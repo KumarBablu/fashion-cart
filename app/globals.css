@@ -12,6 +12,11 @@
 */
 
 :root {
+  --font-fraunces: 'Fraunces', Georgia, serif;
+  --font-inter: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
+
   --fc-bg: #FAF8F5;
   --fc-bg-subtle: #F2EFE8;
   --fc-surface: #FFFFFF;
