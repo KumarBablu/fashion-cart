@@ -1,0 +1,61 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { getCurrentAdmin } from "@/lib/auth/session";
+import { saveImageUpload, UploadError } from "@/lib/upload";
+
+// Public read: checkout page needs the active QR to display to customers.
+export async function GET() {
+  const settings = await prisma.paymentSettings.findFirst({ where: { isActive: true } });
+  return NextResponse.json({ settings });
+}
+
+export async function POST(req: NextRequest) {
+  const admin = await getCurrentAdmin();
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const formData = await req.formData();
+  const file = formData.get("qrCode");
+  const upiId = formData.get("upiId");
+  const instructions = formData.get("instructions");
+  const codEnabled = formData.get("codEnabled") === "true";
+  const codFee = Number(formData.get("codFee") || 0);
+
+  let qrCodePath: string | undefined;
+  if (file instanceof File && file.size > 0) {
+    try {
+      const { relativePath } = await saveImageUpload(file, "payments");
+      qrCodePath = `/uploads/${relativePath}`;
+    } catch (err) {
+      if (err instanceof UploadError) {
+        return NextResponse.json({ error: err.message }, { status: 400 });
+      }
+      throw err;
+    }
+  }
+
+  const existing = await prisma.paymentSettings.findFirst({ where: { isActive: true } });
+
+  const settings = existing
+    ? await prisma.paymentSettings.update({
+        where: { id: existing.id },
+        data: {
+          ...(qrCodePath ? { qrCodePath } : {}),
+          upiId: typeof upiId === "string" ? upiId : existing.upiId,
+          instructions: typeof instructions === "string" ? instructions : existing.instructions,
+          codEnabled,
+          codFee,
+        },
+      })
+    : await prisma.paymentSettings.create({
+        data: {
+          qrCodePath,
+          upiId: typeof upiId === "string" ? upiId : undefined,
+          instructions: typeof instructions === "string" ? instructions : undefined,
+          codEnabled,
+          codFee,
+          isActive: true,
+        },
+      });
+
+  return NextResponse.json({ settings });
+}

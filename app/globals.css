@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+/*
+  Fashion Cart — Forest & Saffron Elegance Design Tokens
+  Exact Palette from Reference:
+  - #6D9773 : Sage Eucalyptus Green (Organic Accents & Secondary Highlights)
+  - #0C3B2E : Deep Forest Emerald / Pine Green (Rich Brand Primary, Headings & Deep Panels)
+  - #BB8A52 : Warm Sandstone / Raw Ochre (Warm Earth Borders & Craft Tags)
+  - #FFBA00 : Vibrant Golden Sunshine / Saffron (Action Buttons, Ratings & Live Badges)
+  - #FAF8F5 : Pure Warm Alabaster (Clean Canvas Background)
+  - #FFFFFF : Crisp Pure White (Card Surfaces & Floating Panels)
+*/
+
+:root {
+  --fc-bg: #FAF8F5;
+  --fc-bg-subtle: #F2EFE8;
+  --fc-surface: #FFFFFF;
+  --fc-surface-glass: rgba(255, 255, 255, 0.92);
+  --fc-border: #E8E3D8;
+  --fc-border-hover: #BB8A52;
+  --fc-border-focus: #0C3B2E;
+  
+  --fc-text: #0C3B2E;
+  --fc-text-muted: #2C483F;
+  --fc-text-dim: #5B7A6F;
+  
+  --fc-primary: #0C3B2E;
+  --fc-primary-hover: #144E3E;
+  --fc-primary-fg: #FFFFFF;
+  
+  --fc-accent: #FFBA00;
+  --fc-accent-hover: #EAA800;
+  --fc-accent-fg: #0C3B2E;
+  
+  --fc-sage: #6D9773;
+  --fc-forest: #0C3B2E;
+  --fc-sandstone: #BB8A52;
+  --fc-sunshine: #FFBA00;
+  
+  --fc-success: #6D9773;
+  --fc-danger: #D94841;
+  --fc-badge-bg: #FFF7E0;
+  --fc-badge-fg: #0C3B2E;
+  
+  --fc-shadow-sm: 0 1px 3px 0 rgba(12, 59, 46, 0.05);
+  --fc-shadow-md: 0 6px 20px -3px rgba(12, 59, 46, 0.08);
+  --fc-shadow-lg: 0 16px 40px -6px rgba(12, 59, 46, 0.12);
+  
+  --background: var(--fc-bg);
+  --foreground: var(--fc-text);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-fc-bg: var(--fc-bg);
+  --color-fc-bg-subtle: var(--fc-bg-subtle);
+  --color-fc-surface: var(--fc-surface);
+  --color-fc-border: var(--fc-border);
+  --color-fc-text: var(--fc-text);
+  --color-fc-text-muted: var(--fc-text-muted);
+  --color-fc-primary: var(--fc-primary);
+  --color-fc-accent: var(--fc-accent);
+  --color-fc-forest: var(--fc-forest);
+  --color-fc-sage: var(--fc-sage);
+  --color-fc-sandstone: var(--fc-sandstone);
+  --color-fc-sunshine: var(--fc-sunshine);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background-color: var(--fc-bg);
+  color: var(--fc-text);
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+/* ==========================================================================
+   FOREST & SAFFRON ARCHITECTURAL CARDS & BUTTONS
+   ========================================================================== */
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--fc-border);
+  box-shadow: 0 4px 20px -2px rgba(12, 59, 46, 0.06);
+}
+
+.glass-card, .card-theme {
+  background: #FFFFFF;
+  border: 1px solid var(--fc-border);
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 16px -2px rgba(12, 59, 46, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card:hover, .card-theme:hover {
+  border-color: #BB8A52;
+  box-shadow: 0 14px 34px -4px rgba(12, 59, 46, 0.12);
+  transform: translateY(-3px);
+}
+
+/* Saffron Sunshine Luminous Action Button */
+.glossy-btn, .gold-btn, .btn-primary {
+  background: linear-gradient(135deg, #FFBA00 0%, #EAA800 100%);
+  color: #0C3B2E !important;
+  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(255, 186, 0, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glossy-btn:hover, .gold-btn:hover, .btn-primary:hover {
+  background: linear-gradient(135deg, #FFC424 0%, #F5B000 100%);
+  box-shadow: 0 8px 24px rgba(255, 186, 0, 0.5);
+  transform: translateY(-1.5px) scale(1.02);
+  color: #0C3B2E !important;
+}
+
+/* Deep Forest Primary Button */
+.forest-btn {
+  background: #0C3B2E;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(12, 59, 46, 0.2);
+  transition: all 0.25s ease;
+}
+
+.forest-btn:hover {
+  background: #144E3E;
+  box-shadow: 0 8px 24px rgba(12, 59, 46, 0.3);
+  transform: translateY(-1.5px);
+  color: #FFFFFF !important;
+}
+
+/* Pulse Beacon */
+@keyframes pulse-dot-sunshine {
+  0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 4px #FFBA00); }
+  50% { opacity: 0.4; transform: scale(1.2); filter: drop-shadow(0 0 10px #FFBA00); }
+}
+
+.pulse-dot {
+  animation: pulse-dot-sunshine 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF8F5;
+}
+::-webkit-scrollbar-thumb {
+  background: #D8D2C5;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #BB8A52;
+}
+
+/* Focus outline */
+:focus-visible {
+  outline: 2px solid #0C3B2E;
+  outline-offset: 2px;
+}

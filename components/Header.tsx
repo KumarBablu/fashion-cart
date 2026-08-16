@@ -1,0 +1,49 @@
+import Link from "next/link";
+import Image from "next/image";
+import { getCurrentUser } from "@/lib/auth/session";
+import HeaderClient from "./HeaderClient";
+import AnnouncementBar from "@/components/ui/AnnouncementBar";
+
+export default async function Header() {
+  const user = await getCurrentUser();
+
+  return (
+    <div className="sticky top-0 z-40">
+      <AnnouncementBar />
+      <header className="bg-white/95 backdrop-blur-md border-b border-[#E8E3D8] shadow-xs transition-colors duration-200">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between gap-6">
+            {/* Official Brand Logo */}
+            <Link
+              href="/"
+              className="shrink-0 flex items-center gap-2 group"
+              aria-label="Fashion Cart Homepage"
+            >
+              <div className="relative h-10 w-10 sm:h-11 sm:w-11 overflow-hidden transition-transform duration-200 group-hover:scale-105">
+                <Image
+                  src="/fashion-cart-logo-transparent.svg"
+                  alt="Fashion Cart Luxury Monogram Logo"
+                  fill
+                  sizes="44px"
+                  priority
+                  className="object-contain"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-display font-black text-lg sm:text-xl tracking-tight text-[#0C3B2E] leading-none">
+                  Fashion Cart
+                </span>
+                <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-[#BB8A52] leading-tight mt-0.5">
+                  Haute Couture
+                </span>
+              </div>
+            </Link>
+
+            {/* Central Navigation, Category Mega Menu, Search & Actions */}
+            <HeaderClient isLoggedIn={!!user} userName={user?.name} />
+          </div>
+        </div>
+      </header>
+    </div>
+  );
+}

@@ -1,0 +1,243 @@
+import nodemailer from "nodemailer";
+import { prisma } from "@/lib/db";
+import {
+  welcomeEmailTemplate,
+  passwordResetEmailTemplate,
+  passwordChangedEmailTemplate,
+  orderPlacedEmailTemplate,
+  paymentVerifiedEmailTemplate,
+  orderShippedEmailTemplate,
+  orderDeliveredEmailTemplate,
+  orderCancelledEmailTemplate,
+  contactInquiryEmailTemplate,
+} from "./templates";
+
+type SendEmailOptions = {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  templateName: string;
+  attachments?: { filename: string; content?: Buffer | string; path?: string; contentType?: string }[];
+  metadata?: Record<string, unknown>;
+};
+
+/**
+ * Gets or creates the nodemailer transport based on database settings or environment variables.
+ */
+async function getEmailTransport() {
+  const settings = await prisma.emailSettings.findFirst().catch(() => null);
+
+  const host = settings?.smtpHost || process.env.SMTP_HOST;
+  const port = settings?.smtpPort || (process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587);
+  const user = settings?.smtpUser || process.env.SMTP_USER;
+  const pass = settings?.smtpPassword || process.env.SMTP_PASS;
+  const secure = settings?.smtpSecure ?? (port === 465);
+  const fromEmail = settings?.fromEmail || process.env.FROM_EMAIL || "notifications@fashioncart.shop";
+  const fromName = settings?.fromName || process.env.FROM_NAME || "Fashion Cart";
+
+  const isConfigured = !!(host && user && pass);
+
+  if (isConfigured) {
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user, pass },
+    });
+    return { transporter, from: `"${fromName}" <${fromEmail}>`, isConfigured: true };
+  }
+
+  // Simulated transporter for local/dev environments or when SMTP is not configured yet
+  return {
+    transporter: null,
+    from: `"${fromName}" <${fromEmail}>`,
+    isConfigured: false,
+  };
+}
+
+/**
+ * Primary dispatch function: sends email via SMTP or logs to simulation storage & EmailLog database table.
+ */
+export async function sendEmail(opts: SendEmailOptions): Promise<{ success: boolean; simulated: boolean; error?: string }> {
+  try {
+    const { transporter, from, isConfigured } = await getEmailTransport();
+
+    if (isConfigured && transporter) {
+      await transporter.sendMail({
+        from,
+        to: opts.to,
+        subject: opts.subject,
+        html: opts.html,
+        text: opts.text,
+        attachments: opts.attachments,
+      });
+
+      // Log successful send
+      await prisma.emailLog.create({
+        data: {
+          recipient: opts.to,
+          subject: opts.subject,
+          template: opts.templateName,
+          status: "SENT",
+          metadata: opts.metadata ? JSON.parse(JSON.stringify(opts.metadata)) : undefined,
+        },
+      }).catch(() => null);
+
+      console.log(`[EMAIL SENT] To: ${opts.to} | Subject: ${opts.subject} [Template: ${opts.templateName}]`);
+      return { success: true, simulated: false };
+    }
+
+    // Simulated email delivery
+    console.log(`\n======================================================`);
+    console.log(`[SIMULATED EMAIL DISPATCHED]`);
+    console.log(`To: ${opts.to}`);
+    console.log(`From: ${from}`);
+    console.log(`Subject: ${opts.subject}`);
+    console.log(`Template: ${opts.templateName}`);
+    console.log(`======================================================\n`);
+
+    await prisma.emailLog.create({
+      data: {
+        recipient: opts.to,
+        subject: opts.subject,
+        template: opts.templateName,
+        status: "SIMULATED",
+        metadata: opts.metadata ? JSON.parse(JSON.stringify(opts.metadata)) : undefined,
+      },
+    }).catch(() => null);
+
+    return { success: true, simulated: true };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Failed to send email";
+    console.error(`[EMAIL ERROR] Failed sending to ${opts.to}:`, errorMsg);
+
+    await prisma.emailLog.create({
+      data: {
+        recipient: opts.to,
+        subject: opts.subject,
+        template: opts.templateName,
+        status: "FAILED",
+        error: errorMsg,
+        metadata: opts.metadata ? JSON.parse(JSON.stringify(opts.metadata)) : undefined,
+      },
+    }).catch(() => null);
+
+    return { success: false, simulated: false, error: errorMsg };
+  }
+}
+
+// -------------------------------------------------------------
+// Transactional Helper Handlers
+// -------------------------------------------------------------
+
+export async function sendWelcomeEmail(user: { name: string; email: string }) {
+  const html = welcomeEmailTemplate(user.name);
+  return sendEmail({
+    to: user.email,
+    subject: "Welcome to Fashion Cart! 🎉 Your 10% Welcome Gift Inside",
+    html,
+    templateName: "WELCOME",
+    metadata: { userId: user.name },
+  });
+}
+
+export async function sendPasswordResetEmail(user: { name: string; email: string }, resetUrl: string, recoveryCode: string) {
+  const html = passwordResetEmailTemplate(user.name, resetUrl, recoveryCode);
+  return sendEmail({
+    to: user.email,
+    subject: "Reset Your Fashion Cart Password (Recovery Link)",
+    html,
+    templateName: "PASSWORD_RESET",
+    metadata: { recoveryCode },
+  });
+}
+
+export async function sendPasswordChangedEmail(user: { name: string; email: string }) {
+  const html = passwordChangedEmailTemplate(user.name);
+  return sendEmail({
+    to: user.email,
+    subject: "Security Notification: Password Changed Successfully",
+    html,
+    templateName: "PASSWORD_CHANGED",
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function sendOrderPlacedEmail(order: any) {
+  const html = orderPlacedEmailTemplate(order);
+  return sendEmail({
+    to: order.user.email,
+    subject: `Order Confirmed: #${order.orderNumber} (Fashion Cart)`,
+    html,
+    templateName: "ORDER_PLACED",
+    metadata: { orderId: order.id, orderNumber: order.orderNumber, total: order.total },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function sendPaymentVerifiedEmail(order: any, invoiceBuffer?: Buffer, invoiceFilename?: string) {
+  const html = paymentVerifiedEmailTemplate(order);
+  const attachments = invoiceBuffer
+    ? [{ filename: invoiceFilename || `Invoice-${order.orderNumber}.pdf`, content: invoiceBuffer, contentType: "application/pdf" }]
+    : undefined;
+
+  return sendEmail({
+    to: order.user.email,
+    subject: `Payment Verified: Order #${order.orderNumber} is Processing`,
+    html,
+    templateName: "PAYMENT_VERIFIED",
+    attachments,
+    metadata: { orderId: order.id, orderNumber: order.orderNumber },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function sendOrderShippedEmail(order: any) {
+  const html = orderShippedEmailTemplate(order, order.carrierName, order.trackingNumber);
+  return sendEmail({
+    to: order.user.email,
+    subject: `Shipped! Order #${order.orderNumber} is on the way 🚚`,
+    html,
+    templateName: "ORDER_SHIPPED",
+    metadata: { orderId: order.id, trackingNumber: order.trackingNumber, carrierName: order.carrierName },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function sendOrderDeliveredEmail(order: any) {
+  const html = orderDeliveredEmailTemplate(order);
+  return sendEmail({
+    to: order.user.email,
+    subject: `Delivered: Order #${order.orderNumber} 🎁`,
+    html,
+    templateName: "ORDER_DELIVERED",
+    metadata: { orderId: order.id, orderNumber: order.orderNumber },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function sendOrderCancelledEmail(order: any, reason?: string | null) {
+  const html = orderCancelledEmailTemplate(order, reason);
+  return sendEmail({
+    to: order.user.email,
+    subject: `Order #${order.orderNumber} has been Cancelled`,
+    html,
+    templateName: "ORDER_CANCELLED",
+    metadata: { orderId: order.id, reason },
+  });
+}
+
+export async function sendContactInquiryEmail(name: string, email: string, subject: string, message: string) {
+  const settings = await prisma.emailSettings.findFirst().catch(() => null);
+  const notifyEmail = settings?.notifyAdminEmail || process.env.ADMIN_NOTIFY_EMAIL || "admin@fashioncart.shop";
+
+  const html = contactInquiryEmailTemplate(name, email, subject, message);
+  return sendEmail({
+    to: notifyEmail,
+    subject: `[Contact Form] ${subject} - ${name}`,
+    html,
+    templateName: "CONTACT_INQUIRY",
+    metadata: { customerName: name, customerEmail: email },
+  });
+}

@@ -1,0 +1,44 @@
+<svg width="800" height="820" viewBox="0 0 800 820" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Fashion Cart — luxury monogram logo</title>
+  <desc>An intertwined "F" and "C" monogram in metallic rose gold, with a subtle hanger-hook nod on the F and a tiny diamond sparkle held within the C, above the serif wordmark "Fashion Cart" in deep charcoal grey, on a cream-white background.</desc>
+
+  <defs>
+    <linearGradient id="roseGold" gradientUnits="userSpaceOnUse" x1="245" y1="220" x2="560" y2="540">
+      <stop offset="0%" stop-color="#C98E77"/>
+      <stop offset="45%" stop-color="#E9C6A4"/>
+      <stop offset="55%" stop-color="#D9A98C"/>
+      <stop offset="100%" stop-color="#B0715F"/>
+    </linearGradient>
+    <linearGradient id="roseGoldSoft" gradientUnits="userSpaceOnUse" x1="255" y1="592" x2="545" y2="592">
+      <stop offset="0%" stop-color="#B0715F"/>
+      <stop offset="50%" stop-color="#E9C6A4"/>
+      <stop offset="100%" stop-color="#B0715F"/>
+    </linearGradient>
+  </defs>
+
+
+  <g transform="translate(0,10)">
+    <path d="M 523,296 A 150,150 0 1 0 523,464"
+          fill="none" stroke="url(#roseGold)" stroke-width="17"
+          stroke-linecap="round"/>
+
+    <path d="M400,247 C400,206 371,182 342,193 C325,199 328,224 348,227"
+          fill="none" stroke="url(#roseGold)" stroke-width="13"
+          stroke-linecap="round"/>
+
+    <line x1="400" y1="247" x2="400" y2="513" stroke="url(#roseGold)" stroke-width="17" stroke-linecap="round"/>
+    <line x1="400" y1="247" x2="497" y2="247" stroke="url(#roseGold)" stroke-width="17" stroke-linecap="round"/>
+    <line x1="400" y1="378" x2="478" y2="378" stroke="url(#roseGold)" stroke-width="17" stroke-linecap="round"/>
+
+    <path d="M493,323 L497,336 L510,340 L497,344 L493,357 L489,344 L476,340 L489,336 Z" fill="url(#roseGold)"/>
+  </g>
+
+  <line x1="255" y1="592" x2="365" y2="592" stroke="url(#roseGoldSoft)" stroke-width="2"/>
+  <path d="M400,584 L408,592 L400,600 L392,592 Z" fill="#C98E77"/>
+  <line x1="435" y1="592" x2="545" y2="592" stroke="url(#roseGoldSoft)" stroke-width="2"/>
+
+  <text x="400" y="660" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+        font-size="56" letter-spacing="10" fill="#2E2A2C">FASHION</text>
+  <text x="400" y="726" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+        font-size="56" letter-spacing="10" fill="#2E2A2C">CART</text>
+</svg>
