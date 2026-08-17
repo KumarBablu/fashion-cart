@@ -290,7 +290,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
 
           <div className="pt-2 text-center">
             <a
-              href={`https://wa.me/918092284954?text=${encodeURIComponent(
+              href={`https://wa.me/919771039201?text=${encodeURIComponent(
                 `Namaste Fashion Cart! I have completed payment for Order #${data.order.orderNumber} (Amount: ₹${Number(data.order.total).toLocaleString("en-IN")}). UTR Reference: ${utr || "Attached"}. Please find my payment screenshot attached.`
               )}`}
               target="_blank"

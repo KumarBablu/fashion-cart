@@ -123,7 +123,7 @@ export default function ForgotPasswordPage() {
             </Link>
 
             <a
-              href={`https://wa.me/918092284954?text=${encodeURIComponent(
+              href={`https://wa.me/919771039201?text=${encodeURIComponent(
                 `Namaste Fashion Cart Support! I need assistance recovering my account with email/phone: ${identifier}`
               )}`}
               target="_blank"

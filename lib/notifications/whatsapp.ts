@@ -10,7 +10,7 @@ const APP_URL =
   (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
   "https://fashion-cart-5p7k.vercel.app";
 
-const BOUTIQUE_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE || "918092284954";
+const BOUTIQUE_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE || "919771039201";
 
 /**
  * Clean phone number to standard international format (e.g. 919876543210)

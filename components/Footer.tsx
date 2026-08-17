@@ -82,7 +82,7 @@ export default function Footer() {
               <span>📍 Bengaluru, India</span>
               <span>·</span>
               <a
-                href="https://wa.me/918092284954?text=Hello%20Fashion%20Cart!%20I%20have%20an%20inquiry%20regarding%20an%20order."
+                href="https://wa.me/919771039201?text=Hello%20Fashion%20Cart!%20I%20have%20an%20inquiry%20regarding%20an%20order."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#FFBA00] hover:underline font-bold flex items-center gap-1"
