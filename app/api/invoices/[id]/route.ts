@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
-import path from "path";
 import { prisma } from "@/lib/db";
 import { getCurrentUser, getCurrentAdmin } from "@/lib/auth/session";
-import { generateInvoiceForOrder } from "@/lib/invoice/generate";
+import { generateInvoiceBufferForOrder } from "@/lib/invoice/generate";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -11,7 +9,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const user = await getCurrentUser();
     const admin = await getCurrentAdmin();
 
-    // Look up order by id or orderNumber
+    // Look up order by id, orderNumber, or invoiceNumber
     const order = await prisma.order.findFirst({
       where: {
         OR: [
@@ -30,26 +28,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       });
     }
 
-    // Authorization check: if authenticated user is accessing, ensure ownership unless admin
-    if (user && user.role !== "ADMIN" && order.userId !== user.id && !admin) {
+    // Authorization check: if customer, must own the order. Otherwise admin allowed.
+    if (!admin && (!user || (user.role !== "ADMIN" && order.userId !== user.id))) {
       return new NextResponse("You are not authorized to view this invoice", {
         status: 403,
         headers: { "Content-Type": "text/plain" },
       });
     }
 
-    // Generate or retrieve the PDF path
-    const relativePath = await generateInvoiceForOrder(order.id);
-    const fullPath = path.join(process.cwd(), "uploads", relativePath);
-    const buffer = await readFile(fullPath);
+    // Generate in-memory PDF buffer (zero disk write dependency for Vercel)
+    const { buffer, invoiceNumber } = await generateInvoiceBufferForOrder(order.id);
+    const filename = `Tax-Invoice-${order.orderNumber}-${invoiceNumber}.pdf`;
 
-    const filename = `Invoice-${order.orderNumber}.pdf`;
-
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="${filename}"`,
+        "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "public, max-age=3600, s-maxage=3600",
       },
     });

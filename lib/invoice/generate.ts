@@ -1,18 +1,18 @@
 import PDFDocument from "pdfkit";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import { prisma } from "@/lib/db";
 import { generateInvoiceNumber } from "@/lib/order-number";
 
-const UPLOAD_ROOT = path.join(process.cwd(), "uploads", "invoices");
-
 /**
- * Generates (or returns the existing) GST-compliant PDF invoice for an order.
- * Fully formatted with brand styling, customer billing info, line items, and payment verification data.
+ * Generates an in-memory GST-compliant PDF invoice buffer for an order.
+ * Runs completely in-memory, making it 100% compatible with Vercel and serverless functions.
  */
-export async function generateInvoiceForOrder(orderId: string): Promise<string> {
+export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
+  buffer: Buffer;
+  invoiceNumber: string;
+  orderNumber: string;
+}> {
   const existing = await prisma.invoice.findUnique({ where: { orderId } });
-  if (existing?.pdfPath) return existing.pdfPath;
+  const invoiceNumber = existing?.invoiceNumber ?? (await generateInvoiceNumber());
 
   const order = await prisma.order.findUniqueOrThrow({
     where: { id: orderId },
@@ -20,25 +20,26 @@ export async function generateInvoiceForOrder(orderId: string): Promise<string> 
   });
 
   const business = await prisma.businessSettings.findFirst();
-  const invoiceNumber = existing?.invoiceNumber ?? (await generateInvoiceNumber());
 
-  await mkdir(UPLOAD_ROOT, { recursive: true });
-  const filename = `${invoiceNumber}.pdf`;
-  const fullPath = path.join(UPLOAD_ROOT, filename);
+  // Create invoice record in database if not yet present
+  if (!existing) {
+    await prisma.invoice.create({
+      data: {
+        orderId,
+        invoiceNumber,
+        pdfPath: `invoices/${invoiceNumber}.pdf`,
+      },
+    }).catch(() => {
+      // Catch in case of race condition
+    });
+  }
 
-  await new Promise<void>((resolve, reject) => {
+  const buffer = await new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 40 });
     const chunks: Buffer[] = [];
     doc.on("data", (c: Buffer) => chunks.push(c));
     doc.on("error", reject);
-    doc.on("end", async () => {
-      try {
-        await writeFile(fullPath, Buffer.concat(chunks));
-        resolve();
-      } catch (e) {
-        reject(e);
-      }
-    });
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
 
     const addr = order.shippingAddressSnapshot as {
       fullName: string;
@@ -74,7 +75,7 @@ export async function generateInvoiceForOrder(orderId: string): Promise<string> 
     doc.fontSize(10).font("Helvetica-Bold").text("Invoice Details:", 320, y);
     doc.fontSize(9).font("Helvetica");
     doc.text(`Invoice No: ${invoiceNumber}`, 320, y + 14);
-    doc.text(`Invoice Date: ${new Date().toLocaleDateString("en-IN")}`, 320, y + 26);
+    doc.text(`Invoice Date: ${new Date(order.createdAt).toLocaleDateString("en-IN")}`, 320, y + 26);
     doc.text(`Order Number: ${order.orderNumber}`, 320, y + 38);
     doc.text(`Payment Method: ${order.paymentMethod.replace(/_/g, " ")}`, 320, y + 50);
     if (order.payment?.utrNumber) {
@@ -168,13 +169,11 @@ export async function generateInvoiceForOrder(orderId: string): Promise<string> 
     doc.end();
   });
 
-  const relativePath = path.posix.join("invoices", filename);
+  return { buffer, invoiceNumber, orderNumber: order.orderNumber };
+}
 
-  await prisma.invoice.upsert({
-    where: { orderId },
-    update: { pdfPath: relativePath },
-    create: { orderId, invoiceNumber, pdfPath: relativePath },
-  });
-
-  return relativePath;
+// Backward compatibility alias
+export async function generateInvoiceForOrder(orderId: string): Promise<string> {
+  const { invoiceNumber } = await generateInvoiceBufferForOrder(orderId);
+  return `invoices/${invoiceNumber}.pdf`;
 }

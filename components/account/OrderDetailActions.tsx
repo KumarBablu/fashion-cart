@@ -48,19 +48,28 @@ export default function OrderDetailActions({
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
-        {/* Invoice Download Button */}
+        {/* Invoice Actions */}
         {isPaid ? (
-          <a
-            href={`/api/invoices/${orderId}`}
-            download
-            className="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 hover:brightness-105"
-            style={{
-              backgroundColor: "var(--fc-primary)",
-              color: "var(--fc-primary-fg)",
-            }}
-          >
-            <span>📥</span> Download Tax Invoice (PDF)
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/invoices/${orderId}`}
+              target="_blank"
+              className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 hover:brightness-105"
+              style={{
+                backgroundColor: "var(--fc-primary)",
+                color: "var(--fc-primary-fg)",
+              }}
+            >
+              <span>📄</span> View &amp; Print Tax Invoice
+            </a>
+            <a
+              href={`/api/invoices/${orderId}`}
+              download
+              className="px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#EAA800] transition-all shadow-sm flex items-center gap-1"
+            >
+              <span>📥</span> PDF
+            </a>
+          </div>
         ) : null}
 
         {/* Cancel Order Button */}

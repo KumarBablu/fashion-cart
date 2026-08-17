@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
+import NavigationProgress from "@/components/providers/NavigationProgress";
 
 export const metadata: Metadata = {
   title: "Fashion Cart — Haute Couture & Everyday Luxury",
@@ -31,7 +33,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-full flex flex-col transition-colors duration-300">
         <ThemeProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            <Suspense fallback={null}>
+              <NavigationProgress />
+            </Suspense>
+            {children}
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

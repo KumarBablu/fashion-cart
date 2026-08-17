@@ -44,17 +44,22 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {order.invoice?.pdfPath && (
-            <a
-              href={`/api/invoices/${order.id}`}
-              download
-              className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-sm flex items-center gap-1.5"
-              style={{ backgroundColor: "var(--fc-primary)" }}
-            >
-              <span>📥</span> Download PDF Invoice
-            </a>
-          )}
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href={`/invoices/${order.id}`}
+            target="_blank"
+            className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-sm flex items-center gap-1.5 hover:brightness-105"
+            style={{ backgroundColor: "var(--fc-primary)" }}
+          >
+            <span>📄</span> Tax Invoice / Receipt
+          </a>
+          <a
+            href={`/invoices/${order.id}`}
+            target="_blank"
+            className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#FFBA00] text-[#0C3B2E] shadow-sm flex items-center gap-1.5 hover:bg-[#EAA800]"
+          >
+            <span>📦</span> Print Parcel Label (4×6)
+          </a>
           <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
         </div>
       </div>
@@ -135,6 +140,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                 screenshotPath: order.payment.screenshotPath,
                 submittedAt: order.payment.submittedAt?.toISOString() ?? null,
                 rejectionReason: order.payment.rejectionReason,
+                orderId: order.id,
+                orderNumber: order.orderNumber,
               }}
             />
           </div>
