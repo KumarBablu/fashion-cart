@@ -1,4 +1,5 @@
-import PDFDocument from "pdfkit";
+// @ts-ignore
+import PDFDocument from "pdfkit/js/pdfkit.standalone";
 import { prisma } from "@/lib/db";
 import { generateInvoiceNumber } from "@/lib/order-number";
 

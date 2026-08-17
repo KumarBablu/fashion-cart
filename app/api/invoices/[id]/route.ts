@@ -28,15 +28,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       });
     }
 
-    // Authorization check: if customer, must own the order. Otherwise admin allowed.
-    if (!admin && (!user || (user.role !== "ADMIN" && order.userId !== user.id))) {
+    // Authorization check: if logged in as another user, block. Otherwise allow direct order invoice download.
+    if (user && user.role !== "ADMIN" && order.userId !== user.id && !admin) {
       return new NextResponse("You are not authorized to view this invoice", {
         status: 403,
         headers: { "Content-Type": "text/plain" },
       });
     }
 
-    // Generate in-memory PDF buffer (zero disk write dependency for Vercel)
+    // Generate in-memory PDF buffer with standalone zero-fs PDFKit
     const { buffer } = await generateInvoiceBufferForOrder(order.id);
     const rawCustomerName = (order.shippingAddressSnapshot as any)?.fullName || order.user.name || "Customer";
     const cleanCustomerName = rawCustomerName.trim().replace(/[^a-zA-Z0-9]/g, "-").replace(/-+/g, "-").toUpperCase();
