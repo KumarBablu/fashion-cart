@@ -287,6 +287,19 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           >
             {submitting ? "Submitting Payment Proof…" : "Submit Payment Confirmation →"}
           </button>
+
+          <div className="pt-2 text-center">
+            <a
+              href={`https://wa.me/918092284954?text=${encodeURIComponent(
+                `Namaste Fashion Cart! I have completed payment for Order #${data.order.orderNumber} (Amount: ₹${Number(data.order.total).toLocaleString("en-IN")}). UTR Reference: ${utr || "Attached"}. Please find my payment screenshot attached.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline py-1"
+            >
+              <span>📲</span> Or Send Payment Screenshot Directly via WhatsApp
+            </a>
+          </div>
         </form>
       </div>
     </div>

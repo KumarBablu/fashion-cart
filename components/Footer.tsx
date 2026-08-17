@@ -78,10 +78,21 @@ export default function Footer() {
             <p className="text-xs text-white/80 leading-relaxed max-w-sm">
               Your premier destination for contemporary everyday apparel, luxury ethnic kurtis, breathable shirts, and precision-tailored garments. Designed for comfort and confidence.
             </p>
-            <div className="flex items-center gap-3 pt-1 text-xs text-white/70">
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-white/70">
               <span>📍 Bengaluru, India</span>
               <span>·</span>
-              <span>✉️ support@fashioncart.shop</span>
+              <a
+                href="https://wa.me/918092284954?text=Hello%20Fashion%20Cart!%20I%20have%20an%20inquiry%20regarding%20an%20order."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#FFBA00] hover:underline font-bold flex items-center gap-1"
+              >
+                <span>💬</span> WhatsApp Concierge
+              </a>
+              <span>·</span>
+              <a href="mailto:bablusoni2825@gmail.com" className="hover:text-white">
+                ✉️ bablusoni2825@gmail.com
+              </a>
             </div>
           </div>
 

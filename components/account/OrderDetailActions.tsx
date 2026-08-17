@@ -72,6 +72,17 @@ export default function OrderDetailActions({
           </div>
         ) : null}
 
+        <a
+          href={`https://wa.me/918092284954?text=${encodeURIComponent(
+            `Hello Fashion Cart! I need assistance with my Order ID: ${orderId}.`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm flex items-center gap-1"
+        >
+          <span>💬</span> WhatsApp Support
+        </a>
+
         {/* Cancel Order Button */}
         {cancellable && (
           <button
