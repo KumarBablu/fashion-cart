@@ -71,17 +71,18 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
         method: "POST",
         body: formData,
       });
-      const result = await res.json();
+      const result = await res.json().catch(() => null);
       setSubmitting(false);
 
       if (!res.ok) {
-        setError(result.error ?? "Could not submit payment.");
+        setError(result?.error ?? "Could not submit payment. Please verify your file and UTR.");
         return;
       }
       setSubmitted(true);
       success("Payment Proof Submitted! 🎉", "Admin will verify your payment shortly.");
-    } catch {
-      setError("Network error while submitting proof.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Network error while submitting proof.";
+      setError(msg);
       setSubmitting(false);
     }
   }
@@ -163,6 +164,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
                 src={data.paymentSettings.qrCodePath}
                 alt="Fashion Cart UPI QR Code"
                 fill
+                unoptimized
                 className="object-contain p-2"
                 priority
               />
@@ -252,7 +254,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
 
             {previewUrl && (
               <div className="mt-3 relative h-32 w-28 rounded-xl overflow-hidden border" style={{ borderColor: "var(--fc-border)" }}>
-                <Image src={previewUrl} alt="Screenshot preview" fill className="object-cover" />
+                <Image src={previewUrl} alt="Screenshot preview" fill unoptimized className="object-cover" />
               </div>
             )}
           </div>

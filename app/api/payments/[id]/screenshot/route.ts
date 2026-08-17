@@ -54,11 +54,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const { relativePath } = await saveImageUpload(file, "payments");
+    const screenshotPath = relativePath.startsWith("data:") ? relativePath : `/uploads/${relativePath}`;
 
     const updated = await prisma.payment.update({
       where: { id: payment.id },
       data: {
-        screenshotPath: `/uploads/${relativePath}`,
+        screenshotPath,
         utrNumber: parsedUtr.data.utrNumber,
         status: "UNDER_REVIEW",
         submittedAt: new Date(),

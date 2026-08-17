@@ -19,12 +19,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const { relativePath } = await saveImageUpload(file, "products");
+    const imageUrl = relativePath.startsWith("data:") ? relativePath : `/uploads/${relativePath}`;
 
     const image = await prisma.productImage.create({
       data: {
         productId: id,
         variantId: typeof variantId === "string" && variantId ? variantId : undefined,
-        imageUrl: `/uploads/${relativePath}`,
+        imageUrl,
         sortOrder,
       },
     });

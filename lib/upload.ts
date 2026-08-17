@@ -39,16 +39,30 @@ export async function saveImageUpload(
     throw new UploadError("The uploaded file does not match its declared image type.");
   }
 
-  const dir = path.join(UPLOAD_ROOT, subdir);
-  await mkdir(dir, { recursive: true });
+  // On Vercel / serverless deployments, the filesystem is read-only.
+  // Store uploaded image as a resilient Base64 Data URL so it saves directly in DB and displays everywhere.
+  const isServerless = process.env.VERCEL === "1" || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+  if (isServerless) {
+    const base64 = buffer.toString("base64");
+    return { relativePath: `data:${file.type};base64,${base64}` };
+  }
 
-  const ext = EXT_BY_MIME[file.type] ?? "bin";
-  const filename = `${Date.now()}-${crypto.randomBytes(16).toString("hex")}.${ext}`;
-  const fullPath = path.join(dir, filename);
+  try {
+    const dir = path.join(UPLOAD_ROOT, subdir);
+    await mkdir(dir, { recursive: true });
 
-  await writeFile(fullPath, buffer);
+    const ext = EXT_BY_MIME[file.type] ?? "bin";
+    const filename = `${Date.now()}-${crypto.randomBytes(16).toString("hex")}.${ext}`;
+    const fullPath = path.join(dir, filename);
 
-  return { relativePath: path.posix.join(subdir, filename) };
+    await writeFile(fullPath, buffer);
+
+    return { relativePath: path.posix.join(subdir, filename) };
+  } catch {
+    // Graceful fallback to Data URI if filesystem is restricted or read-only
+    const base64 = buffer.toString("base64");
+    return { relativePath: `data:${file.type};base64,${base64}` };
+  }
 }
 
 function looksLikeDeclaredType(buffer: Buffer, mime: string): boolean {

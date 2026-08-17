@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   if (file instanceof File && file.size > 0) {
     try {
       const { relativePath } = await saveImageUpload(file, "payments");
-      qrCodePath = `/uploads/${relativePath}`;
+      qrCodePath = relativePath.startsWith("data:") ? relativePath : `/uploads/${relativePath}`;
     } catch (err) {
       if (err instanceof UploadError) {
         return NextResponse.json({ error: err.message }, { status: 400 });

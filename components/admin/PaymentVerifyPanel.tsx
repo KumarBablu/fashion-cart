@@ -66,7 +66,7 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
         <div>
           {payment.screenshotPath ? (
             <a href={payment.screenshotPath} target="_blank" rel="noreferrer" className="block relative aspect-[9/16] max-h-64 overflow-hidden rounded-md border border-line">
-              <Image src={payment.screenshotPath} alt="Payment screenshot" fill className="object-contain bg-ivory-deep" />
+              <Image src={payment.screenshotPath} alt="Payment screenshot" fill unoptimized className="object-contain bg-ivory-deep" />
             </a>
           ) : (
             <p className="text-sm text-ink-soft">No screenshot submitted yet.</p>
