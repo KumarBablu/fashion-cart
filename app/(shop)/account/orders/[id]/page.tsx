@@ -95,14 +95,24 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <h3 className="font-display text-base font-bold mb-3">Order Items</h3>
         <div className="divide-y" style={{ borderColor: "var(--fc-border)" }}>
           {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between items-center py-3 text-sm">
+            <div key={item.id} className="flex flex-wrap justify-between items-center py-3 text-sm gap-2">
               <div>
                 <p className="font-semibold">{item.productNameSnapshot}</p>
                 <p className="text-xs text-dim mt-0.5">
                   SKU: {item.skuSnapshot} · {item.colourSnapshot} / {item.sizeSnapshot} · Qty: {item.quantity}
                 </p>
               </div>
-              <span className="font-bold">{formatINR(item.total)}</span>
+              <div className="flex items-center gap-3">
+                {order.status === "DELIVERED" && (
+                  <Link
+                    href={`/shop`}
+                    className="px-3 py-1 rounded-full border border-[#FFBA00] text-[11px] font-bold text-[#0C3B2E] bg-[#FFF7E0] hover:bg-[#FFBA00] transition-colors"
+                  >
+                    ⭐ Write Review
+                  </Link>
+                )}
+                <span className="font-bold">{formatINR(item.total)}</span>
+              </div>
             </div>
           ))}
         </div>
