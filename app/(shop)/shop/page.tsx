@@ -25,7 +25,14 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
 
   const where: Prisma.ProductWhereInput = {
     status: "ACTIVE",
-    ...(categorySlug ? { category: { slug: categorySlug } } : {}),
+    ...(categorySlug
+      ? {
+          OR: [
+            { category: { slug: categorySlug } },
+            { category: { parent: { slug: categorySlug } } },
+          ],
+        }
+      : {}),
     ...(q
       ? {
           OR: [
@@ -43,7 +50,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         ...(minPrice !== undefined ? { price: { gte: minPrice } } : {}),
         ...(maxPrice !== undefined ? { price: { lte: maxPrice } } : {}),
         ...(size ? { size: { equals: size, mode: "insensitive" } } : {}),
-        ...(colour ? { colour: { equals: colour, mode: "insensitive" } } : {}),
+        ...(colour ? { colour: { contains: colour, mode: "insensitive" } } : {}),
         ...(inStock ? { stockQuantity: { gt: 0 } } : {}),
         ...(onSale ? { compareAtPrice: { not: null } } : {}),
       },
