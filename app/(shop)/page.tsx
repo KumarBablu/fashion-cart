@@ -175,10 +175,10 @@ export default async function HomePage() {
           {/* Right Hero Column: Cinematic Editorial Model Card with VIP Glassmorphism Overlay */}
           <div className="lg:col-span-5 relative">
             <div className="relative aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-[#E7DFD5] group">
-              {/* High-Fashion Editorial Model Image */}
+              {/* High-Fashion Traditional Indian Couture Model Image */}
               <Image
-                src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1200&auto=format&fit=crop&q=85"
-                alt="Haute Couture Fashion Model — Fashion Cart"
+                src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&auto=format&fit=crop&q=85"
+                alt="Traditional Indian Couture Model — Fashion Cart"
                 fill
                 priority
                 sizes="(min-width: 1024px) 40vw, 100vw"

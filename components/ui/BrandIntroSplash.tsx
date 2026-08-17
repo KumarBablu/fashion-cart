@@ -64,8 +64,8 @@ export default function BrandIntroSplash() {
       {/* Subtle Cinematic Runway Silhouette Background */}
       <div className="absolute inset-0 opacity-12 mix-blend-multiply pointer-events-none">
         <Image
-          src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1400&auto=format&fit=crop&q=80"
-          alt="Haute Couture Background"
+          src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1400&auto=format&fit=crop&q=80"
+          alt="Traditional Indian Couture Background"
           fill
           priority
           sizes="100vw"
