@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { saveImageUpload, UploadError } from "@/lib/upload";
 import { utrSubmissionSchema } from "@/lib/validation/schemas";
+import { sendPaymentProofSubmittedAdminAlert } from "@/lib/email/service";
 
 /**
  * Customer submits a payment screenshot + UTR number.
@@ -71,6 +72,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       where: { id: payment.orderId },
       data: { status: "PAYMENT_REVIEW" },
     });
+
+    // Alert admin of newly submitted payment proof
+    sendPaymentProofSubmittedAdminAlert(payment.order, parsedUtr.data.utrNumber).catch(() => null);
 
     return NextResponse.json({ payment: updated });
   } catch (err) {

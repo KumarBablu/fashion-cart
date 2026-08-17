@@ -166,13 +166,73 @@ export async function sendPasswordChangedEmail(user: { name: string; email: stri
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function sendOrderPlacedEmail(order: any) {
   const html = orderPlacedEmailTemplate(order);
-  return sendEmail({
+
+  // 1. Send confirmation to Customer
+  const customerResult = await sendEmail({
     to: order.user.email,
     subject: `Order Confirmed: #${order.orderNumber} (Fashion Cart)`,
     html,
     templateName: "ORDER_PLACED",
     metadata: { orderId: order.id, orderNumber: order.orderNumber, total: order.total },
   });
+
+  // 2. Also send alert to Admin
+  const settings = await prisma.emailSettings.findFirst().catch(() => null);
+  const adminEmail = settings?.notifyAdminEmail || process.env.ADMIN_NOTIFY_EMAIL || "bablusoni2825@gmail.com";
+
+  if (adminEmail && adminEmail !== order.user.email) {
+    await sendEmail({
+      to: adminEmail,
+      subject: `🚨 [New Order Placed] #${order.orderNumber} - ₹${Number(order.total).toLocaleString("en-IN")}`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
+          <h2 style="color: #0C3B2E;">🛍️ New Customer Order Received!</h2>
+          <p><strong>Order Number:</strong> ${order.orderNumber}</p>
+          <p><strong>Customer Name:</strong> ${order.user.name} (${order.user.email})</p>
+          <p><strong>Total Value:</strong> ₹${Number(order.total).toLocaleString("en-IN")}</p>
+          <p><strong>Payment Method:</strong> ${order.paymentMethod}</p>
+          <p style="margin-top: 20px;">
+            <a href="https://fashion-cart-5p7k.vercel.app/admin/orders/${order.id}" style="background-color: #0C3B2E; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+              View Order in Admin Dashboard →
+            </a>
+          </p>
+        </div>
+      `,
+      templateName: "ADMIN_NEW_ORDER_ALERT",
+      metadata: { orderId: order.id },
+    }).catch(() => null);
+  }
+
+  return customerResult;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function sendPaymentProofSubmittedAdminAlert(order: any, utrNumber?: string | null) {
+  const settings = await prisma.emailSettings.findFirst().catch(() => null);
+  const adminEmail = settings?.notifyAdminEmail || process.env.ADMIN_NOTIFY_EMAIL || "bablusoni2825@gmail.com";
+
+  if (adminEmail) {
+    await sendEmail({
+      to: adminEmail,
+      subject: `💳 [Payment Proof Submitted] Order #${order.orderNumber} (UTR: ${utrNumber || "N/A"})`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
+          <h2 style="color: #0C3B2E;">💳 Payment Proof Uploaded for Verification!</h2>
+          <p>A customer has uploaded their payment proof for verification.</p>
+          <p><strong>Order:</strong> #${order.orderNumber}</p>
+          <p><strong>Customer:</strong> ${order.user?.name || "Customer"}</p>
+          <p><strong>UTR / Transaction ID:</strong> <span style="font-family: monospace; font-weight: bold;">${utrNumber || "N/A"}</span></p>
+          <p style="margin-top: 20px;">
+            <a href="https://fashion-cart-5p7k.vercel.app/admin/payments" style="background-color: #FFBA00; color: #0C3B2E; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+              Open Payment Verification Desk →
+            </a>
+          </p>
+        </div>
+      `,
+      templateName: "ADMIN_PAYMENT_PROOF_ALERT",
+      metadata: { orderId: order.id, utr: utrNumber },
+    }).catch(() => null);
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

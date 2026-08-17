@@ -40,11 +40,12 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { token, expiresAt } = generatePasswordResetToken(user);
+  const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "https://fashion-cart-5p7k.vercel.app";
+  const { token } = generatePasswordResetToken(user);
   const recoveryCode = generateRecoveryCode(user.email);
-  const resetUrl = `/reset-password?token=${token}`;
+  const resetUrl = `${origin}/reset-password?token=${token}`;
 
-  // Dispatch Password Reset Email to customer
+  // Dispatch Password Reset Email to actual customer inbox
   await sendPasswordResetEmail(
     { name: user.name, email: user.email },
     resetUrl,
@@ -55,11 +56,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    message: "Recovery email and link generated successfully.",
-    resetUrl,
-    token,
-    recoveryCode,
-    emailMasked: user.email.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => `${a}${"*".repeat(Math.max(2, b.length))}${c}`),
-    expiresAt,
+    message: "If an active account is registered with these details, a secure password recovery link has been dispatched to the account holder's email inbox.",
   });
 }

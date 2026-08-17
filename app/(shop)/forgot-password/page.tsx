@@ -93,51 +93,44 @@ export default function ForgotPasswordPage() {
           </div>
         </form>
       ) : (
-        <div className="space-y-5 animate-in fade-in duration-300">
+        <div className="space-y-5 animate-in fade-in duration-300 text-center">
           <div
-            className="p-4 rounded-2xl border space-y-2 text-left"
+            className="p-5 rounded-2xl border space-y-3 text-center"
             style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}
           >
-            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-              <span>✓</span> Recovery Instructions Ready
-            </p>
+            <div className="text-4xl">✉️</div>
+            <h3 className="font-display text-base font-bold text-primary">Check Your Email Inbox</h3>
             <p className="text-xs text-dim leading-relaxed">
-              We found your account {result.emailMasked ? `associated with ${result.emailMasked}` : ""}.
+              If an account is associated with <strong style={{ color: "var(--fc-text)" }}>{identifier}</strong>, we have dispatched a secure password recovery link to the registered email address.
             </p>
-            {result.recoveryCode && (
-              <div className="pt-2">
-                <span className="text-[11px] font-bold text-dim uppercase">Your 6-Digit Recovery Code:</span>
-                <p className="font-mono text-xl font-black text-primary tracking-widest mt-0.5">
-                  {result.recoveryCode}
-                </p>
-              </div>
-            )}
+            <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/30 text-left text-[11px] text-emerald-800 dark:text-emerald-300 space-y-1">
+              <p className="font-bold flex items-center gap-1">
+                <span>🔒</span> Security Protocol:
+              </p>
+              <p>
+                For your account safety, password resets can only be completed by clicking the unique verification link sent to your registered inbox.
+              </p>
+            </div>
           </div>
 
-          {result.resetUrl && (
+          <div className="flex flex-col gap-2 pt-2">
             <Link
-              href={result.resetUrl}
-              className="block w-full py-3.5 rounded-full font-bold text-center text-xs uppercase tracking-wider text-white shadow-lg transition-all hover:brightness-105"
+              href="/login"
+              className="w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-md transition-all hover:brightness-105"
               style={{ backgroundColor: "var(--fc-primary)" }}
             >
-              Proceed to Reset Password Now →
+              Return to Login →
             </Link>
-          )}
-
-          <div className="flex items-center justify-between pt-2 text-xs">
             <button
               type="button"
               onClick={() => {
                 setResult(null);
                 setIdentifier("");
               }}
-              className="text-dim hover:text-primary transition-colors"
+              className="text-xs text-dim hover:text-primary transition-colors py-1"
             >
-              Try another email/phone
+              Try another email or phone number
             </button>
-            <Link href="/login" className="font-bold text-primary hover:underline">
-              Back to Login
-            </Link>
           </div>
         </div>
       )}
