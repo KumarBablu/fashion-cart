@@ -116,19 +116,19 @@ export default async function HomePage() {
             {/* Top Pill */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#C59B27]/40 bg-white text-xs font-bold uppercase tracking-wider text-[#141416] shadow-xs">
               <span className="w-2 h-2 rounded-full bg-[#C59B27] pulse-dot" />
-              <span>Haute Couture 2026 Collection · Live Drops</span>
+              <span>✦ The 2026 Haute Couture Edit · Live Drops</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-[#141416] leading-[1.08]">
-              Natural Craft.<br />
+              Timeless Elegance.<br />
               <span className="text-[#C59B27]">
-                Architectural Fit.
+                Effortless Style.
               </span>
             </h1>
 
             <p className="text-sm sm:text-base text-[#4B4E56] max-w-xl leading-relaxed">
-              Step into high-craft apparel woven with nature&apos;s purest textures. Hand-embroidered micro-velvet kurta sets, flowing mulberry silk sarees, and breathable French linen shirts.
+              Discover masterfully tailored garments crafted from certified pure Mulberry silks, breathable French linens, and rich hand-embroidered velvets. Designed for modern poise, uncompromising comfort, and true distinction.
             </p>
 
             {/* Action Buttons */}
@@ -137,13 +137,13 @@ export default async function HomePage() {
                 href="/shop"
                 className="px-8 py-3.5 rounded-full font-extrabold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] transition-all duration-200 shadow-md hover:scale-102"
               >
-                Shop Collection →
+                Explore New Season →
               </Link>
               <Link
                 href="/categories"
                 className="px-6 py-3.5 rounded-full border border-[#141416] bg-white font-bold text-xs uppercase tracking-wider text-[#141416] hover:bg-[#141416] hover:text-white transition-all duration-200"
               >
-                Explore Categories
+                Browse Categories
               </Link>
               <a
                 href="https://wa.me/919771039201?text=Hi%20Fashion%20Cart%20Stylist%2C%20I%20need%20outfit%20recommendations"
