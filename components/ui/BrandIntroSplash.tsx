@@ -1,44 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 export default function BrandIntroSplash() {
-  const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
+  const [visible, setVisible] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const isFirstMount = useRef(true);
 
+  // Trigger on initial load / refresh AND on every route / query change
   useEffect(() => {
-    // Check if the user has already seen the luxury splash in this session
-    try {
-      const hasSeen = sessionStorage.getItem("fashion_cart_splash_seen");
-      if (!hasSeen) {
-        setVisible(true);
-        sessionStorage.setItem("fashion_cart_splash_seen", "true");
+    // Determine duration: slightly longer for initial page load/refresh, snappier for in-app page transitions
+    const isInitial = isFirstMount.current;
+    isFirstMount.current = false;
 
-        // Auto transition into the storefront after 1.8s
-        const fadeTimer = setTimeout(() => {
-          setIsFadingOut(true);
-        }, 1600);
+    setVisible(true);
+    setIsFadingOut(false);
 
-        const removeTimer = setTimeout(() => {
-          setVisible(false);
-        }, 2200);
+    const activeDuration = isInitial ? 1100 : 550;
+    const totalDuration = isInitial ? 1600 : 900;
 
-        return () => {
-          clearTimeout(fadeTimer);
-          clearTimeout(removeTimer);
-        };
-      }
-    } catch {
-      // In case sessionStorage is blocked by privacy mode
-    }
-  }, []);
+    const fadeTimer = setTimeout(() => {
+      setIsFadingOut(true);
+    }, activeDuration);
+
+    const removeTimer = setTimeout(() => {
+      setVisible(false);
+    }, totalDuration);
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+    };
+  }, [pathname, searchParams]);
 
   function handleDismiss() {
     setIsFadingOut(true);
     setTimeout(() => {
       setVisible(false);
-    }, 450);
+    }, 300);
   }
 
   if (!visible) return null;
@@ -46,34 +50,34 @@ export default function BrandIntroSplash() {
   return (
     <div
       onClick={handleDismiss}
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center cursor-pointer transition-all duration-700 select-none ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center cursor-pointer transition-all duration-500 select-none ${
         isFadingOut
           ? "opacity-0 pointer-events-none scale-105 blur-sm"
           : "opacity-100 backdrop-blur-md"
       }`}
       style={{
         backgroundColor: "#FAF8F5",
-        backgroundImage: "radial-gradient(circle at 50% 45%, rgba(197, 155, 39, 0.09) 0%, rgba(250, 248, 245, 0.98) 70%)",
+        backgroundImage: "radial-gradient(circle at 50% 45%, rgba(197, 155, 39, 0.12) 0%, rgba(250, 248, 245, 0.98) 75%)",
       }}
-      aria-label="Welcome to Fashion Cart"
+      aria-label="Fashion Cart Luxury Entrance"
     >
-      {/* Decorative Luxury Frame */}
-      <div className="absolute inset-4 sm:inset-8 border border-[#E7DFD5]/80 pointer-events-none rounded-2xl sm:rounded-3xl" />
-      <div className="absolute inset-5 sm:inset-9 border border-[#C59B27]/25 pointer-events-none rounded-xl sm:rounded-2xl" />
+      {/* Decorative Luxury Architectural Frame */}
+      <div className="absolute inset-4 sm:inset-8 border border-[#E7DFD5]/90 pointer-events-none rounded-2xl sm:rounded-3xl shadow-xs" />
+      <div className="absolute inset-5 sm:inset-9 border border-[#C59B27]/30 pointer-events-none rounded-xl sm:rounded-2xl" />
 
       {/* Central Brand Emblem */}
-      <div className="relative flex flex-col items-center text-center px-6 max-w-md space-y-5 animate-in fade-in zoom-in-95 duration-700">
+      <div className="relative flex flex-col items-center text-center px-6 max-w-md space-y-5 animate-in fade-in zoom-in-95 duration-500">
         
         {/* Monogram Emblem with Soft Golden Aura */}
         <div className="relative">
-          <div className="absolute -inset-4 bg-[#C59B27]/20 rounded-full blur-xl animate-pulse" />
-          <div className="relative h-24 w-24 sm:h-28 sm:w-28 drop-shadow-lg transition-transform duration-700 hover:scale-105">
+          <div className="absolute -inset-6 bg-[#C59B27]/25 rounded-full blur-2xl animate-pulse" />
+          <div className="relative h-24 w-24 sm:h-32 sm:w-32 drop-shadow-xl transition-transform duration-500 hover:scale-105">
             <Image
               src="/fashion-cart-logo-transparent.svg"
-              alt="Fashion Cart Luxury Monogram"
+              alt="Fashion Cart Luxury Monogram Emblem"
               fill
               priority
-              sizes="112px"
+              sizes="128px"
               className="object-contain"
             />
           </div>
@@ -98,24 +102,21 @@ export default function BrandIntroSplash() {
         </div>
 
         {/* Subtle Progress Bar */}
-        <div className="w-36 h-0.5 bg-[#E7DFD5] rounded-full overflow-hidden mt-4">
-          <div className="h-full bg-gradient-to-r from-[#C59B27] to-[#E0BF48] rounded-full animate-[shimmer_1.6s_ease-in-out_infinite]" />
+        <div className="w-36 h-0.5 bg-[#E7DFD5] rounded-full overflow-hidden mt-3">
+          <div className="h-full bg-gradient-to-r from-[#C59B27] via-[#E0BF48] to-[#C59B27] rounded-full animate-[shimmer_1.2s_ease-in-out_infinite]" />
         </div>
 
         {/* Quick Skip Prompt */}
-        <p className="text-[10px] text-[#787C87] uppercase tracking-widest pt-2 opacity-75">
-          Entering Boutique… (Click to Skip)
+        <p className="text-[9px] text-[#787C87] uppercase tracking-widest pt-1 opacity-70">
+          Entering Boutique…
         </p>
       </div>
 
-      {/* Bottom Right Direct Enter Button */}
-      <button
-        onClick={handleDismiss}
-        className="absolute bottom-8 right-8 hidden sm:flex items-center gap-1 text-xs font-bold text-[#141416] hover:text-[#C59B27] uppercase tracking-wider transition-colors z-10"
-      >
-        <span>Enter Boutique</span>
+      {/* Direct Enter Prompt */}
+      <div className="absolute bottom-6 sm:bottom-8 right-6 sm:right-8 flex items-center gap-1 text-[11px] font-bold text-[#141416] hover:text-[#C59B27] uppercase tracking-wider transition-colors z-10">
+        <span>Enter</span>
         <span>→</span>
-      </button>
+      </div>
     </div>
   );
 }
