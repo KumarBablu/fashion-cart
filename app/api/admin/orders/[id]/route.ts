@@ -73,13 +73,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     });
   });
 
-  // Dispatch appropriate customer notification emails on status transitions
+  // Dispatch appropriate customer notification emails on status transitions (awaited for serverless reliability)
   if (parsed.data.status === "DELIVERED" && current.status !== "DELIVERED") {
-    sendOrderDeliveredEmail(updatedOrder).catch((err) => console.error("Delivered email failed:", err));
+    await sendOrderDeliveredEmail(updatedOrder).catch((err) => console.error("Delivered email failed:", err));
   } else if (parsed.data.status === "SHIPPED" && current.status !== "SHIPPED") {
-    sendOrderShippedEmail(updatedOrder).catch((err) => console.error("Shipped email failed:", err));
+    await sendOrderShippedEmail(updatedOrder).catch((err) => console.error("Shipped email failed:", err));
   } else if (parsed.data.status === "CANCELLED" && current.status !== "CANCELLED") {
-    sendOrderCancelledEmail(updatedOrder, "Updated by Store Operations").catch((err) =>
+    await sendOrderCancelledEmail(updatedOrder, "Updated by Store Operations").catch((err) =>
       console.error("Cancelled email failed:", err)
     );
   }

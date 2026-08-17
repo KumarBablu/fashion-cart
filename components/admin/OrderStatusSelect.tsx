@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/providers/ToastProvider";
 
 const STATUSES = [
   "PENDING_PAYMENT", "PAYMENT_REVIEW", "CONFIRMED", "PROCESSING", "PACKED",
@@ -12,17 +13,34 @@ export default function OrderStatusSelect({ orderId, currentStatus }: { orderId:
   const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
   const [saving, setSaving] = useState(false);
+  const { success, error } = useToast();
 
   async function onChange(newStatus: string) {
+    const prevStatus = status;
     setStatus(newStatus);
     setSaving(true);
-    await fetch(`/api/admin/orders/${orderId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    setSaving(false);
-    router.refresh();
+
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setStatus(prevStatus);
+        error("Status Update Failed", data?.error || "Could not update order status.");
+      } else {
+        success("Status Updated! 🎉", `Order is now ${newStatus.replace(/_/g, " ")}. Customer notified via email.`);
+        router.refresh();
+      }
+    } catch {
+      setStatus(prevStatus);
+      error("Network Error", "Failed to reach server.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
