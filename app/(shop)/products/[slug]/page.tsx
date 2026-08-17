@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import ProductCard from "@/components/products/ProductCard";
 import ProductDetailClient from "@/components/products/ProductDetailClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

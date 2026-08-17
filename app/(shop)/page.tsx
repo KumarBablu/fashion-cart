@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import HomeClient from "@/components/home/HomeClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 type RailProduct = Prisma.ProductGetPayload<{
   include: {

@@ -136,8 +136,9 @@ export default function Footer() {
           <p>© {new Date().getFullYear()} Fashion Cart Boutique. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <Link href="/terms" className="hover:text-[#FFBA00] transition-colors">Terms of Service</Link>
-            <Link href="/privacy-policy" className="hover:text-[#FFBA00] transition-colors">Privacy</Link>
-            <Link href="/admin/login" className="hover:text-[#FFBA00] transition-colors opacity-60">Admin Portal</Link>
+            <Link href="/privacy-policy" className="hover:text-[#FFBA00] transition-colors">Privacy Policy</Link>
+            <Link href="/return-policy" className="hover:text-[#FFBA00] transition-colors">Returns & Refunds</Link>
+            <Link href="/shipping-policy" className="hover:text-[#FFBA00] transition-colors">Shipping Info</Link>
           </div>
         </div>
       </div>

@@ -102,7 +102,7 @@ export default function HomeClient({
       </div>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 animate-in fade-in duration-300">
+      <div key={activeTab} className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 animate-fade-in animate-slide-up">
         {currentProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

@@ -318,86 +318,20 @@ export default function CheckoutPage() {
               borderColor: "var(--fc-border)",
             }}
           >
-            <h2 className="font-display text-lg font-bold">2. Choose Payment Method</h2>
+            <h2 className="font-display text-lg font-bold">2. Payment Method</h2>
 
-            <div className="space-y-3">
-              {/* Option 1: Manual UPI QR */}
-              <label
-                className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
-                  paymentMethod === "MANUAL_UPI" ? "border-primary shadow-xs" : "opacity-80 hover:opacity-100"
-                }`}
-                style={{
-                  backgroundColor: paymentMethod === "MANUAL_UPI" ? "var(--fc-bg-subtle)" : "var(--fc-bg)",
-                  borderColor: paymentMethod === "MANUAL_UPI" ? "var(--fc-primary)" : "var(--fc-border)",
-                }}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="MANUAL_UPI"
-                  checked={paymentMethod === "MANUAL_UPI"}
-                  onChange={() => setPaymentMethod("MANUAL_UPI")}
-                  className="mt-1"
-                />
-                <div>
-                  <p className="font-bold text-sm">📱 Scan & Pay via UPI QR (GPay / PhonePe / Paytm / BHIM)</p>
-                  <p className="text-xs text-dim mt-0.5">
-                    Scan our verified QR code, make the payment, and submit your UTR number for admin verification.
-                  </p>
+            <div className="p-4 rounded-xl border border-[#0C3B2E] bg-[#F2EFE8] flex items-start gap-3.5">
+              <div className="text-2xl mt-0.5">📲</div>
+              <div>
+                <p className="font-bold text-sm text-[#0C3B2E]">Official UPI QR Scan & Pay (GPay / PhonePe / Paytm / BHIM)</p>
+                <p className="text-xs text-[#5B7A6F] mt-1 leading-relaxed">
+                  Fast & 100% verified payment. On the next step, scan our boutique QR code, complete payment, and upload your screenshot or UTR number.
+                </p>
+                <div className="mt-2.5 flex items-center gap-2 text-[11px] font-bold text-[#0C3B2E]">
+                  <span className="px-2 py-0.5 rounded-md bg-[#FFBA00]/30 text-[#0C3B2E]">⚡ 0% Gateway Fee</span>
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">🔒 100% Verified</span>
                 </div>
-              </label>
-
-              {/* Option 2: Cash on Delivery */}
-              <label
-                className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
-                  paymentMethod === "COD" ? "border-primary shadow-xs" : "opacity-80 hover:opacity-100"
-                }`}
-                style={{
-                  backgroundColor: paymentMethod === "COD" ? "var(--fc-bg-subtle)" : "var(--fc-bg)",
-                  borderColor: paymentMethod === "COD" ? "var(--fc-primary)" : "var(--fc-border)",
-                }}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="COD"
-                  checked={paymentMethod === "COD"}
-                  onChange={() => setPaymentMethod("COD")}
-                  className="mt-1"
-                />
-                <div>
-                  <p className="font-bold text-sm">💵 Cash on Delivery (COD)</p>
-                  <p className="text-xs text-dim mt-0.5">
-                    Pay in cash when your order arrives at your doorstep. Order confirms immediately.
-                  </p>
-                </div>
-              </label>
-
-              {/* Option 3: Instant Online Gateway Simulation */}
-              <label
-                className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
-                  paymentMethod === "ONLINE_GATEWAY" ? "border-primary shadow-xs" : "opacity-80 hover:opacity-100"
-                }`}
-                style={{
-                  backgroundColor: paymentMethod === "ONLINE_GATEWAY" ? "var(--fc-bg-subtle)" : "var(--fc-bg)",
-                  borderColor: paymentMethod === "ONLINE_GATEWAY" ? "var(--fc-primary)" : "var(--fc-border)",
-                }}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="ONLINE_GATEWAY"
-                  checked={paymentMethod === "ONLINE_GATEWAY"}
-                  onChange={() => setPaymentMethod("ONLINE_GATEWAY")}
-                  className="mt-1"
-                />
-                <div>
-                  <p className="font-bold text-sm">💳 Instant Online Payment (Card / NetBanking / UPI)</p>
-                  <p className="text-xs text-dim mt-0.5">
-                    Fast instant verification mode. Order confirms immediately and invoice generates instantly.
-                  </p>
-                </div>
-              </label>
+              </div>
             </div>
 
             {/* Customer Notes */}
@@ -409,7 +343,7 @@ export default function CheckoutPage() {
                 rows={2}
                 value={customerNotes}
                 onChange={(e) => setCustomerNotes(e.target.value)}
-                placeholder="e.g. Please call before delivery or leave with security."
+                placeholder="e.g. Please call before delivery or leave with building security."
                 className="w-full px-3.5 py-2 rounded-xl border text-xs outline-none focus:border-primary"
                 style={{
                   backgroundColor: "var(--fc-bg)",
