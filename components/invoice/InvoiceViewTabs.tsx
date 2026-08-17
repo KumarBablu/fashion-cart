@@ -7,15 +7,22 @@ import ParcelShippingLabel from "./ParcelShippingLabel";
 export default function InvoiceViewTabs({
   order,
   business,
+  isAdmin = false,
 }: {
   order: any;
   business: any;
+  isAdmin?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<"invoice" | "parcel">("invoice");
 
+  // If regular customer, strictly show only their official Tax Invoice
+  if (!isAdmin) {
+    return <InvoiceDocument order={order} business={business} />;
+  }
+
   return (
     <div className="space-y-6">
-      {/* Screen Tab Switcher (Hidden in Print) */}
+      {/* Screen Tab Switcher for Admin Only */}
       <div className="flex items-center justify-center print:hidden">
         <div className="inline-flex p-1.5 rounded-full border border-slate-200 bg-white shadow-xs">
           <button
@@ -36,7 +43,7 @@ export default function InvoiceViewTabs({
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <span>📦</span> Parcel Shipping Label (4×6)
+            <span>📦</span> Parcel Shipping Label (4×6 Admin Only)
           </button>
         </div>
       </div>

@@ -52,22 +52,18 @@ export default function OrderDetailActions({
         {isPaid ? (
           <div className="flex items-center gap-2">
             <a
-              href={`/invoices/${orderId}`}
-              target="_blank"
-              className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 hover:brightness-105"
-              style={{
-                backgroundColor: "var(--fc-primary)",
-                color: "var(--fc-primary-fg)",
-              }}
-            >
-              <span>📄</span> View &amp; Print Tax Invoice
-            </a>
-            <a
               href={`/api/invoices/${orderId}`}
               download={`FashionCart-Tax-Invoice-${orderId}.pdf`}
-              className="px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#EAA800] transition-all shadow-sm flex items-center gap-1"
+              className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#0C3B2E] text-white hover:bg-[#144E3E] transition-all shadow-sm flex items-center gap-1.5"
             >
-              <span>📥</span> PDF
+              <span>📥</span> Download Tax Invoice (PDF)
+            </a>
+            <a
+              href={`/invoices/${orderId}`}
+              target="_blank"
+              className="px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider border border-slate-300 text-slate-700 hover:bg-slate-100 transition-all shadow-xs flex items-center gap-1"
+            >
+              <span>👁️</span> View Receipt
             </a>
           </div>
         ) : null}

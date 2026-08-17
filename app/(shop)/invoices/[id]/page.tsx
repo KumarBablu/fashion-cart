@@ -52,6 +52,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   }
 
   const business = await prisma.businessSettings.findFirst();
+  const isUserAdmin = Boolean(admin || (user && user.role === "ADMIN"));
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] py-8 px-4 sm:px-6 lg:px-8">
@@ -59,17 +60,18 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         {/* Navigation & Tab Switcher (Screen Only) */}
         <div className="flex flex-wrap items-center justify-between gap-4 print:hidden">
           <Link
-            href={admin ? `/admin/orders/${order.id}` : `/account/orders/${order.id}`}
+            href={isUserAdmin ? `/admin/orders/${order.id}` : `/account/orders/${order.id}`}
             className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0C3B2E] hover:underline"
           >
             <span>←</span> Back to Order Details
           </Link>
         </div>
 
-        {/* Interactive Tabs with Tax Invoice & Parcel Shipping Label */}
+        {/* Invoice View (Tabs only for Admin) */}
         <InvoiceViewTabs
           order={order as any}
           business={business}
+          isAdmin={isUserAdmin}
         />
       </div>
     </div>
