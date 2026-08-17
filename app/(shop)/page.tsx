@@ -39,17 +39,20 @@ async function getRail(where: Prisma.ProductWhereInput, take = 8): Promise<RailP
   return items;
 }
 
-function serialize(items: RailProduct[]) {
+function serialize(items: any[]) {
   return items.map((p) => ({
     id: p.id,
     slug: p.slug,
     name: p.name,
     createdAt: p.createdAt,
     brand: p.brand,
+    fabric: p.fabric,
+    categoryId: p.categoryId,
+    category: p.category ? { id: p.category.id, name: p.category.name, slug: p.category.slug } : null,
     averageRating: Number(p.averageRating || 4.85),
     totalReviews: Number(p.totalReviews || 48),
     images: p.images,
-    variants: p.variants.map((v) => ({
+    variants: p.variants.map((v: any) => ({
       id: v.id,
       colour: v.colour,
       size: v.size,
@@ -92,7 +95,7 @@ const OCCASIONS = [
 ];
 
 export default async function HomePage() {
-  const [categories, featured, newArrivals, bestSellers, onSale] = await Promise.all([
+  const [categories, featured, newArrivals, bestSellers, onSale, categoryPillars] = await Promise.all([
     prisma.category.findMany({
       where: { isActive: true, parentId: null },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -102,7 +105,99 @@ export default async function HomePage() {
     getRail({ isNewArrival: true }),
     getRail({ isBestSeller: true }),
     getRail({ variants: { some: { compareAtPrice: { not: null } } } }),
+    prisma.category.findMany({
+      where: { isActive: true, parentId: null },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+          include: {
+            products: {
+              where: { status: "ACTIVE" },
+              take: 10,
+              include: {
+                images: { orderBy: { sortOrder: "asc" } },
+                variants: { where: { isActive: true }, orderBy: { price: "asc" } },
+                category: true,
+              },
+            },
+          },
+        },
+        products: {
+          where: { status: "ACTIVE" },
+          take: 10,
+          include: {
+            images: { orderBy: { sortOrder: "asc" } },
+            variants: { where: { isActive: true }, orderBy: { price: "asc" } },
+            category: true,
+          },
+        },
+      },
+    }),
   ]);
+
+  const META: Record<string, { icon: string; tagline: string; bannerImage: string }> = {
+    women: {
+      icon: "🥻",
+      tagline: "Pure Varanasi Mulberry Silks, Micro-Velvets & Zardozi Anarkalis",
+      bannerImage: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1000&auto=format&fit=crop&q=85",
+    },
+    men: {
+      icon: "👔",
+      tagline: "100% Certified French Linen, Mandarin Collars & Italian Chinos",
+      bannerImage: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=1000&auto=format&fit=crop&q=85",
+    },
+    western: {
+      icon: "✨",
+      tagline: "Liquid Satin Cocktail Gowns, Structured Linen Blazers & Co-ords",
+      bannerImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1000&auto=format&fit=crop&q=85",
+    },
+    kids: {
+      icon: "🧸",
+      tagline: "Junior Festive Brocades, Fairy Tulle Frocks & Organic Cotton",
+      bannerImage: "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=1000&auto=format&fit=crop&q=85",
+    },
+  };
+
+  const categoryCollections = categoryPillars.map((cat) => {
+    const meta = META[cat.slug] || {
+      icon: "👗",
+      tagline: "Curated Artisanal Luxury Outfits & Tailored Edits",
+      bannerImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&auto=format&fit=crop&q=85",
+    };
+
+    // Combine products from category itself + all child subcategories
+    const productMap = new Map<string, any>();
+    for (const p of cat.products) {
+      productMap.set(p.id, p);
+    }
+    for (const child of cat.children) {
+      for (const p of child.products) {
+        if (!productMap.has(p.id)) {
+          productMap.set(p.id, p);
+        }
+      }
+    }
+
+    const subcategories = cat.children.map((child) => ({
+      id: child.id,
+      name: child.name,
+      slug: child.slug,
+      count: child.products.length,
+    }));
+
+    return {
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      icon: meta.icon,
+      tagline: meta.tagline,
+      bannerImage: meta.bannerImage,
+      subcategories,
+      products: serialize(Array.from(productMap.values())),
+    };
+  });
 
   return (
     <div className="space-y-16 pb-20 overflow-hidden">
@@ -245,15 +340,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 🌸 Interactive Tabbed Curated Collections */}
+      {/* 🌸 Interactive Category-Wise Curated Collections */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <HomeClient
-          featured={serialize(featured)}
-          newArrivals={serialize(newArrivals)}
-          bestSellers={serialize(bestSellers)}
-          onSale={serialize(onSale)}
-          categories={categories}
-        />
+        <HomeClient categoryCollections={categoryCollections} />
       </section>
 
       {/* 👑 Shop by Occasion Grid */}
