@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 export const metadata = {
-  title: "About Our Atelier — Fashion Cart Haute Couture",
+  title: "About Our Atelier — Fashion Cart Luxury Atelier",
   description: "Discover the heritage of Fashion Cart — blending timeless Indian artisanal craftsmanship with modern architectural silhouettes, certified pure fabrics, and everyday luxury.",
 };
 
@@ -36,7 +36,7 @@ export default function AboutPage() {
               Where Ancient Loom Artistry Meets Modern Design
             </h2>
             <p className="text-xs sm:text-sm text-[#4B4E56] leading-relaxed">
-              Founded with the vision to make authentic haute couture accessible without unnecessary markups, Fashion Cart collaborates directly with certified master weavers in Varanasi, Chanderi, Surat, and Jaipur.
+              Founded with the vision to make authentic artisanal luxury accessible without unnecessary markups, Fashion Cart collaborates directly with certified master weavers in Varanasi, Chanderi, Surat, and Jaipur.
             </p>
             <p className="text-xs sm:text-sm text-[#4B4E56] leading-relaxed">
               Every garment in our catalog—from hand-embroidered velvet kurta sets to breathable 100% French linen shirts—is crafted with obsessive attention to seam strength, drape, and skin-friendly softness.

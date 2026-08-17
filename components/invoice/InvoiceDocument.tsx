@@ -126,7 +126,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
               </span>
             </div>
             <p className="text-[11px] text-white/80 font-medium tracking-widest uppercase">
-              Haute Couture &amp; Designer Apparel
+              Luxury Atelier &amp; Designer Apparel
             </p>
             <p className="text-[10px] text-white/70 max-w-sm">
               {business?.businessAddress || "Atelier Logistics Hub, 108 Fashion Avenue, Indiranagar, Bengaluru, Karnataka - 560038"}

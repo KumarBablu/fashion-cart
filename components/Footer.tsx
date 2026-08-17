@@ -71,7 +71,7 @@ export default function Footer() {
                   Fashion Cart
                 </span>
                 <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-[#C59B27] leading-tight mt-0.5">
-                  Haute Couture
+                  Luxury Atelier
                 </span>
               </div>
             </Link>

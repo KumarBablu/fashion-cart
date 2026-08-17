@@ -35,7 +35,7 @@ function layout(title: string, content: string) {
     <div class="header">
       <img src="${BASE_URL}/fashion-cart-logo-transparent.svg" alt="Fashion Cart" width="44" height="44" style="margin: 0 auto 6px auto; display: block; border-radius: 8px;" />
       <div class="brand">Fashion Cart</div>
-      <div style="font-size: 11px; color: #FFBA00; margin-top: 4px; text-transform: uppercase; letter-spacing: 2px;">Haute Couture &amp; Everyday Luxury</div>
+      <div style="font-size: 11px; color: #C59B27; margin-top: 4px; text-transform: uppercase; letter-spacing: 2px;">The Luxury Atelier &amp; Fine Apparel</div>
     </div>
     <div class="body">
       ${content}

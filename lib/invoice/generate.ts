@@ -240,7 +240,7 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   page.drawText("TERMS & CONDITIONS:", { x: 36, y: 80, size: 7, font: fontBold, color: textDark });
   page.drawText("1. Goods once sold are eligible for replacement or return within 7 calendar days as per store policy.", { x: 36, y: 70, size: 6.5, font: fontRegular, color: textMuted });
   page.drawText("2. This is a computer-generated tax invoice and requires no physical signature under Indian Information Technology Act.", { x: 36, y: 60, size: 6.5, font: fontRegular, color: textMuted });
-  page.drawText("Fashion Cart Haute Couture · Designed for comfort & everyday elegance · support@fashioncart.shop", { x: 36, y: 46, size: 6.5, font: fontBold, color: brandDark });
+  page.drawText("Fashion Cart Luxury Atelier · Designed for comfort & everyday elegance · support@fashioncart.shop", { x: 36, y: 46, size: 6.5, font: fontBold, color: brandDark });
 
   const pdfBytes = await pdfDoc.save();
   const buffer = Buffer.from(pdfBytes);

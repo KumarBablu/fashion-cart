@@ -402,7 +402,7 @@ export default function CustomerDetailManager({ customer: initialCustomer }: Cus
                 <>
                   <a
                     href={`https://wa.me/91${customer.phone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
-                      `Namaste ${customer.name}! 👗 Welcome to Fashion Cart Haute Couture. Use code *FIRST10* for 10% OFF + Free Delivery: https://fashion-cart-5p7k.vercel.app/shop`
+                      `Namaste ${customer.name}! 👗 Welcome to Fashion Cart Luxury Atelier. Use code *FIRST10* for 10% OFF + Free Delivery: https://fashion-cart-5p7k.vercel.app/shop`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"

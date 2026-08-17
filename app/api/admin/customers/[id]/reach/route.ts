@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           <p style="margin-bottom: 0;">Warm regards,<br /><strong>Fashion Cart Support Team</strong></p>
         </div>
         <div style="padding: 16px 24px; background: #FAF8F5; border-top: 1px solid #E8E3D8; text-align: center; font-size: 11px; color: #5B7A6F;">
-          Sent to ${customer.email} · Fashion Cart Haute Couture &amp; Everyday Luxury
+          Sent to ${customer.email} · Fashion Cart Luxury Atelier &amp; Fine Apparel
         </div>
       </div>
     `;

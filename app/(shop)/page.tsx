@@ -116,7 +116,7 @@ export default async function HomePage() {
             {/* Top Pill */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#C59B27]/40 bg-white text-xs font-bold uppercase tracking-wider text-[#141416] shadow-xs">
               <span className="w-2 h-2 rounded-full bg-[#C59B27] pulse-dot" />
-              <span>✦ The 2026 Haute Couture Edit · Live Drops</span>
+              <span>✦ The 2026 Signature Luxury Edit · Live Drops</span>
             </div>
 
             {/* Main Headline */}

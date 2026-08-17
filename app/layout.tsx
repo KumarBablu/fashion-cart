@@ -6,8 +6,8 @@ import { ToastProvider } from "@/components/providers/ToastProvider";
 import NavigationProgress from "@/components/providers/NavigationProgress";
 
 export const metadata: Metadata = {
-  title: "Fashion Cart — Haute Couture & Everyday Luxury",
-  description: "Explore curated shirts, kurtis, dresses, and everyday essentials. Fast delivery, secure payments, and easy returns.",
+  title: "Fashion Cart — The Luxury Atelier & Fine Apparel",
+  description: "Explore curated artisanal kurtis, pure mulberry silk sarees, bespoke French linen shirts, and everyday luxury essentials.",
   icons: {
     icon: [
       { url: "/fashion-cart-logo-transparent.svg", type: "image/svg+xml" },

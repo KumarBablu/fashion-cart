@@ -17,9 +17,9 @@ const DEPARTMENT_METADATA: Record<
 > = {
   women: {
     heroImage: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&auto=format&fit=crop&q=85",
-    tagline: "Royal Ethnic Elegance & Haute Couture",
+    tagline: "Royal Ethnic Elegance & Luxury Atelier",
     description: "Hand-embroidered micro-velvet kurta sets, flowing Chanderi silk anarkalis, and pure mulberry silk sarees designed for festive majesty and wedding galas.",
-    badge: "Haute Couture",
+    badge: "Artisanal Luxury",
     highlights: ["Handcrafted Zari Embroidery", "Pure Mulberry & Chanderi Silk", "Custom Fit Tailoring", "Festive & Bridal Specials"],
   },
   men: {

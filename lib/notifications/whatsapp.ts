@@ -34,7 +34,7 @@ export function createWhatsAppUrl(phone: string, text: string): string {
 // 1. Welcome / Signup WhatsApp
 // -------------------------------------------------------------
 export function getWelcomeWhatsAppMessage(name: string): string {
-  return `Namaste ${name}! 👗 Welcome to Fashion Cart Haute Couture.
+  return `Namaste ${name}! 👗 Welcome to Fashion Cart Luxury Atelier.
 Your shopping account is now active. Enjoy our mastercrafted kurtis, tailored shirts, and luxury apparel.
 
 🎁 Special Welcome Gift: Use code *FIRST10* at checkout for 10% OFF + Free Express Delivery.
