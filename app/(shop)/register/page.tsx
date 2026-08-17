@@ -49,8 +49,7 @@ export default function RegisterPage() {
       }
 
       success("Account Created! 🎉", `Welcome to Fashion Cart, ${name.trim()}!`);
-      router.push("/account");
-      router.refresh();
+      window.location.href = "/account";
     } catch {
       setError("Network error while creating your account.");
       setLoading(false);

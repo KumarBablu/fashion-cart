@@ -38,8 +38,7 @@ function LoginForm() {
 
       success("Welcome Back! 👋", `Logged in as ${data.user?.name || "Customer"}`);
       const next = searchParams.get("next") || "/account";
-      router.push(next);
-      router.refresh();
+      window.location.href = next;
     } catch {
       setError("Network error while attempting to login.");
       setLoading(false);

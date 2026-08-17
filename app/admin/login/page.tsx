@@ -39,8 +39,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.push("/admin/dashboard");
-      router.refresh();
+      window.location.href = "/admin/dashboard";
     } catch {
       setError("Network error while trying to login to admin console.");
       setLoading(false);
