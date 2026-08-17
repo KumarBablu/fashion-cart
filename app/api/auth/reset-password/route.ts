@@ -8,6 +8,7 @@ import { z } from "zod";
 
 const resetSchema = z.object({
   token: z.string().min(1, "Reset token is required"),
+  code: z.string().optional(),
   newPassword: z.string().min(8, "Password must be at least 8 characters"),
 });
 
@@ -22,8 +23,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
   }
 
-  const { token, newPassword } = parsed.data;
-  const verification = await verifyPasswordResetToken(token);
+  const { token, code, newPassword } = parsed.data;
+  const verification = await verifyPasswordResetToken(token, code);
 
   if (!verification.valid || !verification.user) {
     return NextResponse.json({ error: verification.error || "Invalid or expired token." }, { status: 400 });

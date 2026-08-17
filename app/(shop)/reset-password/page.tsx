@@ -11,6 +11,7 @@ function ResetPasswordForm() {
   const searchParams = useSearchParams();
 
   const [token, setToken] = useState("");
+  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,6 +32,10 @@ function ResetPasswordForm() {
       setError("Reset token is missing. Please request a new password reset link.");
       return;
     }
+    if (!code || code.trim().length !== 6) {
+      setError("Please enter the 6-digit recovery code sent to your email.");
+      return;
+    }
     if (password.length < 8) {
       setError("Password must be at least 8 characters long.");
       return;
@@ -47,7 +52,7 @@ function ResetPasswordForm() {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword: password }),
+        body: JSON.stringify({ token, code: code.trim(), newPassword: password }),
       });
 
       const data = await res.json();
@@ -92,6 +97,33 @@ function ResetPasswordForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      {/* 6-Digit Recovery Verification Code */}
+      <div className="p-3.5 rounded-2xl border bg-[#0C3B2E]/5 border-[#0C3B2E]/15 dark:bg-white/5 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <label className="block text-xs font-bold uppercase tracking-wider text-primary">
+            6-Digit Recovery Code *
+          </label>
+          <span className="text-[10px] text-dim font-medium">Check your email</span>
+        </div>
+        <input
+          type="text"
+          required
+          maxLength={6}
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ""))}
+          placeholder="e.g. 486473"
+          className="w-full px-3.5 py-2.5 rounded-xl border text-center text-lg font-mono font-bold tracking-[0.3em] outline-none focus:border-primary"
+          style={{
+            backgroundColor: "var(--fc-bg)",
+            borderColor: "var(--fc-border)",
+            letterSpacing: "0.3em",
+          }}
+        />
+        <p className="text-[11px] text-dim">
+          Enter the 6-digit verification code displayed in your password reset email.
+        </p>
+      </div>
+
       {!searchParams.get("token") && (
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-dim mb-1">

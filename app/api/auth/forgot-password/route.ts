@@ -41,8 +41,7 @@ export async function POST(req: NextRequest) {
   }
 
   const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "https://fashion-cart-5p7k.vercel.app";
-  const { token } = generatePasswordResetToken(user);
-  const recoveryCode = generateRecoveryCode(user.email);
+  const { token, code: recoveryCode } = generatePasswordResetToken(user);
   const resetUrl = `${origin}/reset-password?token=${token}`;
 
   // Dispatch Password Reset Email to actual customer inbox
