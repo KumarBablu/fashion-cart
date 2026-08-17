@@ -45,6 +45,18 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {addr?.mobileNumber && (
+            <a
+              href={`https://wa.me/91${addr.mobileNumber.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
+                `Namaste ${order.user.name}! 🛍️ Update regarding your Fashion Cart Order #${order.orderNumber} (Status: ${order.status.replace(/_/g, " ")}). View tracking & invoice: https://fashion-cart-5p7k.vercel.app/account/orders/${order.id}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-emerald-600 text-white shadow-sm flex items-center gap-1.5 hover:bg-emerald-700"
+            >
+              <span>📲</span> WhatsApp Update
+            </a>
+          )}
           <a
             href={`/invoices/${order.id}`}
             target="_blank"

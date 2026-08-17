@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
-import { generateInvoiceForOrder } from "@/lib/invoice/generate";
+import { generateInvoiceBufferForOrder } from "@/lib/invoice/generate";
 import { sendPaymentVerifiedEmail } from "@/lib/email/service";
-import { readFile } from "fs/promises";
-import path from "path";
+import { sendMobileSms, formatPaymentVerifiedSms } from "@/lib/notifications/sms";
 
 /**
  * Endpoint moving payment to VERIFIED and order to CONFIRMED.
- * Generates PDF Tax Invoice and sends email notification to customer with invoice.
+ * Generates PDF Tax Invoice and sends email & SMS notifications to customer.
  */
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await getCurrentAdmin();
@@ -52,15 +51,14 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   let invoiceFilename: string | undefined;
 
   try {
-    const invoiceRelPath = await generateInvoiceForOrder(payment.orderId);
-    const fullPdfPath = path.join(process.cwd(), "uploads", invoiceRelPath);
-    invoiceBuffer = await readFile(fullPdfPath);
-    invoiceFilename = path.basename(invoiceRelPath);
+    const { buffer, invoiceNumber } = await generateInvoiceBufferForOrder(payment.orderId);
+    invoiceBuffer = buffer;
+    invoiceFilename = `FashionCart-Invoice-${payment.order.orderNumber}-${invoiceNumber}.pdf`;
   } catch (err) {
     console.error("Invoice generation failed for order", payment.orderId, err);
   }
 
-  // Fetch full order to dispatch customer email
+  // Fetch full order to dispatch customer notifications
   const fullOrder = await prisma.order.findUnique({
     where: { id: payment.orderId },
     include: { user: true, items: true, payment: true },
@@ -70,6 +68,17 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     sendPaymentVerifiedEmail(fullOrder, invoiceBuffer, invoiceFilename).catch((emailErr) => {
       console.error("Payment verified email failed:", emailErr);
     });
+
+    const phone = fullOrder.user.phone || (fullOrder.shippingAddressSnapshot as any)?.mobileNumber;
+    if (phone) {
+      sendMobileSms({
+        to: phone,
+        message: formatPaymentVerifiedSms(fullOrder),
+        templateType: "PAYMENT_VERIFIED",
+      }).catch((smsErr) => {
+        console.error("Payment verified SMS failed:", smsErr);
+      });
+    }
   }
 
   return NextResponse.json({ payment: updated });

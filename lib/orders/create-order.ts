@@ -2,10 +2,9 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { generateOrderNumber } from "@/lib/order-number";
 import { decrementStock, InsufficientStockError } from "@/lib/inventory";
-import { generateInvoiceForOrder } from "@/lib/invoice/generate";
+import { generateInvoiceBufferForOrder } from "@/lib/invoice/generate";
 import { sendOrderPlacedEmail, sendPaymentVerifiedEmail } from "@/lib/email/service";
-import { readFile } from "fs/promises";
-import path from "path";
+import { sendMobileSms, formatOrderPlacedSms } from "@/lib/notifications/sms";
 
 export class CheckoutError extends Error {
   code: string;
@@ -240,19 +239,28 @@ export async function createOrder(
     });
 
     if (fullOrder) {
-      // 1. Send Order Placed Email to customer
+      // 1. Send Order Placed Email to customer & Admin
       sendOrderPlacedEmail(fullOrder).catch((err) => {
         console.error("Order placed email failed to dispatch:", err);
       });
 
-      // 2. If verified immediately (e.g. online simulated / COD), generate PDF invoice and send confirmed email
+      // 2. Dispatch Mobile SMS to customer
+      const phone = fullOrder.user.phone || (fullOrder.shippingAddressSnapshot as any)?.mobileNumber;
+      if (phone) {
+        sendMobileSms({
+          to: phone,
+          message: formatOrderPlacedSms(fullOrder),
+          templateType: "ORDER_PLACED",
+        }).catch((smsErr) => {
+          console.error("Order placed SMS failed to dispatch:", smsErr);
+        });
+      }
+
+      // 3. If verified immediately (e.g. online simulated / COD), generate in-memory PDF invoice and send confirmed email
       if (order.status === "CONFIRMED") {
         try {
-          const invoiceRelPath = await generateInvoiceForOrder(order.id);
-          const fullPdfPath = path.join(process.cwd(), "uploads", invoiceRelPath);
-          const invoiceBuffer = await readFile(fullPdfPath).catch(() => undefined);
-
-          sendPaymentVerifiedEmail(fullOrder, invoiceBuffer, path.basename(invoiceRelPath)).catch((err) => {
+          const { buffer, invoiceNumber } = await generateInvoiceBufferForOrder(order.id);
+          sendPaymentVerifiedEmail(fullOrder, buffer, `FashionCart-Invoice-${order.orderNumber}-${invoiceNumber}.pdf`).catch((err) => {
             console.error("Payment verified email failed to dispatch:", err);
           });
         } catch (invoiceErr) {

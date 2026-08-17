@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { sendOrderShippedEmail } from "@/lib/email/service";
+import { sendMobileSms, formatOrderShippedSms } from "@/lib/notifications/sms";
 
 export async function POST(
   req: NextRequest,
@@ -24,11 +25,22 @@ export async function POST(
     include: { user: true, items: true },
   });
 
-  // Dispatch live tracking & shipping email to customer
+  // Dispatch live tracking & shipping email & SMS to customer
   if (trackingNumber) {
     sendOrderShippedEmail(order).catch((err) => {
       console.error("Order shipped email dispatch failed:", err);
     });
+
+    const phone = order.user.phone || (order.shippingAddressSnapshot as any)?.mobileNumber;
+    if (phone) {
+      sendMobileSms({
+        to: phone,
+        message: formatOrderShippedSms(order),
+        templateType: "ORDER_SHIPPED",
+      }).catch((err) => {
+        console.error("Order shipped SMS dispatch failed:", err);
+      });
+    }
   }
 
   return NextResponse.json({ order });
