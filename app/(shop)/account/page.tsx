@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { formatINR } from "@/lib/format";
@@ -20,8 +21,12 @@ const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }>
 
 export default async function OrdersPage() {
   const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login?next=/account");
+  }
+
   const orders = await prisma.order.findMany({
-    where: { userId: user!.id },
+    where: { userId: user.id },
     orderBy: { createdAt: "desc" },
     include: { payment: true, items: true },
   });

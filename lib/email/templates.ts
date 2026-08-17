@@ -14,20 +14,20 @@ function layout(title: string, content: string) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #FAF8F5; color: #0C3B2E; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E8E3D8; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(12, 59, 46, 0.08); }
-    .header { background-color: #0C3B2E; padding: 28px 24px; text-align: center; }
-    .brand { font-size: 20px; font-weight: 800; color: #FFFFFF; letter-spacing: 1px; }
-    .body { padding: 32px 24px; line-height: 1.6; font-size: 14px; color: #2C483F; }
-    .button { display: inline-block; padding: 12px 28px; background-color: #FFBA00; color: #0C3B2E !important; text-decoration: none; border-radius: 9999px; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0; text-align: center; box-shadow: 0 4px 12px rgba(255, 186, 0, 0.3); }
-    .card { background-color: #FAF8F5; border: 1px solid #E8E3D8; border-radius: 12px; padding: 16px; margin: 20px 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #FAF8F5; color: #141416; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E7DFD5; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(20, 20, 22, 0.08); }
+    .header { background-color: #141416; padding: 28px 24px; text-align: center; }
+    .brand { font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: 1px; }
+    .body { padding: 32px 24px; line-height: 1.6; font-size: 14px; color: #3A3D45; }
+    .button { display: inline-block; padding: 13px 32px; background-color: #141416; color: #FFFFFF !important; text-decoration: none; border-radius: 9999px; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0; text-align: center; border: 1px solid #C59B27; box-shadow: 0 4px 12px rgba(197, 155, 39, 0.25); }
+    .card { background-color: #FAF8F5; border: 1px solid #E7DFD5; border-radius: 12px; padding: 16px; margin: 20px 0; }
     .table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
-    .table th { text-align: left; padding: 10px 8px; border-bottom: 1px solid #E8E3D8; color: #5B7A6F; font-size: 11px; text-transform: uppercase; }
-    .table td { padding: 12px 8px; border-bottom: 1px solid #F2EFE8; color: #0C3B2E; }
-    .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background-color: #FFF7E0; color: #0C3B2E; border: 1px solid #FFBA00; }
-    .code-box { font-family: monospace; font-size: 24px; font-weight: 800; letter-spacing: 6px; color: #0C3B2E; background: #F2EFE8; padding: 16px; border-radius: 12px; text-align: center; border: 1px dashed #BB8A52; margin: 16px 0; }
-    .footer { padding: 24px; text-align: center; font-size: 12px; color: #5B7A6F; border-top: 1px solid #E8E3D8; background-color: #FAF8F5; }
-    .footer a { color: #0C3B2E; text-decoration: underline; font-weight: 600; }
+    .table th { text-align: left; padding: 10px 8px; border-bottom: 1px solid #E7DFD5; color: #787C87; font-size: 11px; text-transform: uppercase; }
+    .table td { padding: 12px 8px; border-bottom: 1px solid #F4EFEA; color: #141416; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background-color: #FBF4E2; color: #8E6C0C; border: 1px solid #C59B27; }
+    .code-box { font-family: monospace; font-size: 24px; font-weight: 800; letter-spacing: 6px; color: #141416; background: #F4EFEA; padding: 16px; border-radius: 12px; text-align: center; border: 1px dashed #C59B27; margin: 16px 0; }
+    .footer { padding: 24px; text-align: center; font-size: 12px; color: #787C87; border-top: 1px solid #E7DFD5; background-color: #FAF8F5; }
+    .footer a { color: #141416; text-decoration: underline; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -35,7 +35,7 @@ function layout(title: string, content: string) {
     <div class="header">
       <img src="${BASE_URL}/fashion-cart-logo-transparent.svg" alt="Fashion Cart" width="44" height="44" style="margin: 0 auto 6px auto; display: block; border-radius: 8px;" />
       <div class="brand">Fashion Cart</div>
-      <div style="font-size: 11px; color: #C59B27; margin-top: 4px; text-transform: uppercase; letter-spacing: 2px;">The Luxury Atelier &amp; Fine Apparel</div>
+      <div style="font-size: 10px; color: #C59B27; margin-top: 4px; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">The Luxury Atelier &amp; Fine Apparel</div>
     </div>
     <div class="body">
       ${content}

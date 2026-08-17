@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
@@ -11,8 +11,19 @@ export const dynamic = "force-dynamic";
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();
+
+  if (!user) {
+    redirect(`/login?next=${encodeURIComponent(`/account/orders/${id}`)}`);
+  }
+
   const order = await prisma.order.findFirst({
-    where: { id, userId: user!.id },
+    where: {
+      id,
+      OR: [
+        { userId: user.id },
+        { user: { email: user.email } },
+      ],
+    },
     include: { items: true, payment: true, invoice: true },
   });
 
