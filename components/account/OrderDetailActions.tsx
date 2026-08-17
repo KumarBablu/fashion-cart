@@ -64,7 +64,7 @@ export default function OrderDetailActions({
             </a>
             <a
               href={`/api/invoices/${orderId}`}
-              download
+              download={`FashionCart-Tax-Invoice-${orderId}.pdf`}
               className="px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#EAA800] transition-all shadow-sm flex items-center gap-1"
             >
               <span>📥</span> PDF

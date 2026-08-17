@@ -37,15 +37,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // Generate in-memory PDF buffer (zero disk write dependency for Vercel)
-    const { buffer, invoiceNumber } = await generateInvoiceBufferForOrder(order.id);
-    const filename = `Tax-Invoice-${order.orderNumber}-${invoiceNumber}.pdf`;
+    const { buffer } = await generateInvoiceBufferForOrder(order.id);
+    const rawCustomerName = (order.shippingAddressSnapshot as any)?.fullName || order.user.name || "Customer";
+    const cleanCustomerName = rawCustomerName.trim().replace(/[^a-zA-Z0-9]/g, "-").replace(/-+/g, "-").toUpperCase();
+    const filename = `FashionCart-Tax-Invoice-${order.orderNumber}-${cleanCustomerName}.pdf`;
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Cache-Control": "public, max-age=3600, s-maxage=3600",
+        "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        "Content-Length": buffer.length.toString(),
+        "Cache-Control": "no-cache, no-store, must-revalidate",
       },
     });
   } catch (err) {

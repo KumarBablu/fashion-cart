@@ -106,7 +106,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
           </button>
           <a
             href={`/api/invoices/${order.id}`}
-            download
+            download={`FashionCart-Tax-Invoice-${order.orderNumber}-${(order.shippingAddressSnapshot?.fullName || order.user.name || "Customer").replace(/[^a-zA-Z0-9]/g, "-").toUpperCase()}.pdf`}
             className="px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#EAA800] shadow-sm flex items-center gap-1.5 transition-all"
           >
             <span>📥</span> Download PDF
