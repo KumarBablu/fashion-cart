@@ -103,14 +103,14 @@ export default function ProductCard({ product }: { product: CardProduct }) {
   return (
     <>
       <div
-        className="group relative flex flex-col rounded-3xl bg-white border border-[#E8E3D8] p-3 transition-all duration-300 hover:border-[#BB8A52] hover:shadow-xl hover:-translate-y-1.5"
+        className="group relative flex flex-col rounded-3xl bg-white border border-[#E7DFD5] p-3 transition-all duration-300 hover:border-[#C59B27] hover:shadow-xl hover:-translate-y-1.5"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Product Image Canvas */}
         <Link
           href={`/products/${product.slug}`}
-          className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-[#F2EFE8] block"
+          className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-[#F4EFEA] block"
         >
           <Image
             src={isHovered && secondaryImage ? secondaryImage : primaryImage}
@@ -123,22 +123,22 @@ export default function ProductCard({ product }: { product: CardProduct }) {
           {/* Top Badges */}
           <div className="absolute left-2.5 top-2.5 flex flex-col gap-1 z-10">
             {pct && (
-              <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-[#FFBA00] text-[#0C3B2E] shadow-sm">
+              <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-[#C59B27] text-white shadow-sm">
                 {pct}% OFF
               </span>
             )}
             {isNew && !pct && (
-              <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase bg-[#0C3B2E] text-white shadow-sm">
+              <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase bg-[#141416] text-white shadow-sm">
                 New
               </span>
             )}
             {isLowStock && (
-              <span className="rounded-lg bg-rose-600 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+              <span className="rounded-lg bg-[#873E4C] px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
                 Only {totalStock} Left
               </span>
             )}
             {!inStock && (
-              <span className="rounded-lg bg-[#0C3B2E]/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+              <span className="rounded-lg bg-[#141416]/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
                 Sold Out
               </span>
             )}
@@ -150,7 +150,7 @@ export default function ProductCard({ product }: { product: CardProduct }) {
             className={`absolute right-2.5 top-2.5 z-10 h-8 w-8 rounded-full border flex items-center justify-center backdrop-blur-md transition-all shadow-xs ${
               isWishlisted
                 ? "bg-rose-50 border-rose-300 text-rose-600 scale-110"
-                : "bg-white/90 border-[#E8E3D8] text-[#5B7A6F] hover:text-rose-600 hover:scale-110"
+                : "bg-white/90 border-[#E7DFD5] text-[#787C87] hover:text-rose-600 hover:scale-110"
             }`}
             aria-label="Save to Wishlist"
           >
@@ -160,10 +160,10 @@ export default function ProductCard({ product }: { product: CardProduct }) {
           {/* Hover Size Strip Overlay */}
           {sizes.length > 0 && (
             <div className="absolute inset-x-2.5 bottom-12 hidden sm:flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-              <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-md border border-[#E8E3D8] shadow-md">
-                <span className="text-[9px] font-bold uppercase text-[#5B7A6F] mr-0.5">Sizes:</span>
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7DFD5] shadow-md">
+                <span className="text-[9px] font-bold uppercase text-[#787C87] mr-0.5">Sizes:</span>
                 {sizes.slice(0, 5).map((s) => (
-                  <span key={s} className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#F2EFE8] text-[#0C3B2E]">
+                  <span key={s} className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#F4EFEA] text-[#141416]">
                     {s}
                   </span>
                 ))}
@@ -179,7 +179,7 @@ export default function ProductCard({ product }: { product: CardProduct }) {
                 e.stopPropagation();
                 setQuickViewOpen(true);
               }}
-              className="w-full py-2.5 rounded-xl text-[11px] font-extrabold uppercase tracking-wider shadow-lg bg-[#FFBA00] hover:bg-[#EAA800] text-[#0C3B2E] transition-colors flex items-center justify-center gap-1"
+              className="w-full py-2.5 rounded-xl text-[11px] font-extrabold uppercase tracking-wider shadow-lg bg-[#C59B27] hover:bg-[#B0881E] text-white transition-colors flex items-center justify-center gap-1"
             >
               <span>👁️</span> Quick View
             </button>
@@ -190,54 +190,54 @@ export default function ProductCard({ product }: { product: CardProduct }) {
         <div className="mt-3 flex flex-1 flex-col justify-between space-y-2">
           <div>
             <div className="flex items-center justify-between gap-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#BB8A52] truncate">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#C59B27] truncate">
                 {product.brand || "Fashion Cart Atelier"}
               </p>
-              <span className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#F2EFE8] text-[#0C3B2E] border border-[#6D9773]/40">
-                <span className="text-[#6D9773]">✦</span> Assured
+              <span className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#F4EFEA] text-[#141416] border border-[#C59B27]/30">
+                <span className="text-[#C59B27]">✦</span> Assured
               </span>
             </div>
 
             <Link href={`/products/${product.slug}`} className="block mt-0.5">
               <h3
-                className="text-xs sm:text-sm font-semibold text-[#0C3B2E] truncate hover:text-[#BB8A52] transition-colors"
+                className="text-xs sm:text-sm font-semibold text-[#141416] truncate hover:text-[#C59B27] transition-colors"
                 title={product.name}
               >
                 {product.name}
               </h3>
             </Link>
 
-            {/* Ratings pill in Saffron Sunshine */}
+            {/* Ratings pill */}
             <div className="mt-1 flex items-center gap-1.5 text-xs">
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.2 rounded-md text-[10px] font-extrabold bg-[#FFBA00] text-[#0C3B2E]">
+              <span className="inline-flex items-center gap-0.5 px-2 py-0.2 rounded-md text-[10px] font-extrabold bg-[#FBF4E2] text-[#8E6C0C] border border-[#C59B27]/40">
                 <span>{ratingVal}</span>
                 <span>★</span>
               </span>
-              <span className="text-[11px] text-[#5B7A6F] font-medium">({reviewsCount})</span>
+              <span className="text-[11px] text-[#787C87] font-medium">({reviewsCount})</span>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-[#E8E3D8] flex flex-col gap-1">
+          <div className="pt-2 border-t border-[#E7DFD5] flex flex-col gap-1">
             <div className="flex items-baseline justify-between">
               <div className="flex items-baseline gap-1.5">
-                <span className="text-sm sm:text-base font-extrabold text-[#0C3B2E]">
+                <span className="text-sm sm:text-base font-extrabold text-[#141416]">
                   {formatINR(price)}
                 </span>
                 {compareAt && (
-                  <span className="text-xs text-[#5B7A6F] line-through">{formatINR(compareAt)}</span>
+                  <span className="text-xs text-[#787C87] line-through">{formatINR(compareAt)}</span>
                 )}
               </div>
 
               {pct && (
-                <span className="text-[11px] font-extrabold text-[#BB8A52]">
+                <span className="text-[11px] font-extrabold text-[#C59B27]">
                   {pct}% off
                 </span>
               )}
             </div>
 
-            <div className="flex items-center justify-between text-[10px] text-[#5B7A6F] font-medium">
+            <div className="flex items-center justify-between text-[10px] text-[#787C87] font-medium">
               <span>Free Delivery</span>
-              <span className="text-[#0C3B2E] font-semibold">COD Available</span>
+              <span className="text-[#141416] font-semibold">COD Available</span>
             </div>
           </div>
         </div>

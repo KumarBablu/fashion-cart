@@ -30,10 +30,10 @@ export default async function Header() {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="font-display font-black text-lg sm:text-xl tracking-tight text-[#0C3B2E] leading-none">
+                <span className="font-display font-black text-lg sm:text-xl tracking-tight text-[#141416] leading-none">
                   Fashion Cart
                 </span>
-                <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-[#BB8A52] leading-tight mt-0.5">
+                <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-[#C59B27] leading-tight mt-0.5">
                   Haute Couture
                 </span>
               </div>

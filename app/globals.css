@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 /*
-  Fashion Cart — Forest & Saffron Elegance Design Tokens
-  Exact Palette from Reference:
-  - #6D9773 : Sage Eucalyptus Green (Organic Accents & Secondary Highlights)
-  - #0C3B2E : Deep Forest Emerald / Pine Green (Rich Brand Primary, Headings & Deep Panels)
-  - #BB8A52 : Warm Sandstone / Raw Ochre (Warm Earth Borders & Craft Tags)
-  - #FFBA00 : Vibrant Golden Sunshine / Saffron (Action Buttons, Ratings & Live Badges)
-  - #FAF8F5 : Pure Warm Alabaster (Clean Canvas Background)
-  - #FFFFFF : Crisp Pure White (Card Surfaces & Floating Panels)
+  Fashion Cart — Atelier Noir & Champagne Royal Gold Luxury Garment Theme
+  Palette:
+  - #141416 : Obsidian Noir / Caviar Black (Brand Primary, Headings, Deep Panels & Luxury Framing)
+  - #C59B27 : Imperial Champagne Gold (Regal Action Buttons, Accents, Rating Stars & Badges)
+  - #873E4C : Parisian Rose Plum / Velvet Cashmere (Fashion Badges, Seasonal Highlights & Warmth)
+  - #557A68 : Sage Laurel (Organic Fabric & Natural Cotton Badges)
+  - #FAF8F5 : Silk Alabaster (Clean Gallery Canvas Background)
+  - #FFFFFF : Crisp Pure White (Card Surfaces & Floating Modules)
 */
 
 :root {
@@ -18,38 +18,38 @@
   --font-display: var(--font-fraunces);
 
   --fc-bg: #FAF8F5;
-  --fc-bg-subtle: #F2EFE8;
+  --fc-bg-subtle: #F4EFEA;
   --fc-surface: #FFFFFF;
   --fc-surface-glass: rgba(255, 255, 255, 0.92);
-  --fc-border: #E8E3D8;
-  --fc-border-hover: #BB8A52;
-  --fc-border-focus: #0C3B2E;
+  --fc-border: #E7DFD5;
+  --fc-border-hover: #C59B27;
+  --fc-border-focus: #141416;
   
-  --fc-text: #0C3B2E;
-  --fc-text-muted: #2C483F;
-  --fc-text-dim: #5B7A6F;
+  --fc-text: #141416;
+  --fc-text-muted: #4B4E56;
+  --fc-text-dim: #787C87;
   
-  --fc-primary: #0C3B2E;
-  --fc-primary-hover: #144E3E;
+  --fc-primary: #141416;
+  --fc-primary-hover: #25262B;
   --fc-primary-fg: #FFFFFF;
   
-  --fc-accent: #FFBA00;
-  --fc-accent-hover: #EAA800;
-  --fc-accent-fg: #0C3B2E;
+  --fc-accent: #C59B27;
+  --fc-accent-hover: #B0881E;
+  --fc-accent-fg: #FFFFFF;
   
-  --fc-sage: #6D9773;
-  --fc-forest: #0C3B2E;
-  --fc-sandstone: #BB8A52;
-  --fc-sunshine: #FFBA00;
+  --fc-gold: #C59B27;
+  --fc-rose: #873E4C;
+  --fc-sage: #557A68;
+  --fc-noir: #141416;
   
-  --fc-success: #6D9773;
-  --fc-danger: #D94841;
-  --fc-badge-bg: #FFF7E0;
-  --fc-badge-fg: #0C3B2E;
+  --fc-success: #2E7D32;
+  --fc-danger: #D32F2F;
+  --fc-badge-bg: #FBF4E2;
+  --fc-badge-fg: #8E6C0C;
   
-  --fc-shadow-sm: 0 1px 3px 0 rgba(12, 59, 46, 0.05);
-  --fc-shadow-md: 0 6px 20px -3px rgba(12, 59, 46, 0.08);
-  --fc-shadow-lg: 0 16px 40px -6px rgba(12, 59, 46, 0.12);
+  --fc-shadow-sm: 0 1px 3px 0 rgba(20, 20, 22, 0.05);
+  --fc-shadow-md: 0 6px 20px -3px rgba(20, 20, 22, 0.08);
+  --fc-shadow-lg: 0 16px 40px -6px rgba(20, 20, 22, 0.12);
   
   --background: var(--fc-bg);
   --foreground: var(--fc-text);
@@ -66,10 +66,10 @@
   --color-fc-text-muted: var(--fc-text-muted);
   --color-fc-primary: var(--fc-primary);
   --color-fc-accent: var(--fc-accent);
-  --color-fc-forest: var(--fc-forest);
+  --color-fc-gold: var(--fc-gold);
+  --color-fc-rose: var(--fc-rose);
   --color-fc-sage: var(--fc-sage);
-  --color-fc-sandstone: var(--fc-sandstone);
-  --color-fc-sunshine: var(--fc-sunshine);
+  --color-fc-noir: var(--fc-noir);
   --font-display: var(--font-fraunces);
   --font-sans: var(--font-inter);
 }
@@ -88,7 +88,7 @@ body {
 }
 
 /* ==========================================================================
-   FOREST & SAFFRON ARCHITECTURAL CARDS & BUTTONS
+   ATELIER NOIR & CHAMPAGNE GOLD CARDS & BUTTONS
    ========================================================================== */
 
 .glass-panel {
@@ -96,53 +96,53 @@ body {
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--fc-border);
-  box-shadow: 0 4px 20px -2px rgba(12, 59, 46, 0.06);
+  box-shadow: 0 4px 20px -2px rgba(20, 20, 22, 0.06);
 }
 
 .glass-card, .card-theme {
   background: #FFFFFF;
   border: 1px solid var(--fc-border);
   border-radius: 1.5rem;
-  box-shadow: 0 4px 16px -2px rgba(12, 59, 46, 0.05);
+  box-shadow: 0 4px 16px -2px rgba(20, 20, 22, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
 
 .glass-card:hover, .card-theme:hover {
-  border-color: #BB8A52;
-  box-shadow: 0 14px 34px -4px rgba(12, 59, 46, 0.12);
+  border-color: #C59B27;
+  box-shadow: 0 14px 34px -4px rgba(20, 20, 22, 0.12);
   transform: translateY(-3px);
 }
 
-/* Saffron Sunshine Luminous Action Button */
+/* Champagne Royal Gold Action Button */
 .glossy-btn, .gold-btn, .btn-primary {
-  background: linear-gradient(135deg, #FFBA00 0%, #EAA800 100%);
-  color: #0C3B2E !important;
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+  color: #FFFFFF !important;
   font-weight: 800;
-  box-shadow: 0 4px 16px rgba(255, 186, 0, 0.35);
+  box-shadow: 0 4px 16px rgba(197, 155, 39, 0.35);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glossy-btn:hover, .gold-btn:hover, .btn-primary:hover {
-  background: linear-gradient(135deg, #FFC424 0%, #F5B000 100%);
-  box-shadow: 0 8px 24px rgba(255, 186, 0, 0.5);
+  background: linear-gradient(135deg, #E0BF48 0%, #C59B27 100%);
+  box-shadow: 0 8px 24px rgba(197, 155, 39, 0.45);
   transform: translateY(-1.5px) scale(1.02);
-  color: #0C3B2E !important;
+  color: #FFFFFF !important;
 }
 
-/* Deep Forest Primary Button */
-.forest-btn {
-  background: #0C3B2E;
+/* Noir Obsidian Luxury Button */
+.forest-btn, .noir-btn {
+  background: #141416;
   color: #FFFFFF !important;
   font-weight: 700;
-  box-shadow: 0 4px 16px rgba(12, 59, 46, 0.2);
+  box-shadow: 0 4px 16px rgba(20, 20, 22, 0.2);
   transition: all 0.25s ease;
 }
 
-.forest-btn:hover {
-  background: #144E3E;
-  box-shadow: 0 8px 24px rgba(12, 59, 46, 0.3);
+.forest-btn:hover, .noir-btn:hover {
+  background: #25262B;
+  box-shadow: 0 8px 24px rgba(20, 20, 22, 0.3);
   transform: translateY(-1.5px);
   color: #FFFFFF !important;
 }

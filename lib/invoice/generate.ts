@@ -44,13 +44,13 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  // Color Palette
-  const brandDark = rgb(12 / 255, 59 / 255, 46 / 255); // #0C3B2E
-  const goldAccent = rgb(255 / 255, 186 / 255, 0 / 255); // #FFBA00
-  const textDark = rgb(26 / 255, 22 / 255, 20 / 255);
-  const textMuted = rgb(100 / 255, 116 / 255, 139 / 255);
-  const bgLight = rgb(248 / 255, 250 / 255, 252 / 255);
-  const lineBorder = rgb(226 / 255, 232 / 255, 240 / 255);
+  // Luxury Color Palette (Atelier Noir & Champagne Royal Gold)
+  const brandDark = rgb(20 / 255, 20 / 255, 22 / 255); // #141416 Obsidian Noir
+  const goldAccent = rgb(197 / 255, 155 / 255, 39 / 255); // #C59B27 Champagne Tuscan Gold
+  const textDark = rgb(20 / 255, 20 / 255, 22 / 255);
+  const textMuted = rgb(120 / 255, 124 / 255, 135 / 255);
+  const bgLight = rgb(250 / 255, 248 / 255, 245 / 255);
+  const lineBorder = rgb(231 / 255, 223 / 255, 213 / 255);
 
   const addr = order.shippingAddressSnapshot as {
     fullName: string;

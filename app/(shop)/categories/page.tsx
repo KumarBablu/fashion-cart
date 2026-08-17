@@ -84,29 +84,29 @@ export default async function CategoriesPage() {
     <div className="space-y-16 pb-20">
       
       {/* 🌟 Directory Hero Banner */}
-      <section className="bg-gradient-to-b from-[#F2EFE8] via-[#FAF8F5] to-[#F2EFE8] border-b border-[#E8E3D8] py-12 sm:py-16">
+      <section className="bg-gradient-to-b from-[#F4EFEA] via-[#FAF8F5] to-[#F4EFEA] border-b border-[#E7DFD5] py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-4 text-center sm:text-left">
           
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFF7E0] border border-[#FFBA00]/40 text-xs font-bold uppercase tracking-wider text-[#0C3B2E]">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FBF4E2] border border-[#C59B27]/40 text-xs font-bold uppercase tracking-wider text-[#8E6C0C]">
             <span>✦ Department Directory</span>
           </div>
 
-          <h1 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-[#0C3B2E] leading-tight">
+          <h1 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-[#141416] leading-tight">
             Curated Fashion Departments
           </h1>
 
-          <p className="text-sm sm:text-base text-[#2C483F] max-w-2xl leading-relaxed">
+          <p className="text-sm sm:text-base text-[#4B4E56] max-w-2xl leading-relaxed">
             Browse through our complete apparel catalog organized by department. From luxury ethnic kurtis and silk sarees to tailored French linen shirts and everyday essentials.
           </p>
 
-          <div className="flex flex-wrap items-center gap-3 pt-2 text-xs font-semibold text-[#5B7A6F]">
-            <span className="px-3 py-1 rounded-lg bg-white border border-[#E8E3D8] shadow-xs text-[#0C3B2E]">
+          <div className="flex flex-wrap items-center gap-3 pt-2 text-xs font-semibold text-[#787C87]">
+            <span className="px-3 py-1 rounded-lg bg-white border border-[#E7DFD5] shadow-xs text-[#141416]">
               📂 {categories.length} Core Departments
             </span>
-            <span className="px-3 py-1 rounded-lg bg-white border border-[#E8E3D8] shadow-xs text-[#0C3B2E]">
+            <span className="px-3 py-1 rounded-lg bg-white border border-[#E7DFD5] shadow-xs text-[#141416]">
               🏷️ {totalCategories} Specialized Categories
             </span>
-            <span className="px-3 py-1 rounded-lg bg-white border border-[#6D9773] shadow-xs text-[#0C3B2E]">
+            <span className="px-3 py-1 rounded-lg bg-white border border-[#C59B27]/50 shadow-xs text-[#141416]">
               ✓ 100% Certified Pure Fabrics
             </span>
           </div>
@@ -123,13 +123,13 @@ export default async function CategoriesPage() {
           return (
             <div
               key={cat.id}
-              className="rounded-3xl border border-[#E8E3D8] bg-white overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
+              className="rounded-3xl border border-[#E7DFD5] bg-white overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
             >
               {/* Department Header Card */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 sm:p-8 lg:p-10 items-center bg-gradient-to-r from-[#FAF8F5] via-white to-[#F2EFE8] border-b border-[#E8E3D8]">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 sm:p-8 lg:p-10 items-center bg-gradient-to-r from-[#FAF8F5] via-white to-[#F4EFEA] border-b border-[#E7DFD5]">
                 
                 {/* Visual Editorial Image */}
-                <div className="lg:col-span-4 relative aspect-[4/3] rounded-2xl overflow-hidden shadow-md border border-[#E8E3D8]">
+                <div className="lg:col-span-4 relative aspect-[4/3] rounded-2xl overflow-hidden shadow-md border border-[#E7DFD5]">
                   <Image
                     src={meta.heroImage}
                     alt={cat.name}
@@ -137,8 +137,8 @@ export default async function CategoriesPage() {
                     sizes="(min-width: 1024px) 33vw, 100vw"
                     className="object-cover transition-transform duration-700 hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0C3B2E]/70 via-transparent to-transparent" />
-                  <span className="absolute bottom-3 left-3 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white text-[#0C3B2E] backdrop-blur-md shadow-xs">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/70 via-transparent to-transparent" />
+                  <span className="absolute bottom-3 left-3 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white text-[#141416] backdrop-blur-md shadow-xs">
                     {meta.badge}
                   </span>
                 </div>
@@ -146,23 +146,23 @@ export default async function CategoriesPage() {
                 {/* Department Info & Narrative */}
                 <div className="lg:col-span-8 space-y-4">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-[#BB8A52]">
+                    <span className="text-xs font-bold uppercase tracking-widest text-[#C59B27]">
                       Department 0{idx + 1}
                     </span>
-                    <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#F2EFE8] text-[#0C3B2E]">
+                    <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#F4EFEA] text-[#141416]">
                       {cat.children.length} Sub-Collections
                     </span>
                   </div>
 
-                  <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#0C3B2E] leading-tight">
+                  <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#141416] leading-tight">
                     {cat.name} Collection
                   </h2>
 
-                  <p className="text-xs sm:text-sm font-semibold text-[#BB8A52]">
+                  <p className="text-xs sm:text-sm font-semibold text-[#C59B27]">
                     {meta.tagline}
                   </p>
 
-                  <p className="text-xs sm:text-sm text-[#2C483F] leading-relaxed max-w-2xl">
+                  <p className="text-xs sm:text-sm text-[#4B4E56] leading-relaxed max-w-2xl">
                     {meta.description}
                   </p>
 
@@ -171,7 +171,7 @@ export default async function CategoriesPage() {
                     {meta.highlights.map((h) => (
                       <span
                         key={h}
-                        className="px-3 py-1 rounded-lg text-xs font-medium bg-[#F2EFE8] border border-[#E8E3D8] text-[#0C3B2E]"
+                        className="px-3 py-1 rounded-lg text-xs font-medium bg-[#F4EFEA] border border-[#E7DFD5] text-[#141416]"
                       >
                         ✓ {h}
                       </span>
@@ -181,7 +181,7 @@ export default async function CategoriesPage() {
                   <div className="pt-2">
                     <Link
                       href={`/shop?category=${cat.slug}`}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider bg-[#0C3B2E] text-white hover:bg-[#144E3E] transition-colors shadow-xs"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-colors shadow-xs"
                     >
                       <span>Explore All {cat.name} Styles</span>
                       <span>→</span>
@@ -196,7 +196,7 @@ export default async function CategoriesPage() {
                 {/* Subcategories Chip List */}
                 {cat.children.length > 0 && (
                   <div className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#5B7A6F]">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#787C87]">
                       Featured Subcategories in {cat.name}:
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -204,17 +204,17 @@ export default async function CategoriesPage() {
                         <Link
                           key={sub.id}
                           href={`/shop?category=${sub.slug}`}
-                          className="group p-3.5 rounded-2xl border border-[#E8E3D8] bg-[#FAF8F5] hover:bg-white hover:border-[#0C3B2E] hover:shadow-md transition-all flex items-center justify-between"
+                          className="group p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#141416] hover:shadow-md transition-all flex items-center justify-between"
                         >
                           <div>
-                            <p className="text-xs font-bold text-[#0C3B2E] group-hover:text-[#BB8A52] transition-colors">
+                            <p className="text-xs font-bold text-[#141416] group-hover:text-[#C59B27] transition-colors">
                               {sub.name}
                             </p>
-                            <p className="text-[10px] text-[#5B7A6F] mt-0.5">
+                            <p className="text-[10px] text-[#787C87] mt-0.5">
                               {sub.products.length > 0 ? `${sub.products.length} Items` : "Curated Styles"}
                             </p>
                           </div>
-                          <span className="text-[#5B7A6F] group-hover:text-[#0C3B2E] group-hover:translate-x-0.5 transition-transform text-xs font-bold">
+                          <span className="text-[#787C87] group-hover:text-[#141416] group-hover:translate-x-0.5 transition-transform text-xs font-bold">
                             →
                           </span>
                         </Link>
@@ -225,14 +225,14 @@ export default async function CategoriesPage() {
 
                 {/* Sample Live Products in this Department */}
                 {sampleProducts.length > 0 && (
-                  <div className="pt-4 border-t border-[#E8E3D8] space-y-3">
+                  <div className="pt-4 border-t border-[#E7DFD5] space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#5B7A6F]">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#787C87]">
                         Top Rated in {cat.name}:
                       </h4>
                       <Link
                         href={`/shop?category=${cat.slug}`}
-                        className="text-xs font-semibold text-[#BB8A52] hover:underline"
+                        className="text-xs font-semibold text-[#C59B27] hover:underline"
                       >
                         View More →
                       </Link>
@@ -247,9 +247,9 @@ export default async function CategoriesPage() {
                           <Link
                             key={prod.id}
                             href={`/products/${prod.slug}`}
-                            className="group flex items-center gap-3 p-2.5 rounded-2xl border border-[#E8E3D8] bg-white hover:border-[#BB8A52] hover:shadow-sm transition-all"
+                            className="group flex items-center gap-3 p-2.5 rounded-2xl border border-[#E7DFD5] bg-white hover:border-[#C59B27] hover:shadow-sm transition-all"
                           >
-                            <div className="relative w-14 h-16 shrink-0 rounded-xl overflow-hidden bg-[#F2EFE8]">
+                            <div className="relative w-14 h-16 shrink-0 rounded-xl overflow-hidden bg-[#F4EFEA]">
                               <Image
                                 src={img}
                                 alt={prod.name}
@@ -259,11 +259,11 @@ export default async function CategoriesPage() {
                               />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold text-[#0C3B2E] truncate group-hover:text-[#BB8A52] transition-colors">
+                              <p className="text-xs font-semibold text-[#141416] truncate group-hover:text-[#C59B27] transition-colors">
                                 {prod.name}
                               </p>
                               {variant && (
-                                <p className="text-xs font-bold text-[#0C3B2E] mt-0.5">
+                                <p className="text-xs font-bold text-[#141416] mt-0.5">
                                   {formatINR(Number(variant.price))}
                                 </p>
                               )}
@@ -283,9 +283,9 @@ export default async function CategoriesPage() {
 
       {/* 🏷️ Curated Boutique Edits */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="border-b border-[#E8E3D8] pb-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#BB8A52]">Special Curations</span>
-          <h2 className="font-display text-2xl font-bold text-[#0C3B2E] mt-0.5">
+        <div className="border-b border-[#E7DFD5] pb-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">Special Curations</span>
+          <h2 className="font-display text-2xl font-bold text-[#141416] mt-0.5">
             Boutique &amp; Occasion Edits
           </h2>
         </div>
@@ -293,64 +293,64 @@ export default async function CategoriesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
             href="/shop?maxPrice=999"
-            className="group p-5 rounded-3xl border border-[#E8E3D8] bg-white hover:border-[#0C3B2E] hover:shadow-md transition-all space-y-2"
+            className="group p-5 rounded-3xl border border-[#E7DFD5] bg-white hover:border-[#141416] hover:shadow-md transition-all space-y-2"
           >
             <span className="text-2xl">🏷️</span>
-            <h3 className="font-bold text-sm text-[#0C3B2E] group-hover:text-[#BB8A52] transition-colors">
+            <h3 className="font-bold text-sm text-[#141416] group-hover:text-[#C59B27] transition-colors">
               Under ₹999 Store
             </h3>
-            <p className="text-xs text-[#2C483F] leading-relaxed">
+            <p className="text-xs text-[#4B4E56] leading-relaxed">
               Everyday breathable cotton shirts and comfortable kurtis at unbeatable prices.
             </p>
-            <span className="text-xs font-bold text-[#0C3B2E] inline-block pt-1">
+            <span className="text-xs font-bold text-[#141416] inline-block pt-1">
               Shop Budget Store →
             </span>
           </Link>
 
           <Link
             href="/shop?onSale=true"
-            className="group p-5 rounded-3xl border border-[#FFBA00]/40 bg-[#FFF7E0]/60 hover:border-[#FFBA00] hover:shadow-md transition-all space-y-2"
+            className="group p-5 rounded-3xl border border-[#C59B27]/40 bg-[#FBF4E2]/60 hover:border-[#C59B27] hover:shadow-md transition-all space-y-2"
           >
             <span className="text-2xl">🔥</span>
-            <h3 className="font-bold text-sm text-[#0C3B2E] group-hover:text-[#BB8A52] transition-colors">
+            <h3 className="font-bold text-sm text-[#141416] group-hover:text-[#C59B27] transition-colors">
               Flash Deals (40% Off)
             </h3>
-            <p className="text-xs text-[#2C483F] leading-relaxed">
+            <p className="text-xs text-[#4B4E56] leading-relaxed">
               Limited-quantity handcrafted silk anarkalis and luxury velvet kurta drops.
             </p>
-            <span className="text-xs font-bold text-[#0C3B2E] inline-block pt-1">
+            <span className="text-xs font-bold text-[#141416] inline-block pt-1">
               Shop Super Deals →
             </span>
           </Link>
 
           <Link
             href="/shop?sort=newest"
-            className="group p-5 rounded-3xl border border-[#E8E3D8] bg-white hover:border-[#0C3B2E] hover:shadow-md transition-all space-y-2"
+            className="group p-5 rounded-3xl border border-[#E7DFD5] bg-white hover:border-[#141416] hover:shadow-md transition-all space-y-2"
           >
             <span className="text-2xl">✨</span>
-            <h3 className="font-bold text-sm text-[#0C3B2E] group-hover:text-[#BB8A52] transition-colors">
+            <h3 className="font-bold text-sm text-[#141416] group-hover:text-[#C59B27] transition-colors">
               New Season 2026
             </h3>
-            <p className="text-xs text-[#2C483F] leading-relaxed">
+            <p className="text-xs text-[#4B4E56] leading-relaxed">
               The latest fashion arrivals fresh off our master atelier looms.
             </p>
-            <span className="text-xs font-bold text-[#0C3B2E] inline-block pt-1">
+            <span className="text-xs font-bold text-[#141416] inline-block pt-1">
               Explore New Drops →
             </span>
           </Link>
 
           <Link
             href="/shop?category=women-kurtis"
-            className="group p-5 rounded-3xl border border-[#E8E3D8] bg-white hover:border-[#0C3B2E] hover:shadow-md transition-all space-y-2"
+            className="group p-5 rounded-3xl border border-[#E7DFD5] bg-white hover:border-[#141416] hover:shadow-md transition-all space-y-2"
           >
             <span className="text-2xl">👑</span>
-            <h3 className="font-bold text-sm text-[#0C3B2E] group-hover:text-[#BB8A52] transition-colors">
+            <h3 className="font-bold text-sm text-[#141416] group-hover:text-[#C59B27] transition-colors">
               Festive Gala &amp; Wedding
             </h3>
-            <p className="text-xs text-[#2C483F] leading-relaxed">
+            <p className="text-xs text-[#4B4E56] leading-relaxed">
               Mulberry silk, Chanderi, and royal zari embroidery designed for special occasions.
             </p>
-            <span className="text-xs font-bold text-[#0C3B2E] inline-block pt-1">
+            <span className="text-xs font-bold text-[#141416] inline-block pt-1">
               Explore Festive Edit →
             </span>
           </Link>
@@ -359,25 +359,25 @@ export default async function CategoriesPage() {
 
       {/* 🛡️ Trust Assurance Banner */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="p-8 rounded-3xl border border-[#E8E3D8] bg-[#F2EFE8] text-center space-y-4">
-          <h3 className="font-display text-xl font-bold text-[#0C3B2E]">
+        <div className="p-8 rounded-3xl border border-[#E7DFD5] bg-[#F4EFEA] text-center space-y-4">
+          <h3 className="font-display text-xl font-bold text-[#141416]">
             Can&apos;t find what you&apos;re looking for?
           </h3>
-          <p className="text-xs text-[#2C483F] max-w-md mx-auto">
+          <p className="text-xs text-[#4B4E56] max-w-md mx-auto">
             Our master stylists are available on WhatsApp for custom size consultations, styling guidance, and wedding wardrobe curation.
           </p>
           <div className="pt-1 flex justify-center gap-3">
             <Link
               href="/shop"
-              className="px-6 py-3 rounded-full text-xs font-bold uppercase bg-[#0C3B2E] text-white hover:bg-[#144E3E] transition-colors shadow-sm"
+              className="px-6 py-3 rounded-full text-xs font-bold uppercase bg-[#141416] text-white hover:bg-[#25262B] transition-colors shadow-sm"
             >
               Browse Complete Catalog
             </Link>
             <a
-              href="https://wa.me/919876543210?text=Hi%20Fashion%20Cart%2C%20I%20am%20looking%20for%20a%20specific%20outfit"
+              href="https://wa.me/919771039201?text=Hi%20Fashion%20Cart%2C%20I%20am%20looking%20for%20a%20specific%20outfit"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-3 rounded-full text-xs font-bold uppercase text-[#0C3B2E] bg-[#6D9773]/20 border border-[#6D9773] hover:bg-[#6D9773]/30 transition-colors"
+              className="px-6 py-3 rounded-full text-xs font-bold uppercase text-[#141416] bg-[#C59B27]/20 border border-[#C59B27] hover:bg-[#C59B27]/30 transition-colors"
             >
               Chat on WhatsApp
             </a>

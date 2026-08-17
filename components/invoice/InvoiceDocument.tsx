@@ -100,14 +100,14 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
         <div className="flex items-center gap-2.5">
           <button
             onClick={handlePrint}
-            className="px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#0C3B2E] text-white hover:bg-[#144E3E] shadow-sm flex items-center gap-2 transition-all"
+            className="px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] shadow-sm flex items-center gap-2 transition-all"
           >
             <span>🖨️</span> Print Invoice / Save PDF
           </button>
           <a
             href={`/api/invoices/${order.id}`}
             download={`FashionCart-Tax-Invoice-${order.orderNumber}-${(order.shippingAddressSnapshot?.fullName || order.user.name || "Customer").replace(/[^a-zA-Z0-9]/g, "-").toUpperCase()}.pdf`}
-            className="px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#EAA800] shadow-sm flex items-center gap-1.5 transition-all"
+            className="px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] shadow-sm flex items-center gap-1.5 transition-all"
           >
             <span>📥</span> Download PDF
           </a>
@@ -117,11 +117,11 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
       {/* Printable Invoice Container */}
       <div className="space-y-6 text-xs leading-normal">
         {/* Brand Header Banner */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 p-6 rounded-2xl bg-[#0C3B2E] text-white print:bg-[#0C3B2E] print:text-white">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 p-6 rounded-2xl bg-[#141416] text-white print:bg-[#141416] print:text-white">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <span className="text-2xl">🌿</span>
-              <span className="font-display text-2xl font-bold text-[#FFBA00] tracking-wide">
+              <span className="text-2xl">✨</span>
+              <span className="font-display text-2xl font-bold text-[#C59B27] tracking-wide">
                 {business?.businessName || "FASHION CART"}
               </span>
             </div>
@@ -132,12 +132,12 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
               {business?.businessAddress || "Atelier Logistics Hub, 108 Fashion Avenue, Indiranagar, Bengaluru, Karnataka - 560038"}
             </p>
             <p className="text-[10px] text-white/70">
-              GSTIN: <span className="font-mono font-bold text-[#FFBA00]">{business?.gstin || "29AAAAA0000A1Z5"}</span> · CIN: U74999KA2024PTC189201
+              GSTIN: <span className="font-mono font-bold text-[#C59B27]">{business?.gstin || "29AAAAA0000A1Z5"}</span> · CIN: U74999KA2024PTC189201
             </p>
           </div>
 
           <div className="text-right sm:text-right space-y-1 self-stretch sm:self-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-white/20">
-            <span className="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#FFBA00] text-[#0C3B2E]">
+            <span className="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#C59B27] text-white">
               TAX INVOICE · ORIGINAL
             </span>
             <p className="text-[11px] font-bold text-white mt-1">Invoice: <span className="font-mono">{invoiceNumber}</span></p>
@@ -262,7 +262,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
               <span className="font-mono font-medium">{formatINR(order.subtotal)}</span>
             </div>
             {discount > 0 && (
-              <div className="flex justify-between text-emerald-700 font-semibold">
+              <div className="flex justify-between text-rose-700 font-semibold">
                 <span>Coupon Discount ({order.couponCode || "PROMO"}):</span>
                 <span className="font-mono">- {formatINR(order.discount)}</span>
               </div>
@@ -277,7 +277,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
             </div>
             <div className="flex justify-between text-sm font-extrabold text-slate-900 border-t border-slate-300 pt-2 bg-amber-50/50 p-2 rounded-lg">
               <span>Grand Total:</span>
-              <span className="font-mono text-base text-[#0C3B2E]">{formatINR(order.total)}</span>
+              <span className="font-mono text-base text-[#141416]">{formatINR(order.total)}</span>
             </div>
           </div>
         </div>
@@ -292,9 +292,9 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
           </div>
 
           <div className="text-right flex flex-col items-end justify-between space-y-2">
-            <div className="border border-dashed border-[#0C3B2E]/40 p-2 rounded-lg bg-emerald-50/30 text-center inline-block">
-              <p className="text-[9px] font-bold text-[#0C3B2E] uppercase tracking-wider">FASHION CART DIGITAL STAMP</p>
-              <p className="text-[10px] font-bold text-emerald-800">✓ VERIFIED &amp; AUTHORIZED</p>
+            <div className="border border-dashed border-[#141416]/40 p-2 rounded-lg bg-amber-50/30 text-center inline-block">
+              <p className="text-[9px] font-bold text-[#141416] uppercase tracking-wider">FASHION CART DIGITAL STAMP</p>
+              <p className="text-[10px] font-bold text-[#8E6C0C]">✓ VERIFIED &amp; AUTHORIZED</p>
             </div>
             <p className="text-[10px] text-slate-400">Authorized Signatory · Fashion Cart Logistics Hub</p>
           </div>

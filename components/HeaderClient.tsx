@@ -126,8 +126,8 @@ export default function HeaderClient({
             onMouseEnter={() => setCategoriesOpen(true)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-200 ${
               categoriesOpen
-                ? "bg-[#0C3B2E] text-white font-bold"
-                : "text-[#0C3B2E] hover:bg-[#F2EFE8]"
+                ? "bg-[#141416] text-white font-bold"
+                : "text-[#141416] hover:bg-[#F4EFEA]"
             }`}
           >
             <span>All Categories</span>
@@ -148,19 +148,19 @@ export default function HeaderClient({
           {categoriesOpen && (
             <div
               onMouseLeave={() => setCategoriesOpen(false)}
-              className="absolute left-0 top-full mt-1.5 w-[680px] rounded-2xl bg-white border border-[#E8E3D8] shadow-2xl p-6 grid grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-2 duration-200 z-50"
+              className="absolute left-0 top-full mt-1.5 w-[680px] rounded-2xl bg-white border border-[#E7DFD5] shadow-2xl p-6 grid grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-2 duration-200 z-50"
             >
               {CATEGORIES_MENU.map((col) => (
                 <div key={col.name} className="space-y-3">
                   <Link
                     href={`/shop?category=${col.slug}`}
                     onClick={() => setCategoriesOpen(false)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#0C3B2E] hover:text-[#BB8A52] transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#141416] hover:text-[#C59B27] transition-colors"
                   >
                     <span>{col.icon}</span>
                     <span>{col.name}</span>
                   </Link>
-                  <ul className="space-y-2 text-[11px] text-[#2C483F]">
+                  <ul className="space-y-2 text-[11px] text-[#4B4E56]">
                     {col.items.map((item) => (
                       <li key={item.name}>
                         <Link
@@ -172,7 +172,7 @@ export default function HeaderClient({
                               : `/shop?category=${item.slug}`
                           }
                           onClick={() => setCategoriesOpen(false)}
-                          className="hover:text-[#BB8A52] hover:translate-x-1 inline-block transition-all"
+                          className="hover:text-[#C59B27] hover:translate-x-1 inline-block transition-all"
                         >
                           {item.name}
                         </Link>
@@ -182,12 +182,12 @@ export default function HeaderClient({
                 </div>
               ))}
 
-              <div className="col-span-4 border-t border-[#F2EFE8] pt-3 flex items-center justify-between text-xs">
-                <span className="text-[#5B7A6F]">✨ Flat 10% Off on your first luxury order with code <strong className="text-[#0C3B2E]">FIRST10</strong></span>
+              <div className="col-span-4 border-t border-[#F4EFEA] pt-3 flex items-center justify-between text-xs">
+                <span className="text-[#787C87]">✨ Flat 10% Off on your first luxury order with code <strong className="text-[#141416]">FIRST10</strong></span>
                 <Link
                   href="/categories"
                   onClick={() => setCategoriesOpen(false)}
-                  className="font-bold text-[#0C3B2E] hover:text-[#BB8A52] hover:underline"
+                  className="font-bold text-[#141416] hover:text-[#C59B27] hover:underline"
                 >
                   Explore Category Hub →
                 </Link>
@@ -198,26 +198,26 @@ export default function HeaderClient({
 
         <Link
           href="/shop?category=women-kurtis"
-          className="text-[#0C3B2E] hover:text-[#BB8A52] transition-colors"
+          className="text-[#141416] hover:text-[#C59B27] transition-colors"
         >
           Women
         </Link>
         <Link
           href="/shop?category=men-shirts"
-          className="text-[#0C3B2E] hover:text-[#BB8A52] transition-colors"
+          className="text-[#141416] hover:text-[#C59B27] transition-colors"
         >
           Men
         </Link>
         <Link
           href="/shop?sort=newest"
-          className="text-[#0C3B2E] hover:text-[#BB8A52] transition-colors flex items-center gap-1"
+          className="text-[#141416] hover:text-[#C59B27] transition-colors flex items-center gap-1"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-[#FFBA00] pulse-dot" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] pulse-dot" />
           New Arrivals
         </Link>
         <Link
           href="/shop?onSale=true"
-          className="text-[#0C3B2E] font-bold hover:text-[#BB8A52] transition-colors flex items-center gap-1"
+          className="text-[#141416] font-bold hover:text-[#C59B27] transition-colors flex items-center gap-1"
         >
           <span>🏷️</span> Super Deals
         </Link>
@@ -228,13 +228,13 @@ export default function HeaderClient({
         {/* Search Modal Trigger */}
         <button
           onClick={() => setSearchModalOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#E8E3D8] bg-[#F2EFE8]/70 hover:bg-[#F2EFE8] text-xs text-[#5B7A6F] hover:text-[#0C3B2E] transition-all shadow-xs"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#E7DFD5] bg-[#F4EFEA]/70 hover:bg-[#F4EFEA] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-xs"
           aria-label="Search catalog"
           title="Search products (Ctrl+K)"
         >
           <SearchIcon />
           <span className="hidden sm:inline">Search apparel…</span>
-          <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded bg-white text-[#0C3B2E] font-semibold border border-[#E8E3D8]">
+          <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded bg-white text-[#141416] font-semibold border border-[#E7DFD5]">
             ⌘K
           </kbd>
         </button>
@@ -242,13 +242,13 @@ export default function HeaderClient({
         {/* Wishlist Link */}
         <Link
           href={isLoggedIn ? "/account/wishlist" : "/login?next=/account/wishlist"}
-          className="relative p-2 rounded-full text-[#0C3B2E] hover:bg-[#F2EFE8] transition-colors"
+          className="relative p-2 rounded-full text-[#141416] hover:bg-[#F4EFEA] transition-colors"
           aria-label="Wishlist"
           title="My Wishlist"
         >
           <WishlistIcon />
           {wishlistCount > 0 && (
-            <span className="absolute top-0 right-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold bg-[#FFBA00] text-[#0C3B2E] shadow-xs">
+            <span className="absolute top-0 right-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold bg-[#C59B27] text-white shadow-xs">
               {wishlistCount}
             </span>
           )}
@@ -257,13 +257,13 @@ export default function HeaderClient({
         {/* Cart Drawer Trigger */}
         <button
           onClick={() => setCartDrawerOpen(true)}
-          className="relative p-2 rounded-full text-[#0C3B2E] hover:bg-[#F2EFE8] transition-colors"
+          className="relative p-2 rounded-full text-[#141416] hover:bg-[#F4EFEA] transition-colors"
           aria-label="Cart"
           title="Shopping Bag"
         >
           <CartIcon />
           {cartCount > 0 && (
-            <span className="absolute top-0 right-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold bg-[#0C3B2E] text-white shadow-xs">
+            <span className="absolute top-0 right-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold bg-[#141416] text-white shadow-xs">
               {cartCount}
             </span>
           )}
@@ -272,7 +272,7 @@ export default function HeaderClient({
         {/* Account Link */}
         <Link
           href={isLoggedIn ? "/account" : "/login"}
-          className="hidden sm:flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-full border border-[#E8E3D8] bg-white hover:bg-[#F2EFE8] text-[#0C3B2E] transition-all shadow-xs"
+          className="hidden sm:flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-full border border-[#E7DFD5] bg-white hover:bg-[#F4EFEA] text-[#141416] transition-all shadow-xs"
         >
           <UserIcon />
           <span>{isLoggedIn ? userName?.split(" ")[0] ?? "Account" : "Sign In"}</span>
@@ -281,7 +281,7 @@ export default function HeaderClient({
         {/* Mobile Hamburger Toggle */}
         <button
           aria-label="Toggle Menu"
-          className="md:hidden p-2 rounded-xl text-[#0C3B2E] hover:bg-[#F2EFE8] transition-colors"
+          className="md:hidden p-2 rounded-xl text-[#141416] hover:bg-[#F4EFEA] transition-colors"
           onClick={() => setMenuOpen((prev) => !prev)}
         >
           <MenuIcon />
@@ -290,62 +290,62 @@ export default function HeaderClient({
 
       {/* Mobile Slide-Over Navigation */}
       {menuOpen && (
-        <div className="absolute left-0 right-0 top-full md:hidden border-b border-[#E8E3D8] bg-white shadow-2xl p-5 space-y-4 animate-in slide-in-from-top-2 duration-200 z-50">
+        <div className="absolute left-0 right-0 top-full md:hidden border-b border-[#E7DFD5] bg-white shadow-2xl p-5 space-y-4 animate-in slide-in-from-top-2 duration-200 z-50">
           <nav className="flex flex-col space-y-2 text-sm font-medium">
             <Link
               href="/"
               onClick={() => setMenuOpen(false)}
-              className="py-2 px-3 rounded-xl hover:bg-[#F2EFE8] text-[#0C3B2E]"
+              className="py-2 px-3 rounded-xl hover:bg-[#F4EFEA] text-[#141416]"
             >
               Home
             </Link>
             <Link
               href="/categories"
               onClick={() => setMenuOpen(false)}
-              className="py-2 px-3 rounded-xl hover:bg-[#F2EFE8] text-[#0C3B2E] font-semibold"
+              className="py-2 px-3 rounded-xl hover:bg-[#F4EFEA] text-[#141416] font-semibold"
             >
               📂 Categories Hub
             </Link>
             <Link
               href="/shop"
               onClick={() => setMenuOpen(false)}
-              className="py-2 px-3 rounded-xl hover:bg-[#F2EFE8] text-[#0C3B2E]"
+              className="py-2 px-3 rounded-xl hover:bg-[#F4EFEA] text-[#141416]"
             >
               All Catalog Products
             </Link>
             <Link
               href="/shop?category=women-kurtis"
               onClick={() => setMenuOpen(false)}
-              className="py-2 px-3 rounded-xl hover:bg-[#F2EFE8] text-[#0C3B2E]"
+              className="py-2 px-3 rounded-xl hover:bg-[#F4EFEA] text-[#141416]"
             >
               👗 Women&apos;s Ethnic &amp; Sarees
             </Link>
             <Link
               href="/shop?category=men-shirts"
               onClick={() => setMenuOpen(false)}
-              className="py-2 px-3 rounded-xl hover:bg-[#F2EFE8] text-[#0C3B2E]"
+              className="py-2 px-3 rounded-xl hover:bg-[#F4EFEA] text-[#141416]"
             >
               👔 Men&apos;s Shirts &amp; Jeans
             </Link>
             <Link
               href="/shop?category=women-dresses"
               onClick={() => setMenuOpen(false)}
-              className="py-2 px-3 rounded-xl hover:bg-[#F2EFE8] text-[#0C3B2E]"
+              className="py-2 px-3 rounded-xl hover:bg-[#F4EFEA] text-[#141416]"
             >
               ✨ Cocktail Dresses
             </Link>
             <Link
               href="/shop?onSale=true"
               onClick={() => setMenuOpen(false)}
-              className="py-2 px-3 rounded-xl bg-[#FFF7E0] text-[#0C3B2E] font-bold"
+              className="py-2 px-3 rounded-xl bg-[#FBF4E2] text-[#8E6C0C] font-bold"
             >
               🏷️ Super Deals (Flat 40% Off)
             </Link>
-            <div className="pt-2 border-t border-[#F2EFE8]">
+            <div className="pt-2 border-t border-[#F4EFEA]">
               <Link
                 href={isLoggedIn ? "/account" : "/login"}
                 onClick={() => setMenuOpen(false)}
-                className="py-2 px-3 rounded-xl hover:bg-[#F2EFE8] font-bold text-[#0C3B2E] block"
+                className="py-2 px-3 rounded-xl hover:bg-[#F4EFEA] font-bold text-[#141416] block"
               >
                 {isLoggedIn ? `My Account (${userName})` : "Sign In / Register"}
               </Link>

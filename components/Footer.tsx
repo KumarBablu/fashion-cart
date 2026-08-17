@@ -3,13 +3,13 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="mt-20 border-t border-[#E8E3D8] bg-[#0C3B2E] text-white">
+    <footer className="mt-20 border-t border-[#E7DFD5] bg-[#141416] text-white">
       {/* 4 Value Propositions Bar */}
-      <div className="border-b border-white/10 bg-black/15">
+      <div className="border-b border-white/10 bg-black/25">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center sm:text-left">
             <div className="flex items-center gap-3.5">
-              <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg bg-white/10 text-[#FFBA00] border border-white/15 shadow-xs shrink-0">
+              <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg bg-white/10 text-[#C59B27] border border-white/15 shadow-xs shrink-0">
                 🚚
               </span>
               <div>
@@ -19,7 +19,7 @@ export default function Footer() {
             </div>
 
             <div className="flex items-center gap-3.5">
-              <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg bg-white/10 text-[#FFBA00] border border-white/15 shadow-xs shrink-0">
+              <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg bg-white/10 text-[#C59B27] border border-white/15 shadow-xs shrink-0">
                 🔄
               </span>
               <div>
@@ -29,7 +29,7 @@ export default function Footer() {
             </div>
 
             <div className="flex items-center gap-3.5">
-              <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg bg-white/10 text-[#FFBA00] border border-white/15 shadow-xs shrink-0">
+              <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg bg-white/10 text-[#C59B27] border border-white/15 shadow-xs shrink-0">
                 🛡️
               </span>
               <div>
@@ -39,7 +39,7 @@ export default function Footer() {
             </div>
 
             <div className="flex items-center gap-3.5">
-              <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg bg-white/10 text-[#FFBA00] border border-white/15 shadow-xs shrink-0">
+              <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg bg-white/10 text-[#C59B27] border border-white/15 shadow-xs shrink-0">
                 🧾
               </span>
               <div>
@@ -70,7 +70,7 @@ export default function Footer() {
                 <span className="font-display font-black text-xl tracking-tight text-white leading-none">
                   Fashion Cart
                 </span>
-                <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-[#FFBA00] leading-tight mt-0.5">
+                <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-[#C59B27] leading-tight mt-0.5">
                   Haute Couture
                 </span>
               </div>
@@ -85,7 +85,7 @@ export default function Footer() {
                 href="https://wa.me/919771039201?text=Hello%20Fashion%20Cart!%20I%20have%20an%20inquiry%20regarding%20an%20order."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#FFBA00] hover:underline font-bold flex items-center gap-1"
+                className="text-[#C59B27] hover:underline font-bold flex items-center gap-1"
               >
                 <span>💬</span> WhatsApp Concierge
               </a>
@@ -98,31 +98,31 @@ export default function Footer() {
 
           {/* Quick Shop Links */}
           <div className="space-y-2.5">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#FFBA00]">Catalog</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">Catalog</p>
             <ul className="space-y-2 text-xs text-white/80">
-              <li><Link href="/shop" className="hover:text-[#FFBA00] transition-colors">All Products</Link></li>
-              <li><Link href="/shop?sort=newest" className="hover:text-[#FFBA00] transition-colors">New Arrivals</Link></li>
-              <li><Link href="/shop?category=men-shirts" className="hover:text-[#FFBA00] transition-colors">Men&apos;s Collection</Link></li>
-              <li><Link href="/shop?category=women-kurtis" className="hover:text-[#FFBA00] transition-colors">Women&apos;s Ethnic</Link></li>
-              <li><Link href="/categories" className="hover:text-[#FFBA00] transition-colors">Categories Hub</Link></li>
+              <li><Link href="/shop" className="hover:text-[#C59B27] transition-colors">All Products</Link></li>
+              <li><Link href="/shop?sort=newest" className="hover:text-[#C59B27] transition-colors">New Arrivals</Link></li>
+              <li><Link href="/shop?category=men-shirts" className="hover:text-[#C59B27] transition-colors">Men&apos;s Collection</Link></li>
+              <li><Link href="/shop?category=women-kurtis" className="hover:text-[#C59B27] transition-colors">Women&apos;s Ethnic</Link></li>
+              <li><Link href="/categories" className="hover:text-[#C59B27] transition-colors">Categories Hub</Link></li>
             </ul>
           </div>
 
           {/* Account & Policies */}
           <div className="space-y-2.5">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#FFBA00]">Customer Care</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">Customer Care</p>
             <ul className="space-y-2 text-xs text-white/80">
-              <li><Link href="/account" className="hover:text-[#FFBA00] transition-colors">Track Your Order</Link></li>
-              <li><Link href="/account/wishlist" className="hover:text-[#FFBA00] transition-colors">My Wishlist</Link></li>
-              <li><Link href="/shipping-policy" className="hover:text-[#FFBA00] transition-colors">Shipping &amp; Delivery</Link></li>
-              <li><Link href="/return-policy" className="hover:text-[#FFBA00] transition-colors">Returns &amp; Refunds</Link></li>
-              <li><Link href="/privacy-policy" className="hover:text-[#FFBA00] transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/account" className="hover:text-[#C59B27] transition-colors">Track Your Order</Link></li>
+              <li><Link href="/account/wishlist" className="hover:text-[#C59B27] transition-colors">My Wishlist</Link></li>
+              <li><Link href="/shipping-policy" className="hover:text-[#C59B27] transition-colors">Shipping &amp; Delivery</Link></li>
+              <li><Link href="/return-policy" className="hover:text-[#C59B27] transition-colors">Returns &amp; Refunds</Link></li>
+              <li><Link href="/privacy-policy" className="hover:text-[#C59B27] transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
 
           {/* Newsletter Box */}
           <div className="space-y-2.5">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#FFBA00]">Stay Connected</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">Stay Connected</p>
             <p className="text-xs text-white/80">
               Subscribe for exclusive secret drop alerts and festive coupon codes.
             </p>
@@ -130,11 +130,11 @@ export default function Footer() {
               <input
                 type="email"
                 placeholder="Enter email address"
-                className="w-full px-3 py-2 rounded-xl border border-white/20 text-xs outline-none focus:border-[#FFBA00] bg-white/10 text-white placeholder:text-white/50"
+                className="w-full px-3 py-2 rounded-xl border border-white/20 text-xs outline-none focus:border-[#C59B27] bg-white/10 text-white placeholder:text-white/50"
               />
               <button
                 type="button"
-                className="px-4 py-2 rounded-xl text-xs font-extrabold uppercase bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#EAA800] shadow-sm transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-extrabold uppercase bg-[#C59B27] text-white hover:bg-[#B0881E] shadow-sm transition-colors"
               >
                 Join
               </button>
@@ -146,10 +146,10 @@ export default function Footer() {
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/60">
           <p>© {new Date().getFullYear()} Fashion Cart Boutique. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href="/terms" className="hover:text-[#FFBA00] transition-colors">Terms of Service</Link>
-            <Link href="/privacy-policy" className="hover:text-[#FFBA00] transition-colors">Privacy Policy</Link>
-            <Link href="/return-policy" className="hover:text-[#FFBA00] transition-colors">Returns & Refunds</Link>
-            <Link href="/shipping-policy" className="hover:text-[#FFBA00] transition-colors">Shipping Info</Link>
+            <Link href="/terms" className="hover:text-[#C59B27] transition-colors">Terms of Service</Link>
+            <Link href="/privacy-policy" className="hover:text-[#C59B27] transition-colors">Privacy Policy</Link>
+            <Link href="/return-policy" className="hover:text-[#C59B27] transition-colors">Returns & Refunds</Link>
+            <Link href="/shipping-policy" className="hover:text-[#C59B27] transition-colors">Shipping Info</Link>
           </div>
         </div>
       </div>
