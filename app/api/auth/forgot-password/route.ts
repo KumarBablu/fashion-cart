@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generatePasswordResetToken, generateRecoveryCode } from "@/lib/auth/password-reset";
 import { sendPasswordResetEmail } from "@/lib/email/service";
+import { rateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const forgotSchema = z.object({
@@ -9,6 +10,10 @@ const forgotSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  if (!rateLimit(clientKeyFromRequest(req, "forgot-password"), 5, 15 * 60 * 1000)) {
+    return NextResponse.json({ error: "Too many password recovery attempts. Please try again later." }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = forgotSchema.safeParse(body);
   if (!parsed.success) {

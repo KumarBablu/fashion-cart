@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { verifyPasswordResetToken } from "@/lib/auth/password-reset";
 import { hashPassword } from "@/lib/auth/password";
 import { sendPasswordChangedEmail } from "@/lib/email/service";
+import { rateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const resetSchema = z.object({
@@ -11,6 +12,10 @@ const resetSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  if (!rateLimit(clientKeyFromRequest(req, "reset-password"), 5, 15 * 60 * 1000)) {
+    return NextResponse.json({ error: "Too many password reset attempts. Please try again later." }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = resetSchema.safeParse(body);
   if (!parsed.success) {
