@@ -77,37 +77,37 @@ export default function ContactPage() {
               <div className="flex items-start gap-3">
                 <span className="text-xl">✉️</span>
                 <div>
-                  <p className="font-bold">Email Support</p>
-                  <a href="mailto:support@fashioncart.shop" className="text-dim hover:text-primary transition-colors">
-                    support@fashioncart.shop
+                  <p className="font-bold">Email Support Desk</p>
+                  <a href="mailto:bablusoni2825@gmail.com" className="text-dim hover:text-primary transition-colors font-medium">
+                    bablusoni2825@gmail.com
                   </a>
-                  <p className="text-[10px] text-dim mt-0.5">Average response time: &lt; 4 hours</p>
+                  <p className="text-[10px] text-dim mt-0.5">Average response time: &lt; 2 hours</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
                 <span className="text-xl">💬</span>
                 <div>
-                  <p className="font-bold">WhatsApp Direct</p>
+                  <p className="font-bold">WhatsApp Concierge Desk</p>
                   <a
-                    href="https://wa.me/919876543210?text=Hi%20Fashion%20Cart%20Team%2C%20I%20have%20an%20inquiry"
+                    href="https://wa.me/919771039201?text=Hi%20Fashion%20Cart%20Team%2C%20I%20have%20an%20inquiry%20regarding%20an%20order"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
+                    className="text-[#C59B27] font-bold hover:underline"
                   >
-                    +91 98765 43210 ↗
+                    +91 97710 39201 ↗
                   </a>
-                  <p className="text-[10px] text-dim mt-0.5">Instant chat assistance</p>
+                  <p className="text-[10px] text-dim mt-0.5">Instant chat &amp; exchange assistance</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
                 <span className="text-xl">📍</span>
                 <div>
-                  <p className="font-bold">Design Studio &amp; Boutique</p>
+                  <p className="font-bold">Flagship Showroom &amp; Logistics Hub</p>
                   <p className="text-dim leading-relaxed">
                     Fashion Cart Luxury Atelier<br />
-                    100 Feet Road, Indiranagar, Bengaluru, Karnataka - 560038
+                    108 Fashion Avenue, 100 Feet Road, Indiranagar, Bengaluru - 560038
                   </p>
                 </div>
               </div>
@@ -115,8 +115,8 @@ export default function ContactPage() {
               <div className="flex items-start gap-3">
                 <span className="text-xl">⏰</span>
                 <div>
-                  <p className="font-bold">Working Hours</p>
-                  <p className="text-dim">Monday – Saturday: 9:00 AM – 8:00 PM IST</p>
+                  <p className="font-bold">Operating Hours</p>
+                  <p className="text-dim">Monday – Sunday: 10:00 AM – 9:00 PM IST</p>
                 </div>
               </div>
             </div>
@@ -131,7 +131,7 @@ export default function ContactPage() {
               You can track live dispatch timelines, courier AWB numbers, and download official tax invoices directly in your account.
             </p>
             <div className="pt-1">
-              <Link href="/account" className="text-xs font-bold text-primary hover:underline">
+              <Link href="/account" className="text-xs font-bold text-[#C59B27] hover:underline">
                 Go to Order Tracking →
               </Link>
             </div>
