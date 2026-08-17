@@ -36,24 +36,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       });
     }
 
-    // Generate in-memory PDF buffer with standalone zero-fs PDFKit
+    // Generate in-memory PDF buffer with zero-dependency pdf-lib
     const { buffer } = await generateInvoiceBufferForOrder(order.id);
     const rawCustomerName = (order.shippingAddressSnapshot as any)?.fullName || order.user.name || "Customer";
     const cleanCustomerName = rawCustomerName.trim().replace(/[^a-zA-Z0-9]/g, "-").replace(/-+/g, "-").toUpperCase();
     const filename = `FashionCart-Tax-Invoice-${order.orderNumber}-${cleanCustomerName}.pdf`;
 
-    return new NextResponse(new Uint8Array(buffer), {
+    return new Response(new Uint8Array(buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
-        "Content-Length": buffer.length.toString(),
+        "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
     });
   } catch (err) {
     console.error("Error serving invoice PDF:", err);
-    return new NextResponse("Internal Server Error generating invoice PDF", {
+    return new Response("Internal Server Error generating invoice PDF", {
       status: 500,
       headers: { "Content-Type": "text/plain" },
     });
