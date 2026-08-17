@@ -113,7 +113,7 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 pt-2">
+          <div className="flex flex-col gap-2.5 pt-2">
             <Link
               href="/login"
               className="w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-md transition-all hover:brightness-105"
@@ -121,6 +121,18 @@ export default function ForgotPasswordPage() {
             >
               Return to Login →
             </Link>
+
+            <a
+              href={`https://wa.me/918092284954?text=${encodeURIComponent(
+                `Namaste Fashion Cart Support! I need assistance recovering my account with email/phone: ${identifier}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 rounded-full font-bold text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all"
+            >
+              <span>💬</span> Get Instant Help on WhatsApp
+            </a>
+
             <button
               type="button"
               onClick={() => {

@@ -392,6 +392,51 @@ export default function CustomerDetailManager({ customer: initialCustomer }: Cus
             </p>
           </div>
 
+          {/* 1-Click WhatsApp Quick Actions */}
+          <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-2.5">
+            <p className="font-bold text-emerald-900 text-xs flex items-center gap-1.5">
+              <span>📲</span> 1-Click Zero-Cost WhatsApp Quick Notifications:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {customer.phone && (
+                <>
+                  <a
+                    href={`https://wa.me/91${customer.phone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
+                      `Namaste ${customer.name}! 👗 Welcome to Fashion Cart Haute Couture. Use code *FIRST10* for 10% OFF + Free Delivery: https://fashion-cart-5p7k.vercel.app/shop`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1"
+                  >
+                    <span>🎁</span> WhatsApp Welcome &amp; Offer
+                  </a>
+
+                  <a
+                    href={`https://wa.me/91${customer.phone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
+                      `Namaste ${customer.name}! 🛍️ Quick update from Fashion Cart regarding your orders: https://fashion-cart-5p7k.vercel.app/account`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1"
+                  >
+                    <span>📦</span> WhatsApp Account Update
+                  </a>
+
+                  <a
+                    href={`https://wa.me/91${customer.phone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
+                      `Hello ${customer.name}! How can we assist you today at Fashion Cart?`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-100 font-bold text-xs flex items-center gap-1"
+                  >
+                    <span>💬</span> Open WhatsApp Chat
+                  </a>
+                </>
+              )}
+            </div>
+          </div>
+
           <form onSubmit={handleSendReach} className="space-y-4 text-xs">
             <div>
               <label className="block font-bold text-slate-700 mb-1 uppercase tracking-wider text-[10px]">
@@ -408,7 +453,7 @@ export default function CustomerDetailManager({ customer: initialCustomer }: Cus
 
             <div>
               <label className="block font-bold text-slate-700 mb-1 uppercase tracking-wider text-[10px]">
-                Message Body *
+                Email Message Content *
               </label>
               <textarea
                 required
