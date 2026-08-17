@@ -172,54 +172,73 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Right Hero Promo Card with Atelier Noir container */}
-          <div className="lg:col-span-5">
-            <div className="p-6 sm:p-7 rounded-3xl border border-[#141416] bg-[#141416] text-white shadow-2xl space-y-5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27] flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#C59B27] pulse-dot" />
-                  Festive Special Offer
+          {/* Right Hero Column: Cinematic Editorial Model Card with VIP Glassmorphism Overlay */}
+          <div className="lg:col-span-5 relative">
+            <div className="relative aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-[#E7DFD5] group">
+              {/* High-Fashion Editorial Model Image */}
+              <Image
+                src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1200&auto=format&fit=crop&q=85"
+                alt="Haute Couture Fashion Model — Fashion Cart"
+                fill
+                priority
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                className="object-cover object-top group-hover:scale-105 transition-transform duration-700"
+              />
+
+              {/* Luxury Vignette & Contrast Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/40 to-transparent" />
+
+              {/* Top Tag: Live Editorial Drop */}
+              <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+                <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#141416]/80 backdrop-blur-md text-[#C59B27] border border-[#C59B27]/40 shadow-sm flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] pulse-dot" />
+                  Editorial Lookbook 2026
                 </span>
-                <span className="text-xs px-3 py-1 rounded-full font-mono font-bold border border-[#C59B27]/40 bg-[#C59B27]/15 text-[#C59B27]">
-                  Code: FIRST10
+                <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-[#C59B27] text-white shadow-sm">
+                  CODE: FIRST10
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white/10 border border-white/15 space-y-1.5">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">✨ VIP Welcome Privilege</p>
-                <h3 className="font-display text-lg font-bold text-white">
-                  Flat 10% Instant Discount + Free Express Shipping
-                </h3>
-                <p className="text-xs text-white/80 leading-relaxed">
-                  Applies automatically on all ethnic kurtis, silk sarees, and tailored menswear at checkout.
-                </p>
-              </div>
+              {/* Bottom Glassmorphic Privilege Card */}
+              <div className="absolute bottom-4 left-4 right-4 p-4 sm:p-5 rounded-2xl bg-[#141416]/85 backdrop-blur-xl border border-white/20 text-white space-y-3 shadow-2xl">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-[#C59B27]">✨</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#C59B27]">
+                      VIP Welcome Privilege
+                    </span>
+                  </div>
+                  <h3 className="font-display text-base sm:text-lg font-bold text-white leading-snug">
+                    Flat 10% Off + Free Express Shipping
+                  </h3>
+                  <p className="text-[11px] text-white/75 leading-relaxed">
+                    Auto-applied on all handcrafted silk sarees, kurtis &amp; tailored menswear.
+                  </p>
+                </div>
 
-              {/* 3 Value Pillars */}
-              <div className="grid grid-cols-3 gap-2.5 text-center text-xs">
-                <div className="p-3 rounded-xl border border-white/15 bg-white/5">
-                  <span className="text-lg">👑</span>
-                  <p className="font-bold text-[11px] mt-1 text-white">Tailored Fit</p>
-                  <p className="text-[9px] text-[#C59B27]">Master craft</p>
+                {/* 3 Value Pillars */}
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px] pt-1 border-t border-white/15">
+                  <div className="py-1">
+                    <span className="block text-sm">👑</span>
+                    <span className="font-semibold text-white">Tailored Fit</span>
+                  </div>
+                  <div className="py-1">
+                    <span className="block text-sm">💵</span>
+                    <span className="font-semibold text-white">COD Eligible</span>
+                  </div>
+                  <div className="py-1">
+                    <span className="block text-sm">🧾</span>
+                    <span className="font-semibold text-white">GST Invoice</span>
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl border border-white/15 bg-white/5">
-                  <span className="text-lg">💵</span>
-                  <p className="font-bold text-[11px] mt-1 text-white">COD Eligible</p>
-                  <p className="text-[9px] text-[#C59B27]">Pay at door</p>
-                </div>
-                <div className="p-3 rounded-xl border border-white/15 bg-white/5">
-                  <span className="text-lg">🧾</span>
-                  <p className="font-bold text-[11px] mt-1 text-white">GST Invoice</p>
-                  <p className="text-[9px] text-[#C59B27]">Instant PDF</p>
-                </div>
-              </div>
 
-              <Link
-                href="/shop?sort=discount"
-                className="w-full py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider text-center block bg-[#C59B27] text-white hover:bg-[#B0881E] transition-colors shadow-lg"
-              >
-                Shop Special Deals →
-              </Link>
+                <Link
+                  href="/shop?sort=discount"
+                  className="w-full py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-wider text-center block bg-[#C59B27] text-white hover:bg-[#B0881E] transition-all shadow-md hover:scale-102"
+                >
+                  Shop Exclusive Edits →
+                </Link>
+              </div>
             </div>
           </div>
 

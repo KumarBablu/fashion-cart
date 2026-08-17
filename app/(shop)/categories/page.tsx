@@ -16,21 +16,21 @@ const DEPARTMENT_METADATA: Record<
   }
 > = {
   women: {
-    heroImage: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1000&auto=format&fit=crop&q=85",
+    heroImage: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&auto=format&fit=crop&q=85",
     tagline: "Royal Ethnic Elegance & Haute Couture",
     description: "Hand-embroidered micro-velvet kurta sets, flowing Chanderi silk anarkalis, and pure mulberry silk sarees designed for festive majesty and wedding galas.",
     badge: "Haute Couture",
     highlights: ["Handcrafted Zari Embroidery", "Pure Mulberry & Chanderi Silk", "Custom Fit Tailoring", "Festive & Bridal Specials"],
   },
   men: {
-    heroImage: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=1000&auto=format&fit=crop&q=85",
+    heroImage: "https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?w=1200&auto=format&fit=crop&q=85",
     tagline: "Sartorial Menswear & Tailored Linen Cuts",
     description: "Breathable French linen shirts, classic mandarin collar button-downs, and premium stretch denim jeans precision-crafted for modern gentleman's comfort.",
     badge: "Master Tailored",
     highlights: ["100% Breathable Pure Linen", "Wrinkle-Resistant Cotton", "Comfort-Flex Stretch Denim", "Mandarin & Spread Collars"],
   },
   kids: {
-    heroImage: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=1000&auto=format&fit=crop&q=85",
+    heroImage: "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=1200&auto=format&fit=crop&q=85",
     tagline: "Everyday Comfort & Festive Junior Edits",
     description: "Ultra-soft combed cotton essentials and vibrant festive ethnic wear designed with skin-friendly fabrics for cheerful, active little ones.",
     badge: "Pure Comfort",
@@ -39,7 +39,7 @@ const DEPARTMENT_METADATA: Record<
 };
 
 const DEFAULT_METADATA = {
-  heroImage: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=1000&auto=format&fit=crop&q=85",
+  heroImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&auto=format&fit=crop&q=85",
   tagline: "Contemporary Everyday & Evening Fashion",
   description: "Curated styles crafted with premium fabrics, modern silhouettes, and meticulous stitching for timeless everyday appeal.",
   badge: "Signature Collection",
@@ -281,7 +281,7 @@ export default async function CategoriesPage() {
         })}
       </section>
 
-      {/* 🏷️ Curated Boutique Edits */}
+      {/* 🏷️ Curated Boutique Edits with High-Fashion Models */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="border-b border-[#E7DFD5] pb-3">
           <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">Special Curations</span>
@@ -290,69 +290,113 @@ export default async function CategoriesPage() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link
             href="/shop?maxPrice=999"
-            className="group p-5 rounded-3xl border border-[#E7DFD5] bg-white hover:border-[#141416] hover:shadow-md transition-all space-y-2"
+            className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[3/4] flex flex-col justify-end p-5 bg-[#141416] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
           >
-            <span className="text-2xl">🏷️</span>
-            <h3 className="font-bold text-sm text-[#141416] group-hover:text-[#C59B27] transition-colors">
-              Under ₹999 Store
-            </h3>
-            <p className="text-xs text-[#4B4E56] leading-relaxed">
-              Everyday breathable cotton shirts and comfortable kurtis at unbeatable prices.
-            </p>
-            <span className="text-xs font-bold text-[#141416] inline-block pt-1">
-              Shop Budget Store →
-            </span>
+            <Image
+              src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&auto=format&fit=crop&q=80"
+              alt="Under 999 Daily Essentials"
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-108"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/40 to-transparent" />
+            <div className="relative z-10 space-y-1">
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#C59B27] text-white">
+                Under ₹999 Store
+              </span>
+              <h3 className="font-display text-base font-bold text-white group-hover:text-[#C59B27] transition-colors">
+                Everyday Cottons &amp; Linens
+              </h3>
+              <p className="text-xs text-white/80">Breathable essentials at honest prices.</p>
+              <div className="pt-1 flex items-center gap-1 text-xs font-bold text-[#C59B27]">
+                <span>Shop Store</span>
+                <span>→</span>
+              </div>
+            </div>
           </Link>
 
           <Link
             href="/shop?onSale=true"
-            className="group p-5 rounded-3xl border border-[#C59B27]/40 bg-[#FBF4E2]/60 hover:border-[#C59B27] hover:shadow-md transition-all space-y-2"
+            className="group relative rounded-3xl overflow-hidden border border-[#C59B27]/40 aspect-[3/4] flex flex-col justify-end p-5 bg-[#141416] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
           >
-            <span className="text-2xl">🔥</span>
-            <h3 className="font-bold text-sm text-[#141416] group-hover:text-[#C59B27] transition-colors">
-              Flash Deals (40% Off)
-            </h3>
-            <p className="text-xs text-[#4B4E56] leading-relaxed">
-              Limited-quantity handcrafted silk anarkalis and luxury velvet kurta drops.
-            </p>
-            <span className="text-xs font-bold text-[#141416] inline-block pt-1">
-              Shop Super Deals →
-            </span>
+            <Image
+              src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80"
+              alt="Flash Deals 40% Off"
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-108"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/40 to-transparent" />
+            <div className="relative z-10 space-y-1">
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-600 text-white">
+                🔥 Flash 40% Off
+              </span>
+              <h3 className="font-display text-base font-bold text-white group-hover:text-[#C59B27] transition-colors">
+                Handcrafted Silk Drops
+              </h3>
+              <p className="text-xs text-white/80">Limited-quantity master weaver editions.</p>
+              <div className="pt-1 flex items-center gap-1 text-xs font-bold text-[#C59B27]">
+                <span>Shop Deals</span>
+                <span>→</span>
+              </div>
+            </div>
           </Link>
 
           <Link
             href="/shop?sort=newest"
-            className="group p-5 rounded-3xl border border-[#E7DFD5] bg-white hover:border-[#141416] hover:shadow-md transition-all space-y-2"
+            className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[3/4] flex flex-col justify-end p-5 bg-[#141416] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
           >
-            <span className="text-2xl">✨</span>
-            <h3 className="font-bold text-sm text-[#141416] group-hover:text-[#C59B27] transition-colors">
-              New Season 2026
-            </h3>
-            <p className="text-xs text-[#4B4E56] leading-relaxed">
-              The latest fashion arrivals fresh off our master atelier looms.
-            </p>
-            <span className="text-xs font-bold text-[#141416] inline-block pt-1">
-              Explore New Drops →
-            </span>
+            <Image
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80"
+              alt="New Season 2026 Drops"
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-108"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/40 to-transparent" />
+            <div className="relative z-10 space-y-1">
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white text-[#141416]">
+                ✨ New Season 2026
+              </span>
+              <h3 className="font-display text-base font-bold text-white group-hover:text-[#C59B27] transition-colors">
+                Haute Runway Arrivals
+              </h3>
+              <p className="text-xs text-white/80">Fresh off the loom artisanal silhouettes.</p>
+              <div className="pt-1 flex items-center gap-1 text-xs font-bold text-[#C59B27]">
+                <span>Explore Drops</span>
+                <span>→</span>
+              </div>
+            </div>
           </Link>
 
           <Link
             href="/shop?category=women-kurtis"
-            className="group p-5 rounded-3xl border border-[#E7DFD5] bg-white hover:border-[#141416] hover:shadow-md transition-all space-y-2"
+            className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[3/4] flex flex-col justify-end p-5 bg-[#141416] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
           >
-            <span className="text-2xl">👑</span>
-            <h3 className="font-bold text-sm text-[#141416] group-hover:text-[#C59B27] transition-colors">
-              Festive Gala &amp; Wedding
-            </h3>
-            <p className="text-xs text-[#4B4E56] leading-relaxed">
-              Mulberry silk, Chanderi, and royal zari embroidery designed for special occasions.
-            </p>
-            <span className="text-xs font-bold text-[#141416] inline-block pt-1">
-              Explore Festive Edit →
-            </span>
+            <Image
+              src="https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=800&auto=format&fit=crop&q=80"
+              alt="Festive Gala & Wedding"
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-108"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/40 to-transparent" />
+            <div className="relative z-10 space-y-1">
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#C59B27] text-white">
+                👑 Royal Gala &amp; Wedding
+              </span>
+              <h3 className="font-display text-base font-bold text-white group-hover:text-[#C59B27] transition-colors">
+                Zardozi &amp; Velvet Sets
+              </h3>
+              <p className="text-xs text-white/80">Regal grandeur for life&apos;s finest moments.</p>
+              <div className="pt-1 flex items-center gap-1 text-xs font-bold text-[#C59B27]">
+                <span>Explore Gala</span>
+                <span>→</span>
+              </div>
+            </div>
           </Link>
         </div>
       </section>
