@@ -69,7 +69,16 @@ export default async function HomePage() {
       take: 6,
     }),
     prisma.product.findMany({
-      where: { status: "ACTIVE" },
+      where: {
+        status: "ACTIVE",
+        category: {
+          isActive: true,
+          OR: [
+            { parentId: null },
+            { parent: { isActive: true } },
+          ],
+        },
+      },
       orderBy: { createdAt: "desc" },
       take: 40,
       include: {

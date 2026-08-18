@@ -1,11 +1,24 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getCurrentUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/db";
 import HeaderClient from "./HeaderClient";
 import AnnouncementBar from "@/components/ui/AnnouncementBar";
 
 export default async function Header() {
-  const user = await getCurrentUser();
+  const [user, categories] = await Promise.all([
+    getCurrentUser(),
+    prisma.category.findMany({
+      where: { isActive: true, parentId: null },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        },
+      },
+    }),
+  ]);
 
   return (
     <div className="sticky top-0 z-40">
@@ -40,7 +53,11 @@ export default async function Header() {
             </Link>
 
             {/* Central Navigation, Category Mega Menu, Search & Actions */}
-            <HeaderClient isLoggedIn={!!user} userName={user?.name} />
+            <HeaderClient
+              isLoggedIn={!!user}
+              userName={user?.name}
+              categories={categories as any}
+            />
           </div>
         </div>
       </header>

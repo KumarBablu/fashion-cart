@@ -25,14 +25,21 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
 
   const where: Prisma.ProductWhereInput = {
     status: "ACTIVE",
-    ...(categorySlug
-      ? {
-          OR: [
-            { category: { slug: categorySlug } },
-            { category: { parent: { slug: categorySlug } } },
-          ],
-        }
-      : {}),
+    category: {
+      isActive: true,
+      OR: [
+        { parentId: null },
+        { parent: { isActive: true } },
+      ],
+      ...(categorySlug
+        ? {
+            OR: [
+              { slug: categorySlug },
+              { parent: { slug: categorySlug, isActive: true } },
+            ],
+          }
+        : {}),
+    },
     ...(q
       ? {
           OR: [
@@ -70,7 +77,13 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     }),
     prisma.product.count({ where }),
     prisma.category.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        OR: [
+          { parentId: null },
+          { parent: { isActive: true } },
+        ],
+      },
       select: { id: true, name: true, slug: true, parentId: true },
       orderBy: { sortOrder: "asc" },
     }),

@@ -10,7 +10,17 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const { slug } = await params;
 
   const product = await prisma.product.findFirst({
-    where: { slug, status: "ACTIVE" },
+    where: {
+      slug,
+      status: "ACTIVE",
+      category: {
+        isActive: true,
+        OR: [
+          { parentId: null },
+          { parent: { isActive: true } },
+        ],
+      },
+    },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       variants: { where: { isActive: true }, orderBy: [{ colour: "asc" }, { size: "asc" }] },
@@ -21,7 +31,18 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (!product) notFound();
 
   const related = await prisma.product.findMany({
-    where: { categoryId: product.categoryId, status: "ACTIVE", id: { not: product.id } },
+    where: {
+      categoryId: product.categoryId,
+      status: "ACTIVE",
+      id: { not: product.id },
+      category: {
+        isActive: true,
+        OR: [
+          { parentId: null },
+          { parent: { isActive: true } },
+        ],
+      },
+    },
     take: 4,
     include: { images: { take: 2, orderBy: { sortOrder: "asc" } }, variants: { where: { isActive: true } } },
   });

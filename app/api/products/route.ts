@@ -26,7 +26,21 @@ export async function GET(req: NextRequest) {
 
   const where: Prisma.ProductWhereInput = {
     status: "ACTIVE",
-    ...(categorySlug ? { category: { slug: categorySlug } } : {}),
+    category: {
+      isActive: true,
+      OR: [
+        { parentId: null },
+        { parent: { isActive: true } },
+      ],
+      ...(categorySlug
+        ? {
+            OR: [
+              { slug: categorySlug },
+              { parent: { slug: categorySlug, isActive: true } },
+            ],
+          }
+        : {}),
+    },
     ...(brand ? { brand: { equals: brand, mode: "insensitive" } } : {}),
     ...(q
       ? {
