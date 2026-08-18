@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { formatINR } from "@/lib/format";
-import { generateBarcodeSvg } from "@/lib/invoice/barcode";
+import QRCode from "qrcode";
 
 type OrderItem = {
   id: string;
@@ -67,6 +68,7 @@ type InvoiceProps = {
 };
 
 export default function InvoiceDocument({ order, business }: InvoiceProps) {
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const addr = order.shippingAddressSnapshot;
   const invoiceNumber = order.invoice?.invoiceNumber ?? `FC-INV-2026-${order.orderNumber.replace(/[^0-9]/g, "").slice(-6).padStart(6, "0")}`;
   const invoiceDate = new Date(order.createdAt).toLocaleDateString("en-IN", {
@@ -74,6 +76,21 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
     month: "short",
     year: "numeric",
   });
+
+  const verificationUrl = `https://fashion-cart-5p7k.vercel.app/invoices/${order.id}`;
+
+  useEffect(() => {
+    QRCode.toDataURL(verificationUrl, {
+      width: 180,
+      margin: 1,
+      color: {
+        dark: "#141416",
+        light: "#FFFFFF",
+      },
+    })
+      .then(setQrDataUrl)
+      .catch((err) => console.error("QR Code error:", err));
+  }, [verificationUrl]);
 
   const subtotal = Number(order.subtotal);
   const discount = Number(order.discount);
@@ -86,8 +103,6 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
   const cgstAmount = (totalTaxCalculated / 2).toFixed(2);
   const sgstAmount = (totalTaxCalculated / 2).toFixed(2);
 
-  const barcodeSvg = generateBarcodeSvg(invoiceNumber, 36, 1.3);
-
   function handlePrint() {
     window.print();
   }
@@ -98,7 +113,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
       <div className="flex flex-wrap items-center justify-between gap-4 pb-6 mb-6 border-b border-slate-200 print:hidden">
         <div>
           <h1 className="text-xl font-bold text-slate-900 font-display flex items-center gap-2">
-            <span>📄</span> Official Tax Invoice &amp; Retail Receipt
+            <span>📄</span> Official GST Tax Invoice &amp; Digital Receipt
           </h1>
           <p className="text-xs text-slate-500 mt-0.5 font-mono">
             Invoice #{invoiceNumber} · Order #{order.orderNumber}
@@ -113,7 +128,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
           </button>
           <a
             href={`/api/invoices/${order.id}`}
-            download={`FashionCart-Invoice-${order.orderNumber}-${invoiceNumber}.pdf`}
+            download={`FashionCart-Tax-Invoice-${order.orderNumber}-${invoiceNumber}.pdf`}
             className="px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <span>📥</span> Download PDF
@@ -123,16 +138,16 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
 
       {/* Printable Invoice Body */}
       <div className="space-y-6 text-xs leading-normal">
-        {/* Brand Header Banner */}
+        {/* Brand Header Banner with Embedded Scannable QR Code */}
         <div className="p-6 rounded-2xl bg-[#141416] text-white border border-[#27272A] shadow-md flex flex-col sm:flex-row justify-between items-start gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-3">
-              <div className="relative h-10 w-10 overflow-hidden shrink-0">
+              <div className="relative h-11 w-11 overflow-hidden shrink-0">
                 <Image
                   src="/fashion-cart-logo-transparent.svg"
                   alt="Fashion Cart Official Monogram"
                   fill
-                  sizes="40px"
+                  sizes="44px"
                   className="object-contain"
                 />
               </div>
@@ -146,31 +161,42 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
               </div>
             </div>
 
-            <p className="text-[10px] text-white/70 max-w-sm pt-1">
-              {business?.businessAddress || "Atelier Logistics Hub, 108 Fashion Avenue, Indiranagar, Bengaluru, Karnataka - 560038"}
+            <p className="text-[10px] text-white/70 max-w-sm pt-1 leading-relaxed">
+              Atelier Logistics Hub, 108 Fashion Avenue, Indiranagar, Bengaluru, Karnataka - 560038
             </p>
             <p className="text-[10px] text-white/80 font-medium">
-              GSTIN: <span className="font-mono font-bold text-[#C59B27]">{business?.gstin || "29AABCU9603R1ZM"}</span> · PAN: AABCU9603R · State: Karnataka (29)
+              GSTIN: <span className="font-mono font-bold text-[#C59B27]">{business?.gstin || "29AABCU9603R1ZM"}</span> · State: Karnataka (29)
             </p>
             <p className="text-[10px] text-white/70">
-              Support: {business?.email || "support@fashioncart.shop"} · Phone: {business?.phone || "+91 97710 39201"}
+              Support: {business?.email || "support@fashioncart.shop"} · Contact: {business?.phone || "+91 97710 39201"}
             </p>
           </div>
 
-          {/* Right Column with Barcode & Tax Meta */}
+          {/* Right Column with Authentic QR Code & Tax Meta */}
           <div className="text-right sm:text-right space-y-2 self-stretch sm:self-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-white/10 flex flex-col sm:items-end">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#C59B27] text-white shadow-xs">
-              TAX INVOICE · ORIGINAL FOR RECIPIENT
+              TAX INVOICE · ORIGINAL
             </div>
 
-            {/* Crisp Code 128 Barcode Stamp */}
-            <div className="bg-white p-2 rounded-lg inline-block text-center shadow-xs">
-              <div
-                className="w-48 h-9"
-                dangerouslySetInnerHTML={{ __html: barcodeSvg }}
-              />
-              <span className="font-mono text-[9px] font-bold text-slate-800 tracking-widest block mt-0.5">
-                *{invoiceNumber}*
+            {/* Authentic Digital Verification QR Code */}
+            <div className="bg-white p-2 rounded-xl inline-flex flex-col items-center justify-center shadow-md">
+              {qrDataUrl ? (
+                <div className="relative h-18 w-18">
+                  <Image
+                    src={qrDataUrl}
+                    alt="Digital Tax Invoice Verification QR Code"
+                    fill
+                    sizes="72px"
+                    className="object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="h-18 w-18 bg-neutral-100 flex items-center justify-center text-[10px] text-slate-400">
+                  Loading QR…
+                </div>
+              )}
+              <span className="font-mono text-[8px] font-bold text-slate-800 tracking-wider mt-1 uppercase">
+                Scan for Digital Copy
               </span>
             </div>
 
@@ -268,7 +294,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
                   <td className="py-3 px-4">
                     <p className="font-bold text-slate-900 text-sm">{item.productNameSnapshot}</p>
                     <p className="text-slate-500 text-[11px] mt-0.5">
-                      Premium Apparel Edition · {item.colourSnapshot}
+                      Premium Edition · {item.colourSnapshot}
                     </p>
                   </td>
                   <td className="py-3 px-3 text-center font-mono text-[11px] text-slate-600">
@@ -384,7 +410,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
             <p className="font-bold text-slate-700 uppercase tracking-wider">Declaration &amp; Store Terms:</p>
             <p>1. We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</p>
             <p>2. Hassle-free 7-day doorstep replacement or return available through your online account portal.</p>
-            <p>3. This is a computer-generated tax invoice issued in accordance with Section 65B of the Indian IT Act, 2000.</p>
+            <p>3. Computer-generated tax invoice issued in accordance with Section 65B of Indian Information Technology Act, 2000.</p>
           </div>
 
           {/* Digital Signature Box */}
