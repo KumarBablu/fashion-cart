@@ -2,13 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { unstable_cache } from "next/cache";
 import HeaderClient from "./HeaderClient";
 import AnnouncementBar from "@/components/ui/AnnouncementBar";
 
-export default async function Header() {
-  const [user, categories] = await Promise.all([
-    getCurrentUser(),
-    prisma.category.findMany({
+// In-memory cache for active category navigation (revalidates every 60 seconds)
+const getCachedCategories = unstable_cache(
+  async () => {
+    return prisma.category.findMany({
       where: { isActive: true, parentId: null },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: {
@@ -17,7 +18,16 @@ export default async function Header() {
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
         },
       },
-    }),
+    });
+  },
+  ["active-header-categories"],
+  { revalidate: 60, tags: ["categories"] }
+);
+
+export default async function Header() {
+  const [user, categories] = await Promise.all([
+    getCurrentUser(),
+    getCachedCategories(),
   ]);
 
   return (
@@ -29,6 +39,7 @@ export default async function Header() {
             {/* Official Brand Logo */}
             <Link
               href="/"
+              prefetch={true}
               className="shrink-0 flex items-center gap-2 group"
               aria-label="Fashion Cart Homepage"
             >

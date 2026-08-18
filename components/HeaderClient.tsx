@@ -61,16 +61,8 @@ export default function HeaderClient({
   }
 
   useEffect(() => {
-    // If the window/browser was closed, sessionStorage was purged. Require fresh login.
     if (isLoggedIn && typeof window !== "undefined") {
-      if (!sessionStorage.getItem("fc_window_session")) {
-        fetch("/api/auth/logout", { method: "POST" })
-          .then(() => {
-            window.location.reload();
-          })
-          .catch(() => {});
-        return;
-      }
+      sessionStorage.setItem("fc_window_session", "active");
     }
 
     refreshCartCount();

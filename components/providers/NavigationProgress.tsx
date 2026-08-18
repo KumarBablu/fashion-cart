@@ -59,7 +59,7 @@ export default function NavigationProgress() {
       aria-hidden="true"
     >
       <div
-        className="h-full bg-gradient-to-r from-[#FFBA00] via-[#FFD700] to-[#0C3B2E] shadow-[0_0_12px_#FFBA00] transition-all duration-200 ease-out"
+        className="h-full bg-gradient-to-r from-[#C59B27] via-[#E0BF48] to-[#141416] shadow-[0_0_12px_rgba(197,155,39,0.7)] transition-all duration-150 ease-out"
         style={{
           width: `${progress}%`,
           opacity: progress === 100 ? 0 : 1,
