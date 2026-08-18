@@ -108,8 +108,8 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
   }
 
   return (
-    <div className="bg-white text-slate-900 font-sans antialiased max-w-4xl mx-auto p-4 sm:p-8 rounded-3xl border border-slate-200 shadow-2xl print:border-0 print:shadow-none print:p-0 print:max-w-none print:m-0">
-      {/* Screen Action Bar (Hidden on Print) */}
+    <div className="bg-white text-slate-900 font-sans antialiased max-w-4xl mx-auto p-4 sm:p-8 rounded-3xl border border-slate-200 shadow-2xl print:border-0 print:shadow-none print:p-0 print:max-w-none print:m-0 print:bg-transparent">
+      {/* Screen Action Bar (Strictly Hidden on Print/Save) */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-6 mb-6 border-b border-slate-200 print:hidden">
         <div>
           <h1 className="text-xl font-bold text-slate-900 font-display flex items-center gap-2">
@@ -123,21 +123,25 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
           <button
             onClick={handlePrint}
             className="px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+            title="Print or Save Receipt as PDF"
           >
-            <span>🖨️</span> Print Invoice / Save PDF
+            <span>🖨️</span> Print / Save Receipt
           </button>
           <a
             href={`/api/invoices/${order.id}`}
             download={`FashionCart-Tax-Invoice-${order.orderNumber}-${invoiceNumber}.pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Download pure PDF receipt"
           >
-            <span>📥</span> Download PDF
+            <span>📥</span> Download PDF Receipt
           </a>
         </div>
       </div>
 
-      {/* Printable Invoice Body */}
-      <div className="space-y-6 text-xs leading-normal">
+      {/* Pure Printable Receipt Document Body */}
+      <div id="invoice-receipt-card" className="space-y-6 text-xs leading-normal bg-white print:p-0 print:m-0">
         {/* Brand Header Banner with Embedded Scannable QR Code */}
         <div className="p-6 rounded-2xl bg-[#141416] text-white border border-[#27272A] shadow-md flex flex-col sm:flex-row justify-between items-start gap-4">
           <div className="space-y-1.5">

@@ -4,40 +4,7 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import HomeClient from "@/components/home/HomeClient";
 
-export const revalidate = 30;
-
-type RailProduct = Prisma.ProductGetPayload<{
-  include: {
-    images: { take: 2; orderBy: { sortOrder: "asc" } };
-    variants: { where: { isActive: true } };
-  };
-}>;
-
-async function getRail(where: Prisma.ProductWhereInput, take = 8): Promise<RailProduct[]> {
-  const items = await prisma.product.findMany({
-    where: { status: "ACTIVE", ...where },
-    take,
-    orderBy: { createdAt: "desc" },
-    include: {
-      images: { take: 2, orderBy: { sortOrder: "asc" } },
-      variants: { where: { isActive: true } },
-    },
-  });
-
-  if (items.length === 0) {
-    return prisma.product.findMany({
-      where: { status: "ACTIVE" },
-      take,
-      orderBy: { createdAt: "desc" },
-      include: {
-        images: { take: 2, orderBy: { sortOrder: "asc" } },
-        variants: { where: { isActive: true } },
-      },
-    });
-  }
-
-  return items;
-}
+export const revalidate = 60;
 
 function serialize(items: any[]) {
   return items.map((p) => ({
@@ -95,47 +62,61 @@ const OCCASIONS = [
 ];
 
 export default async function HomePage() {
-  const [categories, featured, newArrivals, bestSellers, onSale, categoryPillars] = await Promise.all([
+  const [categories, allProducts, rootCategories] = await Promise.all([
     prisma.category.findMany({
       where: { isActive: true, parentId: null },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       take: 6,
     }),
-    getRail({ isFeatured: true }),
-    getRail({ isNewArrival: true }),
-    getRail({ isBestSeller: true }),
-    getRail({ variants: { some: { compareAtPrice: { not: null } } } }),
+    prisma.product.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+      include: {
+        images: { orderBy: { sortOrder: "asc" } },
+        variants: { where: { isActive: true } },
+        category: true,
+      },
+    }),
     prisma.category.findMany({
       where: { isActive: true, parentId: null },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: {
         children: {
           where: { isActive: true },
-          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-          include: {
-            products: {
-              where: { status: "ACTIVE" },
-              take: 10,
-              include: {
-                images: { orderBy: { sortOrder: "asc" } },
-                variants: { where: { isActive: true }, orderBy: { price: "asc" } },
-                category: true,
-              },
-            },
-          },
-        },
-        products: {
-          where: { status: "ACTIVE" },
-          take: 10,
-          include: {
-            images: { orderBy: { sortOrder: "asc" } },
-            variants: { where: { isActive: true }, orderBy: { price: "asc" } },
-            category: true,
-          },
+          select: { id: true, name: true, slug: true },
         },
       },
     }),
   ]);
+
+  // Fast in-memory rails
+  const featured = allProducts.filter((p) => p.isFeatured).slice(0, 8);
+  const newArrivals = allProducts.filter((p) => p.isNewArrival).slice(0, 8);
+  const bestSellers = allProducts.filter((p) => p.isBestSeller).slice(0, 8);
+  const onSale = allProducts.filter((p) => p.variants.some((v) => v.compareAtPrice !== null)).slice(0, 8);
+
+  const fallbackRail = allProducts.slice(0, 8);
+  const finalFeatured = featured.length > 0 ? featured : fallbackRail;
+  const finalNewArrivals = newArrivals.length > 0 ? newArrivals : fallbackRail;
+  const finalBestSellers = bestSellers.length > 0 ? bestSellers : fallbackRail;
+  const finalOnSale = onSale.length > 0 ? onSale : fallbackRail;
+
+  const categoryPillars = rootCategories.map((rc) => {
+    const childIds = new Set(rc.children.map((c) => c.id));
+    const matchingProducts = allProducts.filter(
+      (p) => p.categoryId === rc.id || (p.categoryId && childIds.has(p.categoryId))
+    ).slice(0, 10);
+
+    return {
+      ...rc,
+      products: matchingProducts,
+      children: rc.children.map((c) => ({
+        ...c,
+        products: allProducts.filter((p) => p.categoryId === c.id).slice(0, 10),
+      })),
+    };
+  });
 
   const META: Record<string, { icon: string; tagline: string; bannerImage: string }> = {
     women: {

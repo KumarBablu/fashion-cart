@@ -45,10 +45,15 @@ export async function GET(
     await stat(fullPath);
     const buffer = await readFile(fullPath);
     const ext = path.extname(fullPath).toLowerCase();
+    const isSensitive = segments[0] === "payments";
+    const cacheControl = isSensitive
+      ? "private, no-cache, no-store, must-revalidate"
+      : "public, max-age=31536000, immutable";
+
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": MIME_BY_EXT[ext] ?? "application/octet-stream",
-        "Cache-Control": "private, max-age=3600",
+        "Cache-Control": cacheControl,
       },
     });
   } catch {

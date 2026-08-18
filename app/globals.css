@@ -241,3 +241,38 @@ button:active, .interactive-click:active {
   outline: 2px solid #FFBA00;
   outline-offset: 2px;
 }
+
+/* Strict Clean Print Media Styles - Print ONLY the Receipt Document */
+@media print {
+  @page {
+    margin: 8mm;
+    size: A4 portrait;
+  }
+
+  html, body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+
+  /* Hide entire page elements by default */
+  header, footer, nav, aside, .print-hidden, [class*="print:hidden"], #announcement-bar, #brand-intro-splash, [role="banner"], [role="navigation"] {
+    display: none !important;
+  }
+
+  /* Isolate only the receipt card */
+  #invoice-receipt-card {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #FFFFFF !important;
+  }
+}
+

@@ -69,9 +69,23 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       },
     }),
     prisma.product.count({ where }),
-    prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.productVariant.findMany({ where: { isActive: true }, distinct: ["size"], select: { size: true } }),
-    prisma.productVariant.findMany({ where: { isActive: true }, distinct: ["colour"], select: { colour: true } }),
+    prisma.category.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, slug: true, parentId: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.productVariant.findMany({
+      where: { isActive: true },
+      distinct: ["size"],
+      select: { size: true },
+      take: 20,
+    }),
+    prisma.productVariant.findMany({
+      where: { isActive: true },
+      distinct: ["colour"],
+      select: { colour: true },
+      take: 20,
+    }),
   ]);
 
   let products = items.map((p) => ({
