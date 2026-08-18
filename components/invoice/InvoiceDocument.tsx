@@ -172,7 +172,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
               GSTIN: <span className="font-mono font-bold text-[#C59B27]">{business?.gstin || "29AABCU9603R1ZM"}</span> · State: Karnataka (29)
             </p>
             <p className="text-[10px] text-white/70">
-              Support: {business?.email || "support@fashioncart.shop"} · Contact: {business?.phone || "+91 97710 39201"}
+              Support: {business?.email || "fashioncart.support@gmail.com"} · Contact: {business?.phone || "+91 97710 39201"}
             </p>
           </div>
 

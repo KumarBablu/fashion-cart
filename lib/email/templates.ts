@@ -42,7 +42,7 @@ function layout(title: string, content: string) {
     </div>
     <div class="footer">
       <p style="margin: 0 0 6px 0;">&copy; ${new Date().getFullYear()} Fashion Cart Boutique. All rights reserved.</p>
-      <p style="margin: 0;">Need assistance? Contact us at <a href="mailto:support@fashioncart.shop">support@fashioncart.shop</a></p>
+      <p style="margin: 0;">Need assistance? Contact us at <a href="mailto:fashioncart.support@gmail.com">fashioncart.support@gmail.com</a></p>
     </div>
   </div>
 </body>
@@ -98,7 +98,7 @@ export function passwordChangedEmailTemplate(name: string) {
     <p>The password for your Fashion Cart account was recently updated. All previous sessions have been invalidated for your protection.</p>
     
     <div class="card">
-      <p style="margin: 0; font-size: 13px;">If you performed this change, no further action is required. If you did not authorize this change, please contact us immediately at <a href="mailto:support@fashioncart.shop" style="color: #0F172A;">support@fashioncart.shop</a>.</p>
+      <p style="margin: 0; font-size: 13px;">If you performed this change, no further action is required. If you did not authorize this change, please contact us immediately at <a href="mailto:fashioncart.support@gmail.com" style="color: #0F172A;">fashioncart.support@gmail.com</a>.</p>
     </div>
 
     <div style="text-align: center;">
@@ -284,7 +284,7 @@ export function orderCancelledEmailTemplate(order: OrderDataSummary, reason?: st
     <p>Your order <strong>#${order.orderNumber}</strong> has been cancelled${reason ? ` (${reason})` : ""}. Any inventory reserved has been released.</p>
 
     <div class="card">
-      <p style="margin: 0; font-size: 13px;">If you have any questions regarding payment refunds, please contact us at <a href="mailto:support@fashioncart.shop" style="color: #0F172A;">support@fashioncart.shop</a>.</p>
+      <p style="margin: 0; font-size: 13px;">If you have any questions regarding payment refunds, please contact us at <a href="mailto:fashioncart.support@gmail.com" style="color: #0F172A;">fashioncart.support@gmail.com</a>.</p>
     </div>
 
     <div style="text-align: center;">

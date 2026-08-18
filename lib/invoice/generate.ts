@@ -147,7 +147,7 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
     font: fontBold,
     color: textDark,
   });
-  page.drawText(`Contact: ${business?.email || "support@fashioncart.shop"} - ${business?.phone || "+91 97710 39201"}`, {
+  page.drawText(`Contact: ${business?.email || "fashioncart.support@gmail.com"} - ${business?.phone || "+91 97710 39201"}`, {
     x: 36,
     y: currentY - 60,
     size: 7.5,
@@ -305,7 +305,7 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   page.drawText("DECLARATION & TERMS OF SALE:", { x: 36, y: 78, size: 6.5, font: fontBold, color: textDark });
   page.drawText("1. Goods once sold are eligible for replacement or return within 7 calendar days as per store policy.", { x: 36, y: 68, size: 6, font: fontRegular, color: textMuted });
   page.drawText("2. Computer-generated tax invoice issued in accordance with Section 65B of Indian Information Technology Act, 2000.", { x: 36, y: 58, size: 6, font: fontRegular, color: textMuted });
-  page.drawText("Fashion Cart Luxury Atelier - Registered Trade Office - support@fashioncart.shop - +91 97710 39201", { x: 36, y: 44, size: 6.5, font: fontBold, color: goldAccent });
+  page.drawText("Fashion Cart Luxury Atelier - Registered Trade Office - fashioncart.support@gmail.com - +91 97710 39201", { x: 36, y: 44, size: 6.5, font: fontBold, color: goldAccent });
 
   const pdfBytes = await pdfDoc.save();
   const buffer = Buffer.from(pdfBytes);
