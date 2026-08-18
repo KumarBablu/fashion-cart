@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/providers/ToastProvider";
+import DownloadCsvButton from "./DownloadCsvButton";
 
 type Review = {
   id: string;
@@ -53,9 +54,12 @@ export default function ReviewsManager({ initialReviews }: { initialReviews: Rev
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Customer Reviews Moderation</h1>
-        <p className="text-xs text-dim mt-0.5">Review feedback submitted by buyers across your shop catalog.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Customer Reviews Moderation</h1>
+          <p className="text-xs text-dim mt-0.5">Review feedback submitted by buyers across your shop catalog.</p>
+        </div>
+        <DownloadCsvButton type="reviews" label="Export Reviews CSV" />
       </div>
 
       <div className="overflow-x-auto rounded-2xl border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>

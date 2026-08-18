@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import DownloadCsvButton from "@/components/admin/DownloadCsvButton";
 
 export const dynamic = "force-dynamic";
 
@@ -28,22 +29,31 @@ export default async function AdminInventoryPage({ searchParams }: { searchParam
   const filtered = status ? withStatus.filter((v) => v.stockStatus === status) : withStatus;
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl">Inventory</h1>
-        <div className="flex gap-2 text-xs">
-          {["IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"].map((s) => (
-            <Link
-              key={s}
-              href={`/admin/inventory?status=${s}`}
-              className={`rounded-full border px-3 py-1.5 font-medium ${status === s ? "border-ink bg-ink text-white" : "border-line text-ink-soft"}`}
-            >
-              {s.replace(/_/g, " ")}
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <span>📊</span> Inventory &amp; Stock Levels
+          </h1>
+          <p className="text-xs text-dim mt-0.5">Real-time stock quantities across all size and color variants ({filtered.length} SKUs)</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <DownloadCsvButton type="inventory" label="Export Inventory CSV" />
+          <div className="flex gap-1.5 text-xs">
+            {["IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"].map((s) => (
+              <Link
+                key={s}
+                href={`/admin/inventory?status=${s}`}
+                className={`rounded-full border px-3 py-1.5 font-bold ${status === s ? "border-amber-500 bg-amber-600 text-white" : "border-line text-ink-soft hover:border-amber-500"}`}
+              >
+                {s.replace(/_/g, " ")}
+              </Link>
+            ))}
+            <Link href="/admin/inventory" className={`rounded-full border px-3 py-1.5 font-bold ${!status ? "border-amber-500 bg-amber-600 text-white" : "border-line text-ink-soft hover:border-amber-500"}`}>
+              All
             </Link>
-          ))}
-          <Link href="/admin/inventory" className={`rounded-full border px-3 py-1.5 font-medium ${!status ? "border-ink bg-ink text-white" : "border-line text-ink-soft"}`}>
-            All
-          </Link>
+          </div>
         </div>
       </div>
 

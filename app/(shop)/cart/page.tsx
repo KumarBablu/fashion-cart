@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatINR } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
+import CouponDrawer from "@/components/checkout/CouponDrawer";
 
 type CartItem = {
   id: string;
@@ -73,16 +74,14 @@ export default function CartPage() {
   const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
   const total = Math.max(0, subtotal - discount + deliveryCharge);
 
-  async function handleApplyCoupon(e: React.FormEvent) {
-    e.preventDefault();
-    if (!couponInput.trim()) return;
-
+  async function applyCouponByCode(codeToApply: string) {
+    if (!codeToApply.trim()) return;
     setValidating(true);
     try {
       const res = await fetch("/api/coupons/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponInput.trim(), subtotal }),
+        body: JSON.stringify({ code: codeToApply.trim(), subtotal }),
       });
 
       const data = await res.json();
@@ -97,6 +96,12 @@ export default function CartPage() {
     } finally {
       setValidating(false);
     }
+  }
+
+  async function handleApplyCoupon(e: React.FormEvent) {
+    e.preventDefault();
+    if (!couponInput.trim()) return;
+    applyCouponByCode(couponInput);
   }
 
   if (loggedOut) {
@@ -287,6 +292,16 @@ export default function CartPage() {
                 </button>
               </form>
             )}
+
+            {/* 1-Click Available Coupons Modal */}
+            <CouponDrawer
+              subtotal={subtotal}
+              onApply={(code) => {
+                setCouponInput(code);
+                applyCouponByCode(code);
+              }}
+              appliedCode={appliedCoupon?.code}
+            />
           </div>
 
           {/* Pricing Box */}

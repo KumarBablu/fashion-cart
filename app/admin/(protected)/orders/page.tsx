@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatINR } from "@/lib/format";
 import { Prisma } from "@prisma/client";
+import DownloadCsvButton from "@/components/admin/DownloadCsvButton";
 
 export const dynamic = "force-dynamic";
 
@@ -46,18 +47,26 @@ export default async function AdminOrdersPage({
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div>
-      <h1 className="font-display text-2xl">Orders</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <span>📦</span> Orders Fulfillment Desk
+          </h1>
+          <p className="text-xs text-dim mt-0.5">Manage customer orders, track courier logistics, and verify payments ({total} total orders)</p>
+        </div>
+        <DownloadCsvButton type="orders" label="Export Orders CSV" />
+      </div>
 
-      <form className="mt-4 flex flex-wrap gap-2" method="GET">
-        <input name="q" defaultValue={sp.q} placeholder="Search order #, name, email…" className="rounded-md border border-line px-3 py-1.5 text-sm" />
-        <select name="status" defaultValue={sp.status ?? ""} className="rounded-md border border-line px-3 py-1.5 text-sm">
+      <form className="flex flex-wrap gap-2" method="GET">
+        <input name="q" defaultValue={sp.q} placeholder="Search order #, name, email…" className="rounded-xl border px-3 py-2 text-xs outline-none focus:border-primary" style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }} />
+        <select name="status" defaultValue={sp.status ?? ""} className="rounded-xl border px-3 py-2 text-xs outline-none focus:border-primary" style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}>
           <option value="">All statuses</option>
           {ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
           ))}
         </select>
-        <button className="rounded-md bg-ink px-4 py-1.5 text-sm font-semibold text-white">Filter</button>
+        <button className="rounded-xl bg-ink px-4 py-2 text-xs font-bold uppercase text-white shadow-xs cursor-pointer" style={{ backgroundColor: "var(--fc-primary)" }}>Filter</button>
       </form>
 
       <div className="mt-6 overflow-x-auto rounded-lg border border-line bg-white">

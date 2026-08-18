@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatINR } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
+import DownloadCsvButton from "./DownloadCsvButton";
 
 type Coupon = {
   id: string;
@@ -127,13 +128,16 @@ export default function CouponsManager({ initialCoupons }: { initialCoupons: Cou
           <h1 className="font-display text-2xl font-bold">Coupons & Promo Codes</h1>
           <p className="text-xs text-dim mt-0.5">Manage customer promotional discounts, percentage caps, and usage limits.</p>
         </div>
-        <button
-          onClick={() => setShowForm((p) => !p)}
-          className="px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-sm"
-          style={{ backgroundColor: "var(--fc-primary)" }}
-        >
-          {showForm ? "✕ Cancel" : "+ Create Promo Code"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <DownloadCsvButton type="coupons" label="Export Coupons CSV" />
+          <button
+            onClick={() => setShowForm((p) => !p)}
+            className="px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-sm cursor-pointer"
+            style={{ backgroundColor: "var(--fc-primary)" }}
+          >
+            {showForm ? "✕ Cancel" : "+ Create Promo Code"}
+          </button>
+        </div>
       </div>
 
       {/* Creation Modal / Form */}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatINR } from "@/lib/format";
+import DownloadCsvButton from "@/components/admin/DownloadCsvButton";
 
 export const dynamic = "force-dynamic";
 
@@ -16,15 +17,23 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
   const STATUSES = ["UNDER_REVIEW", "VERIFIED", "REJECTED", "PAYMENT_PENDING"];
 
   return (
-    <div>
-      <h1 className="font-display text-2xl">Payment Verification</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <span>💳</span> Payment Verification Desk
+          </h1>
+          <p className="text-xs text-dim mt-0.5">Verify UPI screenshot proofs, match bank UTR numbers, and approve invoices</p>
+        </div>
+        <DownloadCsvButton type="payments" label="Export Payments CSV" />
+      </div>
 
-      <div className="mt-4 flex gap-2 text-xs">
+      <div className="flex flex-wrap gap-2 text-xs">
         {STATUSES.map((s) => (
           <Link
             key={s}
             href={`/admin/payments?status=${s}`}
-            className={`rounded-full border px-3 py-1.5 font-medium ${status === s ? "border-ink bg-ink text-white" : "border-line text-ink-soft"}`}
+            className={`rounded-full border px-3 py-1.5 font-bold ${status === s ? "border-amber-500 bg-amber-600 text-white" : "border-line text-ink-soft hover:border-amber-500"}`}
           >
             {s.replace(/_/g, " ")}
           </Link>
