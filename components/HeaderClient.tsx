@@ -80,26 +80,21 @@ export default function HeaderClient({
 
   const activeCategories = categories;
 
-  function getCleanCategoryName(name: string) {
-    if (name.toLowerCase().includes("women")) return "Women";
-    if (name.toLowerCase().includes("men")) return "Men";
-    if (name.toLowerCase().includes("kid")) return "Kids";
-    return name.split(" ")[0];
-  }
-
   return (
-    <div className="flex h-16 items-center justify-between gap-2 sm:gap-6 w-full max-w-full">
+    <div className="flex h-16 items-center justify-between gap-3 w-full max-w-full">
       
-      {/* 1. Left Group: Mobile Hamburger Button + Brand Logo */}
+      {/* 1. Left Group: Menu Trigger + Official Brand Logo */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Mobile Hamburger Trigger */}
+        
+        {/* Menu Drawer Trigger Button */}
         <button
           type="button"
           onClick={() => setMenuDrawerOpen(true)}
-          className="md:hidden w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] flex items-center justify-center hover:bg-[#FAF8F5] transition-colors cursor-pointer shadow-2xs shrink-0"
+          className="flex items-center gap-2 h-9 px-3 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-[#141416] transition-all cursor-pointer shadow-2xs group shrink-0"
           aria-label="Open Navigation Menu"
         >
-          <MenuIcon />
+          <span className="text-[#C59B27] font-bold text-sm leading-none group-hover:scale-110 transition-transform">☰</span>
+          <span className="hidden sm:inline text-xs font-extrabold uppercase tracking-wider">Menu</span>
         </button>
 
         {/* Official Brand Logo */}
@@ -130,68 +125,21 @@ export default function HeaderClient({
         </Link>
       </div>
 
-      {/* 2. Center Group: Desktop Main Navigation Tabs */}
-      <nav className="hidden md:flex items-center gap-5 lg:gap-7 text-xs font-bold uppercase tracking-[0.14em]">
-        
-        {/* All Categories Slide-Over Menu Trigger */}
-        <button
-          type="button"
-          onClick={() => setMenuDrawerOpen(true)}
-          className="group relative flex items-center gap-2 py-2 text-[#141416] hover:text-[#C59B27] transition-colors cursor-pointer"
-          aria-label="Open full department catalog"
-        >
-          <span className="text-[#C59B27] text-sm leading-none font-bold group-hover:scale-110 transition-transform">☰</span>
-          <span className="whitespace-nowrap font-extrabold">All Categories</span>
-          <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-[#C59B27] transition-all duration-300 group-hover:w-full" />
-        </button>
-
-        {/* Top Department Links (Women, Men, etc.) */}
-        {activeCategories.slice(0, 3).map((cat) => (
-          <Link
-            key={cat.id}
-            href={`/shop?category=${cat.slug}`}
-            className="group relative py-2 text-[#141416] hover:text-[#C59B27] transition-colors whitespace-nowrap"
-          >
-            <span>{getCleanCategoryName(cat.name)}</span>
-            <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-[#C59B27] transition-all duration-300 group-hover:w-full" />
-          </Link>
-        ))}
-
-        {/* New Arrivals */}
-        <Link
-          href="/shop?sort=newest"
-          className="group relative py-2 text-[#141416] hover:text-[#C59B27] transition-colors whitespace-nowrap flex items-center gap-1.5"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] pulse-dot" />
-          <span>New Arrivals</span>
-          <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-[#C59B27] transition-all duration-300 group-hover:w-full" />
-        </Link>
-
-        {/* Super Deals */}
-        <Link
-          href="/shop?onSale=true"
-          className="group relative py-2 text-[#873E4C] hover:text-[#C59B27] transition-colors whitespace-nowrap flex items-center gap-1 font-extrabold"
-        >
-          <span>Super Deals</span>
-          <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-[#873E4C] transition-all duration-300 group-hover:w-full" />
-        </Link>
-      </nav>
-
-      {/* 3. Right Group: Action Controls (Search, Wishlist, Bag, Account) */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+      {/* 2. Right Group: ONLY Search, Wishlist, and Shopping Bag */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         
         {/* Search Trigger Button */}
         <button
           onClick={() => setSearchModalOpen(true)}
-          className="flex items-center gap-2 h-9 px-2.5 sm:px-4 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer group shrink-0"
+          className="flex items-center gap-2 h-9 px-3 sm:px-4 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer group shrink-0"
           aria-label="Search fine apparel"
           title="Quick search (Ctrl+K)"
         >
           <SearchIcon />
-          <span className="hidden lg:inline font-medium text-xs text-[#787C87] group-hover:text-[#141416] transition-colors">
+          <span className="hidden md:inline font-medium text-xs text-[#787C87] group-hover:text-[#141416] transition-colors">
             Search apparel…
           </span>
-          <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded-md bg-white text-[#141416] font-bold border border-[#E7DFD5] shadow-2xs">
+          <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded-md bg-white text-[#141416] font-bold border border-[#E7DFD5] shadow-2xs">
             ⌘K
           </kbd>
         </button>
@@ -223,31 +171,14 @@ export default function HeaderClient({
             </span>
           )}
         </button>
-
-        {/* User Account / Sign In */}
-        {isLoggedIn ? (
-          <Link
-            href="/account"
-            className="flex items-center justify-center gap-1.5 h-9 px-2.5 sm:px-4 rounded-full border border-[#E7DFD5] bg-white hover:border-[#141416] text-xs font-bold text-[#141416] transition-all shadow-2xs shrink-0"
-          >
-            <UserIcon />
-            <span className="hidden sm:inline max-w-[80px] truncate">{userName || "Account"}</span>
-          </Link>
-        ) : (
-          <Link
-            href="/login"
-            className="flex items-center justify-center h-9 px-2.5 sm:px-5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-xs shrink-0"
-          >
-            <span className="sm:hidden"><UserIcon /></span>
-            <span className="hidden sm:inline">Sign In</span>
-          </Link>
-        )}
       </div>
 
-      {/* Full-Height Slide-Over Category & Navigation Drawer */}
+      {/* Full-Height Slide-Over Navigation & Category Drawer */}
       <MenuDrawer
         isOpen={menuDrawerOpen}
         onClose={() => setMenuDrawerOpen(false)}
+        isLoggedIn={isLoggedIn}
+        userName={userName}
         categories={activeCategories}
       />
 
@@ -289,25 +220,6 @@ function CartIcon() {
       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
       <path d="M3 6h18" />
       <path d="M16 10a4 4 0 0 1-8 0" />
-    </svg>
-  );
-}
-
-function UserIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function MenuIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="4" x2="20" y1="12" y2="12" />
-      <line x1="4" x2="20" y1="6" y2="6" />
-      <line x1="4" x2="20" y1="18" y2="18" />
     </svg>
   );
 }

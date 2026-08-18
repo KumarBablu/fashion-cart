@@ -21,10 +21,14 @@ type HeaderCategory = {
 export default function MenuDrawer({
   isOpen,
   onClose,
+  isLoggedIn = false,
+  userName,
   categories = [],
 }: {
   isOpen: boolean;
   onClose: () => void;
+  isLoggedIn?: boolean;
+  userName?: string;
   categories?: HeaderCategory[];
 }) {
   const [mounted, setMounted] = useState(false);
@@ -55,6 +59,16 @@ export default function MenuDrawer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      sessionStorage.removeItem("fc_window_session");
+      window.location.href = "/login";
+    } catch {
+      window.location.href = "/login";
+    }
+  }
+
   if (!isOpen || !mounted) return null;
 
   const drawerContent = (
@@ -62,7 +76,7 @@ export default function MenuDrawer({
       className="fixed inset-0 z-[999999] overflow-hidden"
       role="dialog"
       aria-modal="true"
-      aria-label="Department Catalog & Navigation Menu"
+      aria-label="Atelier Navigation Menu"
     >
       {/* Darkened Backdrop Overlay with Subtle Blur */}
       <div
@@ -108,8 +122,75 @@ export default function MenuDrawer({
             </button>
           </div>
 
-          {/* 2. VIP Welcome Privilege Banner */}
-          <div className="px-5 py-3 border-b border-[#E7DFD5] bg-[#FBF4E2] flex items-center justify-between shrink-0">
+          {/* 2. User Account Card / Sign In Section */}
+          <div className="p-4 bg-white border-b border-[#E7DFD5] shrink-0">
+            {isLoggedIn ? (
+              <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E7DFD5] space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-full bg-[#141416] text-white flex items-center justify-center text-xs font-bold font-mono">
+                      {userName ? userName.charAt(0).toUpperCase() : "U"}
+                    </span>
+                    <div>
+                      <p className="text-xs font-bold text-[#141416] truncate max-w-[170px]">{userName || "Customer"}</p>
+                      <p className="text-[10px] text-[#C59B27] font-bold uppercase tracking-wider">VIP Member</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleLogout}
+                    className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+
+                <div className="pt-2 border-t border-[#E7DFD5]/60 flex items-center justify-between text-xs">
+                  <Link
+                    href="/account"
+                    onClick={onClose}
+                    className="font-bold text-[#141416] hover:text-[#C59B27] flex items-center gap-1 transition-colors"
+                  >
+                    <span>My Account &amp; Orders</span>
+                    <span>→</span>
+                  </Link>
+                  <Link
+                    href="/account/wishlist"
+                    onClick={onClose}
+                    className="font-semibold text-slate-500 hover:text-[#141416] transition-colors"
+                  >
+                    Wishlist
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-[#141416] to-[#25262B] text-white space-y-2.5 shadow-sm">
+                <div>
+                  <h4 className="font-display text-sm font-bold">Welcome to Fashion Cart</h4>
+                  <p className="text-[11px] text-slate-300">Sign in to track orders, save wishlists, and unlock VIP privileges.</p>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <Link
+                    href="/login"
+                    onClick={onClose}
+                    className="flex-1 py-2 px-3 rounded-xl bg-[#C59B27] hover:bg-[#D8AE3A] text-black font-bold text-xs text-center uppercase tracking-wider transition-colors shadow-xs"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={onClose}
+                    className="flex-1 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs text-center uppercase tracking-wider transition-colors border border-white/20"
+                  >
+                    Register
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. VIP Promo Banner */}
+          <div className="px-5 py-2.5 border-b border-[#E7DFD5] bg-[#FBF4E2] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2 text-xs text-[#8E6C0C]">
               <span>🏷️</span>
               <span>Use code <strong>FIRST10</strong> for 10% OFF</span>
@@ -119,14 +200,14 @@ export default function MenuDrawer({
             </span>
           </div>
 
-          {/* 3. Main Scrollable Categories & Links Body */}
+          {/* 4. Main Scrollable Categories & Navigation Body */}
           <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4">
             
             {/* Curated Department Cards */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87]">
-                  Curated Departments
+                  Departments &amp; Catalog
                 </span>
                 <span className="text-[10px] font-mono text-[#C59B27] font-bold">
                   {categories.length} Collections
@@ -196,8 +277,8 @@ export default function MenuDrawer({
               })}
             </div>
 
-            {/* Featured Highlight Cards */}
-            <div className="space-y-2 pt-2">
+            {/* Featured Highlights & Quick Edits */}
+            <div className="space-y-2 pt-1">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87] px-1 block">
                 Highlights &amp; Offers
               </span>
@@ -241,10 +322,10 @@ export default function MenuDrawer({
               </Link>
             </div>
 
-            {/* Concierge & Support Quick Links */}
+            {/* Atelier Services & Concierge */}
             <div className="p-4 rounded-2xl bg-white border border-[#E7DFD5] space-y-2.5 shadow-2xs">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87] block">
-                Atelier Services
+                Atelier Concierge
               </span>
               <div className="space-y-1.5 text-xs font-semibold">
                 <Link
@@ -260,7 +341,7 @@ export default function MenuDrawer({
                   onClick={onClose}
                   className="flex items-center justify-between py-1 text-[#141416] hover:text-[#C59B27] transition-colors"
                 >
-                  <span>💬 WhatsApp Stylist &amp; Concierge</span>
+                  <span>💬 WhatsApp Stylist Concierge</span>
                   <span>→</span>
                 </Link>
               </div>
@@ -268,7 +349,7 @@ export default function MenuDrawer({
 
           </div>
 
-          {/* 4. Bottom Footer */}
+          {/* 5. Bottom Footer */}
           <div className="p-4 border-t border-[#E7DFD5] bg-white flex items-center justify-between text-xs text-[#787C87] shrink-0">
             <span>Fashion Cart Atelier · 2026</span>
             <Link
@@ -276,7 +357,7 @@ export default function MenuDrawer({
               onClick={onClose}
               className="font-bold text-[#141416] hover:text-[#C59B27] hover:underline"
             >
-              Need Help? Contact Us →
+              Need Help? Concierge →
             </Link>
           </div>
 
