@@ -36,26 +36,30 @@ export default function PaymentSettingsForm({
 
     try {
       const res = await fetch("/api/admin/settings/payment", { method: "POST", body: formData });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: "Server response error" }));
       setSaving(false);
 
       if (!res.ok) {
-        setError(data.error);
+        const msg = data.error || "Failed to update payment settings";
+        setError(msg);
+        toastError("Save Failed", msg);
         return;
       }
-      success("Payment Settings Saved", "Updated UPI QR and payment preferences.");
+      success("Payment Settings Saved", "Updated UPI QR code and payment options.");
       router.refresh();
-    } catch {
-      toastError("Error", "Network request failed.");
+    } catch (e) {
+      const msg = (e as Error)?.message || "Network request failed.";
+      setError(msg);
+      toastError("Error", msg);
       setSaving(false);
     }
   }
 
   return (
-    <form onSubmit={save} className="space-y-4 rounded-2xl border p-6" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
+    <form onSubmit={save} className="space-y-4 rounded-2xl border p-6 card-theme bg-white shadow-xs" style={{ borderColor: "var(--fc-border)" }}>
       <div>
         <span className="text-xs font-bold uppercase tracking-wide text-dim">Active UPI QR Code</span>
-        <div className="mt-2 relative h-44 w-44 rounded-xl border overflow-hidden p-2 bg-white" style={{ borderColor: "var(--fc-border)" }}>
+        <div className="mt-2 relative h-48 w-48 rounded-2xl border overflow-hidden p-2 bg-[#FAF8F5] shadow-2xs" style={{ borderColor: "var(--fc-border)" }}>
           {preview ? (
             <Image src={preview} alt="Payment QR" fill className="object-contain p-2" />
           ) : (
@@ -74,8 +78,9 @@ export default function PaymentSettingsForm({
             setFile(f);
             if (f) setPreview(URL.createObjectURL(f));
           }}
-          className="mt-1 block text-xs file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-black/10 dark:file:bg-white/10 file:text-inherit"
+          className="mt-1 block text-xs file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#141416] file:text-white hover:file:bg-[#25262B] file:cursor-pointer"
         />
+        <span className="text-[10px] text-dim block mt-1">Supports PNG, JPG, JPEG, and WebP (up to 5MB)</span>
       </label>
 
       <label className="block">
@@ -83,37 +88,38 @@ export default function PaymentSettingsForm({
         <input
           value={upiId}
           onChange={(e) => setUpiId(e.target.value)}
-          className="mt-1 w-full rounded-xl border px-3.5 py-2 text-xs font-mono font-bold outline-none focus:border-primary"
-          style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}
+          placeholder="fashioncart@okaxis"
+          className="mt-1 w-full rounded-xl border px-3.5 py-2.5 text-xs font-mono font-bold outline-none focus:border-[#C59B27] bg-[#FAF8F5]"
+          style={{ borderColor: "var(--fc-border)" }}
         />
       </label>
 
-      <div className="p-4 rounded-xl border space-y-3" style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}>
+      <div className="p-4 rounded-xl border space-y-3 bg-[#FAF8F5]" style={{ borderColor: "var(--fc-border)" }}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold">Cash on Delivery (COD)</p>
+            <p className="text-xs font-bold text-[#141416]">Cash on Delivery (COD)</p>
             <p className="text-[11px] text-dim">Allow customers to pay upon package delivery</p>
           </div>
           <input
             type="checkbox"
             checked={codEnabled}
             onChange={(e) => setCodEnabled(e.target.checked)}
-            className="h-4 w-4 rounded"
+            className="h-4 w-4 rounded accent-[#141416]"
           />
         </div>
 
         {codEnabled && (
-          <div>
-            <span className="text-[11px] font-bold text-dim uppercase">Extra COD Handling Fee (₹)</span>
+          <label className="block pt-2 border-t" style={{ borderColor: "var(--fc-border)" }}>
+            <span className="text-xs font-bold uppercase tracking-wide text-dim">Extra COD Handling Fee (₹)</span>
             <input
               type="number"
-              min={0}
+              min="0"
               value={codFee}
               onChange={(e) => setCodFee(e.target.value)}
-              className="mt-1 w-32 rounded-lg border px-3 py-1.5 text-xs outline-none focus:border-primary"
-              style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}
+              className="mt-1 w-32 rounded-xl border px-3.5 py-2 text-xs font-bold outline-none focus:border-[#C59B27] bg-white"
+              style={{ borderColor: "var(--fc-border)" }}
             />
-          </div>
+          </label>
         )}
       </div>
 
@@ -123,19 +129,24 @@ export default function PaymentSettingsForm({
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
           rows={3}
-          className="mt-1 w-full rounded-xl border px-3.5 py-2 text-xs outline-none focus:border-primary"
-          style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}
+          className="mt-1 w-full rounded-xl border px-3.5 py-2 text-xs outline-none focus:border-[#C59B27] bg-[#FAF8F5]"
+          style={{ borderColor: "var(--fc-border)" }}
         />
       </label>
 
-      {error && <p className="text-xs text-rose-500 font-semibold">{error}</p>}
+      {error && (
+        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+          {error}
+        </div>
+      )}
 
       <button
+        type="submit"
         disabled={saving}
-        className="rounded-full px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm disabled:opacity-50"
-        style={{ backgroundColor: "var(--fc-primary)" }}
+        className="rounded-full bg-[#141416] text-white px-6 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-[#25262B] transition-all cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-2"
       >
-        {saving ? "Saving…" : "Save Payment Settings"}
+        {saving && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+        <span>{saving ? "Saving Changes…" : "Save Payment Settings"}</span>
       </button>
     </form>
   );
