@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import CartDrawer from "@/components/cart/CartDrawer";
 import SearchModal from "@/components/search/SearchModal";
@@ -37,7 +38,7 @@ export default function HeaderClient({
   const [mobileExpandedCat, setMobileExpandedCat] = useState<string | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const deptDropdownRef = useRef<HTMLDivElement>(null);
+  const navContainerRef = useRef<HTMLDivElement>(null);
 
   function refreshCartCount() {
     if (!isLoggedIn) return;
@@ -80,7 +81,7 @@ export default function HeaderClient({
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setCategoriesOpen(false);
       }
-      if (deptDropdownRef.current && !deptDropdownRef.current.contains(e.target as Node)) {
+      if (navContainerRef.current && !navContainerRef.current.contains(e.target as Node)) {
         setActiveDeptHover(null);
       }
     }
@@ -95,250 +96,246 @@ export default function HeaderClient({
 
   const activeCategories = categories;
 
+  // Short label helper to prevent top bar overflow/wrapping
+  function getShortCategoryName(name: string) {
+    if (name.toLowerCase().includes("women")) return "Women's";
+    if (name.toLowerCase().includes("men")) return "Men's";
+    if (name.toLowerCase().includes("kid")) return "Kids";
+    return name.split(" ")[0];
+  }
+
   return (
     <>
-      {/* Desktop Main Navigation Links with Luxury Card Menus & Sub-menus */}
-      <nav className="hidden md:flex items-center gap-2 text-xs font-semibold">
-        
-        {/* 1. All Categories Interactive Mega-Menu Card Button */}
+      {/* Desktop Main Navigation Bar */}
+      <nav
+        ref={navContainerRef}
+        className="hidden md:flex items-center gap-1.5 lg:gap-2 text-xs font-semibold"
+      >
+        {/* 1. All Categories Dropdown Button */}
         <div className="relative" ref={dropdownRef}>
           <button
-            onClick={() => setCategoriesOpen((prev) => !prev)}
+            onClick={() => {
+              setCategoriesOpen((prev) => !prev);
+              setActiveDeptHover(null);
+            }}
             onMouseEnter={() => {
               setCategoriesOpen(true);
               setActiveDeptHover(null);
             }}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-full border transition-all duration-200 cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
               categoriesOpen
-                ? "bg-[#141416] text-white border-[#141416] shadow-sm"
-                : "text-[#141416] border-[#E7DFD5] bg-[#FAF8F5]/80 hover:bg-white hover:border-[#C59B27] shadow-2xs"
+                ? "bg-[#141416] text-white border-[#141416] shadow-xs"
+                : "text-[#141416] border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27]"
             }`}
             aria-expanded={categoriesOpen}
-            aria-haspopup="true"
           >
-            <span className="text-sm">🗂️</span>
-            <span className="font-bold">All Categories</span>
+            <span className="font-bold whitespace-nowrap">All Categories</span>
             <svg
-              width="12"
-              height="12"
+              width="10"
+              height="10"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2.5"
-              className={`transition-transform duration-200 ${categoriesOpen ? "rotate-180 text-[#C59B27]" : ""}`}
+              className={`transition-transform duration-200 ${categoriesOpen ? "rotate-180 text-[#C59B27]" : "text-[#787C87]"}`}
             >
               <path d="m6 9 6 6 6-6" />
             </svg>
           </button>
 
-          {/* Interactive Dynamic Category Mega-Menu Card Container */}
+          {/* Luxury Mega-Menu Card Container */}
           {categoriesOpen && (
             <div
               onMouseLeave={() => setCategoriesOpen(false)}
-              className="absolute left-0 top-full mt-2 w-[760px] rounded-3xl bg-white/98 backdrop-blur-2xl border border-[#E7DFD5] shadow-2xl p-6 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50 card-theme"
-              style={{ borderColor: "var(--fc-border)" }}
+              className="absolute left-0 top-full mt-2 w-[680px] rounded-3xl bg-white/98 backdrop-blur-2xl border border-[#E7DFD5] shadow-2xl p-5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 z-50 card-theme"
             >
-              {/* Top Accent Luxury Border */}
+              {/* Top Accent Gold Trim */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C59B27] via-[#E0BF48] to-[#141416]" />
 
-              {/* Header Label */}
-              <div className="flex items-center justify-between pb-4 border-b border-[#E7DFD5]">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#C59B27]" />
-                  <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#787C87]">
-                    Curated Atelier Catalog &amp; Departments
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono text-[#C59B27] font-bold">
-                  {activeCategories.length} Departments Active
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-[#E7DFD5]">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87]">
+                  Curated Atelier Catalog
                 </span>
-              </div>
-
-              {/* Department Cards Grid */}
-              <div className="grid grid-cols-3 gap-4 pt-4">
-                {activeCategories.length > 0 ? (
-                  activeCategories.map((col) => (
-                    <div
-                      key={col.id}
-                      className="group/card rounded-2xl p-3.5 bg-[#FAF8F5]/70 hover:bg-white border border-[#E7DFD5] hover:border-[#C59B27] transition-all duration-200 shadow-2xs hover:shadow-md flex flex-col justify-between"
-                    >
-                      <div>
-                        <Link
-                          href={`/shop?category=${col.slug}`}
-                          onClick={() => setCategoriesOpen(false)}
-                          className="flex items-center justify-between text-xs font-black text-[#141416] group-hover/card:text-[#C59B27] transition-colors pb-2 border-b border-[#E7DFD5]/60"
-                        >
-                          <span className="flex items-center gap-1.5">
-                            <span>✨</span>
-                            <span>{col.name}</span>
-                          </span>
-                          <span className="text-[#C59B27] font-bold text-xs opacity-0 group-hover/card:opacity-100 group-hover/card:translate-x-0.5 transition-all">
-                            →
-                          </span>
-                        </Link>
-
-                        {/* Subcategory Pill Items */}
-                        {(col.children ?? []).length > 0 ? (
-                          <ul className="space-y-1 pt-2 text-[11px] text-[#4B4E56]">
-                            {col.children!.map((item) => (
-                              <li key={item.id}>
-                                <Link
-                                  href={`/shop?category=${item.slug}`}
-                                  onClick={() => setCategoriesOpen(false)}
-                                  className="px-2 py-1 rounded-lg hover:bg-[#F4EFEA] hover:text-[#C59B27] flex items-center justify-between group/sub transition-all"
-                                >
-                                  <span className="truncate">{item.name}</span>
-                                  <span className="text-[10px] text-[#787C87] group-hover/sub:text-[#C59B27] opacity-0 group-hover/sub:opacity-100 transition-opacity">
-                                    ↗
-                                  </span>
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-[10px] text-[#787C87] italic pt-2">Full departmental line</p>
-                        )}
-                      </div>
-
-                      <div className="pt-2 mt-2 border-t border-[#E7DFD5]/40 text-right">
-                        <Link
-                          href={`/shop?category=${col.slug}`}
-                          onClick={() => setCategoriesOpen(false)}
-                          className="text-[10px] font-bold text-[#C59B27] hover:underline"
-                        >
-                          View All {col.name.split(" ")[0]} →
-                        </Link>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="col-span-full py-8 text-center text-xs text-[#787C87]">
-                    No active categories currently available.
-                  </div>
-                )}
-              </div>
-
-              {/* Bottom Privilege & Hub Footer */}
-              <div className="mt-4 pt-3.5 border-t border-[#E7DFD5] flex items-center justify-between text-xs bg-[#FAF8F5]/80 -mx-6 -mb-6 p-4 px-6 rounded-b-3xl">
-                <div className="flex items-center gap-2 text-[#787C87] text-[11px]">
-                  <span>🏷️</span>
-                  <span>Flat <strong>10% Off</strong> with coupon <strong className="text-[#141416] font-mono bg-[#E7DFD5] px-1.5 py-0.5 rounded">FIRST10</strong></span>
-                </div>
                 <Link
                   href="/categories"
                   onClick={() => setCategoriesOpen(false)}
-                  className="font-bold text-[#141416] hover:text-[#C59B27] hover:underline flex items-center gap-1 text-xs"
+                  className="text-[11px] font-bold text-[#C59B27] hover:underline flex items-center gap-1"
                 >
-                  <span>Explore Category Hub</span>
+                  <span>Category Gallery Hub</span>
                   <span>→</span>
                 </Link>
+              </div>
+
+              {/* Dynamic 2-Column or 3-Column Balanced Grid */}
+              <div className="grid grid-cols-2 gap-4 pt-4">
+                {activeCategories.map((col) => (
+                  <div
+                    key={col.id}
+                    className="rounded-2xl p-4 bg-[#FAF8F5]/80 hover:bg-white border border-[#E7DFD5] hover:border-[#C59B27] transition-all duration-200 shadow-2xs hover:shadow-xs flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Department Title */}
+                      <Link
+                        href={`/shop?category=${col.slug}`}
+                        onClick={() => setCategoriesOpen(false)}
+                        className="flex items-center justify-between text-xs font-black text-[#141416] hover:text-[#C59B27] transition-colors pb-2 border-b border-[#E7DFD5]"
+                      >
+                        <span className="flex items-center gap-1.5 truncate">
+                          <span>✨</span>
+                          <span>{col.name}</span>
+                        </span>
+                        <span className="text-[#C59B27] font-bold text-xs shrink-0">→</span>
+                      </Link>
+
+                      {/* Subcategories List */}
+                      {(col.children ?? []).length > 0 ? (
+                        <ul className="space-y-1 pt-2 text-[11px] text-[#4B4E56]">
+                          {col.children!.map((item) => (
+                            <li key={item.id}>
+                              <Link
+                                href={`/shop?category=${item.slug}`}
+                                onClick={() => setCategoriesOpen(false)}
+                                className="px-2 py-1.5 rounded-xl hover:bg-[#F4EFEA] hover:text-[#C59B27] flex items-center justify-between group transition-all"
+                              >
+                                <span className="truncate">{item.name}</span>
+                                <span className="text-[10px] text-[#787C87] group-hover:text-[#C59B27] opacity-0 group-hover:opacity-100 transition-opacity">
+                                  ↗
+                                </span>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-[10px] text-[#787C87] italic pt-2">Full departmental line</p>
+                      )}
+                    </div>
+
+                    <div className="pt-2.5 mt-2 border-t border-[#E7DFD5]/50 text-right">
+                      <Link
+                        href={`/shop?category=${col.slug}`}
+                        onClick={() => setCategoriesOpen(false)}
+                        className="text-[10px] font-bold text-[#C59B27] hover:underline"
+                      >
+                        Explore All {getShortCategoryName(col.name)} →
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom VIP Ribbon */}
+              <div className="mt-4 pt-3 border-t border-[#E7DFD5] flex items-center justify-between text-xs bg-[#FAF8F5]/80 -mx-5 -mb-5 p-3.5 px-5 rounded-b-3xl">
+                <div className="flex items-center gap-2 text-[#787C87] text-[11px]">
+                  <span>🏷️</span>
+                  <span>Use code <strong className="text-[#141416] font-mono bg-[#E7DFD5] px-1.5 py-0.5 rounded">FIRST10</strong> for 10% OFF</span>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-[#C59B27] uppercase">
+                  Free Express Delivery &gt; ₹999
+                </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* 2. Individual Department Cards & Sub-menus (e.g. Women's, Men's) */}
-        <div className="flex items-center gap-1.5" ref={deptDropdownRef}>
-          {activeCategories.slice(0, 3).map((cat) => {
-            const hasSub = (cat.children ?? []).length > 0;
-            const isHovered = activeDeptHover === cat.id;
+        {/* 2. Top Bar Department Links (Concise, single-line tabs with hover drop cards) */}
+        {activeCategories.slice(0, 3).map((cat) => {
+          const hasSub = (cat.children ?? []).length > 0;
+          const isHovered = activeDeptHover === cat.id;
+          const shortName = getShortCategoryName(cat.name);
 
-            return (
-              <div
-                key={cat.id}
-                className="relative"
-                onMouseEnter={() => {
-                  setActiveDeptHover(cat.id);
-                  setCategoriesOpen(false);
-                }}
+          return (
+            <div
+              key={cat.id}
+              className="relative"
+              onMouseEnter={() => {
+                setActiveDeptHover(cat.id);
+                setCategoriesOpen(false);
+              }}
+            >
+              <Link
+                href={`/shop?category=${cat.slug}`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all duration-150 whitespace-nowrap ${
+                  isHovered
+                    ? "bg-[#141416] text-white border-[#141416] font-bold shadow-2xs"
+                    : "text-[#141416] border-transparent hover:border-[#E7DFD5] hover:bg-[#FAF8F5]"
+                }`}
               >
-                <Link
-                  href={`/shop?category=${cat.slug}`}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all duration-200 ${
-                    isHovered
-                      ? "bg-[#141416] text-white border-[#141416] shadow-2xs font-bold"
-                      : "text-[#141416] border-transparent hover:border-[#E7DFD5] hover:bg-[#F4EFEA]"
-                  }`}
-                >
-                  <span>{cat.name}</span>
-                  {hasSub && (
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      className={`transition-transform duration-200 ${isHovered ? "rotate-180 text-[#C59B27]" : "text-[#787C87]"}`}
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  )}
-                </Link>
-
-                {/* Sub-menu Dropdown Card */}
-                {hasSub && isHovered && (
-                  <div
-                    onMouseLeave={() => setActiveDeptHover(null)}
-                    className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white/98 backdrop-blur-2xl border border-[#E7DFD5] shadow-2xl p-3.5 space-y-2 animate-in fade-in slide-in-from-top-2 duration-150 z-50 card-theme"
+                <span>{shortName}</span>
+                {hasSub && (
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className={`transition-transform duration-150 ${isHovered ? "rotate-180 text-[#C59B27]" : "text-[#787C87]"}`}
                   >
-                    {/* Header */}
-                    <div className="px-2 pb-2 border-b border-[#E7DFD5] flex items-center justify-between">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#C59B27]">
-                        {cat.name} Collection
-                      </span>
-                      <span className="text-[9px] font-mono text-[#787C87] font-bold">
-                        {cat.children!.length} Styles
-                      </span>
-                    </div>
-
-                    {/* Subcategories List */}
-                    <div className="space-y-0.5 max-h-64 overflow-y-auto">
-                      {cat.children!.map((sub) => (
-                        <Link
-                          key={sub.id}
-                          href={`/shop?category=${sub.slug}`}
-                          onClick={() => setActiveDeptHover(null)}
-                          className="flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold text-[#141416] hover:bg-[#F4EFEA] hover:text-[#C59B27] transition-all group"
-                        >
-                          <span>{sub.name}</span>
-                          <span className="text-[11px] text-[#C59B27] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
-                            →
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-
-                    {/* Bottom CTA */}
-                    <div className="pt-2 border-t border-[#E7DFD5]">
-                      <Link
-                        href={`/shop?category=${cat.slug}`}
-                        onClick={() => setActiveDeptHover(null)}
-                        className="block w-full py-1.5 px-2 rounded-lg bg-[#141416] hover:bg-[#25262B] text-white text-[10px] font-bold uppercase tracking-wider text-center transition-colors"
-                      >
-                        Explore All {cat.name} →
-                      </Link>
-                    </div>
-                  </div>
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
                 )}
-              </div>
-            );
-          })}
-        </div>
+              </Link>
 
-        {/* 3. New Arrivals Feature Capsule */}
+              {/* Dedicated Department Sub-Menu Dropdown Card */}
+              {hasSub && isHovered && (
+                <div
+                  onMouseLeave={() => setActiveDeptHover(null)}
+                  className="absolute left-0 top-full mt-2 w-60 rounded-2xl bg-white/98 backdrop-blur-2xl border border-[#E7DFD5] shadow-2xl p-3 space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-150 z-50 card-theme"
+                >
+                  <div className="px-2.5 pb-2 border-b border-[#E7DFD5] flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#C59B27]">
+                      {shortName} Edit
+                    </span>
+                    <span className="text-[9px] font-mono text-[#787C87] font-bold">
+                      {cat.children!.length} Styles
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5 max-h-56 overflow-y-auto">
+                    {cat.children!.map((sub) => (
+                      <Link
+                        key={sub.id}
+                        href={`/shop?category=${sub.slug}`}
+                        onClick={() => setActiveDeptHover(null)}
+                        className="flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#141416] hover:bg-[#F4EFEA] hover:text-[#C59B27] transition-all group"
+                      >
+                        <span className="truncate">{sub.name}</span>
+                        <span className="text-[10px] text-[#C59B27] opacity-0 group-hover:opacity-100 transition-opacity">
+                          →
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className="pt-1.5 border-t border-[#E7DFD5]">
+                    <Link
+                      href={`/shop?category=${cat.slug}`}
+                      onClick={() => setActiveDeptHover(null)}
+                      className="block w-full py-1.5 px-2 rounded-lg bg-[#141416] hover:bg-[#25262B] text-white text-[10px] font-bold uppercase tracking-wider text-center transition-colors"
+                    >
+                      View All {shortName} →
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* 3. New Arrivals Capsule */}
         <Link
           href="/shop?sort=newest"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs font-semibold"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs whitespace-nowrap"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] pulse-dot" />
           <span>New Arrivals</span>
         </Link>
 
-        {/* 4. Super Deals Luxury Badge Capsule */}
+        {/* 4. Super Deals Capsule */}
         <Link
           href="/shop?onSale=true"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#873E4C]/30 bg-[#873E4C]/5 text-[#873E4C] hover:bg-[#873E4C] hover:text-white transition-all shadow-2xs font-bold"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#873E4C]/30 bg-[#873E4C]/5 text-[#873E4C] hover:bg-[#873E4C] hover:text-white transition-all shadow-2xs font-bold whitespace-nowrap"
         >
           <span>🏷️</span>
           <span>Super Deals</span>
@@ -350,7 +347,7 @@ export default function HeaderClient({
         {/* Search Modal Trigger */}
         <button
           onClick={() => setSearchModalOpen(true)}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-[#E7DFD5] bg-[#F4EFEA]/70 hover:bg-[#F4EFEA] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer"
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#E7DFD5] bg-[#F4EFEA]/70 hover:bg-[#F4EFEA] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer"
           aria-label="Search catalog"
           title="Search products (Ctrl+K)"
         >
@@ -361,10 +358,10 @@ export default function HeaderClient({
           </kbd>
         </button>
 
-        {/* Wishlist Button with Floating Badge */}
+        {/* Wishlist Button */}
         <Link
           href="/account/wishlist"
-          className="relative p-2.5 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs"
+          className="relative p-2 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs"
           aria-label="View Wishlist"
         >
           <WishlistIcon />
@@ -378,7 +375,7 @@ export default function HeaderClient({
         {/* Shopping Cart Drawer Trigger Button */}
         <button
           onClick={() => setCartDrawerOpen(true)}
-          className="relative p-2.5 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs cursor-pointer"
+          className="relative p-2 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs cursor-pointer"
           aria-label="Open Shopping Bag"
         >
           <CartIcon />
@@ -393,7 +390,7 @@ export default function HeaderClient({
         {isLoggedIn ? (
           <Link
             href="/account"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#E7DFD5] bg-white hover:border-[#141416] text-xs font-bold text-[#141416] transition-all shadow-2xs"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#E7DFD5] bg-white hover:border-[#141416] text-xs font-bold text-[#141416] transition-all shadow-2xs"
           >
             <UserIcon />
             <span className="max-w-[80px] truncate">{userName || "Account"}</span>
@@ -401,7 +398,7 @@ export default function HeaderClient({
         ) : (
           <Link
             href="/login"
-            className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-xs"
+            className="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-xs"
           >
             Sign In
           </Link>
@@ -410,7 +407,7 @@ export default function HeaderClient({
         {/* Mobile Hamburger Toggle Button */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden p-2.5 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:bg-[#F4EFEA] transition-colors cursor-pointer"
+          className="md:hidden p-2 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:bg-[#F4EFEA] transition-colors cursor-pointer"
           aria-label="Toggle Navigation Menu"
         >
           {menuOpen ? <CloseIcon /> : <MenuIcon />}
