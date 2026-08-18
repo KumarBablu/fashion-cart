@@ -222,7 +222,7 @@ export default function CustomerDetailManager({ customer: initialCustomer }: Cus
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            {customer.email} · {customer.phone ?? "No phone recorded"} · Customer ID: {customer.id}
+            {customer.email} · {customer.phone ?? "No phone recorded"} · <span className="font-mono font-bold text-slate-700">USR-{customer.id.slice(-6).toUpperCase()}</span>
           </p>
         </div>
 

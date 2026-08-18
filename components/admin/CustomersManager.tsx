@@ -394,7 +394,9 @@ export default function CustomersManager({ initialCustomers }: { initialCustomer
                         >
                           {c.name}
                         </Link>
-                        <p className="text-[11px] text-slate-400 font-mono mt-0.5">{c.id.slice(-8)}</p>
+                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                          <span className="font-semibold text-slate-700">USR-{c.id.slice(-6).toUpperCase()}</span>
+                        </p>
                       </div>
                     </div>
                   </td>
