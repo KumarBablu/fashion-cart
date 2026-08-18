@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import CartDrawer from "@/components/cart/CartDrawer";
+import MenuDrawer from "@/components/navigation/MenuDrawer";
 import SearchModal from "@/components/search/SearchModal";
 
 type SubCat = {
@@ -28,17 +28,11 @@ export default function HeaderClient({
   userName?: string;
   categories?: HeaderCategory[];
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const [activeDeptHover, setActiveDeptHover] = useState<string | null>(null);
+  const [menuDrawerOpen, setMenuDrawerOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [cartCount, setCartCount] = useState<number>(0);
   const [wishlistCount, setWishlistCount] = useState<number>(0);
-  const [mobileExpandedCat, setMobileExpandedCat] = useState<string | null>(null);
-
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const navContainerRef = useRef<HTMLDivElement>(null);
 
   function refreshCartCount() {
     if (!isLoggedIn) return;
@@ -77,26 +71,14 @@ export default function HeaderClient({
     window.addEventListener("cart-updated", handleCartUpdate);
     window.addEventListener("wishlist-updated", handleWishlistUpdate);
 
-    function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setCategoriesOpen(false);
-      }
-      if (navContainerRef.current && !navContainerRef.current.contains(e.target as Node)) {
-        setActiveDeptHover(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-
     return () => {
       window.removeEventListener("cart-updated", handleCartUpdate);
       window.removeEventListener("wishlist-updated", handleWishlistUpdate);
-      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isLoggedIn]);
 
   const activeCategories = categories;
 
-  // Short label helper to prevent top bar overflow/wrapping
   function getShortCategoryName(name: string) {
     if (name.toLowerCase().includes("women")) return "Women's";
     if (name.toLowerCase().includes("men")) return "Men's";
@@ -107,223 +89,33 @@ export default function HeaderClient({
   return (
     <>
       {/* Desktop Main Navigation Bar */}
-      <nav
-        ref={navContainerRef}
-        className="hidden md:flex items-center gap-1.5 lg:gap-2 text-xs font-semibold"
-      >
-        {/* 1. All Categories Dropdown Button */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => {
-              setCategoriesOpen((prev) => !prev);
-              setActiveDeptHover(null);
-            }}
-            onMouseEnter={() => {
-              setCategoriesOpen(true);
-              setActiveDeptHover(null);
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
-              categoriesOpen
-                ? "bg-[#141416] text-white border-[#141416] shadow-xs"
-                : "text-[#141416] border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27]"
-            }`}
-            aria-expanded={categoriesOpen}
+      <nav className="hidden md:flex items-center gap-2 text-xs font-semibold">
+        
+        {/* 1. All Categories Slide-Over Menu Button */}
+        <button
+          onClick={() => setMenuDrawerOpen(true)}
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-[#141416] transition-all shadow-2xs cursor-pointer group"
+          aria-label="Open Category & Department Directory"
+        >
+          <span className="text-[#C59B27] font-bold text-sm leading-none">☰</span>
+          <span className="font-bold">All Categories</span>
+          <span className="text-[10px] font-mono font-bold text-[#787C87] bg-white border border-[#E7DFD5] px-1.5 py-0.2 rounded-full">
+            {activeCategories.length}
+          </span>
+        </button>
+
+        {/* 2. Top Bar Department Links */}
+        {activeCategories.slice(0, 3).map((cat) => (
+          <Link
+            key={cat.id}
+            href={`/shop?category=${cat.slug}`}
+            className="px-3 py-1.5 rounded-full border border-transparent hover:border-[#E7DFD5] hover:bg-[#FAF8F5] text-[#141416] transition-all whitespace-nowrap"
           >
-            <span className="font-bold whitespace-nowrap">All Categories</span>
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              className={`transition-transform duration-200 ${categoriesOpen ? "rotate-180 text-[#C59B27]" : "text-[#787C87]"}`}
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </button>
+            {getShortCategoryName(cat.name)}
+          </Link>
+        ))}
 
-          {/* Luxury Mega-Menu Card Container */}
-          {categoriesOpen && (
-            <div
-              onMouseLeave={() => setCategoriesOpen(false)}
-              className="absolute left-0 top-full mt-2 w-[680px] rounded-3xl bg-white/98 backdrop-blur-2xl border border-[#E7DFD5] shadow-2xl p-5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 z-50 card-theme"
-            >
-              {/* Top Accent Gold Trim */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C59B27] via-[#E0BF48] to-[#141416]" />
-
-              {/* Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-[#E7DFD5]">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87]">
-                  Curated Atelier Catalog
-                </span>
-                <Link
-                  href="/categories"
-                  onClick={() => setCategoriesOpen(false)}
-                  className="text-[11px] font-bold text-[#C59B27] hover:underline flex items-center gap-1"
-                >
-                  <span>Category Gallery Hub</span>
-                  <span>→</span>
-                </Link>
-              </div>
-
-              {/* Dynamic 2-Column or 3-Column Balanced Grid */}
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                {activeCategories.map((col) => (
-                  <div
-                    key={col.id}
-                    className="rounded-2xl p-4 bg-[#FAF8F5]/80 hover:bg-white border border-[#E7DFD5] hover:border-[#C59B27] transition-all duration-200 shadow-2xs hover:shadow-xs flex flex-col justify-between"
-                  >
-                    <div>
-                      {/* Department Title */}
-                      <Link
-                        href={`/shop?category=${col.slug}`}
-                        onClick={() => setCategoriesOpen(false)}
-                        className="flex items-center justify-between text-xs font-black text-[#141416] hover:text-[#C59B27] transition-colors pb-2 border-b border-[#E7DFD5]"
-                      >
-                        <span className="flex items-center gap-1.5 truncate">
-                          <span>✨</span>
-                          <span>{col.name}</span>
-                        </span>
-                        <span className="text-[#C59B27] font-bold text-xs shrink-0">→</span>
-                      </Link>
-
-                      {/* Subcategories List */}
-                      {(col.children ?? []).length > 0 ? (
-                        <ul className="space-y-1 pt-2 text-[11px] text-[#4B4E56]">
-                          {col.children!.map((item) => (
-                            <li key={item.id}>
-                              <Link
-                                href={`/shop?category=${item.slug}`}
-                                onClick={() => setCategoriesOpen(false)}
-                                className="px-2 py-1.5 rounded-xl hover:bg-[#F4EFEA] hover:text-[#C59B27] flex items-center justify-between group transition-all"
-                              >
-                                <span className="truncate">{item.name}</span>
-                                <span className="text-[10px] text-[#787C87] group-hover:text-[#C59B27] opacity-0 group-hover:opacity-100 transition-opacity">
-                                  ↗
-                                </span>
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-[10px] text-[#787C87] italic pt-2">Full departmental line</p>
-                      )}
-                    </div>
-
-                    <div className="pt-2.5 mt-2 border-t border-[#E7DFD5]/50 text-right">
-                      <Link
-                        href={`/shop?category=${col.slug}`}
-                        onClick={() => setCategoriesOpen(false)}
-                        className="text-[10px] font-bold text-[#C59B27] hover:underline"
-                      >
-                        Explore All {getShortCategoryName(col.name)} →
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Bottom VIP Ribbon */}
-              <div className="mt-4 pt-3 border-t border-[#E7DFD5] flex items-center justify-between text-xs bg-[#FAF8F5]/80 -mx-5 -mb-5 p-3.5 px-5 rounded-b-3xl">
-                <div className="flex items-center gap-2 text-[#787C87] text-[11px]">
-                  <span>🏷️</span>
-                  <span>Use code <strong className="text-[#141416] font-mono bg-[#E7DFD5] px-1.5 py-0.5 rounded">FIRST10</strong> for 10% OFF</span>
-                </div>
-                <span className="text-[10px] font-mono font-bold text-[#C59B27] uppercase">
-                  Free Express Delivery &gt; ₹999
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 2. Top Bar Department Links (Concise, single-line tabs with hover drop cards) */}
-        {activeCategories.slice(0, 3).map((cat) => {
-          const hasSub = (cat.children ?? []).length > 0;
-          const isHovered = activeDeptHover === cat.id;
-          const shortName = getShortCategoryName(cat.name);
-
-          return (
-            <div
-              key={cat.id}
-              className="relative"
-              onMouseEnter={() => {
-                setActiveDeptHover(cat.id);
-                setCategoriesOpen(false);
-              }}
-            >
-              <Link
-                href={`/shop?category=${cat.slug}`}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full border transition-all duration-150 whitespace-nowrap ${
-                  isHovered
-                    ? "bg-[#141416] text-white border-[#141416] font-bold shadow-2xs"
-                    : "text-[#141416] border-transparent hover:border-[#E7DFD5] hover:bg-[#FAF8F5]"
-                }`}
-              >
-                <span>{shortName}</span>
-                {hasSub && (
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    className={`transition-transform duration-150 ${isHovered ? "rotate-180 text-[#C59B27]" : "text-[#787C87]"}`}
-                  >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                )}
-              </Link>
-
-              {/* Dedicated Department Sub-Menu Dropdown Card */}
-              {hasSub && isHovered && (
-                <div
-                  onMouseLeave={() => setActiveDeptHover(null)}
-                  className="absolute left-0 top-full mt-2 w-60 rounded-2xl bg-white/98 backdrop-blur-2xl border border-[#E7DFD5] shadow-2xl p-3 space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-150 z-50 card-theme"
-                >
-                  <div className="px-2.5 pb-2 border-b border-[#E7DFD5] flex items-center justify-between">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#C59B27]">
-                      {shortName} Edit
-                    </span>
-                    <span className="text-[9px] font-mono text-[#787C87] font-bold">
-                      {cat.children!.length} Styles
-                    </span>
-                  </div>
-
-                  <div className="space-y-0.5 max-h-56 overflow-y-auto">
-                    {cat.children!.map((sub) => (
-                      <Link
-                        key={sub.id}
-                        href={`/shop?category=${sub.slug}`}
-                        onClick={() => setActiveDeptHover(null)}
-                        className="flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#141416] hover:bg-[#F4EFEA] hover:text-[#C59B27] transition-all group"
-                      >
-                        <span className="truncate">{sub.name}</span>
-                        <span className="text-[10px] text-[#C59B27] opacity-0 group-hover:opacity-100 transition-opacity">
-                          →
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-
-                  <div className="pt-1.5 border-t border-[#E7DFD5]">
-                    <Link
-                      href={`/shop?category=${cat.slug}`}
-                      onClick={() => setActiveDeptHover(null)}
-                      className="block w-full py-1.5 px-2 rounded-lg bg-[#141416] hover:bg-[#25262B] text-white text-[10px] font-bold uppercase tracking-wider text-center transition-colors"
-                    >
-                      View All {shortName} →
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* 3. New Arrivals Capsule */}
+        {/* 3. New Arrivals Feature Capsule */}
         <Link
           href="/shop?sort=newest"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs whitespace-nowrap"
@@ -332,7 +124,7 @@ export default function HeaderClient({
           <span>New Arrivals</span>
         </Link>
 
-        {/* 4. Super Deals Capsule */}
+        {/* 4. Super Deals Luxury Badge Capsule */}
         <Link
           href="/shop?onSale=true"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#873E4C]/30 bg-[#873E4C]/5 text-[#873E4C] hover:bg-[#873E4C] hover:text-white transition-all shadow-2xs font-bold whitespace-nowrap"
@@ -342,7 +134,7 @@ export default function HeaderClient({
         </Link>
       </nav>
 
-      {/* Action Controls */}
+      {/* Right-Side Action Controls */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Search Modal Trigger */}
         <button
@@ -404,112 +196,34 @@ export default function HeaderClient({
           </Link>
         )}
 
-        {/* Mobile Hamburger Toggle Button */}
+        {/* Mobile Hamburger Toggle Button (Opens Slide-Over Menu Drawer) */}
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
+          onClick={() => setMenuDrawerOpen(true)}
           className="md:hidden p-2 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:bg-[#F4EFEA] transition-colors cursor-pointer"
           aria-label="Toggle Navigation Menu"
         >
-          {menuOpen ? <CloseIcon /> : <MenuIcon />}
+          <MenuIcon />
         </button>
       </div>
 
-      {/* Mobile Drawer Navigation Card */}
-      {menuOpen && (
-        <div className="fixed inset-0 top-[108px] z-50 bg-[#FAF8F5]/98 backdrop-blur-xl border-b border-[#E7DFD5] p-5 flex flex-col justify-between overflow-y-auto md:hidden animate-in slide-in-from-top-4 duration-200">
-          <div className="space-y-4">
-            
-            {/* Curated Departments Card */}
-            <div className="rounded-2xl bg-white border border-[#E7DFD5] p-4 shadow-sm space-y-3">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87] flex items-center gap-1.5 pb-2 border-b border-[#E7DFD5]">
-                <span>✨</span> Curated Atelier Departments
-              </p>
-              
-              <div className="space-y-2">
-                {activeCategories.map((c) => {
-                  const hasSub = (c.children ?? []).length > 0;
-                  const isExpanded = mobileExpandedCat === c.id;
+      {/* Slide-over Luxury Category & Department Menu Drawer (Side Menu like Cart) */}
+      <MenuDrawer
+        isOpen={menuDrawerOpen}
+        onClose={() => setMenuDrawerOpen(false)}
+        categories={activeCategories}
+      />
 
-                  return (
-                    <div key={c.id} className="rounded-xl border border-[#E7DFD5]/60 bg-[#FAF8F5] overflow-hidden">
-                      <div className="flex items-center justify-between p-3">
-                        <Link
-                          href={`/shop?category=${c.slug}`}
-                          onClick={() => setMenuOpen(false)}
-                          className="text-xs font-bold text-[#141416]"
-                        >
-                          {c.name}
-                        </Link>
-                        {hasSub && (
-                          <button
-                            onClick={() => setMobileExpandedCat(isExpanded ? null : c.id)}
-                            className="p-1 text-xs text-[#787C87] font-bold"
-                          >
-                            {isExpanded ? "▲" : "▼"}
-                          </button>
-                        )}
-                      </div>
+      {/* Slide-over Cart Review Drawer */}
+      <CartDrawer
+        isOpen={cartDrawerOpen}
+        onClose={() => setCartDrawerOpen(false)}
+      />
 
-                      {hasSub && isExpanded && (
-                        <div className="px-3 pb-3 pt-1 border-t border-[#E7DFD5]/60 space-y-1 bg-white">
-                          {c.children!.map((sub) => (
-                            <Link
-                              key={sub.id}
-                              href={`/shop?category=${sub.slug}`}
-                              onClick={() => setMenuOpen(false)}
-                              className="block py-1.5 px-2 text-[11px] text-[#4B4E56] hover:text-[#C59B27] font-medium"
-                            >
-                              • {sub.name}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Quick Actions Card */}
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                href="/shop?sort=newest"
-                onClick={() => setMenuOpen(false)}
-                className="p-3.5 rounded-2xl bg-white border border-[#E7DFD5] text-xs font-bold text-[#141416] flex items-center justify-between shadow-2xs"
-              >
-                <span>✨ New Drops</span>
-                <span className="text-[#C59B27]">→</span>
-              </Link>
-              <Link
-                href="/shop?onSale=true"
-                onClick={() => setMenuOpen(false)}
-                className="p-3.5 rounded-2xl bg-white border border-[#873E4C]/30 text-xs font-bold text-[#873E4C] flex items-center justify-between shadow-2xs"
-              >
-                <span>🏷️ Super Deals</span>
-                <span className="text-[#873E4C]">→</span>
-              </Link>
-            </div>
-
-          </div>
-
-          <div className="pt-4 border-t border-[#E7DFD5] text-xs text-[#787C87] flex justify-between items-center">
-            <span>Fashion Cart Luxury Atelier</span>
-            <Link
-              href="/contact"
-              onClick={() => setMenuOpen(false)}
-              className="font-bold text-[#141416] hover:underline"
-            >
-              Contact Concierge →
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Slide-over Cart Drawer Component */}
-      <CartDrawer isOpen={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} />
-
-      {/* Global Instant Search Modal */}
-      <SearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
+      {/* Global Instant Search Command Palette */}
+      <SearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+      />
     </>
   );
 }
@@ -556,15 +270,6 @@ function MenuIcon() {
       <line x1="4" x2="20" y1="12" y2="12" />
       <line x1="4" x2="20" y1="6" y2="6" />
       <line x1="4" x2="20" y1="18" y2="18" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }
