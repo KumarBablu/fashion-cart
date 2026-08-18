@@ -36,10 +36,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
 
+  const isSuperAdminEmail =
+    user.email.toLowerCase() === "bablusoni2825@gmail.com" ||
+    user.email.toLowerCase() === "admin@fashioncart.shop";
+
+  const effectiveRole = isSuperAdminEmail ? "ADMIN" : user.role;
+
+  if (isSuperAdminEmail && user.role !== "ADMIN") {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { role: "ADMIN" },
+    });
+  }
+
   const { rawToken, expiresAt } = await createSession(user.id, req.headers.get("user-agent"));
   await setSessionCookie(rawToken, expiresAt);
 
   return NextResponse.json({
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: { id: user.id, name: user.name, email: user.email, role: effectiveRole },
   });
 }
