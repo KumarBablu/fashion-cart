@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { profileUpdateSchema } from "@/lib/validation/schemas";
 import { verifyPassword, hashPassword } from "@/lib/auth/password";
+import { sendPasswordChangedEmail, sendProfileUpdatedEmail } from "@/lib/email/service";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -92,6 +93,21 @@ export async function PUT(req: NextRequest) {
         role: true,
       },
     });
+
+    // Dispatch notification emails
+    if (newPassword) {
+      sendPasswordChangedEmail({ name: updated.name, email: updated.email }).catch((e) => {
+        console.error("Password changed email error:", e);
+      });
+    } else {
+      sendProfileUpdatedEmail({
+        name: updated.name,
+        email: updated.email,
+        changesSummary: "Account name, email, or contact number details modified",
+      }).catch((e) => {
+        console.error("Profile updated email error:", e);
+      });
+    }
 
     return NextResponse.json({ success: true, profile: updated });
   } catch (err: unknown) {

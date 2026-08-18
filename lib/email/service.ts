@@ -11,6 +11,9 @@ import {
   orderCancelledEmailTemplate,
   contactInquiryEmailTemplate,
   loginAlertEmailTemplate,
+  failedLoginAlertEmailTemplate,
+  profileUpdatedEmailTemplate,
+  adminAccessAttemptAlertEmailTemplate,
 } from "./templates";
 
 type SendEmailOptions = {
@@ -323,5 +326,66 @@ export async function sendLoginAlertEmail({
     html,
     templateName: "LOGIN_ALERT",
     metadata: { identifier, timestamp, userAgent },
+  });
+}
+
+export async function sendFailedLoginAlertEmail({
+  name,
+  email,
+  identifier,
+  userAgent,
+}: {
+  name: string;
+  email: string;
+  identifier: string;
+  userAgent?: string | null;
+}) {
+  const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+  const html = failedLoginAlertEmailTemplate(name, identifier, timestamp, userAgent);
+  return sendEmail({
+    to: email,
+    subject: "⚠️ Security Warning: Unsuccessful Login Attempt (Fashion Cart)",
+    html,
+    templateName: "FAILED_LOGIN_ALERT",
+    metadata: { identifier, timestamp, userAgent },
+  });
+}
+
+export async function sendProfileUpdatedEmail({
+  name,
+  email,
+  changesSummary,
+}: {
+  name: string;
+  email: string;
+  changesSummary: string;
+}) {
+  const html = profileUpdatedEmailTemplate(name, email, changesSummary);
+  return sendEmail({
+    to: email,
+    subject: "👤 Notice: Your Fashion Cart Profile Was Updated",
+    html,
+    templateName: "PROFILE_UPDATED",
+    metadata: { changesSummary },
+  });
+}
+
+export async function sendAdminAccessAttemptAlertEmail({
+  attemptEmail,
+  userAgent,
+}: {
+  attemptEmail: string;
+  userAgent?: string | null;
+}) {
+  const settings = await prisma.emailSettings.findFirst().catch(() => null);
+  const adminEmail = settings?.notifyAdminEmail || process.env.ADMIN_NOTIFY_EMAIL || "Kumar.bablu9547.sv@gmail.com";
+  const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+  const html = adminAccessAttemptAlertEmailTemplate(attemptEmail, timestamp, userAgent);
+  return sendEmail({
+    to: adminEmail,
+    subject: `🚨 [Security Alert] Unauthorized Admin Console Access Attempt (${attemptEmail})`,
+    html,
+    templateName: "ADMIN_ACCESS_ATTEMPT_ALERT",
+    metadata: { attemptEmail, timestamp, userAgent },
   });
 }

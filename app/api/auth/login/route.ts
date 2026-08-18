@@ -4,7 +4,7 @@ import { verifyPassword } from "@/lib/auth/password";
 import { createSession, setSessionCookie } from "@/lib/auth/session";
 import { loginSchema } from "@/lib/validation/schemas";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
-import { sendLoginAlertEmail } from "@/lib/email/service";
+import { sendLoginAlertEmail, sendFailedLoginAlertEmail } from "@/lib/email/service";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -66,6 +66,18 @@ export async function POST(req: NextRequest) {
   const valid = user ? await verifyPassword(password, user.passwordHash) : false;
 
   if (!user || !valid || !user.isActive) {
+    if (user && !valid) {
+      // Unauthorized/failed password attempt detected: notify the account owner immediately
+      sendFailedLoginAlertEmail({
+        name: user.name,
+        email: user.email,
+        identifier: rawId,
+        userAgent: req.headers.get("user-agent"),
+      }).catch((err) => {
+        console.error("Failed login alert dispatch error:", err);
+      });
+    }
+
     return NextResponse.json({ error: "Invalid email/mobile number or password." }, { status: 401 });
   }
 

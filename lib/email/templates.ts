@@ -330,3 +330,69 @@ export function loginAlertEmailTemplate(name: string, identifier: string, timest
   return layout("Security Notice: Successful Account Login", content);
 }
 
+// 11. Failed Login Attempt Security Warning
+export function failedLoginAlertEmailTemplate(name: string, identifier: string, timestamp: string, userAgent?: string | null) {
+  const content = `
+    <h2 style="color: #DC2626; margin-top: 0;">⚠️ Security Warning: Unsuccessful Login Attempt</h2>
+    <p>Hello ${name},</p>
+    <p>We detected an unsuccessful attempt to log into your Fashion Cart account with an incorrect password.</p>
+
+    <div class="card" style="border-left: 4px solid #DC2626;">
+      <p style="margin: 4px 0;"><strong>Account:</strong> ${identifier}</p>
+      <p style="margin: 4px 0;"><strong>Attempt Time:</strong> ${timestamp}</p>
+      ${userAgent ? `<p style="margin: 4px 0; font-size: 12px; color: #787C87;"><strong>Device / Browser:</strong> ${userAgent}</p>` : ""}
+    </div>
+
+    <p style="font-size: 13px; color: #3A3D45;"><strong>Was this you?</strong> If you forgot your password, you can reset it securely using the link below.</p>
+    <p style="font-size: 13px; color: #DC2626;"><strong>Wasn't you?</strong> Someone may be attempting to guess your password. We recommend resetting your password immediately to protect your account.</p>
+
+    <div style="text-align: center;">
+      <a href="${BASE_URL}/forgot-password" class="button">Reset Your Password Immediately →</a>
+    </div>
+  `;
+  return layout("⚠️ Security Warning: Failed Login Attempt Detected", content);
+}
+
+// 12. Account Profile Updated
+export function profileUpdatedEmailTemplate(name: string, email: string, changesSummary: string) {
+  const content = `
+    <h2 style="color: #141416; margin-top: 0;">Account Information Updated 👤</h2>
+    <p>Hello ${name},</p>
+    <p>Your Fashion Cart profile information was recently modified.</p>
+
+    <div class="card">
+      <p style="margin: 4px 0;"><strong>Changes:</strong> ${changesSummary}</p>
+      <p style="margin: 4px 0;"><strong>Timestamp:</strong> ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
+    </div>
+
+    <p style="font-size: 12px; color: #787C87;">If you made this change, you can safely ignore this email. If you did not make this change, please contact support immediately.</p>
+
+    <div style="text-align: center;">
+      <a href="${BASE_URL}/account/profile" class="button">Review Account Profile →</a>
+    </div>
+  `;
+  return layout("Notice: Account Profile Updated", content);
+}
+
+// 13. Admin Access Attempt Security Alert
+export function adminAccessAttemptAlertEmailTemplate(attemptEmail: string, timestamp: string, userAgent?: string | null) {
+  const content = `
+    <h2 style="color: #DC2626; margin-top: 0;">🚨 Admin Console: Unauthorized Access Attempt</h2>
+    <p>A non-administrator or unrecognized user attempted to log into the Fashion Cart Admin Console.</p>
+
+    <div class="card" style="border-left: 4px solid #DC2626;">
+      <p style="margin: 4px 0;"><strong>Attempted Identifier:</strong> ${attemptEmail}</p>
+      <p style="margin: 4px 0;"><strong>Timestamp:</strong> ${timestamp}</p>
+      ${userAgent ? `<p style="margin: 4px 0; font-size: 12px; color: #787C87;"><strong>Client Device:</strong> ${userAgent}</p>` : ""}
+    </div>
+
+    <p style="font-size: 12px; color: #787C87;">The login was blocked and rejected by the server.</p>
+
+    <div style="text-align: center;">
+      <a href="${BASE_URL}/admin/customers" class="button">Open Admin Management →</a>
+    </div>
+  `;
+  return layout("🚨 Security Alert: Unauthorized Admin Login Attempt", content);
+}
+
+
