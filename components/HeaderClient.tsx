@@ -87,10 +87,21 @@ export default function HeaderClient({
   }
 
   return (
-    <div className="flex flex-1 items-center justify-between gap-3 lg:gap-8">
-      
-      {/* 1. Center Luxury Navigation Links (Responsive from md breakpoint and above) */}
-      <nav className="hidden md:flex items-center gap-4 lg:gap-7 text-xs font-bold uppercase tracking-[0.14em]">
+    <>
+      {/* Mobile-Only Left Hamburger Trigger (Displayed before logo on mobile) */}
+      <div className="flex md:hidden items-center">
+        <button
+          type="button"
+          onClick={() => setMenuDrawerOpen(true)}
+          className="w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] flex items-center justify-center hover:bg-[#FAF8F5] transition-colors cursor-pointer shadow-2xs"
+          aria-label="Open Navigation Menu"
+        >
+          <MenuIcon />
+        </button>
+      </div>
+
+      {/* Desktop Main Navigation Links (Centered, Single-Line, Luxury Underline Hover) */}
+      <nav className="hidden md:flex items-center gap-5 lg:gap-7 text-xs font-bold uppercase tracking-[0.14em]">
         
         {/* All Categories Slide-Over Menu Trigger */}
         <button
@@ -136,21 +147,21 @@ export default function HeaderClient({
         </Link>
       </nav>
 
-      {/* 2. Right-Side Action Controls */}
-      <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+      {/* Right-Side Action Controls (Search, Wishlist, Cart, Account) */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5">
         
-        {/* Luxury Search Pill Trigger */}
+        {/* Search Trigger Button */}
         <button
           onClick={() => setSearchModalOpen(true)}
-          className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer group"
+          className="flex items-center gap-2 h-9 px-3 sm:px-4 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer group"
           aria-label="Search fine apparel"
           title="Quick search (Ctrl+K)"
         >
           <SearchIcon />
-          <span className="hidden sm:inline font-medium text-xs text-[#787C87] group-hover:text-[#141416] transition-colors">
-            Search fine apparel…
+          <span className="hidden lg:inline font-medium text-xs text-[#787C87] group-hover:text-[#141416] transition-colors">
+            Search apparel…
           </span>
-          <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded-md bg-white text-[#141416] font-bold border border-[#E7DFD5] shadow-2xs">
+          <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded-md bg-white text-[#141416] font-bold border border-[#E7DFD5] shadow-2xs">
             ⌘K
           </kbd>
         </button>
@@ -158,7 +169,7 @@ export default function HeaderClient({
         {/* Wishlist Button */}
         <Link
           href="/account/wishlist"
-          className="relative p-2.5 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs group"
+          className="relative w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs flex items-center justify-center group"
           aria-label="View Wishlist"
         >
           <WishlistIcon />
@@ -172,7 +183,7 @@ export default function HeaderClient({
         {/* Shopping Bag Button */}
         <button
           onClick={() => setCartDrawerOpen(true)}
-          className="relative p-2.5 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs cursor-pointer group"
+          className="relative w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs flex items-center justify-center cursor-pointer group"
           aria-label="Open Shopping Bag"
         >
           <CartIcon />
@@ -187,28 +198,20 @@ export default function HeaderClient({
         {isLoggedIn ? (
           <Link
             href="/account"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#E7DFD5] bg-white hover:border-[#141416] text-xs font-bold text-[#141416] transition-all shadow-2xs"
+            className="flex items-center gap-1.5 h-9 px-3 sm:px-4 rounded-full border border-[#E7DFD5] bg-white hover:border-[#141416] text-xs font-bold text-[#141416] transition-all shadow-2xs"
           >
             <UserIcon />
-            <span className="max-w-[85px] truncate">{userName || "Account"}</span>
+            <span className="hidden sm:inline max-w-[80px] truncate">{userName || "Account"}</span>
           </Link>
         ) : (
           <Link
             href="/login"
-            className="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-xs"
+            className="flex items-center justify-center h-9 px-3 sm:px-5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-xs"
           >
-            Sign In
+            <span className="sm:hidden"><UserIcon /></span>
+            <span className="hidden sm:inline">Sign In</span>
           </Link>
         )}
-
-        {/* Mobile Navigation Toggle */}
-        <button
-          onClick={() => setMenuDrawerOpen(true)}
-          className="md:hidden p-2.5 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
-          aria-label="Open Mobile Menu"
-        >
-          <MenuIcon />
-        </button>
       </div>
 
       {/* Full-Height Slide-Over Category & Navigation Drawer */}
@@ -229,7 +232,7 @@ export default function HeaderClient({
         isOpen={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}
       />
-    </div>
+    </>
   );
 }
 
@@ -244,7 +247,7 @@ function SearchIcon() {
 
 function WishlistIcon() {
   return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
     </svg>
   );
@@ -252,7 +255,7 @@ function WishlistIcon() {
 
 function CartIcon() {
   return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
       <path d="M3 6h18" />
       <path d="M16 10a4 4 0 0 1-8 0" />
