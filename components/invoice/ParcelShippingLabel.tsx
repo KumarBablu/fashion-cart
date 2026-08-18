@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { formatINR } from "@/lib/format";
+import { generateBarcodeSvg } from "@/lib/invoice/barcode";
 
 type ParcelProps = {
   order: {
@@ -49,6 +51,8 @@ export default function ParcelShippingLabel({ order, business }: ParcelProps) {
   const isPrepaid = order.payment?.status === "VERIFIED" || order.paymentMethod === "MANUAL_UPI" || order.paymentMethod === "ONLINE_GATEWAY";
   const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
 
+  const barcodeSvg = generateBarcodeSvg(order.orderNumber, 36, 1.4);
+
   function handlePrint() {
     window.print();
   }
@@ -63,7 +67,7 @@ export default function ParcelShippingLabel({ order, business }: ParcelProps) {
         </div>
         <button
           onClick={handlePrint}
-          className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#0C3B2E] text-white hover:bg-[#144E3E] shadow-sm flex items-center gap-1.5"
+          className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] shadow-sm flex items-center gap-1.5 cursor-pointer"
         >
           <span>🖨️</span> Print Parcel Label
         </button>
@@ -73,11 +77,19 @@ export default function ParcelShippingLabel({ order, business }: ParcelProps) {
       <div className="border-2 border-black p-4 space-y-3 bg-white text-black">
         {/* Top Carrier / Barcode Header */}
         <div className="flex items-center justify-between border-b-2 border-black pb-2.5">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🌿</span>
+          <div className="flex items-center gap-2.5">
+            <div className="relative h-8 w-8 overflow-hidden shrink-0">
+              <Image
+                src="/fashion-cart-logo-transparent.svg"
+                alt="Logo"
+                fill
+                sizes="32px"
+                className="object-contain"
+              />
+            </div>
             <div>
-              <p className="font-extrabold text-sm tracking-wider uppercase">{business?.businessName || "FASHION CART"}</p>
-              <p className="text-[9px] uppercase tracking-widest text-slate-600">Standard Express Delivery</p>
+              <p className="font-black text-sm tracking-wider uppercase">{business?.businessName || "Fashion Cart"}</p>
+              <p className="text-[9px] uppercase tracking-widest text-slate-600">Luxury Logistics &amp; Express Delivery</p>
             </div>
           </div>
           <div className="text-right">
@@ -88,20 +100,14 @@ export default function ParcelShippingLabel({ order, business }: ParcelProps) {
         </div>
 
         {/* Courier Routing Barcode Box */}
-        <div className="border border-black p-2 text-center rounded bg-slate-50">
+        <div className="border border-black p-2 text-center rounded bg-slate-50 space-y-1">
           <p className="font-mono text-xs font-bold tracking-widest">ORDER #{order.orderNumber}</p>
-          <div className="my-1.5 flex justify-center items-center gap-1 h-8">
-            {/* High-contrast simulated barcode stripes */}
-            {[4, 2, 6, 1, 3, 5, 2, 8, 2, 4, 1, 7, 3, 5, 2, 6, 4, 2, 5, 1, 3, 7, 2, 4, 6].map((w, i) => (
-              <span
-                key={i}
-                className="bg-black inline-block h-full"
-                style={{ width: `${w * 1.5}px` }}
-              />
-            ))}
-          </div>
+          <div
+            className="w-full h-9 flex justify-center"
+            dangerouslySetInnerHTML={{ __html: barcodeSvg }}
+          />
           <p className="text-[9px] font-mono text-slate-600">
-            AWB: {order.trackingNumber || `AWB-FC-${order.orderNumber.replace("FC-", "")}`} · Carrier: {order.carrierName || "BlueDart / Delhivery Express"}
+            AWB: {order.trackingNumber || `AWB-FC-${order.orderNumber.replace(/[^0-9]/g, "").slice(-8)}`} · Carrier: {order.carrierName || "Delhivery / BlueDart Express"}
           </p>
         </div>
 
@@ -141,36 +147,40 @@ export default function ParcelShippingLabel({ order, business }: ParcelProps) {
           </div>
         </div>
 
-        {/* FROM / RETURN TO SENDER */}
-        <div className="border border-black p-2.5 rounded text-[10px] space-y-0.5 bg-white">
-          <span className="font-extrabold uppercase text-[9px] text-slate-700 block">IF UNDELIVERED, RETURN TO:</span>
-          <p className="font-bold">{business?.businessName || "Fashion Cart Fulfillment Hub"}</p>
-          <p className="text-slate-700">{business?.businessAddress || "108 Fashion Avenue, Indiranagar, Bengaluru, Karnataka - 560038"}</p>
-          <p className="text-slate-700">Helpline: {business?.phone || "+91 98765 43210"} · {business?.email || "support@fashioncart.shop"}</p>
-        </div>
-
-        {/* Package Packing Checklist */}
-        <div className="border border-black p-2 rounded text-[10px]">
-          <div className="flex justify-between font-bold border-b border-black/20 pb-1 mb-1">
-            <span>PACKING CHECKLIST ({totalItems} Items)</span>
-            <span>Total Value: {formatINR(order.total)}</span>
+        {/* Package Contents / Return Address Grid */}
+        <div className="grid grid-cols-2 gap-2 text-[10px]">
+          {/* Dispatcher Return Address */}
+          <div className="border border-black p-2 rounded bg-slate-50">
+            <p className="font-bold uppercase text-[9px] tracking-wider text-slate-600">IF UNDELIVERED, RETURN TO:</p>
+            <p className="font-extrabold text-slate-900 mt-0.5">{business?.businessName || "Fashion Cart"} (Returns Dept)</p>
+            <p className="text-slate-600 leading-tight">
+              {business?.businessAddress || "Atelier Logistics Hub, 108 Fashion Avenue, Indiranagar, Bengaluru, Karnataka - 560038"}
+            </p>
+            <p className="text-slate-700 mt-0.5 font-semibold">Ph: {business?.phone || "+91 97710 39201"}</p>
           </div>
-          <div className="space-y-1 divide-y divide-slate-100">
-            {order.items.map((item, i) => (
-              <div key={item.id} className="flex justify-between pt-0.5">
-                <span>
-                  {i + 1}. {item.productNameSnapshot} ({item.sizeSnapshot} / {item.colourSnapshot})
-                </span>
-                <span className="font-mono font-bold">Qty: {item.quantity} [ ]</span>
+
+          {/* Itemized Manifest Summary */}
+          <div className="border border-black p-2 rounded bg-slate-50 flex flex-col justify-between">
+            <div>
+              <p className="font-bold uppercase text-[9px] tracking-wider text-slate-600">PARCEL CONTENTS ({totalItems} PCS):</p>
+              <div className="mt-1 space-y-0.5 max-h-16 overflow-hidden">
+                {order.items.map((it) => (
+                  <p key={it.id} className="truncate text-slate-800">
+                    • {it.productNameSnapshot} ({it.sizeSnapshot}) ×{it.quantity}
+                  </p>
+                ))}
               </div>
-            ))}
+            </div>
+            <div className="border-t border-black/20 pt-1 mt-1 flex justify-between font-bold text-slate-900">
+              <span>Total Declared Value:</span>
+              <span>{formatINR(order.total)}</span>
+            </div>
           </div>
         </div>
 
-        {/* Caution & Fragile Footer */}
-        <div className="flex items-center justify-between border-t-2 border-black pt-2 text-[9px] font-bold uppercase tracking-wider text-slate-700">
-          <span>⚠️ HANDLE WITH CARE · KEEP DRY</span>
-          <span>🔒 TAMPER-EVIDENT PACKAGING</span>
+        {/* Footer Warning / Anti-Tamper Note */}
+        <div className="text-center pt-1 border-t border-black text-[9px] font-bold text-slate-700">
+          ⚠️ DO NOT ACCEPT IF SECURITY TAMPER-EVIDENT SEAL IS BROKEN OR DAMAGED.
         </div>
       </div>
     </div>

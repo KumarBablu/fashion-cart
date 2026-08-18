@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatINR } from "@/lib/format";
+import { generateBarcodeSvg } from "@/lib/invoice/barcode";
 
 type OrderItem = {
   id: string;
@@ -67,7 +68,7 @@ type InvoiceProps = {
 
 export default function InvoiceDocument({ order, business }: InvoiceProps) {
   const addr = order.shippingAddressSnapshot;
-  const invoiceNumber = order.invoice?.invoiceNumber ?? `FC-INV-${order.orderNumber.replace("FC-", "")}`;
+  const invoiceNumber = order.invoice?.invoiceNumber ?? `FC-INV-2026-${order.orderNumber.replace(/[^0-9]/g, "").slice(-6).padStart(6, "0")}`;
   const invoiceDate = new Date(order.createdAt).toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -77,226 +78,329 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
   const subtotal = Number(order.subtotal);
   const discount = Number(order.discount);
   const delivery = Number(order.deliveryCharge);
-  const taxTotal = Number(order.tax);
   const grandTotal = Number(order.total);
 
-  // Approximate 9% CGST + 9% SGST breakdown
-  const taxableValue = subtotal - discount;
-  const cgst = (taxTotal / 2).toFixed(2);
-  const sgst = (taxTotal / 2).toFixed(2);
+  // 5% Apparel GST breakdown (2.5% CGST + 2.5% SGST)
+  const taxableValue = Math.max(0, subtotal - discount);
+  const totalTaxCalculated = Math.round((taxableValue * 0.05) * 100) / 100;
+  const cgstAmount = (totalTaxCalculated / 2).toFixed(2);
+  const sgstAmount = (totalTaxCalculated / 2).toFixed(2);
+
+  const barcodeSvg = generateBarcodeSvg(invoiceNumber, 36, 1.3);
 
   function handlePrint() {
     window.print();
   }
 
   return (
-    <div className="bg-white text-slate-900 font-sans antialiased max-w-4xl mx-auto p-4 sm:p-8 rounded-3xl border border-slate-200 shadow-xl print:border-0 print:shadow-none print:p-0 print:max-w-none print:m-0">
-      {/* Screen Control Bar (Hidden on Print) */}
+    <div className="bg-white text-slate-900 font-sans antialiased max-w-4xl mx-auto p-4 sm:p-8 rounded-3xl border border-slate-200 shadow-2xl print:border-0 print:shadow-none print:p-0 print:max-w-none print:m-0">
+      {/* Screen Action Bar (Hidden on Print) */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-6 mb-6 border-b border-slate-200 print:hidden">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 font-display">Tax Invoice &amp; Official Receipt</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Order #{order.orderNumber} · Invoice #{invoiceNumber}</p>
+          <h1 className="text-xl font-bold text-slate-900 font-display flex items-center gap-2">
+            <span>📄</span> Official Tax Invoice &amp; Retail Receipt
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5 font-mono">
+            Invoice #{invoiceNumber} · Order #{order.orderNumber}
+          </p>
         </div>
         <div className="flex items-center gap-2.5">
           <button
             onClick={handlePrint}
-            className="px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] shadow-sm flex items-center gap-2 transition-all"
+            className="px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] shadow-sm flex items-center gap-2 transition-all cursor-pointer"
           >
             <span>🖨️</span> Print Invoice / Save PDF
           </button>
           <a
             href={`/api/invoices/${order.id}`}
-            download={`FashionCart-Tax-Invoice-${order.orderNumber}-${(order.shippingAddressSnapshot?.fullName || order.user.name || "Customer").replace(/[^a-zA-Z0-9]/g, "-").toUpperCase()}.pdf`}
-            className="px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] shadow-sm flex items-center gap-1.5 transition-all"
+            download={`FashionCart-Invoice-${order.orderNumber}-${invoiceNumber}.pdf`}
+            className="px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <span>📥</span> Download PDF
           </a>
         </div>
       </div>
 
-      {/* Printable Invoice Container */}
+      {/* Printable Invoice Body */}
       <div className="space-y-6 text-xs leading-normal">
         {/* Brand Header Banner */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 p-6 rounded-2xl bg-[#141416] text-white print:bg-[#141416] print:text-white">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2.5">
-              <span className="text-2xl">✨</span>
-              <span className="font-display text-2xl font-bold text-[#C59B27] tracking-wide">
-                {business?.businessName || "FASHION CART"}
-              </span>
+        <div className="p-6 rounded-2xl bg-[#141416] text-white border border-[#27272A] shadow-md flex flex-col sm:flex-row justify-between items-start gap-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-3">
+              <div className="relative h-10 w-10 overflow-hidden shrink-0">
+                <Image
+                  src="/fashion-cart-logo-transparent.svg"
+                  alt="Fashion Cart Official Monogram"
+                  fill
+                  sizes="40px"
+                  className="object-contain"
+                />
+              </div>
+              <div>
+                <span className="font-display text-2xl font-black text-[#C59B27] tracking-tight leading-none block">
+                  {business?.businessName || "Fashion Cart"}
+                </span>
+                <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-white/90">
+                  Luxury Atelier &amp; Designer Apparel
+                </span>
+              </div>
             </div>
-            <p className="text-[11px] text-white/80 font-medium tracking-widest uppercase">
-              Luxury Atelier &amp; Designer Apparel
-            </p>
-            <p className="text-[10px] text-white/70 max-w-sm">
+
+            <p className="text-[10px] text-white/70 max-w-sm pt-1">
               {business?.businessAddress || "Atelier Logistics Hub, 108 Fashion Avenue, Indiranagar, Bengaluru, Karnataka - 560038"}
             </p>
+            <p className="text-[10px] text-white/80 font-medium">
+              GSTIN: <span className="font-mono font-bold text-[#C59B27]">{business?.gstin || "29AABCU9603R1ZM"}</span> · PAN: AABCU9603R · State: Karnataka (29)
+            </p>
             <p className="text-[10px] text-white/70">
-              GSTIN: <span className="font-mono font-bold text-[#C59B27]">{business?.gstin || "29AAAAA0000A1Z5"}</span> · CIN: U74999KA2024PTC189201
+              Support: {business?.email || "support@fashioncart.shop"} · Phone: {business?.phone || "+91 97710 39201"}
             </p>
           </div>
 
-          <div className="text-right sm:text-right space-y-1 self-stretch sm:self-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-white/20">
-            <span className="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#C59B27] text-white">
-              TAX INVOICE · ORIGINAL
-            </span>
-            <p className="text-[11px] font-bold text-white mt-1">Invoice: <span className="font-mono">{invoiceNumber}</span></p>
-            <p className="text-[10px] text-white/80">Date: {invoiceDate}</p>
-            <p className="text-[10px] text-white/80">Order Ref: <span className="font-mono">{order.orderNumber}</span></p>
-            <p className="text-[10px] text-white/80">Place of Supply: <span className="font-bold">{addr.state} (State Code: 29)</span></p>
+          {/* Right Column with Barcode & Tax Meta */}
+          <div className="text-right sm:text-right space-y-2 self-stretch sm:self-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-white/10 flex flex-col sm:items-end">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#C59B27] text-white shadow-xs">
+              TAX INVOICE · ORIGINAL FOR RECIPIENT
+            </div>
+
+            {/* Crisp Code 128 Barcode Stamp */}
+            <div className="bg-white p-2 rounded-lg inline-block text-center shadow-xs">
+              <div
+                className="w-48 h-9"
+                dangerouslySetInnerHTML={{ __html: barcodeSvg }}
+              />
+              <span className="font-mono text-[9px] font-bold text-slate-800 tracking-widest block mt-0.5">
+                *{invoiceNumber}*
+              </span>
+            </div>
+
+            <div className="text-[10px] text-white/80 space-y-0.5 font-medium">
+              <p>Invoice Date: <span className="font-bold text-white">{invoiceDate}</span></p>
+              <p>Order ID: <span className="font-mono font-bold text-[#C59B27]">#{order.orderNumber}</span></p>
+              <p>Place of Supply: <span className="font-bold text-white">{addr.state || "Karnataka"} (Code: 29)</span></p>
+            </div>
           </div>
         </div>
 
-        {/* Customer Billed & Shipped Columns */}
+        {/* Dispatch & Customer Billing Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70">
-            <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">
-              BILLED TO / CUSTOMER DETAILS
-            </p>
+          {/* Buyer Details */}
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-1.5">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                BILLED &amp; SHIPPED TO (CUSTOMER)
+              </p>
+              <span className="text-[9px] font-bold uppercase text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
+                Verified Recipient
+              </span>
+            </div>
             <p className="text-sm font-bold text-slate-900">{addr.fullName}</p>
-            <p className="text-slate-600 mt-0.5">{addr.addressLine1}</p>
+            <p className="text-slate-600">{addr.addressLine1}</p>
             {addr.addressLine2 && <p className="text-slate-600">{addr.addressLine2}</p>}
-            <p className="text-slate-600">{addr.city}, {addr.state} - <span className="font-bold">{addr.pinCode}</span></p>
+            <p className="text-slate-600">{addr.city}, {addr.state} - <span className="font-bold text-slate-900">{addr.pinCode}</span></p>
             {addr.landmark && <p className="text-slate-500 text-[11px]">Landmark: {addr.landmark}</p>}
-            <p className="text-slate-600 mt-1">Mobile: <span className="font-semibold text-slate-900">{addr.mobileNumber}</span></p>
-            <p className="text-slate-600">Email: {order.user.email}</p>
+            <p className="text-slate-700 pt-1">
+              Mobile: <span className="font-semibold text-slate-900">{addr.mobileNumber}</span> · Email: {order.user.email}
+            </p>
           </div>
 
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70">
-            <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">
-              PAYMENT &amp; DISPATCH SUMMARY
-            </p>
-            <div className="space-y-1 text-slate-600">
+          {/* Payment & Logistics Summary */}
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1.5">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-1">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                PAYMENT &amp; LOGISTICS FULFILLMENT
+              </p>
+              <span className="text-[9px] font-bold uppercase text-slate-600 bg-slate-200 px-1.5 py-0.2 rounded font-mono">
+                Order #{order.orderNumber}
+              </span>
+            </div>
+            <div className="space-y-1 text-slate-600 text-[11px]">
               <p className="flex justify-between">
-                <span>Payment Mode:</span>
+                <span>Payment Method:</span>
                 <span className="font-bold text-slate-900">{order.paymentMethod.replace(/_/g, " ")}</span>
               </p>
               <p className="flex justify-between">
                 <span>Payment Status:</span>
-                <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.2 rounded">
-                  {order.payment?.status === "VERIFIED" ? "✓ 100% VERIFIED" : order.payment?.status?.replace(/_/g, " ") || "PAID"}
+                <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.2 rounded border border-emerald-200">
+                  {order.payment?.status === "VERIFIED" ? "✓ 100% VERIFIED & CONFIRMED" : order.payment?.status?.replace(/_/g, " ") || "CONFIRMED"}
                 </span>
               </p>
               {order.payment?.utrNumber && (
                 <p className="flex justify-between">
-                  <span>UTR / Ref No:</span>
+                  <span>Bank UTR / Transaction Ref:</span>
                   <span className="font-mono font-bold text-slate-900">{order.payment.utrNumber}</span>
                 </p>
               )}
               {order.carrierName && (
                 <p className="flex justify-between">
-                  <span>Courier / Carrier:</span>
-                  <span className="font-semibold text-slate-900">{order.carrierName}</span>
+                  <span>Courier Partner:</span>
+                  <span className="font-bold text-slate-900">{order.carrierName}</span>
                 </p>
               )}
               {order.trackingNumber && (
                 <p className="flex justify-between">
-                  <span>Tracking AWB:</span>
-                  <span className="font-mono font-bold text-slate-900">{order.trackingNumber}</span>
+                  <span>AWB Tracking No:</span>
+                  <span className="font-mono font-bold text-primary">{order.trackingNumber}</span>
                 </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Itemized Table */}
-        <div className="border border-slate-200 rounded-xl overflow-hidden">
+        {/* Itemized Table (Zero Overlaps) */}
+        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-100/90 text-slate-800 text-[10px] font-extrabold uppercase tracking-wider border-b border-slate-200">
-                <th className="py-2.5 px-3 w-8">#</th>
-                <th className="py-2.5 px-3">Item Description</th>
-                <th className="py-2.5 px-3 text-center">HSN</th>
+              <tr className="bg-slate-100 text-slate-800 text-[10px] font-extrabold uppercase tracking-wider border-b border-slate-200">
+                <th className="py-2.5 px-3 w-8 text-center">#</th>
+                <th className="py-2.5 px-4">Garment Description</th>
+                <th className="py-2.5 px-3 text-center">HSN Code</th>
                 <th className="py-2.5 px-3 text-center">SKU / Variant</th>
                 <th className="py-2.5 px-3 text-center">Qty</th>
-                <th className="py-2.5 px-3 text-right">Unit Rate</th>
-                <th className="py-2.5 px-3 text-right">Total (INR)</th>
+                <th className="py-2.5 px-4 text-right">Unit Price</th>
+                <th className="py-2.5 px-4 text-right">Amount (INR)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
               {order.items.map((item, idx) => (
                 <tr key={item.id} className="hover:bg-slate-50/50">
-                  <td className="py-2.5 px-3 text-slate-400 font-mono">{idx + 1}</td>
-                  <td className="py-2.5 px-3">
-                    <p className="font-bold text-slate-900">{item.productNameSnapshot}</p>
-                    <p className="text-[10px] text-slate-500">100% Genuine Certified Fabric</p>
+                  <td className="py-3 px-3 text-slate-400 font-mono text-center">{idx + 1}</td>
+                  <td className="py-3 px-4">
+                    <p className="font-bold text-slate-900 text-sm">{item.productNameSnapshot}</p>
+                    <p className="text-slate-500 text-[11px] mt-0.5">
+                      Premium Apparel Edition · {item.colourSnapshot}
+                    </p>
                   </td>
-                  <td className="py-2.5 px-3 text-center font-mono text-slate-600">6204</td>
-                  <td className="py-2.5 px-3 text-center text-slate-700">
-                    <span className="font-medium">{item.sizeSnapshot}</span> · <span className="text-slate-500">{item.colourSnapshot}</span>
-                    <span className="block text-[9px] font-mono text-slate-400">{item.skuSnapshot}</span>
+                  <td className="py-3 px-3 text-center font-mono text-[11px] text-slate-600">
+                    6204.19
                   </td>
-                  <td className="py-2.5 px-3 text-center font-bold text-slate-900">{item.quantity}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-700 font-mono">{formatINR(item.unitPrice)}</td>
-                  <td className="py-2.5 px-3 text-right font-bold text-slate-900 font-mono">{formatINR(item.total)}</td>
+                  <td className="py-3 px-3 text-center font-mono text-[11px] text-slate-700">
+                    <span className="font-bold">{item.skuSnapshot}</span>
+                    <span className="block text-[10px] text-slate-500">Size: {item.sizeSnapshot}</span>
+                  </td>
+                  <td className="py-3 px-3 text-center font-bold text-slate-900 text-sm">
+                    {item.quantity}
+                  </td>
+                  <td className="py-3 px-4 text-right text-slate-700 font-medium">
+                    {formatINR(item.unitPrice)}
+                  </td>
+                  <td className="py-3 px-4 text-right font-bold text-slate-900">
+                    {formatINR(item.total)}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* Calculation & Tax Breakdown */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2 text-[11px] text-slate-600">
-            <p className="font-bold text-slate-900 uppercase tracking-wider text-[10px]">GST Tax Distribution</p>
-            <div className="flex justify-between border-b border-slate-200 pb-1">
-              <span>Central GST (CGST @ 9%):</span>
-              <span className="font-mono">₹{cgst}</span>
-            </div>
-            <div className="flex justify-between border-b border-slate-200 pb-1">
-              <span>State GST (SGST @ 9%):</span>
-              <span className="font-mono">₹{sgst}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-slate-800">
-              <span>Total Tax (18% Included):</span>
-              <span className="font-mono">{formatINR(order.tax)}</span>
-            </div>
-            <p className="text-[10px] text-slate-400 italic pt-1">
-              * Taxes are inclusive and computed per Indian GST norms for apparel.
+        {/* Detailed GST Tax Matrix & Grand Totals */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          {/* GST Tax Matrix Table */}
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+              TAX COMPUTATION MATRIX (GST 5% APPAREL)
+            </p>
+            <table className="w-full text-[11px] text-left">
+              <thead>
+                <tr className="text-slate-500 border-b border-slate-200 text-[9px] uppercase font-bold">
+                  <th className="pb-1">Tax Head</th>
+                  <th className="pb-1 text-right">Taxable Val</th>
+                  <th className="pb-1 text-right">Rate</th>
+                  <th className="pb-1 text-right">Tax Amt</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                <tr>
+                  <td className="py-1">Central GST (CGST)</td>
+                  <td className="py-1 text-right">{formatINR(taxableValue)}</td>
+                  <td className="py-1 text-right">2.5%</td>
+                  <td className="py-1 text-right font-mono font-bold">INR {cgstAmount}</td>
+                </tr>
+                <tr>
+                  <td className="py-1">State GST (SGST)</td>
+                  <td className="py-1 text-right">{formatINR(taxableValue)}</td>
+                  <td className="py-1 text-right">2.5%</td>
+                  <td className="py-1 text-right font-mono font-bold">INR {sgstAmount}</td>
+                </tr>
+                <tr className="font-bold text-slate-900 pt-1">
+                  <td className="pt-1.5">Total Integrated Tax</td>
+                  <td className="pt-1.5 text-right">{formatINR(taxableValue)}</td>
+                  <td className="pt-1.5 text-right">5.0%</td>
+                  <td className="pt-1.5 text-right font-mono text-primary font-bold">INR {totalTaxCalculated.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="text-[10px] text-slate-500 italic pt-1">
+              * Tax is inclusive in MRP as per GST laws for retail sale. Reverse Charge: No.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/80 space-y-2 text-xs">
-            <div className="flex justify-between text-slate-600">
-              <span>Items Subtotal:</span>
-              <span className="font-mono font-medium">{formatINR(order.subtotal)}</span>
-            </div>
-            {discount > 0 && (
-              <div className="flex justify-between text-rose-700 font-semibold">
-                <span>Coupon Discount ({order.couponCode || "PROMO"}):</span>
-                <span className="font-mono">- {formatINR(order.discount)}</span>
+          {/* Pricing Totals Box */}
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
+            <div className="space-y-1.5 text-xs">
+              <div className="flex justify-between text-slate-600">
+                <span>Items Subtotal (Gross):</span>
+                <span className="font-bold text-slate-900">{formatINR(subtotal)}</span>
               </div>
-            )}
-            <div className="flex justify-between text-slate-600">
-              <span>Delivery &amp; Freight:</span>
-              <span className="font-mono">{delivery === 0 ? "FREE" : formatINR(order.deliveryCharge)}</span>
-            </div>
-            <div className="flex justify-between text-slate-600">
-              <span>GST (Included):</span>
-              <span className="font-mono">{formatINR(order.tax)}</span>
-            </div>
-            <div className="flex justify-between text-sm font-extrabold text-slate-900 border-t border-slate-300 pt-2 bg-amber-50/50 p-2 rounded-lg">
-              <span>Grand Total:</span>
-              <span className="font-mono text-base text-[#141416]">{formatINR(order.total)}</span>
+
+              {discount > 0 && (
+                <div className="flex justify-between text-rose-600 font-bold">
+                  <span>Special Discount ({order.couponCode || "Promo"}):</span>
+                  <span>- {formatINR(discount)}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between text-slate-600">
+                <span>Express Doorstep Delivery:</span>
+                <span className="font-bold text-slate-900">
+                  {delivery === 0 ? "FREE (Complimentary)" : formatINR(delivery)}
+                </span>
+              </div>
+
+              <div className="flex justify-between text-slate-600">
+                <span>Applicable GST (CGST + SGST):</span>
+                <span className="text-slate-900 font-medium">INR {totalTaxCalculated.toFixed(2)}</span>
+              </div>
+
+              {/* Grand Total Banner */}
+              <div className="flex justify-between items-center text-sm font-bold pt-3 mt-1 border-t border-slate-300">
+                <div>
+                  <span className="text-slate-900 text-base font-display">GRAND TOTAL:</span>
+                  <p className="text-[10px] text-slate-500 font-normal">Inclusive of all applicable taxes</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xl font-black text-[#C59B27] font-display">
+                    {formatINR(grandTotal)}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Legal Disclaimer & Authorized Signature */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-200">
-          <div className="text-[10px] text-slate-500 space-y-1">
-            <p className="font-bold text-slate-700 uppercase">Terms &amp; Conditions:</p>
-            <p>1. Returns or exchanges accepted within 7 days of delivery in pristine condition with tags intact.</p>
-            <p>2. Goods once sold are covered under Fashion Cart guarantee of authenticity.</p>
-            <p>3. For questions, contact support: {business?.email || "support@fashioncart.shop"}</p>
+        {/* Terms & Authorized Signatory Block */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-200">
+          <div className="sm:col-span-2 space-y-1 text-[10px] text-slate-500">
+            <p className="font-bold text-slate-700 uppercase tracking-wider">Declaration &amp; Store Terms:</p>
+            <p>1. We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</p>
+            <p>2. Hassle-free 7-day doorstep replacement or return available through your online account portal.</p>
+            <p>3. This is a computer-generated tax invoice issued in accordance with Section 65B of the Indian IT Act, 2000.</p>
           </div>
 
-          <div className="text-right flex flex-col items-end justify-between space-y-2">
-            <div className="border border-dashed border-[#141416]/40 p-2 rounded-lg bg-amber-50/30 text-center inline-block">
-              <p className="text-[9px] font-bold text-[#141416] uppercase tracking-wider">FASHION CART DIGITAL STAMP</p>
-              <p className="text-[10px] font-bold text-[#8E6C0C]">✓ VERIFIED &amp; AUTHORIZED</p>
+          {/* Digital Signature Box */}
+          <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 text-center space-y-1">
+            <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
+              For {business?.businessName || "Fashion Cart"}
+            </p>
+            <div className="h-9 flex items-center justify-center font-display text-base font-bold text-[#C59B27] italic">
+              Fashion Cart Atelier
             </div>
-            <p className="text-[10px] text-slate-400">Authorized Signatory · Fashion Cart Logistics Hub</p>
+            <p className="text-[9px] font-bold text-emerald-700 uppercase">
+              ✓ Digitally Signed &amp; Authenticated
+            </p>
+            <p className="text-[8px] text-slate-400 font-mono">
+              Auth ID: FC-{order.orderNumber.replace(/[^0-9]/g, "").slice(-8)}
+            </p>
           </div>
         </div>
       </div>

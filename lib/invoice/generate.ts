@@ -1,7 +1,7 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { prisma } from "@/lib/db";
 import { generateInvoiceNumber } from "@/lib/order-number";
-import { formatINR } from "@/lib/format";
+import { getBarcodeBars } from "./barcode";
 
 /**
  * Generates an in-memory GST-compliant PDF invoice buffer for an order using pdf-lib.
@@ -48,9 +48,9 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   const brandDark = rgb(20 / 255, 20 / 255, 22 / 255); // #141416 Obsidian Noir
   const goldAccent = rgb(197 / 255, 155 / 255, 39 / 255); // #C59B27 Champagne Tuscan Gold
   const textDark = rgb(20 / 255, 20 / 255, 22 / 255);
-  const textMuted = rgb(120 / 255, 124 / 255, 135 / 255);
-  const bgLight = rgb(250 / 255, 248 / 255, 245 / 255);
-  const lineBorder = rgb(231 / 255, 223 / 255, 213 / 255);
+  const textMuted = rgb(110 / 255, 114 / 255, 125 / 255);
+  const bgLight = rgb(248 / 255, 246 / 255, 242 / 255);
+  const lineBorder = rgb(225 / 255, 220 / 255, 210 / 255);
 
   const addr = order.shippingAddressSnapshot as {
     fullName: string;
@@ -65,21 +65,21 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   // 1. Header Banner Box
   page.drawRectangle({
     x: 36,
-    y: height - 100,
+    y: height - 108,
     width: width - 72,
-    height: 64,
+    height: 72,
     color: brandDark,
   });
 
   page.drawText(business?.businessName || "FASHION CART", {
     x: 52,
-    y: height - 60,
-    size: 18,
+    y: height - 62,
+    size: 20,
     font: fontBold,
     color: goldAccent,
   });
 
-  page.drawText("OFFICIAL GST TAX INVOICE · RETAIL RECEIPT", {
+  page.drawText("LUXURY ATELIER · OFFICIAL GST TAX INVOICE", {
     x: 52,
     y: height - 80,
     size: 8,
@@ -87,56 +87,101 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
     color: rgb(1, 1, 1),
   });
 
-  page.drawText("Original for Recipient", {
-    x: width - 170,
-    y: height - 60,
-    size: 9,
+  page.drawText("Original for Recipient · Retail Sale", {
+    x: 52,
+    y: height - 94,
+    size: 7.5,
     font: fontRegular,
+    color: rgb(200 / 255, 200 / 255, 200 / 255),
+  });
+
+  // Draw Live Code 128 Barcode on the Header Banner
+  const barcodeBars = getBarcodeBars(invoiceNumber);
+  const barcodeHeight = 22;
+  const barUnitWidth = 0.85;
+  let totalBarcodeWidth = 0;
+  for (const b of barcodeBars) totalBarcodeWidth += b.width * barUnitWidth;
+
+  const barcodeBoxWidth = totalBarcodeWidth + 16;
+  const barcodeBoxX = width - 48 - barcodeBoxWidth;
+  const barcodeBoxY = height - 98;
+
+  // White rounded/flat backing box for barcode
+  page.drawRectangle({
+    x: barcodeBoxX,
+    y: barcodeBoxY,
+    width: barcodeBoxWidth,
+    height: 38,
     color: rgb(1, 1, 1),
   });
 
-  page.drawText(`Status: ${order.status}`, {
-    x: width - 170,
-    y: height - 76,
-    size: 9,
+  let currentBarX = barcodeBoxX + 8;
+  for (const b of barcodeBars) {
+    const w = b.width * barUnitWidth;
+    if (b.isBlack) {
+      page.drawRectangle({
+        x: currentBarX,
+        y: barcodeBoxY + 11,
+        width: w,
+        height: barcodeHeight,
+        color: brandDark,
+      });
+    }
+    currentBarX += w;
+  }
+
+  page.drawText(`*${invoiceNumber}*`, {
+    x: barcodeBoxX + (barcodeBoxWidth / 2) - 34,
+    y: barcodeBoxY + 3,
+    size: 6.5,
     font: fontBold,
-    color: goldAccent,
+    color: textDark,
   });
 
   // 2. Business & Invoice Details Meta Grid
-  let currentY = height - 130;
+  let currentY = height - 132;
 
   // Left Column: Seller Info
-  page.drawText("Sold By / Dispatcher:", { x: 36, y: currentY, size: 9, font: fontBold, color: textDark });
-  page.drawText(business?.businessName || "Fashion Cart Boutique", { x: 36, y: currentY - 14, size: 8, font: fontRegular, color: textDark });
-  if (business?.businessAddress) {
-    page.drawText(business.businessAddress.slice(0, 50), { x: 36, y: currentY - 26, size: 8, font: fontRegular, color: textMuted });
-  }
-  page.drawText(`GSTIN: ${business?.gstin || "29AAAAA0000A1Z5"}`, { x: 36, y: currentY - 38, size: 8, font: fontBold, color: textDark });
-  page.drawText(`Contact: ${business?.phone || "9771039201"} · ${business?.email || "bablusoni2825@gmail.com"}`, {
+  page.drawText("Sold By / Dispatcher:", { x: 36, y: currentY, size: 8.5, font: fontBold, color: textDark });
+  page.drawText(business?.businessName || "Fashion Cart", { x: 36, y: currentY - 13, size: 8.5, font: fontBold, color: goldAccent });
+  page.drawText((business?.businessAddress || "Atelier Logistics Hub, 108 Fashion Avenue, Indiranagar, Bengaluru - 560038").slice(0, 52), {
     x: 36,
-    y: currentY - 50,
-    size: 8,
+    y: currentY - 24,
+    size: 7.5,
+    font: fontRegular,
+    color: textMuted,
+  });
+  page.drawText(`GSTIN: ${business?.gstin || "29AABCU9603R1ZM"} · State: Karnataka (29)`, {
+    x: 36,
+    y: currentY - 35,
+    size: 7.5,
+    font: fontBold,
+    color: textDark,
+  });
+  page.drawText(`Support: ${business?.email || "support@fashioncart.shop"} · ${business?.phone || "+91 97710 39201"}`, {
+    x: 36,
+    y: currentY - 46,
+    size: 7.5,
     font: fontRegular,
     color: textMuted,
   });
 
   // Right Column: Invoice Details
   const rightColX = 330;
-  page.drawText("Invoice Details:", { x: rightColX, y: currentY, size: 9, font: fontBold, color: textDark });
-  page.drawText(`Invoice No: ${invoiceNumber}`, { x: rightColX, y: currentY - 14, size: 8, font: fontBold, color: brandDark });
-  page.drawText(`Invoice Date: ${new Date(order.createdAt).toLocaleDateString("en-IN")}`, { x: rightColX, y: currentY - 26, size: 8, font: fontRegular, color: textDark });
-  page.drawText(`Order ID: #${order.orderNumber}`, { x: rightColX, y: currentY - 38, size: 8, font: fontRegular, color: textDark });
+  page.drawText("Invoice & Dispatch Details:", { x: rightColX, y: currentY, size: 8.5, font: fontBold, color: textDark });
+  page.drawText(`Invoice No: ${invoiceNumber}`, { x: rightColX, y: currentY - 13, size: 8, font: fontBold, color: brandDark });
+  page.drawText(`Invoice Date: ${new Date(order.createdAt).toLocaleDateString("en-IN")}`, { x: rightColX, y: currentY - 24, size: 7.5, font: fontRegular, color: textDark });
+  page.drawText(`Order ID: #${order.orderNumber}`, { x: rightColX, y: currentY - 35, size: 7.5, font: fontBold, color: textDark });
   page.drawText(`Payment: ${order.paymentMethod.replace(/_/g, " ")}${order.payment?.utrNumber ? ` (UTR: ${order.payment.utrNumber})` : ""}`, {
     x: rightColX,
-    y: currentY - 50,
-    size: 8,
+    y: currentY - 46,
+    size: 7.5,
     font: fontRegular,
     color: textDark,
   });
 
   // Divider Line
-  currentY -= 68;
+  currentY -= 60;
   page.drawLine({
     start: { x: 36, y: currentY },
     end: { x: width - 36, y: currentY },
@@ -145,48 +190,50 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   });
 
   // 3. Customer Billing & Shipping Address
-  currentY -= 18;
-  page.drawText("Billed & Shipped To (Customer):", { x: 36, y: currentY, size: 9, font: fontBold, color: textDark });
-  currentY -= 14;
+  currentY -= 15;
+  page.drawText("Billed & Shipped To (Customer):", { x: 36, y: currentY, size: 8.5, font: fontBold, color: textDark });
+  currentY -= 13;
   page.drawText(`${addr.fullName} · Phone: ${addr.mobileNumber}`, { x: 36, y: currentY, size: 8, font: fontBold, color: textDark });
-  currentY -= 12;
-  page.drawText(`${addr.addressLine1}${addr.addressLine2 ? `, ${addr.addressLine2}` : ""}`, { x: 36, y: currentY, size: 8, font: fontRegular, color: textMuted });
-  currentY -= 12;
-  page.drawText(`${addr.city}, ${addr.state} - ${addr.pinCode} · Email: ${order.user.email}`, { x: 36, y: currentY, size: 8, font: fontRegular, color: textMuted });
+  currentY -= 11;
+  page.drawText(`${addr.addressLine1}${addr.addressLine2 ? `, ${addr.addressLine2}` : ""}`, { x: 36, y: currentY, size: 7.5, font: fontRegular, color: textMuted });
+  currentY -= 11;
+  page.drawText(`${addr.city}, ${addr.state} - ${addr.pinCode} · Email: ${order.user.email}`, { x: 36, y: currentY, size: 7.5, font: fontRegular, color: textMuted });
 
-  // 4. Line Items Table Header
-  currentY -= 24;
+  // 4. Line Items Table Header (Zero Overlap Columns)
+  currentY -= 20;
   page.drawRectangle({
     x: 36,
-    y: currentY - 18,
+    y: currentY - 16,
     width: width - 72,
-    height: 20,
+    height: 18,
     color: bgLight,
     borderColor: lineBorder,
     borderWidth: 1,
   });
 
-  page.drawText("ITEM DESCRIPTION", { x: 44, y: currentY - 12, size: 8, font: fontBold, color: textDark });
-  page.drawText("SKU / SIZE", { x: 260, y: currentY - 12, size: 8, font: fontBold, color: textDark });
-  page.drawText("QTY", { x: 360, y: currentY - 12, size: 8, font: fontBold, color: textDark });
-  page.drawText("PRICE", { x: 420, y: currentY - 12, size: 8, font: fontBold, color: textDark });
-  page.drawText("TOTAL", { x: 490, y: currentY - 12, size: 8, font: fontBold, color: textDark });
+  page.drawText("GARMENT DESCRIPTION", { x: 44, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
+  page.drawText("HSN", { x: 230, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
+  page.drawText("SKU / SIZE", { x: 280, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
+  page.drawText("QTY", { x: 380, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
+  page.drawText("UNIT PRICE", { x: 420, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
+  page.drawText("TOTAL", { x: 495, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
 
-  currentY -= 26;
+  currentY -= 24;
 
   // 5. Items Rows
   for (const item of order.items) {
-    page.drawText(item.productNameSnapshot.slice(0, 36), { x: 44, y: currentY, size: 8, font: fontBold, color: textDark });
-    page.drawText(`${item.skuSnapshot} / ${item.sizeSnapshot}`, { x: 260, y: currentY, size: 8, font: fontRegular, color: textMuted });
-    page.drawText(`${item.quantity}`, { x: 368, y: currentY, size: 8, font: fontRegular, color: textDark });
-    page.drawText(`INR ${Number(item.unitPrice).toLocaleString("en-IN")}`, { x: 420, y: currentY, size: 8, font: fontRegular, color: textDark });
-    page.drawText(`INR ${Number(item.total).toLocaleString("en-IN")}`, { x: 490, y: currentY, size: 8, font: fontBold, color: textDark });
+    page.drawText(item.productNameSnapshot.slice(0, 32), { x: 44, y: currentY, size: 7.5, font: fontBold, color: textDark });
+    page.drawText("6204", { x: 230, y: currentY, size: 7, font: fontRegular, color: textMuted });
+    page.drawText(`${item.skuSnapshot.slice(0, 14)} / ${item.sizeSnapshot}`, { x: 280, y: currentY, size: 7, font: fontRegular, color: textMuted });
+    page.drawText(`${item.quantity}`, { x: 386, y: currentY, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(`INR ${Number(item.unitPrice).toLocaleString("en-IN")}`, { x: 420, y: currentY, size: 7.5, font: fontRegular, color: textDark });
+    page.drawText(`INR ${Number(item.total).toLocaleString("en-IN")}`, { x: 495, y: currentY, size: 7.5, font: fontBold, color: textDark });
 
-    currentY -= 18;
+    currentY -= 16;
   }
 
   // Divider Line before totals
-  currentY -= 8;
+  currentY -= 6;
   page.drawLine({
     start: { x: 36, y: currentY },
     end: { x: width - 36, y: currentY },
@@ -194,53 +241,54 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
     color: lineBorder,
   });
 
-  // 6. Totals & Tax Breakdown Box
+  // 6. Tax Computation & Totals Box
   currentY -= 16;
   const totalsX = 350;
+  const taxableVal = Math.max(0, Number(order.subtotal) - Number(order.discount));
+  const gstAmt = Math.round((taxableVal * 0.05) * 100) / 100;
+  const halfGst = (gstAmt / 2).toFixed(2);
 
-  page.drawText("Subtotal:", { x: totalsX, y: currentY, size: 8, font: fontRegular, color: textMuted });
-  page.drawText(`INR ${Number(order.subtotal).toLocaleString("en-IN")}`, { x: 490, y: currentY, size: 8, font: fontRegular, color: textDark });
-  currentY -= 14;
+  page.drawText("Gross Items Subtotal:", { x: totalsX, y: currentY, size: 7.5, font: fontRegular, color: textMuted });
+  page.drawText(`INR ${Number(order.subtotal).toLocaleString("en-IN")}`, { x: 495, y: currentY, size: 7.5, font: fontRegular, color: textDark });
+  currentY -= 13;
 
   if (Number(order.discount) > 0) {
-    page.drawText(`Discount (${order.couponCode || "Coupon"}):`, { x: totalsX, y: currentY, size: 8, font: fontRegular, color: rgb(220 / 255, 38 / 255, 38 / 255) });
-    page.drawText(`- INR ${Number(order.discount).toLocaleString("en-IN")}`, { x: 490, y: currentY, size: 8, font: fontBold, color: rgb(220 / 255, 38 / 255, 38 / 255) });
-    currentY -= 14;
+    page.drawText(`Special Discount (${order.couponCode || "Promo"}):`, { x: totalsX, y: currentY, size: 7.5, font: fontRegular, color: rgb(220 / 255, 38 / 255, 38 / 255) });
+    page.drawText(`- INR ${Number(order.discount).toLocaleString("en-IN")}`, { x: 495, y: currentY, size: 7.5, font: fontBold, color: rgb(220 / 255, 38 / 255, 38 / 255) });
+    currentY -= 13;
   }
 
-  page.drawText("Shipping / Delivery:", { x: totalsX, y: currentY, size: 8, font: fontRegular, color: textMuted });
-  page.drawText(Number(order.deliveryCharge) === 0 ? "FREE" : `INR ${Number(order.deliveryCharge).toLocaleString("en-IN")}`, {
-    x: 490,
+  page.drawText("Express Doorstep Delivery:", { x: totalsX, y: currentY, size: 7.5, font: fontRegular, color: textMuted });
+  page.drawText(Number(order.deliveryCharge) === 0 ? "FREE (Complimentary)" : `INR ${Number(order.deliveryCharge).toLocaleString("en-IN")}`, {
+    x: 495,
     y: currentY,
-    size: 8,
+    size: 7.5,
     font: fontRegular,
     color: textDark,
   });
-  currentY -= 14;
+  currentY -= 13;
 
-  const taxAmount = Number(order.tax);
-  const halfTax = (taxAmount / 2).toFixed(2);
-  page.drawText(`Integrated CGST (9%) + SGST (9%):`, { x: totalsX, y: currentY, size: 8, font: fontRegular, color: textMuted });
-  page.drawText(`INR ${Number(halfTax) * 2}`, { x: 490, y: currentY, size: 8, font: fontRegular, color: textDark });
-  currentY -= 18;
+  page.drawText(`CGST (2.5%) + SGST (2.5%):`, { x: totalsX, y: currentY, size: 7.5, font: fontRegular, color: textMuted });
+  page.drawText(`INR ${gstAmt.toFixed(2)}`, { x: 495, y: currentY, size: 7.5, font: fontRegular, color: textDark });
+  currentY -= 16;
 
   // Grand Total Banner
   page.drawRectangle({
     x: totalsX - 10,
-    y: currentY - 6,
+    y: currentY - 5,
     width: width - totalsX - 26,
-    height: 24,
+    height: 22,
     color: brandDark,
   });
 
-  page.drawText("GRAND TOTAL:", { x: totalsX, y: currentY + 1, size: 9, font: fontBold, color: rgb(1, 1, 1) });
-  page.drawText(`INR ${Number(order.total).toLocaleString("en-IN")}`, { x: 480, y: currentY + 1, size: 10, font: fontBold, color: goldAccent });
+  page.drawText("GRAND TOTAL:", { x: totalsX, y: currentY + 2, size: 8.5, font: fontBold, color: rgb(1, 1, 1) });
+  page.drawText(`INR ${Number(order.total).toLocaleString("en-IN")}`, { x: 485, y: currentY + 2, size: 9.5, font: fontBold, color: goldAccent });
 
   // 7. Footer Terms & Authenticity Seal
-  page.drawText("TERMS & CONDITIONS:", { x: 36, y: 80, size: 7, font: fontBold, color: textDark });
-  page.drawText("1. Goods once sold are eligible for replacement or return within 7 calendar days as per store policy.", { x: 36, y: 70, size: 6.5, font: fontRegular, color: textMuted });
-  page.drawText("2. This is a computer-generated tax invoice and requires no physical signature under Indian Information Technology Act.", { x: 36, y: 60, size: 6.5, font: fontRegular, color: textMuted });
-  page.drawText("Fashion Cart Luxury Atelier · Designed for comfort & everyday elegance · support@fashioncart.shop", { x: 36, y: 46, size: 6.5, font: fontBold, color: brandDark });
+  page.drawText("DECLARATION & TERMS:", { x: 36, y: 74, size: 6.5, font: fontBold, color: textDark });
+  page.drawText("1. Goods once sold are eligible for replacement or return within 7 calendar days as per store policy.", { x: 36, y: 64, size: 6, font: fontRegular, color: textMuted });
+  page.drawText("2. Computer-generated tax invoice issued in accordance with Section 65B of Indian Information Technology Act.", { x: 36, y: 55, size: 6, font: fontRegular, color: textMuted });
+  page.drawText("Fashion Cart Luxury Atelier · Registered Trade Office · support@fashioncart.shop · +91 97710 39201", { x: 36, y: 42, size: 6.5, font: fontBold, color: goldAccent });
 
   const pdfBytes = await pdfDoc.save();
   const buffer = Buffer.from(pdfBytes);
