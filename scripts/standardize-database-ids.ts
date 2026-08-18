@@ -74,13 +74,13 @@ async function standardizeAllIds() {
     try {
       await prisma.$transaction(async (tx) => {
         await tx.$executeRawUnsafe(`
-          INSERT INTO "Category" ("id", "name", "slug", "description", "imageUrl", "parentId", "createdAt", "updatedAt")
+          INSERT INTO "Category" ("id", "name", "slug", "isActive", "sortOrder", "parentId", "createdAt", "updatedAt")
           VALUES (
             '${newCatId}',
             '${cat.name.replace(/'/g, "''")}',
             'temp_${Date.now()}_${cat.slug}',
-            ${cat.description ? `'${cat.description.replace(/'/g, "''")}'` : "NULL"},
-            ${cat.imageUrl ? `'${cat.imageUrl}'` : "NULL"},
+            ${cat.isActive},
+            ${cat.sortOrder},
             NULL,
             '${cat.createdAt.toISOString()}',
             NOW()
