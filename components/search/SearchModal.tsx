@@ -20,10 +20,9 @@ type SearchResult = {
 const POPULAR_SEARCH_CHIPS = [
   { label: "Silk Sarees", query: "Silk" },
   { label: "Ethnic Kurtis", query: "Kurti" },
-  { label: "French Linen Shirts", query: "Linen" },
-  { label: "Designer Dresses", query: "Dress" },
+  { label: "French Linen", query: "Linen" },
+  { label: "Anarkali Gowns", query: "Anarkali" },
   { label: "Men's Denim", query: "Denim" },
-  { label: "Velvet Sets", query: "Velvet" },
   { label: "Under ₹1,999", query: "Cotton" },
 ];
 
@@ -48,7 +47,7 @@ export default function SearchModal({
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      setTimeout(() => inputRef.current?.focus(), 80);
+      setTimeout(() => inputRef.current?.focus(), 60);
     } else {
       document.body.style.overflow = "unset";
       setQuery("");
@@ -82,7 +81,7 @@ export default function SearchModal({
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/products?q=${encodeURIComponent(query.trim())}&take=8`);
+        const res = await fetch(`/api/products?q=${encodeURIComponent(query.trim())}&take=6`);
         if (res.ok) {
           const data = await res.json();
           setResults(data.products || []);
@@ -92,7 +91,7 @@ export default function SearchModal({
       } finally {
         setLoading(false);
       }
-    }, 200);
+    }, 180);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -117,7 +116,7 @@ export default function SearchModal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[999999] overflow-y-auto p-4 sm:p-6 md:p-12 flex items-start justify-center"
+      className="fixed inset-0 z-[999999] overflow-y-auto p-4 sm:p-6 md:p-10 flex items-start justify-center"
       role="dialog"
       aria-modal="true"
       aria-label="Universal Search & Catalog Discovery"
@@ -125,13 +124,12 @@ export default function SearchModal({
       {/* Luxury Darkened Backdrop Overlay */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-[#141416]/70 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
+        className="fixed inset-0 bg-[#141416]/75 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
       />
 
-      {/* Main Luxury Search Command Card */}
+      {/* Main Luxury Search Command Card (Comfortably positioned in upper center) */}
       <div
-        className="relative w-full max-w-3xl rounded-3xl bg-white border border-[#E7DFD5] shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-200 mt-4 sm:mt-10"
-        style={{ borderColor: "var(--fc-border)" }}
+        className="relative w-full max-w-2xl rounded-3xl bg-white border border-[#E7DFD5] shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-200 mt-12 sm:mt-16 card-theme"
       >
         {/* Top Champagne Gold Luxury Accent Ribbon */}
         <div className="h-1.5 w-full bg-gradient-to-r from-[#C59B27] via-[#E0BF48] to-[#141416]" />
@@ -139,7 +137,7 @@ export default function SearchModal({
         {/* Search Input Bar Section */}
         <form
           onSubmit={handleFullSearch}
-          className="relative flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-[#E7DFD5] bg-[#FAF8F5]/60"
+          className="relative flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-[#E7DFD5] bg-[#FAF8F5]/80"
         >
           <span className="text-[#C59B27] text-lg shrink-0">
             {loading ? (
@@ -158,7 +156,7 @@ export default function SearchModal({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search silk sarees, kurtis, linen shirts, fabrics, colors, sizes..."
-            className="flex-1 bg-transparent text-sm sm:text-base font-medium text-[#141416] placeholder:text-[#787C87] outline-none border-none ring-0 shadow-none focus:outline-none focus:ring-0"
+            className="flex-1 bg-transparent text-sm sm:text-base font-semibold text-[#141416] placeholder:text-[#787C87] outline-none border-none ring-0 shadow-none focus:outline-none focus:ring-0"
             autoComplete="off"
             spellCheck={false}
           />
@@ -196,7 +194,7 @@ export default function SearchModal({
         </form>
 
         {/* Quick Trending Suggestions Bar */}
-        <div className="px-5 sm:px-6 py-3 border-b border-[#E7DFD5]/70 bg-white flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <div className="px-5 sm:px-6 py-2.5 border-b border-[#E7DFD5]/70 bg-white flex items-center gap-2 overflow-x-auto no-scrollbar">
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87] shrink-0 flex items-center gap-1">
             <span>🔥</span> Trending:
           </span>
@@ -208,7 +206,7 @@ export default function SearchModal({
                 onClick={() => handleTagClick(chip.query)}
                 className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
                   query.toLowerCase() === chip.query.toLowerCase()
-                    ? "bg-[#141416] text-white"
+                    ? "bg-[#141416] text-white font-bold"
                     : "bg-[#FAF8F5] text-[#4B4E56] hover:bg-[#F4EFEA] hover:text-[#C59B27] border border-[#E7DFD5]"
                 }`}
               >
@@ -219,10 +217,10 @@ export default function SearchModal({
         </div>
 
         {/* Search Body Results Grid */}
-        <div className="max-h-[60vh] overflow-y-auto p-5 sm:p-6 space-y-4">
+        <div className="max-h-[55vh] overflow-y-auto p-4 sm:p-5 space-y-3">
           {query.trim() === "" ? (
             /* Initial Discovery State */
-            <div className="py-8 text-center space-y-3">
+            <div className="py-8 text-center space-y-2.5">
               <div className="w-12 h-12 rounded-full bg-[#FAF8F5] border border-[#E7DFD5] flex items-center justify-center text-xl mx-auto text-[#C59B27]">
                 ✨
               </div>
@@ -237,20 +235,20 @@ export default function SearchModal({
             </div>
           ) : loading && results.length === 0 ? (
             /* Loading State */
-            <div className="py-16 text-center space-y-3">
+            <div className="py-14 text-center space-y-2.5">
               <span className="w-8 h-8 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin inline-block" />
               <p className="text-xs text-[#787C87] font-medium">Searching fine apparel catalog…</p>
             </div>
           ) : results.length === 0 ? (
             /* Empty Search Results */
-            <div className="py-12 text-center space-y-3">
+            <div className="py-10 text-center space-y-2.5">
               <div className="text-3xl">🔍</div>
               <div className="space-y-1">
                 <h4 className="font-display font-bold text-sm text-[#141416]">
                   No matching garments found for &ldquo;{query}&rdquo;
                 </h4>
                 <p className="text-xs text-[#787C87] max-w-xs mx-auto leading-relaxed">
-                  Try searching by broader terms like <span className="font-bold text-[#141416]">Saree</span>, <span className="font-bold text-[#141416]">Kurti</span>, <span className="font-bold text-[#141416]">Linen</span>, or explore all collections.
+                  Try searching by broader terms like <span className="font-bold text-[#141416]">Saree</span>, <span className="font-bold text-[#141416]">Kurti</span>, or <span className="font-bold text-[#141416]">Linen</span>.
                 </p>
               </div>
               <Link
@@ -263,19 +261,19 @@ export default function SearchModal({
             </div>
           ) : (
             /* Populated Search Results Grid */
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#787C87] pb-1">
-                <span>Matching Apparel ({results.length} results)</span>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between text-xs text-[#787C87] px-1">
+                <span>Matching Apparel ({results.length} items found)</span>
                 <button
                   onClick={() => handleFullSearch()}
                   className="font-bold text-[#C59B27] hover:underline cursor-pointer flex items-center gap-1"
                 >
-                  <span>View all in store</span>
+                  <span>View full results in store</span>
                   <span>→</span>
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {results.map((product) => {
                   const minPrice = Math.min(...product.variants.map((v) => Number(v.price)));
                   const inStock = product.variants.some((v) => v.stockQuantity > 0);
@@ -285,7 +283,7 @@ export default function SearchModal({
                       key={product.id}
                       href={`/products/${product.slug}`}
                       onClick={onClose}
-                      className="group flex gap-3 p-3 rounded-2xl bg-[#FAF8F5]/80 hover:bg-white border border-[#E7DFD5] hover:border-[#C59B27] transition-all duration-200 shadow-2xs hover:shadow-md"
+                      className="group flex gap-3 p-3 rounded-2xl bg-[#FAF8F5]/80 hover:bg-white border border-[#E7DFD5] hover:border-[#C59B27] transition-all duration-200 shadow-2xs hover:shadow-sm"
                     >
                       {/* Product Thumbnail */}
                       <div className="relative h-20 w-16 shrink-0 rounded-xl overflow-hidden bg-[#F4EFEA] border border-[#E7DFD5]">
@@ -355,7 +353,7 @@ export default function SearchModal({
             onClick={() => handleFullSearch()}
             className="font-bold text-[#141416] hover:text-[#C59B27] transition-colors cursor-pointer"
           >
-            Search Catalog →
+            Search Full Catalog →
           </button>
         </div>
       </div>
