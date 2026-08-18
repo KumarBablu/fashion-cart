@@ -31,14 +31,15 @@ export async function createSession(userId: string, userAgent?: string | null) {
   return { rawToken, expiresAt };
 }
 
-export async function setSessionCookie(rawToken: string, expiresAt: Date) {
+export async function setSessionCookie(rawToken: string, _expiresAt?: Date) {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, rawToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    expires: expiresAt,
+    // Omit expires & maxAge so the browser treats this as a pure Session Cookie.
+    // When the browser window is closed, the cookie is discarded, requiring a fresh login.
   });
 }
 

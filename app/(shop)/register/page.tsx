@@ -55,6 +55,10 @@ export default function RegisterPage() {
         return;
       }
 
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("fc_window_session", "active");
+      }
+
       success("Account Created! 🎉", `Welcome to Fashion Cart, ${name.trim()}!`);
       window.location.href = "/";
     } catch {

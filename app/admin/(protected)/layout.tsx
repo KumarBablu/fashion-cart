@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
+import AdminWindowSessionGuard from "@/components/admin/AdminWindowSessionGuard";
 
 const NAV = [
   { href: "/admin/dashboard", label: "Analytics Dashboard", icon: "📊" },
@@ -24,6 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen flex bg-[#FAF8F5] text-[#0C3B2E]">
+      <AdminWindowSessionGuard />
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-[#E8E3D8] bg-white transition-colors">
         {/* Brand Header */}

@@ -38,6 +38,10 @@ function LoginForm() {
         return;
       }
 
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("fc_window_session", "active");
+      }
+
       if (data.user?.role === "ADMIN") {
         success("Administrator Portal 👑", "Redirecting to Admin Management Console...");
         window.location.href = "/admin/dashboard";

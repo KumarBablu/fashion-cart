@@ -46,6 +46,10 @@ export default function AdminLoginPage() {
         return;
       }
 
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("fc_window_session", "active");
+      }
+
       window.location.href = "/admin/dashboard";
     } catch {
       setError("Network error while trying to login to admin console.");
