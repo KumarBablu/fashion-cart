@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthCard from "@/components/AuthCard";
 import { useToast } from "@/components/providers/ToastProvider";
-import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 function LoginForm() {
   const router = useRouter();
@@ -58,19 +57,6 @@ function LoginForm() {
 
   return (
     <div className="space-y-5">
-      {/* 1-Click Google Sign In */}
-      <div className="space-y-2">
-        <GoogleSignInButton text="continue_with" next={next} label="Continue with Google" />
-        
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow border-t" style={{ borderColor: "var(--fc-border)" }} />
-          <span className="shrink-0 mx-3 text-[10px] uppercase tracking-wider font-extrabold text-dim">
-            Or sign in with password
-          </span>
-          <div className="flex-grow border-t" style={{ borderColor: "var(--fc-border)" }} />
-        </div>
-      </div>
-
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-dim mb-1">

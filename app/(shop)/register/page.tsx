@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AuthCard from "@/components/AuthCard";
 import { useToast } from "@/components/providers/ToastProvider";
-import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -73,19 +72,6 @@ export default function RegisterPage() {
       subtitle="Join Fashion Cart for express checkout, order tracking, and VIP member drops"
     >
       <div className="space-y-5">
-        {/* 1-Click Google Sign Up */}
-        <div className="space-y-2">
-          <GoogleSignInButton text="signup_with" next="/" label="Sign up with Google" />
-          
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t" style={{ borderColor: "var(--fc-border)" }} />
-            <span className="shrink-0 mx-3 text-[10px] uppercase tracking-wider font-extrabold text-dim">
-              Or register with email &amp; mobile
-            </span>
-            <div className="flex-grow border-t" style={{ borderColor: "var(--fc-border)" }} />
-          </div>
-        </div>
-
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-dim mb-1">
@@ -108,32 +94,37 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-dim mb-1">
-              Email Address (Unique) *
+              Email Address *
             </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="your.email@example.com"
+              placeholder="e.g. asha@example.com"
               className="w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-primary transition-all"
               style={{
                 backgroundColor: "var(--fc-bg)",
                 borderColor: "var(--fc-border)",
               }}
             />
-            <p className="text-[10px] text-dim mt-1">
-              Used for official GST tax invoice and order receipts.
-            </p>
+            <p className="text-[10px] text-dim mt-1">We will send order receipts and tracking links here.</p>
           </div>
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-dim mb-1">
-              Mobile Number (10 Digits) *
+              10-Digit Mobile Phone Number *
             </label>
-            <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-xs font-bold text-dim select-none">
-                +91
+            <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: "var(--fc-border)" }}>
+              <span
+                className="px-3.5 py-2.5 text-xs font-bold flex items-center border-r"
+                style={{
+                  backgroundColor: "var(--fc-surface)",
+                  borderColor: "var(--fc-border)",
+                  color: "var(--fc-text)",
+                }}
+              >
+                🇮🇳 +91
               </span>
               <input
                 type="tel"
@@ -142,22 +133,19 @@ export default function RegisterPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                 placeholder="9876543210"
-                className="w-full pl-12 pr-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-primary transition-all font-mono"
+                className="w-full px-3.5 py-2.5 text-xs outline-none focus:border-primary transition-all"
                 style={{
                   backgroundColor: "var(--fc-bg)",
-                  borderColor: "var(--fc-border)",
                 }}
               />
             </div>
-            <p className="text-[10px] text-dim mt-1">
-              Used for WhatsApp delivery alerts and alternative 1-step login.
-            </p>
+            <p className="text-[10px] text-dim mt-1">Required for instant WhatsApp shipping updates &amp; delivery OTP.</p>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-bold uppercase tracking-wider text-dim">
-                Password (min 8 chars) *
+                Password * (min. 8 characters)
               </label>
               <button
                 type="button"
@@ -188,18 +176,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div className="text-[11px] text-dim leading-relaxed">
-            By registering, you agree to Fashion Cart&apos;s{" "}
-            <Link href="/terms" className="text-primary hover:underline">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy-policy" className="text-primary hover:underline">
-              Privacy Policy
-            </Link>
-            .
-          </div>
-
+          {/* High-visibility themed button */}
           <button
             type="submit"
             disabled={loading || !name || !email || !phone || !password}
@@ -214,18 +191,16 @@ export default function RegisterPage() {
                 <span>Creating Account…</span>
               </>
             ) : (
-              <span>Create My Account →</span>
+              <span>Complete Registration →</span>
             )}
           </button>
 
-          <div className="pt-4 border-t text-center" style={{ borderColor: "var(--fc-border)" }}>
-            <p className="text-xs text-dim">
-              Already have an account?{" "}
-              <Link href="/login" className="font-bold text-primary hover:underline">
-                Sign In Instead
-              </Link>
-            </p>
-          </div>
+          <p className="text-center text-xs text-dim pt-3 border-t" style={{ borderColor: "var(--fc-border)" }}>
+            Already have an account?{" "}
+            <Link href="/login" className="font-bold text-primary hover:underline">
+              Sign In Instead
+            </Link>
+          </p>
         </form>
       </div>
     </AuthCard>
