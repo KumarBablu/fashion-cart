@@ -38,6 +38,12 @@ function LoginForm() {
         return;
       }
 
+      if (data.user?.role === "ADMIN") {
+        success("Administrator Portal 👑", "Redirecting to Admin Management Console...");
+        window.location.href = "/admin/dashboard";
+        return;
+      }
+
       success("Welcome Back! 👋", `Logged in as ${data.user?.name || "Customer"}`);
       window.location.href = next;
     } catch {

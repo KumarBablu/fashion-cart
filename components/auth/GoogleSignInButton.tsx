@@ -70,6 +70,12 @@ export default function GoogleSignInButton({
         return;
       }
 
+      if (data.user?.role === "ADMIN") {
+        success("Administrator Portal 👑", "Redirecting to Admin Management Console...");
+        window.location.href = "/admin/dashboard";
+        return;
+      }
+
       success("Signed In with Google! 🎉", `Welcome back, ${data.user?.name || "Customer"}`);
       window.location.href = next;
     } catch {

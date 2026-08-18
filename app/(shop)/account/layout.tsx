@@ -47,6 +47,28 @@ export default async function AccountLayout({ children }: { children: React.Reac
         </div>
       </div>
 
+      {(user.role === "ADMIN" || user.email === "bablusoni2825@gmail.com") && (
+        <div className="mt-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">👑</span>
+            <div>
+              <p className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                Administrator Account Active
+              </p>
+              <p className="text-[11px] text-dim">
+                You have full administrative privileges to manage orders, inventory, CRM, and payments.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/dashboard"
+            className="px-4 py-2 rounded-xl bg-[#141416] text-white text-xs font-bold hover:bg-[#25262B] transition-all shadow-sm flex items-center gap-1.5"
+          >
+            <span>🚀</span> Open Admin Console
+          </Link>
+        </div>
+      )}
+
       <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-[220px_1fr]">
         <aside>
           <nav
