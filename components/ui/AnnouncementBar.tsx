@@ -24,7 +24,7 @@ export default function AnnouncementBar() {
 
   return (
     <div
-      className="py-2 px-4 text-center text-xs font-semibold tracking-wider transition-colors duration-300 relative overflow-hidden"
+      className="py-2 px-3 sm:px-4 text-center text-xs font-semibold tracking-wider transition-colors duration-300 relative overflow-hidden w-full max-w-full"
       style={{
         backgroundColor: "var(--fc-primary)",
         color: "var(--fc-primary-fg)",
@@ -32,12 +32,12 @@ export default function AnnouncementBar() {
     >
       <Link
         href={item.link}
-        className="inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+        className="inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity max-w-full"
       >
-        <span className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+        <span className="truncate max-w-[70vw] sm:max-w-none text-[11px] sm:text-xs">
           {item.text}
         </span>
-        <span className="text-[10px] uppercase font-bold tracking-widest bg-black/20 px-2 py-0.5 rounded-full ml-1">
+        <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest bg-black/20 px-2 py-0.5 rounded-full shrink-0">
           Shop Now →
         </span>
       </Link>

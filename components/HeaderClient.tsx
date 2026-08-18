@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import CartDrawer from "@/components/cart/CartDrawer";
 import MenuDrawer from "@/components/navigation/MenuDrawer";
@@ -87,20 +88,49 @@ export default function HeaderClient({
   }
 
   return (
-    <>
-      {/* Mobile-Only Left Hamburger Trigger (Displayed before logo on mobile) */}
-      <div className="flex md:hidden items-center">
+    <div className="flex h-16 items-center justify-between gap-2 sm:gap-6 w-full max-w-full">
+      
+      {/* 1. Left Group: Mobile Hamburger Button + Brand Logo */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Mobile Hamburger Trigger */}
         <button
           type="button"
           onClick={() => setMenuDrawerOpen(true)}
-          className="w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] flex items-center justify-center hover:bg-[#FAF8F5] transition-colors cursor-pointer shadow-2xs"
+          className="md:hidden w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] flex items-center justify-center hover:bg-[#FAF8F5] transition-colors cursor-pointer shadow-2xs shrink-0"
           aria-label="Open Navigation Menu"
         >
           <MenuIcon />
         </button>
+
+        {/* Official Brand Logo */}
+        <Link
+          href="/"
+          prefetch={true}
+          className="flex items-center gap-2 group shrink-0"
+          aria-label="Fashion Cart Homepage"
+        >
+          <div className="relative h-9 w-9 sm:h-10 sm:w-10 overflow-hidden transition-transform duration-200 group-hover:scale-105">
+            <Image
+              src="/fashion-cart-logo-transparent.svg"
+              alt="Fashion Cart Luxury Monogram Logo"
+              fill
+              sizes="40px"
+              priority
+              className="object-contain"
+            />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-display font-black text-base sm:text-xl tracking-tight text-[#141416] leading-none">
+              Fashion Cart
+            </span>
+            <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.22em] font-semibold text-[#C59B27] leading-tight mt-0.5">
+              Luxury Atelier
+            </span>
+          </div>
+        </Link>
       </div>
 
-      {/* Desktop Main Navigation Links (Centered, Single-Line, Luxury Underline Hover) */}
+      {/* 2. Center Group: Desktop Main Navigation Tabs */}
       <nav className="hidden md:flex items-center gap-5 lg:gap-7 text-xs font-bold uppercase tracking-[0.14em]">
         
         {/* All Categories Slide-Over Menu Trigger */}
@@ -147,13 +177,13 @@ export default function HeaderClient({
         </Link>
       </nav>
 
-      {/* Right-Side Action Controls (Search, Wishlist, Cart, Account) */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5">
+      {/* 3. Right Group: Action Controls (Search, Wishlist, Bag, Account) */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         
         {/* Search Trigger Button */}
         <button
           onClick={() => setSearchModalOpen(true)}
-          className="flex items-center gap-2 h-9 px-3 sm:px-4 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer group"
+          className="flex items-center gap-2 h-9 px-2.5 sm:px-4 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer group shrink-0"
           aria-label="Search fine apparel"
           title="Quick search (Ctrl+K)"
         >
@@ -169,7 +199,7 @@ export default function HeaderClient({
         {/* Wishlist Button */}
         <Link
           href="/account/wishlist"
-          className="relative w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs flex items-center justify-center group"
+          className="relative w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs flex items-center justify-center group shrink-0"
           aria-label="View Wishlist"
         >
           <WishlistIcon />
@@ -183,7 +213,7 @@ export default function HeaderClient({
         {/* Shopping Bag Button */}
         <button
           onClick={() => setCartDrawerOpen(true)}
-          className="relative w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs flex items-center justify-center cursor-pointer group"
+          className="relative w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs flex items-center justify-center cursor-pointer group shrink-0"
           aria-label="Open Shopping Bag"
         >
           <CartIcon />
@@ -198,7 +228,7 @@ export default function HeaderClient({
         {isLoggedIn ? (
           <Link
             href="/account"
-            className="flex items-center gap-1.5 h-9 px-3 sm:px-4 rounded-full border border-[#E7DFD5] bg-white hover:border-[#141416] text-xs font-bold text-[#141416] transition-all shadow-2xs"
+            className="flex items-center justify-center gap-1.5 h-9 px-2.5 sm:px-4 rounded-full border border-[#E7DFD5] bg-white hover:border-[#141416] text-xs font-bold text-[#141416] transition-all shadow-2xs shrink-0"
           >
             <UserIcon />
             <span className="hidden sm:inline max-w-[80px] truncate">{userName || "Account"}</span>
@@ -206,7 +236,7 @@ export default function HeaderClient({
         ) : (
           <Link
             href="/login"
-            className="flex items-center justify-center h-9 px-3 sm:px-5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-xs"
+            className="flex items-center justify-center h-9 px-2.5 sm:px-5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-xs shrink-0"
           >
             <span className="sm:hidden"><UserIcon /></span>
             <span className="hidden sm:inline">Sign In</span>
@@ -232,7 +262,7 @@ export default function HeaderClient({
         isOpen={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}
       />
-    </>
+    </div>
   );
 }
 
