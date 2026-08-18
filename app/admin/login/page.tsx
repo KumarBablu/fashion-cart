@@ -7,7 +7,7 @@ import Image from "next/image";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier: identifier.trim(), password }),
       });
       const data = await res.json();
 
@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#FAF8F5] text-[#0C3B2E]">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#FAF8F5] text-[#141416]">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-3">
           <Link href="/" className="inline-flex flex-col items-center gap-1.5 group">
@@ -61,39 +61,39 @@ export default function AdminLoginPage() {
                 className="object-contain"
               />
             </div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#0C3B2E]">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#141416]">
               Fashion Cart Admin
             </h1>
           </Link>
-          <p className="text-xs text-[#5B7A6F]">Secure administrative portal for boutique management</p>
+          <p className="text-xs text-[#787C87]">Secure administrative console for boutique operations</p>
         </div>
 
-        <div className="rounded-3xl border border-[#E8E3D8] bg-white p-6 sm:p-8 shadow-2xl space-y-5">
+        <div className="rounded-3xl border border-[#E7DFD5] bg-white p-6 sm:p-8 shadow-2xl space-y-5">
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#5B7A6F] mb-1">
-                Admin Email Address
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#787C87] mb-1">
+                Admin Email or Mobile Number
               </label>
               <input
-                type="email"
+                type="text"
                 required
                 autoFocus
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@example.com"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8E3D8] bg-[#FAF8F5] text-xs outline-none focus:border-[#0C3B2E] transition-all text-[#0C3B2E]"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="bablusoni2825@gmail.com or 9771039201"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7DFD5] bg-[#FAF8F5] text-xs outline-none focus:border-[#C59B27] transition-all text-[#141416]"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#5B7A6F]">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#787C87]">
                   Password
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowPassword((p) => !p)}
-                  className="text-[11px] text-[#5B7A6F] hover:text-[#0C3B2E] transition-colors"
+                  className="text-[11px] text-[#787C87] hover:text-[#141416] transition-colors cursor-pointer"
                 >
                   {showPassword ? "🙈 Hide" : "👁️ Show"}
                 </button>
@@ -104,25 +104,25 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8E3D8] bg-[#FAF8F5] text-xs outline-none focus:border-[#0C3B2E] transition-all text-[#0C3B2E]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7DFD5] bg-[#FAF8F5] text-xs outline-none focus:border-[#C59B27] transition-all text-[#141416]"
               />
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-600 font-semibold">
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold">
                 {error}
               </div>
             )}
 
             <button
               type="submit"
-              disabled={loading || !email || !password}
-              className="w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#0C3B2E] text-white hover:bg-[#144E3E] shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-2"
+              disabled={loading || !identifier || !password}
+              className="w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-2"
             >
               {loading ? (
                 <>
                   <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                  <span>Authenticating…</span>
+                  <span>Verifying Credentials…</span>
                 </>
               ) : (
                 <span>Login to Admin Console →</span>
@@ -130,8 +130,11 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          <div className="pt-3 border-t border-[#E8E3D8] text-center">
-            <Link href="/" className="text-xs text-[#5B7A6F] hover:text-[#0C3B2E] transition-colors">
+          <div className="pt-4 border-t border-[#E7DFD5] text-center">
+            <Link
+              href="/"
+              className="text-xs text-[#787C87] hover:text-[#141416] transition-colors font-medium"
+            >
               ← Return to Customer Storefront
             </Link>
           </div>

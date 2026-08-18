@@ -15,25 +15,57 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { email, password } = parsed.data;
+  const rawId = (parsed.data.identifier || parsed.data.email || "").trim();
+  const password = parsed.data.password;
 
-  // Rate limit by IP + email to slow down both credential stuffing and
-  // targeted brute force against a single account.
+  if (!rawId) {
+    return NextResponse.json(
+      { error: "Please enter your email address or mobile number." },
+      { status: 400 }
+    );
+  }
+
+  // Rate limit by IP + identifier
   if (
-    !rateLimit(clientKeyFromRequest(req, "login"), 15, 15 * 60 * 1000) ||
-    !rateLimit(`login-email:${email}`, 8, 15 * 60 * 1000)
+    !rateLimit(clientKeyFromRequest(req, "login"), 20, 15 * 60 * 1000) ||
+    !rateLimit(`login-id:${rawId.toLowerCase()}`, 10, 15 * 60 * 1000)
   ) {
     return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
   }
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  let user = null;
 
-  // Constant-shape response whether the user exists or not, to avoid
-  // leaking account existence via timing/response differences.
+  // If identifier has @, query by email
+  if (rawId.includes("@")) {
+    user = await prisma.user.findUnique({
+      where: { email: rawId.toLowerCase() },
+    });
+  } else {
+    // Treat as phone number (or alphanumeric username fallback)
+    const phoneDigits = rawId.replace(/\D/g, "").slice(-10);
+    if (phoneDigits.length >= 7) {
+      user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { phone: phoneDigits },
+            { phone: `+91${phoneDigits}` },
+            { phone: { contains: phoneDigits } },
+            { email: rawId.toLowerCase() },
+          ],
+        },
+      });
+    } else {
+      user = await prisma.user.findUnique({
+        where: { email: rawId.toLowerCase() },
+      });
+    }
+  }
+
+  // Constant-shape response whether the user exists or not
   const valid = user ? await verifyPassword(password, user.passwordHash) : false;
 
   if (!user || !valid || !user.isActive) {
-    return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+    return NextResponse.json({ error: "Invalid email/mobile number or password." }, { status: 401 });
   }
 
   const isSuperAdminEmail =
@@ -53,6 +85,12 @@ export async function POST(req: NextRequest) {
   await setSessionCookie(rawToken, expiresAt);
 
   return NextResponse.json({
-    user: { id: user.id, name: user.name, email: user.email, role: effectiveRole },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: effectiveRole,
+    },
   });
 }

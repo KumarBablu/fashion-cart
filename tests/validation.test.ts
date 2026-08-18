@@ -10,7 +10,7 @@ import {
 } from "@/lib/validation/schemas";
 
 describe("registerSchema", () => {
-  it("accepts a valid registration payload", () => {
+  it("accepts a valid registration payload with 10-digit mobile number", () => {
     const result = registerSchema.safeParse({
       name: "Asha Verma",
       email: "asha@example.com",
@@ -24,6 +24,7 @@ describe("registerSchema", () => {
     const result = registerSchema.safeParse({
       name: "Asha Verma",
       email: "asha@example.com",
+      phone: "9876543210",
       password: "short",
     });
     expect(result.success).toBe(false);
@@ -33,6 +34,17 @@ describe("registerSchema", () => {
     const result = registerSchema.safeParse({
       name: "Asha Verma",
       email: "not-an-email",
+      phone: "9876543210",
+      password: "password123",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a short mobile number (< 10 digits)", () => {
+    const result = registerSchema.safeParse({
+      name: "Asha Verma",
+      email: "asha@example.com",
+      phone: "12345",
       password: "password123",
     });
     expect(result.success).toBe(false);
@@ -40,8 +52,18 @@ describe("registerSchema", () => {
 });
 
 describe("loginSchema", () => {
+  it("accepts login with email address", () => {
+    const result = loginSchema.safeParse({ identifier: "asha@example.com", password: "password123" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts login with 10-digit mobile number", () => {
+    const result = loginSchema.safeParse({ identifier: "9876543210", password: "password123" });
+    expect(result.success).toBe(true);
+  });
+
   it("requires a non-empty password", () => {
-    const result = loginSchema.safeParse({ email: "a@b.com", password: "" });
+    const result = loginSchema.safeParse({ identifier: "a@b.com", password: "" });
     expect(result.success).toBe(false);
   });
 });

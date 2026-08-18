@@ -21,24 +21,47 @@ export async function POST(req: NextRequest) {
   }
 
   const { name, email, phone, password } = parsed.data;
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanPhone = phone ? phone.replace(/\D/g, "").slice(-10) : null;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
+  // Check if email already registered
+  const existingEmail = await prisma.user.findUnique({ where: { email: cleanEmail } });
+  if (existingEmail) {
     return NextResponse.json(
-      { error: "An account with this email already exists." },
+      { error: "An account with this email address already exists. Please sign in." },
       { status: 409 }
     );
+  }
+
+  // Check if mobile number already registered
+  if (cleanPhone) {
+    const existingPhone = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { phone: cleanPhone },
+          { phone: `+91${cleanPhone}` },
+          { phone: { contains: cleanPhone } },
+        ],
+      },
+    });
+
+    if (existingPhone) {
+      return NextResponse.json(
+        { error: "An account with this mobile number already exists. Please sign in." },
+        { status: 409 }
+      );
+    }
   }
 
   const passwordHash = await hashPassword(password);
 
   const user = await prisma.user.create({
     data: {
-      name,
-      email,
-      phone: phone || undefined,
+      name: name.trim(),
+      email: cleanEmail,
+      phone: cleanPhone || undefined,
       passwordHash,
-      role: email.toLowerCase() === "bablusoni2825@gmail.com" ? "ADMIN" : "CUSTOMER",
+      role: cleanEmail === "bablusoni2825@gmail.com" ? "ADMIN" : "CUSTOMER",
     },
   });
 
