@@ -44,12 +44,12 @@ export default function GoogleSignInButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
   const buttonRef = useRef<HTMLDivElement>(null);
   const { success, error: toastError } = useToast();
 
-  const clientId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    "1049382910291-fashioncartdemo.apps.googleusercontent.com";
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  const isConfigured = Boolean(clientId && !clientId.includes("fashioncartdemo"));
 
   async function handleCredentialResponse(response: { credential: string }) {
     if (!response.credential) return;
@@ -85,7 +85,7 @@ export default function GoogleSignInButton({
   }
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.google && buttonRef.current && scriptLoaded) {
+    if (isConfigured && typeof window !== "undefined" && window.google && buttonRef.current && scriptLoaded) {
       try {
         window.google.accounts.id.initialize({
           client_id: clientId,
@@ -93,7 +93,6 @@ export default function GoogleSignInButton({
           cancel_on_tap_outside: true,
         });
 
-        // Render official GIS button inside container
         window.google.accounts.id.renderButton(buttonRef.current, {
           theme: "outline",
           size: "large",
@@ -106,9 +105,14 @@ export default function GoogleSignInButton({
         console.warn("Google Sign-In initialization:", err);
       }
     }
-  }, [scriptLoaded, clientId, text]);
+  }, [scriptLoaded, clientId, text, isConfigured]);
 
-  function handleFallbackClick() {
+  function handleClick() {
+    if (!isConfigured) {
+      setShowConfigModal(true);
+      return;
+    }
+
     if (typeof window !== "undefined" && window.google) {
       try {
         window.google.accounts.id.initialize({
@@ -120,28 +124,29 @@ export default function GoogleSignInButton({
         toastError("Google Sign-In", "Google Sign-In is initializing. Please click again.");
       }
     } else {
-      toastError("Google Sign-In", "Loading Google Services... Please wait a moment.");
+      toastError("Google Sign-In", "Loading Google Identity Services...");
     }
   }
 
   return (
     <div className="w-full space-y-2">
-      <Script
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-        onLoad={() => setScriptLoaded(true)}
-      />
+      {isConfigured && (
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="afterInteractive"
+          onLoad={() => setScriptLoaded(true)}
+        />
+      )}
 
-      {/* Official GIS Button Container */}
-      <div ref={buttonRef} className="w-full flex justify-center min-h-[42px]" />
-
-      {/* Styled High-Fashion Google Button Fallback / Display */}
-      {(!scriptLoaded || loading) && (
+      {/* Official GIS Button Container if configured */}
+      {isConfigured && scriptLoaded ? (
+        <div ref={buttonRef} className="w-full flex justify-center min-h-[42px]" />
+      ) : (
         <button
           type="button"
-          onClick={handleFallbackClick}
+          onClick={handleClick}
           disabled={loading}
-          className="w-full py-2.5 px-4 rounded-full border border-[#E7DFD5] bg-white hover:bg-[#F4EFEA] text-[#141416] font-bold text-xs flex items-center justify-center gap-2.5 transition-all shadow-xs disabled:opacity-60"
+          className="w-full py-2.5 px-4 rounded-full border border-[#E7DFD5] bg-white hover:bg-[#F4EFEA] text-[#141416] font-bold text-xs flex items-center justify-center gap-2.5 transition-all shadow-xs disabled:opacity-60 cursor-pointer"
         >
           {loading ? (
             <span className="w-4 h-4 border-2 border-[#141416] border-t-transparent rounded-full animate-spin" />
@@ -167,6 +172,58 @@ export default function GoogleSignInButton({
           )}
           <span>{loading ? "Authenticating with Google…" : label}</span>
         </button>
+      )}
+
+      {/* Google OAuth Setup Helper Modal for Admin / Developer */}
+      {showConfigModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-[#E7DFD5] space-y-4 text-left">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🌐</span>
+                <h3 className="font-display text-base font-bold text-[#141416]">
+                  Google Sign-In Configuration
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowConfigModal(false)}
+                className="text-xs text-slate-400 hover:text-slate-700 font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              To enable 1-click Google Sign-In on your live domain, you need a free <strong>Google OAuth Client ID</strong> from Google Cloud Console.
+            </p>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2 text-slate-700 font-sans">
+              <p className="font-bold text-[#141416]">Quick 2-Minute Setup Steps:</p>
+              <ol className="list-decimal list-inside space-y-1.5 text-[11px] text-slate-600">
+                <li>Go to <strong>console.cloud.google.com</strong></li>
+                <li>Navigate to <strong>APIs &amp; Services &gt; Credentials</strong></li>
+                <li>Click <strong>Create Credentials &gt; OAuth Client ID</strong> (Web Application)</li>
+                <li>
+                  Add Authorized Javascript origin: <br />
+                  <code className="px-1.5 py-0.5 bg-slate-200 rounded font-mono text-[10px] select-all">https://fashion-cart-5p7k.vercel.app</code>
+                </li>
+                <li>
+                  Copy your Client ID and set in Vercel Environment Variables as: <br />
+                  <code className="px-1.5 py-0.5 bg-slate-200 rounded font-mono text-[10px] select-all">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code>
+                </li>
+              </ol>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowConfigModal(false)}
+                className="px-5 py-2.5 rounded-full bg-[#141416] text-white text-xs font-bold hover:bg-[#25262B] transition-all"
+              >
+                Got It, Thanks!
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
