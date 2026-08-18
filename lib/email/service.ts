@@ -10,6 +10,7 @@ import {
   orderDeliveredEmailTemplate,
   orderCancelledEmailTemplate,
   contactInquiryEmailTemplate,
+  loginAlertEmailTemplate,
 } from "./templates";
 
 type SendEmailOptions = {
@@ -28,12 +29,13 @@ type SendEmailOptions = {
 async function getEmailTransport() {
   const settings = await prisma.emailSettings.findFirst().catch(() => null);
 
-  const host = settings?.smtpHost || process.env.SMTP_HOST;
-  const port = settings?.smtpPort || (process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587);
-  const user = settings?.smtpUser || process.env.SMTP_USER;
-  const pass = settings?.smtpPassword || process.env.SMTP_PASS;
+  const host = settings?.smtpHost || process.env.SMTP_HOST || "smtp.gmail.com";
+  const port = settings?.smtpPort || (process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465);
+  const user = settings?.smtpUser || process.env.SMTP_USER || "Kumar.bablu9547.sv@gmail.com";
+  const rawPass = settings?.smtpPassword || process.env.SMTP_PASS || "dlpy ilmox lksr fdx";
+  const pass = rawPass ? rawPass.replace(/\s+/g, "") : undefined;
   const secure = settings?.smtpSecure ?? (port === 465);
-  const fromEmail = settings?.fromEmail || process.env.FROM_EMAIL || "notifications@fashioncart.shop";
+  const fromEmail = settings?.fromEmail || user || "Kumar.bablu9547.sv@gmail.com";
   const fromName = settings?.fromName || process.env.FROM_NAME || "Fashion Cart";
 
   const isConfigured = !!(host && user && pass);
@@ -299,5 +301,27 @@ export async function sendContactInquiryEmail(name: string, email: string, subje
     html,
     templateName: "CONTACT_INQUIRY",
     metadata: { customerName: name, customerEmail: email },
+  });
+}
+
+export async function sendLoginAlertEmail({
+  name,
+  email,
+  identifier,
+  userAgent,
+}: {
+  name: string;
+  email: string;
+  identifier: string;
+  userAgent?: string | null;
+}) {
+  const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+  const html = loginAlertEmailTemplate(name, identifier, timestamp, userAgent);
+  return sendEmail({
+    to: email,
+    subject: "🔐 Security Notice: Successful Login (Fashion Cart)",
+    html,
+    templateName: "LOGIN_ALERT",
+    metadata: { identifier, timestamp, userAgent },
   });
 }

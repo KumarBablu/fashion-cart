@@ -307,3 +307,26 @@ export function contactInquiryEmailTemplate(name: string, email: string, subject
   `;
   return layout(`Inquiry: ${subject}`, content);
 }
+
+// 10. Login Security Alert Email
+export function loginAlertEmailTemplate(name: string, identifier: string, timestamp: string, userAgent?: string | null) {
+  const content = `
+    <h2 style="color: #141416; margin-top: 0;">Account Login Notice 🔐</h2>
+    <p>Hello ${name},</p>
+    <p>Your Fashion Cart account was recently accessed with a successful login.</p>
+
+    <div class="card">
+      <p style="margin: 4px 0;"><strong>Account:</strong> ${identifier}</p>
+      <p style="margin: 4px 0;"><strong>Timestamp:</strong> ${timestamp}</p>
+      ${userAgent ? `<p style="margin: 4px 0; font-size: 12px; color: #787C87;"><strong>Device / Browser:</strong> ${userAgent}</p>` : ""}
+    </div>
+
+    <p style="font-size: 12px; color: #787C87;">If this was you, no action is required. If you did not initiate this login, please reset your password immediately.</p>
+
+    <div style="text-align: center;">
+      <a href="${BASE_URL}/forgot-password" class="button">Security &amp; Password Reset →</a>
+    </div>
+  `;
+  return layout("Security Notice: Successful Account Login", content);
+}
+

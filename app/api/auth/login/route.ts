@@ -4,6 +4,7 @@ import { verifyPassword } from "@/lib/auth/password";
 import { createSession, setSessionCookie } from "@/lib/auth/session";
 import { loginSchema } from "@/lib/validation/schemas";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
+import { sendLoginAlertEmail } from "@/lib/email/service";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -81,8 +82,19 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { rawToken, expiresAt } = await createSession(user.id, req.headers.get("user-agent"));
+  const userAgent = req.headers.get("user-agent");
+  const { rawToken, expiresAt } = await createSession(user.id, userAgent);
   await setSessionCookie(rawToken, expiresAt);
+
+  // Dispatch Login Alert Email asynchronously
+  sendLoginAlertEmail({
+    name: user.name,
+    email: user.email,
+    identifier: rawId,
+    userAgent,
+  }).catch((err) => {
+    console.error("Login alert email dispatch failed:", err);
+  });
 
   return NextResponse.json({
     user: {

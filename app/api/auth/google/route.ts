@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
 import { createSession, setSessionCookie } from "@/lib/auth/session";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
-import { sendWelcomeEmail } from "@/lib/email/service";
+import { sendWelcomeEmail, sendLoginAlertEmail } from "@/lib/email/service";
 import { generateStandardUserId } from "@/lib/db/identifiers";
 import crypto from "crypto";
 
@@ -84,8 +84,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Create session & set secure cookie
-    const { rawToken, expiresAt } = await createSession(user.id, req.headers.get("user-agent"));
+    const userAgent = req.headers.get("user-agent");
+    const { rawToken, expiresAt } = await createSession(user.id, userAgent);
     await setSessionCookie(rawToken, expiresAt);
+
+    // Send login alert email
+    sendLoginAlertEmail({
+      name: user.name,
+      email: user.email,
+      identifier: `Google (${user.email})`,
+      userAgent,
+    }).catch((err) => {
+      console.error("Google login alert email failed:", err);
+    });
 
     return NextResponse.json({
       user: {
