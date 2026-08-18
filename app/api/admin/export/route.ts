@@ -25,6 +25,88 @@ export async function GET(req: NextRequest) {
 
   try {
     switch (type) {
+      case "template": {
+        const headers = [
+          "Title",
+          "Slug",
+          "Department",
+          "Subcategory",
+          "Brand",
+          "Fabric",
+          "Description",
+          "Status",
+          "SKU",
+          "Colour",
+          "Size",
+          "Price",
+          "CompareAtPrice",
+          "StockQuantity",
+          "ImageURL",
+        ];
+
+        const sampleRows = [
+          [
+            "Royal Emerald Banarasi Silk Saree",
+            "royal-emerald-banarasi-silk-saree",
+            "Women's Ethnic & Couture",
+            "Mulberry Silk Sarees",
+            "Fashion Cart Atelier",
+            "100% Pure Mulberry Silk",
+            "Exquisite handloom Banarasi silk saree woven with real metallic zari threads and floral vines.",
+            "ACTIVE",
+            "FC-SAR-EME-01",
+            "Emerald Green",
+            "Free Size",
+            "4499",
+            "7999",
+            "25",
+            "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800",
+          ],
+          [
+            "Tailored French Linen Shirt - Cloud White",
+            "tailored-french-linen-shirt-white",
+            "Men's Apparel & Tailoring",
+            "Pure French Linen Shirts",
+            "Fashion Cart Tailored",
+            "100% Certified French Linen",
+            "Breathable pre-washed French linen shirt with tailored fit and mother-of-pearl buttons.",
+            "ACTIVE",
+            "FC-SHT-LIN-WHT-M",
+            "Cloud White",
+            "M",
+            "1899",
+            "2999",
+            "40",
+            "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800",
+          ],
+          [
+            "Tailored French Linen Shirt - Cloud White",
+            "tailored-french-linen-shirt-white",
+            "Men's Apparel & Tailoring",
+            "Pure French Linen Shirts",
+            "Fashion Cart Tailored",
+            "100% Certified French Linen",
+            "Breathable pre-washed French linen shirt with tailored fit and mother-of-pearl buttons.",
+            "ACTIVE",
+            "FC-SHT-LIN-WHT-L",
+            "Cloud White",
+            "L",
+            "1899",
+            "2999",
+            "35",
+            "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800",
+          ],
+        ];
+
+        const csv = convertToCsv(headers, sampleRows);
+        return new NextResponse(csv, {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": 'attachment; filename="fashion-cart-bulk-upload-template.csv"',
+          },
+        });
+      }
+
       case "products": {
         const products = await prisma.product.findMany({
           include: {

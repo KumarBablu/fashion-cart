@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { formatINR } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
 import DownloadCsvButton from "./DownloadCsvButton";
+import BulkProductUploadModal from "./BulkProductUploadModal";
 
 type ProductItem = {
   id: string;
@@ -50,6 +51,7 @@ export default function ProductsManager({
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [deleteModalProduct, setDeleteModalProduct] = useState<ProductItem | null>(null);
+  const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
 
   // Filter products
   const filtered = products.filter((p) => {
@@ -173,7 +175,14 @@ export default function ProductsManager({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <DownloadCsvButton type="products" label="Export Products CSV" />
+          <DownloadCsvButton type="template" label="CSV Template" icon="📋" />
+          <DownloadCsvButton type="products" label="Export Catalog CSV" icon="📥" />
+          <button
+            onClick={() => setBulkUploadModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#141416] hover:bg-[#25262B] text-white transition-all shadow-sm cursor-pointer"
+          >
+            <span>📤</span> Bulk Upload CSV
+          </button>
           <Link
             href="/admin/products/new"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:brightness-110 cursor-pointer"
@@ -520,6 +529,15 @@ export default function ProductsManager({
           </div>
         </div>
       )}
+
+      {/* Bulk Product CSV Upload Modal */}
+      <BulkProductUploadModal
+        isOpen={bulkUploadModalOpen}
+        onClose={() => setBulkUploadModalOpen(false)}
+        onSuccess={() => {
+          router.refresh();
+        }}
+      />
     </div>
   );
 }

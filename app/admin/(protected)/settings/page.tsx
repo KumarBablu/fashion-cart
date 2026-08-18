@@ -29,7 +29,29 @@ export default async function AdminSettingsPage() {
           <p className="text-xs text-dim mt-0.5">Download real-time database records in CSV spreadsheet format.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+          <a
+            href="/api/admin/export?type=template"
+            download
+            className="p-4 rounded-xl border flex flex-col items-center justify-center text-center hover:border-amber-500 transition-all card-theme bg-amber-500/5"
+            style={{ borderColor: "var(--fc-border)" }}
+          >
+            <span className="text-2xl mb-1">📋</span>
+            <span className="font-bold text-xs text-amber-700 dark:text-amber-300">Bulk Upload Template</span>
+            <span className="text-[10px] text-dim mt-0.5">Sample CSV to bulk add products</span>
+          </a>
+
+          <a
+            href="/api/admin/export?type=products"
+            download
+            className="p-4 rounded-xl border flex flex-col items-center justify-center text-center hover:border-primary transition-all card-theme"
+            style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}
+          >
+            <span className="text-2xl mb-1">👗</span>
+            <span className="font-bold text-xs">Export All Products</span>
+            <span className="text-[10px] text-dim mt-0.5">Catalog SKUs, prices &amp; stock</span>
+          </a>
+
           <a
             href="/api/admin/export?type=orders"
             download
@@ -42,25 +64,14 @@ export default async function AdminSettingsPage() {
           </a>
 
           <a
-            href="/api/admin/export?type=customers"
+            href="/api/admin/export?type=inventory"
             download
             className="p-4 rounded-xl border flex flex-col items-center justify-center text-center hover:border-primary transition-all card-theme"
             style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}
           >
-            <span className="text-2xl mb-1">👥</span>
-            <span className="font-bold text-xs">Export Customers</span>
-            <span className="text-[10px] text-dim mt-0.5">Customer list &amp; order counts</span>
-          </a>
-
-          <a
-            href="/api/admin/export?type=products"
-            download
-            className="p-4 rounded-xl border flex flex-col items-center justify-center text-center hover:border-primary transition-all card-theme"
-            style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}
-          >
-            <span className="text-2xl mb-1">👗</span>
-            <span className="font-bold text-xs">Export Products</span>
-            <span className="text-[10px] text-dim mt-0.5">Catalog SKUs &amp; inventory</span>
+            <span className="text-2xl mb-1">📦</span>
+            <span className="font-bold text-xs">Export Inventory</span>
+            <span className="text-[10px] text-dim mt-0.5">Stock by SKU &amp; size levels</span>
           </a>
         </div>
       </section>
