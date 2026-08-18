@@ -87,10 +87,10 @@ export default function HeaderClient({
   }
 
   return (
-    <div className="flex flex-1 items-center justify-between gap-4 lg:gap-8">
+    <div className="flex flex-1 items-center justify-between gap-3 lg:gap-8">
       
-      {/* 1. Center Luxury Navigation Links */}
-      <nav className="hidden lg:flex items-center gap-7 text-xs font-bold uppercase tracking-[0.14em]">
+      {/* 1. Center Luxury Navigation Links (Responsive from md breakpoint and above) */}
+      <nav className="hidden md:flex items-center gap-4 lg:gap-7 text-xs font-bold uppercase tracking-[0.14em]">
         
         {/* All Categories Slide-Over Menu Trigger */}
         <button
@@ -142,7 +142,7 @@ export default function HeaderClient({
         {/* Luxury Search Pill Trigger */}
         <button
           onClick={() => setSearchModalOpen(true)}
-          className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer group"
+          className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer group"
           aria-label="Search fine apparel"
           title="Quick search (Ctrl+K)"
         >
@@ -204,7 +204,7 @@ export default function HeaderClient({
         {/* Mobile Navigation Toggle */}
         <button
           onClick={() => setMenuDrawerOpen(true)}
-          className="lg:hidden p-2.5 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+          className="md:hidden p-2.5 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
           aria-label="Open Mobile Menu"
         >
           <MenuIcon />
