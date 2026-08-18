@@ -242,13 +242,23 @@ export default function ProfileForm({ initialProfile }: { initialProfile: UserPr
         )}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pt-2">
         <button
           type="submit"
           disabled={saving}
-          className="px-8 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-xl transition-all hover:scale-105 amethyst-btn disabled:opacity-50"
+          className="px-8 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-xl transition-all hover:brightness-105 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+          style={{
+            backgroundColor: "var(--fc-primary)",
+          }}
         >
-          {saving ? "Saving Changes…" : "Save Profile Details ✨"}
+          {saving ? (
+            <>
+              <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              <span>Saving Changes…</span>
+            </>
+          ) : (
+            <span>Save Profile Details ✨</span>
+          )}
         </button>
       </div>
     </form>
