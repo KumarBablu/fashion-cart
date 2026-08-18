@@ -35,7 +35,7 @@ declare global {
 
 export default function GoogleSignInButton({
   text = "continue_with",
-  next = "/account",
+  next = "/",
   label = "Continue with Google",
 }: {
   text?: "signin_with" | "signup_with" | "continue_with" | "signin";

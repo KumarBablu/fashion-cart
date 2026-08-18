@@ -56,7 +56,7 @@ export default function RegisterPage() {
       }
 
       success("Account Created! 🎉", `Welcome to Fashion Cart, ${name.trim()}!`);
-      window.location.href = "/account";
+      window.location.href = "/";
     } catch {
       setError("Network error while creating your account.");
       setLoading(false);
@@ -71,7 +71,7 @@ export default function RegisterPage() {
       <div className="space-y-5">
         {/* 1-Click Google Sign Up */}
         <div className="space-y-2">
-          <GoogleSignInButton text="signup_with" next="/account" label="Sign up with Google" />
+          <GoogleSignInButton text="signup_with" next="/" label="Sign up with Google" />
           
           <div className="relative flex py-2 items-center">
             <div className="flex-grow border-t" style={{ borderColor: "var(--fc-border)" }} />

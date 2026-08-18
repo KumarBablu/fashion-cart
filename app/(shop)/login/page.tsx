@@ -17,7 +17,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const { success } = useToast();
-  const next = searchParams.get("next") || "/account";
+  const next = searchParams.get("next") || "/";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
