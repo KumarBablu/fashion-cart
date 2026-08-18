@@ -5,6 +5,7 @@ import { createSession, setSessionCookie } from "@/lib/auth/session";
 import { registerSchema } from "@/lib/validation/schemas";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
 import { sendWelcomeEmail } from "@/lib/email/service";
+import { generateStandardUserId } from "@/lib/db/identifiers";
 
 export async function POST(req: NextRequest) {
   if (!rateLimit(clientKeyFromRequest(req, "register"), 10, 15 * 60 * 1000)) {
@@ -54,14 +55,17 @@ export async function POST(req: NextRequest) {
   }
 
   const passwordHash = await hashPassword(password);
+  const userRole = cleanEmail === "bablusoni2825@gmail.com" ? "ADMIN" : "CUSTOMER";
+  const standardId = await generateStandardUserId(userRole);
 
   const user = await prisma.user.create({
     data: {
+      id: standardId,
       name: name.trim(),
       email: cleanEmail,
       phone: cleanPhone || undefined,
       passwordHash,
-      role: cleanEmail === "bablusoni2825@gmail.com" ? "ADMIN" : "CUSTOMER",
+      role: userRole,
     },
   });
 

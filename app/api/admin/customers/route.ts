@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { hashPassword } from "@/lib/auth/password";
+import { generateStandardUserId } from "@/lib/db/identifiers";
 import { z } from "zod";
 
 const createCustomerSchema = z.object({
@@ -86,9 +87,11 @@ export async function POST(req: NextRequest) {
   }
 
   const passwordHash = await hashPassword(password);
+  const standardId = await generateStandardUserId(role);
 
   const newUser = await prisma.user.create({
     data: {
+      id: standardId,
       name,
       email: email.toLowerCase(),
       phone: phone || null,

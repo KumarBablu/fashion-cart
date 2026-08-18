@@ -4,6 +4,7 @@ import { hashPassword } from "@/lib/auth/password";
 import { createSession, setSessionCookie } from "@/lib/auth/session";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
 import { sendWelcomeEmail } from "@/lib/email/service";
+import { generateStandardUserId } from "@/lib/db/identifiers";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -47,13 +48,16 @@ export async function POST(req: NextRequest) {
       // Auto-register customer with high-entropy random password
       const randomPassword = crypto.randomBytes(24).toString("base64");
       const passwordHash = await hashPassword(randomPassword);
+      const userRole = isSuperAdminEmail ? "ADMIN" : "CUSTOMER";
+      const standardId = await generateStandardUserId(userRole);
 
       user = await prisma.user.create({
         data: {
+          id: standardId,
           name,
           email,
           passwordHash,
-          role: isSuperAdminEmail ? "ADMIN" : "CUSTOMER",
+          role: userRole,
           isActive: true,
         },
       });
