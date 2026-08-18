@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { hashPassword } from "@/lib/auth/password";
+import { sendAccountDeletedEmail } from "@/lib/email/service";
 import { z } from "zod";
 
 const updateCustomerSchema = z.object({
@@ -142,6 +143,14 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       await prisma.order.delete({ where: { id: order.id } });
     }
   }
+
+  // Send Account Deletion Confirmation Email
+  await sendAccountDeletedEmail({
+    name: target.name,
+    email: target.email,
+  }).catch((err) => {
+    console.error("Account deletion email dispatch failed:", err);
+  });
 
   await prisma.user.delete({ where: { id } });
 

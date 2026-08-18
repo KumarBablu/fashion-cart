@@ -78,7 +78,7 @@ function LoginForm() {
             autoFocus
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="e.g. your.email@example.com or 9771039201"
+            placeholder="e.g. your.email@example.com or 9876543210"
             className="w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-primary transition-all"
             style={{
               backgroundColor: "var(--fc-bg)",

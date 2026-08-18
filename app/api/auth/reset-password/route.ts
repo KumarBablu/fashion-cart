@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   });
 
   // Dispatch Password Changed Security Notification Email
-  sendPasswordChangedEmail({
+  await sendPasswordChangedEmail({
     name: verification.user.name,
     email: verification.user.email,
   }).catch((err) => {

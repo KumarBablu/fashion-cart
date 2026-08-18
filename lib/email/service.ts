@@ -14,6 +14,7 @@ import {
   failedLoginAlertEmailTemplate,
   profileUpdatedEmailTemplate,
   adminAccessAttemptAlertEmailTemplate,
+  accountDeletedEmailTemplate,
 } from "./templates";
 
 type SendEmailOptions = {
@@ -401,3 +402,15 @@ export async function sendAdminAccessAttemptAlertEmail({
   }
   return { success: true, simulated: false };
 }
+
+export async function sendAccountDeletedEmail(user: { name: string; email: string }) {
+  const html = accountDeletedEmailTemplate(user.name, user.email);
+  return sendEmail({
+    to: user.email,
+    subject: "Notice: Your Fashion Cart Account Has Been Closed",
+    html,
+    templateName: "ACCOUNT_DELETED",
+    metadata: { userEmail: user.email },
+  });
+}
+

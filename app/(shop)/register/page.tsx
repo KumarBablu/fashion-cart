@@ -137,7 +137,7 @@ export default function RegisterPage() {
                 maxLength={10}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                placeholder="9771039201"
+                placeholder="9876543210"
                 className="w-full pl-12 pr-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-primary transition-all font-mono"
                 style={{
                   backgroundColor: "var(--fc-bg)",

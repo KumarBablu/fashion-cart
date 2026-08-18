@@ -395,4 +395,27 @@ export function adminAccessAttemptAlertEmailTemplate(attemptEmail: string, times
   return layout("🚨 Security Alert: Unauthorized Admin Login Attempt", content);
 }
 
+// 14. Customer Account Deletion / Deactivation Confirmation
+export function accountDeletedEmailTemplate(name: string, email: string) {
+  const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+  const content = `
+    <h2 style="color: #0F172A; margin-top: 0;">Account Deletion Confirmation</h2>
+    <p>Hello ${name},</p>
+    <p>This email confirms that your Fashion Cart account associated with <strong>${email}</strong> has been deleted / closed as requested.</p>
+
+    <div class="card">
+      <p style="margin: 4px 0;"><strong>Account:</strong> ${email}</p>
+      <p style="margin: 4px 0;"><strong>Processed On:</strong> ${timestamp}</p>
+      <p style="margin: 4px 0; font-size: 12px; color: #787C87;">All active sessions, shopping carts, and saved payment tokens have been completely purged from our database.</p>
+    </div>
+
+    <p style="font-size: 13px;">If you ever wish to return, you are always welcome to create a fresh account anytime.</p>
+
+    <div style="text-align: center; margin-top: 24px;">
+      <a href="${BASE_URL}" class="button">Visit Fashion Cart Boutique →</a>
+    </div>
+  `;
+  return layout("Your Fashion Cart Account Has Been Deleted", content);
+}
+
 

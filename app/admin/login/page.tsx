@@ -87,7 +87,7 @@ export default function AdminLoginPage() {
                 autoFocus
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="bablusoni2825@gmail.com or 9771039201"
+                placeholder="admin@fashioncart.shop or 9876543210"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7DFD5] bg-[#FAF8F5] text-xs outline-none focus:border-[#C59B27] transition-all text-[#141416]"
               />
             </div>
