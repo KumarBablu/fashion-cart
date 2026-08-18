@@ -316,6 +316,14 @@ model Review {
   rating          Int      @default(5)
   title           String?
   comment         String
+  fitRating       String?  // RUNS_SMALL, TRUE_TO_SIZE, RUNS_LARGE
+  qualityRating   Int?     // 1 to 5
+  colorAccuracy   String?  // EXACT_MATCH, SLIGHT_VARIATION, VERY_DIFFERENT
+  comfortRating   Int?     // 1 to 5
+  valueRating     Int?     // 1 to 5
+  sizePurchased   String?  // XS, S, M, L, XL, XXL, FREE_SIZE
+  occasionWorn    String?  // WEDDING_FESTIVE, PARTY_EVENING, WORK_OFFICE, CASUAL_DAILY
+  recommend       Boolean? @default(true)
   isVerifiedBuyer Boolean  @default(true)
   status          String   @default("APPROVED") // PENDING, APPROVED, REJECTED
   createdAt       DateTime @default(now())
