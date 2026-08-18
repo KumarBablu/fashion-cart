@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import HomeClient from "@/components/home/HomeClient";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 function serialize(items: any[]) {
   return items.map((p) => ({

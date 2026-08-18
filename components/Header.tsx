@@ -1,13 +1,14 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
-import { unstable_cache } from "next/cache";
 import HeaderClient from "./HeaderClient";
 import AnnouncementBar from "@/components/ui/AnnouncementBar";
 
-// In-memory cache for active category navigation (revalidates every 60 seconds)
-const getCachedCategories = unstable_cache(
-  async () => {
-    return prisma.category.findMany({
+export const dynamic = "force-dynamic";
+
+export default async function Header() {
+  const [user, categories] = await Promise.all([
+    getCurrentUser(),
+    prisma.category.findMany({
       where: { isActive: true, parentId: null },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: {
@@ -16,16 +17,7 @@ const getCachedCategories = unstable_cache(
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
         },
       },
-    });
-  },
-  ["active-header-categories"],
-  { revalidate: 60, tags: ["categories"] }
-);
-
-export default async function Header() {
-  const [user, categories] = await Promise.all([
-    getCurrentUser(),
-    getCachedCategories(),
+    }),
   ]);
 
   return (
