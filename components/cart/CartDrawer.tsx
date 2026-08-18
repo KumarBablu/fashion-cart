@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { formatINR } from "@/lib/format";
@@ -22,11 +23,17 @@ export default function CartDrawer({
   onClose: () => void;
   onCartChange?: () => void;
 }) {
+  const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const { error } = useToast();
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const { error, success } = useToast();
 
-  const FREE_SHIPPING_THRESHOLD = 499;
+  const FREE_SHIPPING_THRESHOLD = 999;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function loadCart() {
     setLoading(true);
@@ -46,7 +53,6 @@ export default function CartDrawer({
   useEffect(() => {
     if (isOpen) {
       loadCart();
-      // Lock background body scroll
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -57,231 +63,333 @@ export default function CartDrawer({
   }, [isOpen]);
 
   async function updateQty(id: string, quantity: number) {
-    const res = await fetch(`/api/cart/items/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quantity }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      error("Quantity Update", data.error || "Could not update quantity");
-      return;
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/cart/items/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantity }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        error("Quantity Update", data.error || "Could not update quantity");
+        return;
+      }
+      await loadCart();
+      if (onCartChange) onCartChange();
+      window.dispatchEvent(new Event("cart-updated"));
+    } finally {
+      setUpdatingId(null);
     }
-    loadCart();
-    if (onCartChange) onCartChange();
   }
 
   async function remove(id: string) {
-    await fetch(`/api/cart/items/${id}`, { method: "DELETE" });
-    loadCart();
-    if (onCartChange) onCartChange();
+    setUpdatingId(id);
+    try {
+      await fetch(`/api/cart/items/${id}`, { method: "DELETE" });
+      await loadCart();
+      if (onCartChange) onCartChange();
+      window.dispatchEvent(new Event("cart-updated"));
+      success("Item Removed", "Your shopping bag has been updated.");
+    } finally {
+      setUpdatingId(null);
+    }
   }
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce((sum, i) => sum + Number(i.variant.price) * i.quantity, 0);
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
   const progressPercent = Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100));
 
-  return (
-    <div className="fixed inset-0 z-[9999] overflow-hidden" role="dialog" aria-modal="true" aria-label="Shopping Bag">
-      {/* Darkened Backdrop */}
+  const drawerContent = (
+    <div
+      className="fixed inset-0 z-[999999] overflow-hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Shopping Bag & Cart Review"
+    >
+      {/* Premium Backdrop Overlay with Subtle Blur */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-300"
+        className="fixed inset-0 bg-[#141416]/65 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
       />
 
-      {/* Slide-Over Luxury Drawer Panel */}
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
-        <div className="w-screen max-w-md h-full bg-[#FAF8F5] text-[#141416] shadow-2xl border-l border-[#E7DFD5] flex flex-col animate-in slide-in-from-right duration-300">
+      {/* Slide-in Full-Height Luxury Drawer Panel */}
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10">
+        <aside className="w-screen max-w-md h-full bg-[#FAF8F5] text-[#141416] shadow-2xl border-l border-[#E7DFD5] flex flex-col justify-between transition-transform duration-300 ease-out animate-in slide-in-from-right">
           
-          {/* Header */}
-          <div className="p-4 sm:p-5 border-b border-[#E7DFD5] flex items-center justify-between bg-white shrink-0">
+          {/* 1. Header Section */}
+          <div className="p-4 sm:p-5 border-b border-[#E7DFD5] bg-white flex items-center justify-between shrink-0 shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="relative h-8 w-8 shrink-0">
+              <div className="relative h-9 w-9 shrink-0">
                 <Image
                   src="/fashion-cart-logo-transparent.svg"
-                  alt="Fashion Cart"
+                  alt="Fashion Cart Luxury Monogram"
                   fill
-                  sizes="32px"
+                  sizes="36px"
                   className="object-contain"
                 />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="font-display text-lg font-bold text-[#141416] leading-none">
+                  <h2 className="font-display text-lg font-black text-[#141416] tracking-tight leading-none">
                     Shopping Bag
                   </h2>
-                  <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-[#141416] text-white">
-                    {totalQuantity}
+                  <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-[#141416] text-[#FFFFFF] font-mono">
+                    {totalQuantity} {totalQuantity === 1 ? "item" : "items"}
                   </span>
                 </div>
-                <p className="text-[10px] text-[#787C87] uppercase tracking-wider font-semibold mt-0.5">
-                  The Luxury Atelier
+                <p className="text-[10px] text-[#C59B27] uppercase tracking-[0.2em] font-bold mt-0.5">
+                  Fashion Cart Luxury Atelier
                 </p>
               </div>
             </div>
 
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full border border-[#E7DFD5] hover:bg-[#F4EFEA] text-[#141416] flex items-center justify-center transition-colors text-sm font-bold"
-              aria-label="Close cart"
+              className="w-9 h-9 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-[#E7DFD5] text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs"
+              aria-label="Close cart review"
+              title="Close (Esc)"
             >
-              ✕
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
 
-          {/* Free Shipping Progress Indicator */}
-          <div className="px-5 py-3 border-b border-[#E7DFD5] bg-[#F4EFEA] shrink-0">
-            {remainingForFreeShipping === 0 ? (
-              <p className="text-xs font-bold text-[#8E6C0C] flex items-center gap-1.5">
-                <span>🎉</span> You unlocked FREE Express Delivery!
-              </p>
-            ) : (
-              <p className="text-xs text-[#4B4E56]">
-                Add <strong className="text-[#141416]">{formatINR(remainingForFreeShipping)}</strong> more for <strong className="text-[#C59B27]">FREE Delivery</strong>
-              </p>
-            )}
-            <div className="w-full h-1.5 bg-[#E7DFD5] rounded-full mt-2 overflow-hidden">
+          {/* 2. Free Express Delivery Progress Ribbon */}
+          <div className="px-5 py-3 border-b border-[#E7DFD5] bg-[#F4EFEA]/80 shrink-0">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              {remainingForFreeShipping === 0 ? (
+                <span className="font-bold text-[#2E7D32] flex items-center gap-1.5">
+                  <span>✨</span> Free Express Delivery Unlocked!
+                </span>
+              ) : (
+                <span className="text-[#4B4E56] font-medium">
+                  Add <strong className="text-[#141416] font-bold">{formatINR(remainingForFreeShipping)}</strong> more for <strong className="text-[#C59B27] font-bold">FREE Express Delivery</strong>
+                </span>
+              )}
+              <span className="text-[10px] font-mono font-bold text-[#787C87]">{progressPercent}%</span>
+            </div>
+            <div className="w-full h-2 bg-[#E7DFD5] rounded-full overflow-hidden p-0.5">
               <div
-                className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-[#C59B27] to-[#E0BF48]"
+                className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-[#C59B27] via-[#E0BF48] to-[#2E7D32]"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
 
-          {/* Scrollable Cart Items Container */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-3.5 divide-y divide-[#E7DFD5]/60">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-20 text-xs text-[#787C87] space-y-2">
-                <span className="w-6 h-6 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />
-                <span>Updating your shopping bag…</span>
+          {/* 3. Main Scrollable Items List */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4">
+            {loading && items.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 text-xs text-[#787C87] space-y-3">
+                <span className="w-8 h-8 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />
+                <span className="font-medium">Loading your luxury apparel selection…</span>
               </div>
             ) : items.length === 0 ? (
-              <div className="text-center py-16 space-y-4">
-                <div className="text-5xl">🛍️</div>
-                <div className="space-y-1">
-                  <h3 className="font-display text-lg font-bold text-[#141416]">Your bag is empty</h3>
+              <div className="text-center py-20 px-4 space-y-5">
+                <div className="w-16 h-16 rounded-full bg-[#F4EFEA] border border-[#E7DFD5] flex items-center justify-center text-2xl mx-auto shadow-xs">
+                  🛍️
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="font-display text-xl font-bold text-[#141416]">Your shopping bag is empty</h3>
                   <p className="text-xs text-[#787C87] max-w-xs mx-auto leading-relaxed">
-                    Explore our latest royal silk sarees, velvet kurta sets, and breathable French linen cuts.
+                    Discover handcrafted mulberry silk sarees, bespoke linen shirts, and royal velvet apparel curated for distinction.
                   </p>
                 </div>
                 <button
                   onClick={onClose}
-                  className="px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-colors shadow-sm"
+                  className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-md cursor-pointer"
                 >
-                  Explore Collection →
+                  Explore Signature Collection →
                 </button>
               </div>
             ) : (
-              items.map((item) => (
-                <div key={item.id} className="pt-3.5 first:pt-0 flex gap-3.5 items-start">
-                  <div className="relative h-20 w-16 shrink-0 rounded-xl overflow-hidden bg-[#F4EFEA] border border-[#E7DFD5]">
-                    {item.product.images[0] ? (
-                      <Image
-                        src={item.product.images[0].imageUrl}
-                        alt={item.product.name}
-                        fill
-                        sizes="64px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-[10px] text-[#787C87]">
-                        No image
-                      </div>
-                    )}
-                  </div>
+              <div className="space-y-3.5 divide-y divide-[#E7DFD5]/70">
+                {items.map((item) => {
+                  const isBusy = updatingId === item.id;
+                  const itemPrice = Number(item.variant.price);
+                  const itemTotal = itemPrice * item.quantity;
 
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex justify-between items-start gap-2">
+                  return (
+                    <div
+                      key={item.id}
+                      className={`pt-3.5 first:pt-0 flex gap-3.5 items-start transition-opacity duration-200 ${
+                        isBusy ? "opacity-50 pointer-events-none" : "opacity-100"
+                      }`}
+                    >
+                      {/* Product Thumbnail */}
                       <Link
                         href={`/products/${item.product.slug}`}
                         onClick={onClose}
-                        className="text-xs font-bold text-[#141416] hover:text-[#C59B27] transition-colors line-clamp-1"
+                        className="relative h-24 w-20 shrink-0 rounded-2xl overflow-hidden bg-[#F4EFEA] border border-[#E7DFD5] group shadow-2xs block"
                       >
-                        {item.product.name}
+                        {item.product.images[0] ? (
+                          <Image
+                            src={item.product.images[0].imageUrl}
+                            alt={item.product.name}
+                            fill
+                            sizes="80px"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-[10px] text-[#787C87]">
+                            Garment
+                          </div>
+                        )}
                       </Link>
-                      <button
-                        onClick={() => remove(item.id)}
-                        className="text-xs text-[#787C87] hover:text-rose-600 transition-colors p-1"
-                        title="Remove item"
-                      >
-                        ✕
-                      </button>
-                    </div>
 
-                    <p className="text-[11px] text-[#787C87]">
-                      {item.variant.colour} · Size <span className="font-semibold text-[#141416]">{item.variant.size}</span>
-                    </p>
+                      {/* Product & Variant Details */}
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex justify-between items-start gap-2">
+                          <Link
+                            href={`/products/${item.product.slug}`}
+                            onClick={onClose}
+                            className="text-xs font-bold text-[#141416] hover:text-[#C59B27] transition-colors line-clamp-2 leading-snug"
+                          >
+                            {item.product.name}
+                          </Link>
+                          <button
+                            onClick={() => remove(item.id)}
+                            className="text-[#787C87] hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            title="Remove from bag"
+                            aria-label="Remove item"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                        </div>
 
-                    <div className="flex items-center justify-between pt-1">
-                      {/* Quantity Selector */}
-                      <div className="flex items-center border border-[#E7DFD5] rounded-lg bg-white overflow-hidden text-xs">
-                        <button
-                          onClick={() => updateQty(item.id, Math.max(1, item.quantity - 1))}
-                          className="px-2.5 py-1 hover:bg-[#F4EFEA] text-[#141416] font-bold"
-                          aria-label="Decrease quantity"
-                        >
-                          −
-                        </button>
-                        <span className="px-2 font-bold text-[#141416]">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQty(item.id, Math.min(item.variant.stockQuantity, item.quantity + 1))}
-                          className="px-2.5 py-1 hover:bg-[#F4EFEA] text-[#141416] font-bold"
-                          aria-label="Increase quantity"
-                        >
-                          +
-                        </button>
+                        {/* Variant Badges */}
+                        <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                          <span className="px-2 py-0.5 rounded-md bg-[#F4EFEA] border border-[#E7DFD5] font-semibold text-[#4B4E56]">
+                            {item.variant.colour}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-[#F4EFEA] border border-[#E7DFD5] font-bold text-[#141416]">
+                            Size: {item.variant.size}
+                          </span>
+                        </div>
+
+                        {/* Quantity Controls & Price Display */}
+                        <div className="flex items-center justify-between pt-1.5">
+                          {/* Quantity Selector Pill */}
+                          <div className="inline-flex items-center border border-[#E7DFD5] rounded-xl bg-white shadow-2xs overflow-hidden">
+                            <button
+                              onClick={() => updateQty(item.id, Math.max(1, item.quantity - 1))}
+                              className="px-2.5 py-1 text-xs font-bold text-[#141416] hover:bg-[#F4EFEA] transition-colors cursor-pointer"
+                              aria-label="Decrease quantity"
+                              disabled={item.quantity <= 1}
+                            >
+                              −
+                            </button>
+                            <span className="px-2.5 text-xs font-bold font-mono text-[#141416]">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQty(item.id, Math.min(item.variant.stockQuantity || 99, item.quantity + 1))}
+                              className="px-2.5 py-1 text-xs font-bold text-[#141416] hover:bg-[#F4EFEA] transition-colors cursor-pointer"
+                              aria-label="Increase quantity"
+                              disabled={item.quantity >= (item.variant.stockQuantity || 99)}
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          {/* Line Total */}
+                          <div className="text-right">
+                            <span className="text-xs font-black text-[#141416] font-mono block">
+                              {formatINR(itemTotal)}
+                            </span>
+                            {item.quantity > 1 && (
+                              <span className="text-[10px] text-[#787C87] font-mono">
+                                ({formatINR(itemPrice)} each)
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-
-                      {/* Price */}
-                      <span className="text-xs font-black text-[#141416] font-mono">
-                        {formatINR(Number(item.variant.price) * item.quantity)}
-                      </span>
                     </div>
-                  </div>
-                </div>
-              ))
+                  );
+                })}
+              </div>
             )}
           </div>
 
-          {/* Sticky Luxury Checkout Footer */}
+          {/* 4. Luxury Sticky Summary & Checkout Footer */}
           {items.length > 0 && (
             <div className="p-4 sm:p-5 border-t border-[#E7DFD5] bg-white space-y-3 shrink-0 shadow-lg">
-              <div className="flex justify-between items-baseline">
-                <span className="text-xs font-bold text-[#787C87] uppercase tracking-wider">Subtotal</span>
-                <span className="font-mono text-lg font-black text-[#141416]">
-                  {formatINR(subtotal)}
+              
+              {/* Price Breakdown */}
+              <div className="space-y-1.5 text-xs border-b border-[#E7DFD5] pb-3">
+                <div className="flex justify-between items-center text-[#787C87]">
+                  <span>Subtotal ({totalQuantity} {totalQuantity === 1 ? "item" : "items"})</span>
+                  <span className="font-mono font-bold text-[#141416]">{formatINR(subtotal)}</span>
+                </div>
+                <div className="flex justify-between items-center text-[#787C87]">
+                  <span>Estimated Delivery</span>
+                  <span className="font-bold text-[#2E7D32]">
+                    {remainingForFreeShipping === 0 ? "FREE" : formatINR(99)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-baseline pt-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#141416]">
+                    Total Payable
+                  </span>
+                  <span className="font-mono text-lg font-black text-[#141416]">
+                    {formatINR(subtotal + (remainingForFreeShipping === 0 ? 0 : 99))}
+                  </span>
+                </div>
+              </div>
+
+              {/* Promo Coupon Privilege Banner */}
+              <div className="p-2.5 rounded-xl bg-[#FBF4E2] border border-[#C59B27]/40 text-[11px] text-[#8E6C0C] flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span>🏷️</span>
+                  <span>Use coupon <strong>FIRST10</strong> for 10% OFF</span>
+                </div>
+                <span className="font-mono font-bold uppercase text-[10px] bg-[#C59B27]/15 px-1.5 py-0.5 rounded">
+                  VIP PRIVILEGE
                 </span>
               </div>
 
-              <div className="p-2.5 rounded-xl bg-[#FBF4E2] border border-[#C59B27]/40 text-[11px] text-[#8E6C0C] flex items-center justify-between">
-                <span>✨ Use code <strong>FIRST10</strong> for 10% OFF</span>
-                <span className="font-mono font-bold uppercase text-[10px]">10% VIP</span>
-              </div>
-
+              {/* Action Buttons */}
               <div className="space-y-2 pt-1">
                 <Link
                   href="/checkout"
                   onClick={onClose}
-                  className="w-full py-3 rounded-full font-bold text-xs uppercase tracking-wider text-center block bg-[#141416] text-white hover:bg-[#25262B] transition-colors shadow-md"
+                  className="w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block bg-gradient-to-r from-[#C59B27] via-[#D4AF37] to-[#B8860B] text-white hover:brightness-105 transition-all shadow-md cursor-pointer"
                 >
-                  Proceed to Checkout →
+                  Proceed to Secure Checkout →
                 </Link>
                 <Link
                   href="/cart"
                   onClick={onClose}
-                  className="w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block border border-[#E7DFD5] text-[#141416] hover:bg-[#F4EFEA] transition-colors"
+                  className="w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] hover:bg-[#E7DFD5] transition-colors cursor-pointer"
                 >
                   View Full Cart &amp; Apply Coupons
                 </Link>
               </div>
+
+              {/* Trust Badges */}
+              <div className="pt-2 flex items-center justify-center gap-4 text-[10px] text-[#787C87] border-t border-[#E7DFD5]/60 font-medium">
+                <span className="flex items-center gap-1">🔒 256-Bit SSL</span>
+                <span>•</span>
+                <span className="flex items-center gap-1">✨ 100% Authentic</span>
+                <span>•</span>
+                <span className="flex items-center gap-1">🔄 7-Day Returns</span>
+              </div>
             </div>
           )}
 
-        </div>
+        </aside>
       </div>
     </div>
   );
+
+  return createPortal(drawerContent, document.body);
 }
