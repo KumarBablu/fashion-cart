@@ -212,7 +212,7 @@ export default function ProductsManager({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ hard }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
       if (!res.ok) throw new Error(data.error || "Failed to delete");
 
       if (data.deleted) {
