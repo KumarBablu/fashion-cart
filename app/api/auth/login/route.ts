@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   if (!user || !valid || !user.isActive) {
     if (user && !valid) {
       // Unauthorized/failed password attempt detected: notify the account owner immediately
-      sendFailedLoginAlertEmail({
+      await sendFailedLoginAlertEmail({
         name: user.name,
         email: user.email,
         identifier: rawId,
@@ -98,8 +98,8 @@ export async function POST(req: NextRequest) {
   const { rawToken, expiresAt } = await createSession(user.id, userAgent);
   await setSessionCookie(rawToken, expiresAt);
 
-  // Dispatch Login Alert Email asynchronously
-  sendLoginAlertEmail({
+  // Dispatch Login Alert Email (awaited for serverless reliability)
+  await sendLoginAlertEmail({
     name: user.name,
     email: user.email,
     identifier: rawId,

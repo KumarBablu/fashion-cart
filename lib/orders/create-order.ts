@@ -239,15 +239,15 @@ export async function createOrder(
     });
 
     if (fullOrder) {
-      // 1. Send Order Placed Email to customer & Admin
-      sendOrderPlacedEmail(fullOrder).catch((err) => {
+      // 1. Send Order Placed Email to customer & Admin (awaited for serverless delivery)
+      await sendOrderPlacedEmail(fullOrder).catch((err) => {
         console.error("Order placed email failed to dispatch:", err);
       });
 
       // 2. Dispatch Mobile SMS to customer
       const phone = fullOrder.user.phone || (fullOrder.shippingAddressSnapshot as any)?.mobileNumber;
       if (phone) {
-        sendMobileSms({
+        await sendMobileSms({
           to: phone,
           message: formatOrderPlacedSms(fullOrder),
           templateType: "ORDER_PLACED",
@@ -260,7 +260,7 @@ export async function createOrder(
       if (order.status === "CONFIRMED") {
         try {
           const { buffer, invoiceNumber } = await generateInvoiceBufferForOrder(order.id);
-          sendPaymentVerifiedEmail(fullOrder, buffer, `FashionCart-Invoice-${order.orderNumber}-${invoiceNumber}.pdf`).catch((err) => {
+          await sendPaymentVerifiedEmail(fullOrder, buffer, `FashionCart-Invoice-${order.orderNumber}-${invoiceNumber}.pdf`).catch((err) => {
             console.error("Payment verified email failed to dispatch:", err);
           });
         } catch (invoiceErr) {

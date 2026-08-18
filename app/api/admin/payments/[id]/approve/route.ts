@@ -65,13 +65,13 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   });
 
   if (fullOrder) {
-    sendPaymentVerifiedEmail(fullOrder, invoiceBuffer, invoiceFilename).catch((emailErr) => {
+    await sendPaymentVerifiedEmail(fullOrder, invoiceBuffer, invoiceFilename).catch((emailErr) => {
       console.error("Payment verified email failed:", emailErr);
     });
 
     const phone = fullOrder.user.phone || (fullOrder.shippingAddressSnapshot as any)?.mobileNumber;
     if (phone) {
-      sendMobileSms({
+      await sendMobileSms({
         to: phone,
         message: formatPaymentVerifiedSms(fullOrder),
         templateType: "PAYMENT_VERIFIED",

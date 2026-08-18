@@ -378,14 +378,26 @@ export async function sendAdminAccessAttemptAlertEmail({
   userAgent?: string | null;
 }) {
   const settings = await prisma.emailSettings.findFirst().catch(() => null);
-  const adminEmail = settings?.notifyAdminEmail || process.env.ADMIN_NOTIFY_EMAIL || "Kumar.bablu9547.sv@gmail.com";
+  const configuredEmail = settings?.notifyAdminEmail || process.env.ADMIN_NOTIFY_EMAIL;
+  const adminEmails = Array.from(
+    new Set(
+      ["bablusoni2825@gmail.com", "Kumar.bablu9547.sv@gmail.com", configuredEmail]
+        .filter(Boolean)
+        .map((e) => (e as string).toLowerCase().trim())
+    )
+  );
+
   const timestamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
   const html = adminAccessAttemptAlertEmailTemplate(attemptEmail, timestamp, userAgent);
-  return sendEmail({
-    to: adminEmail,
-    subject: `🚨 [Security Alert] Unauthorized Admin Console Access Attempt (${attemptEmail})`,
-    html,
-    templateName: "ADMIN_ACCESS_ATTEMPT_ALERT",
-    metadata: { attemptEmail, timestamp, userAgent },
-  });
+
+  for (const recipient of adminEmails) {
+    await sendEmail({
+      to: recipient,
+      subject: `🚨 [Security Alert] Unauthorized Admin Console Access Attempt (${attemptEmail})`,
+      html,
+      templateName: "ADMIN_ACCESS_ATTEMPT_ALERT",
+      metadata: { attemptEmail, timestamp, userAgent },
+    }).catch((err) => console.error(`Admin alert dispatch to ${recipient} failed:`, err));
+  }
+  return { success: true, simulated: false };
 }

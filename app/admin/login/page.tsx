@@ -33,9 +33,16 @@ export default function AdminLoginPage() {
       }
 
       if (data.user.role !== "ADMIN") {
+        // Dispatch security warning to super admin
+        fetch("/api/admin/security/alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ attemptEmail: identifier.trim() }),
+        }).catch(() => {});
+
         await fetch("/api/auth/logout", { method: "POST" });
         setLoading(false);
-        setError("This account does not have administrator privileges.");
+        setError("⚠️ Access Denied: This account does not possess administrator privileges. A security event notice has been dispatched to the administrator.");
         return;
       }
 
