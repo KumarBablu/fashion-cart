@@ -3,6 +3,16 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/providers/ToastProvider";
 
+type SubCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  _count?: { products: number };
+};
+
 type Category = {
   id: string;
   name: string;
@@ -11,7 +21,7 @@ type Category = {
   isActive: boolean;
   sortOrder: number;
   _count?: { products: number };
-  children?: Category[];
+  children?: SubCategory[];
 };
 
 function slugify(s: string) {
@@ -26,21 +36,30 @@ export default function AdminCategoriesPage() {
   const { success, error: toastError } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Form State
+  // Modal / Form State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"NEW_PARENT" | "NEW_SUB" | "EDIT">("NEW_PARENT");
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const [slugTouched, setSlugTouched] = useState(false);
-  const [parentId, setParentId] = useState("");
+  const [slugAuto, setSlugAuto] = useState(true);
+  const [parentId, setParentId] = useState<string>("");
   const [sortOrder, setSortOrder] = useState(0);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Quick inline add state per category ID: { [categoryId]: string }
+  const [quickSubName, setQuickSubName] = useState<Record<string, string>>({});
+  const [quickSubSaving, setQuickSubSaving] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/categories");
+      const res = await fetch("/api/categories?includeInactive=true");
       const data = await res.json();
       setCategories(data.categories || []);
     } catch (e) {
@@ -55,36 +74,69 @@ export default function AdminCategoriesPage() {
     load();
   }, []);
 
-  function startEdit(cat: Category) {
-    setEditingId(cat.id);
-    setName(cat.name);
-    setSlug(cat.slug);
-    setSlugTouched(true);
-    setParentId(cat.parentId || "");
-    setSortOrder(cat.sortOrder || 0);
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  function handleNameChange(val: string) {
+    setName(val);
+    if (slugAuto) {
+      setSlug(slugify(val));
+    }
   }
 
-  function resetForm() {
+  function openNewParentModal() {
+    setModalMode("NEW_PARENT");
     setEditingId(null);
     setName("");
     setSlug("");
-    setSlugTouched(false);
+    setSlugAuto(true);
     setParentId("");
     setSortOrder(0);
-    setError(null);
+    setIsActive(true);
+    setFormError(null);
+    setIsModalOpen(true);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
+  function openNewSubModal(parentCatId: string) {
+    setModalMode("NEW_SUB");
+    setEditingId(null);
+    setName("");
+    setSlug("");
+    setSlugAuto(true);
+    setParentId(parentCatId);
+    setSortOrder(0);
+    setIsActive(true);
+    setFormError(null);
+    setIsModalOpen(true);
+  }
 
+  function openEditModal(cat: Category | SubCategory) {
+    setModalMode("EDIT");
+    setEditingId(cat.id);
+    setName(cat.name);
+    setSlug(cat.slug);
+    setSlugAuto(false);
+    setParentId(cat.parentId || "");
+    setSortOrder(cat.sortOrder || 0);
+    setIsActive(cat.isActive);
+    setFormError(null);
+    setIsModalOpen(true);
+  }
+
+  async function handleModalSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) {
+      setFormError("Please enter a category name");
+      return;
+    }
+
+    setSaving(true);
+    setFormError(null);
+
+    const cleanSlug = slug.trim() || slugify(name);
     const payload = {
-      name,
-      slug: slug || slugify(name),
+      name: name.trim(),
+      slug: cleanSlug,
       parentId: parentId || null,
       sortOrder: Number(sortOrder) || 0,
+      isActive,
     };
 
     try {
@@ -101,20 +153,60 @@ export default function AdminCategoriesPage() {
       setSaving(false);
 
       if (!res.ok) {
-        setError(data.error || "Failed to save category");
+        setFormError(data.error || "Failed to save category");
         return;
       }
 
-      success(editingId ? "Category Updated" : "Category Created 🎉", `"${name}" saved successfully.`);
-      resetForm();
+      success(
+        editingId ? "Category Updated" : "Category Created 🎉",
+        `"${name}" was saved successfully.`
+      );
+      setIsModalOpen(false);
       load();
     } catch {
       setSaving(false);
-      setError("Network error while saving category");
+      setFormError("Network error while saving category");
     }
   }
 
-  async function toggleActive(cat: Category) {
+  async function handleQuickAddSub(parentCatId: string, parentCatName: string) {
+    const subName = quickSubName[parentCatId]?.trim();
+    if (!subName) return;
+
+    setQuickSubSaving(parentCatId);
+    const generatedSlug = slugify(subName);
+
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: subName,
+          slug: generatedSlug,
+          parentId: parentCatId,
+          isActive: true,
+          sortOrder: 0,
+        }),
+      });
+
+      const data = await res.json();
+      setQuickSubSaving(null);
+
+      if (!res.ok) {
+        toastError("Add Subcategory Failed", data.error || "Could not add subcategory");
+        return;
+      }
+
+      success("Subcategory Added 🎉", `Added "${subName}" to ${parentCatName}.`);
+      setQuickSubName((prev) => ({ ...prev, [parentCatId]: "" }));
+      load();
+    } catch {
+      setQuickSubSaving(null);
+      toastError("Error", "Network error while creating subcategory");
+    }
+  }
+
+  async function toggleActive(cat: Category | SubCategory) {
     try {
       const res = await fetch(`/api/categories/${cat.id}`, {
         method: "PUT",
@@ -129,241 +221,399 @@ export default function AdminCategoriesPage() {
     }
   }
 
-  async function handleDelete(id: string, name: string) {
-    if (!confirm(`Are you sure you want to delete/archive "${name}"?`)) return;
+  async function handleDelete(cat: Category | SubCategory, isSub: boolean) {
+    const message = isSub
+      ? `Are you sure you want to delete subcategory "${cat.name}"?`
+      : `Are you sure you want to delete category "${cat.name}" and all its subcategories?`;
+
+    if (!confirm(message)) return;
+
     try {
-      const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/categories/${cat.id}?hard=true`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
-      success("Category Removed", `"${name}" archived successfully.`);
+      success("Category Removed", `"${cat.name}" removed successfully.`);
       load();
     } catch {
       toastError("Delete Failed", "Could not remove category.");
     }
   }
 
-  const topLevel = categories.filter((c) => !c.parentId);
+  const filteredCategories = categories.filter((cat) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const matchesParent = cat.name.toLowerCase().includes(q) || cat.slug.toLowerCase().includes(q);
+    const matchesChild = (cat.children || []).some(
+      (child) => child.name.toLowerCase().includes(q) || child.slug.toLowerCase().includes(q)
+    );
+    return matchesParent || matchesChild;
+  });
+
+  const totalSubcategories = categories.reduce((acc, c) => acc + (c.children?.length || 0), 0);
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
+      {/* Top Header & Action Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2">
-            <span>🏷️</span> Categories &amp; Collections
+          <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2 text-slate-900">
+            <span>🏷️</span> Categories &amp; Subcategories Manager
           </h1>
-          <p className="text-xs text-dim mt-0.5">
-            Organize high-fashion apparel into curated collections, departments, and subcategories
+          <p className="text-xs text-slate-500 mt-0.5">
+            Full control to create, modify, sort, activate, and manage all {categories.length} departments and {totalSubcategories} subcategories
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            resetForm();
-            window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-          }}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:brightness-110 cursor-pointer"
-          style={{ backgroundColor: "var(--fc-primary)" }}
-        >
-          <span>+</span> Add New Category
-        </button>
-      </div>
-
-      {/* Category List Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {topLevel.map((cat) => (
-          <div
-            key={cat.id}
-            className="rounded-2xl border p-5 space-y-3 transition-all shadow-xs"
-            style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-sm" style={{ color: "var(--fc-text)" }}>
-                  {cat.name}
-                </h3>
-                <p className="text-[11px] font-mono text-primary">/{cat.slug}</p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => toggleActive(cat)}
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
-                    cat.isActive
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : "bg-neutral-100 text-neutral-500 border-neutral-300"
-                  }`}
-                >
-                  {cat.isActive ? "● Active" : "○ Hidden"}
-                </button>
-
-                <button
-                  onClick={() => startEdit(cat)}
-                  className="p-1.5 rounded-lg border text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                  title="Edit category"
-                  style={{ borderColor: "var(--fc-border)" }}
-                >
-                  ✏️
-                </button>
-
-                <button
-                  onClick={() => handleDelete(cat.id, cat.name)}
-                  className="p-1.5 rounded-lg border text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 transition-colors"
-                  title="Delete category"
-                  style={{ borderColor: "var(--fc-border)" }}
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-
-            {/* Subcategories list */}
-            {(cat.children ?? []).length > 0 && (
-              <div className="p-3 rounded-xl border space-y-1.5" style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}>
-                <p className="text-[10px] uppercase font-bold text-dim">Subcategories ({cat.children!.length}):</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {cat.children!.map((sub) => (
-                    <span
-                      key={sub.id}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border bg-white dark:bg-neutral-900 shadow-2xs"
-                      style={{ borderColor: "var(--fc-border)" }}
-                    >
-                      <span>{sub.name}</span>
-                      <button
-                        onClick={() => startEdit(sub)}
-                        className="text-[10px] text-amber-600 hover:underline"
-                        title="Edit subcategory"
-                      >
-                        ✎
-                      </button>
-                      <button
-                        onClick={() => handleDelete(sub.id, sub.name)}
-                        className="text-[10px] text-rose-500 hover:underline"
-                        title="Delete subcategory"
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {topLevel.length === 0 && !loading && (
-          <div className="col-span-2 p-12 text-center text-dim rounded-2xl border" style={{ borderColor: "var(--fc-border)" }}>
-            <p className="text-3xl">🏷️</p>
-            <p className="font-bold text-sm mt-2">No categories found.</p>
-            <p className="text-xs">Create your first category using the form below.</p>
-          </div>
-        )}
-      </div>
-
-      {/* Add / Edit Category Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-2xl border p-6 space-y-4 shadow-sm"
-        style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}
-      >
-        <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: "var(--fc-border)" }}>
-          <h3 className="font-display text-base font-bold text-primary">
-            {editingId ? "✏️ Edit Category" : "✨ Create New Category or Subcategory"}
-          </h3>
-          {editingId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="text-xs text-rose-500 hover:underline cursor-pointer"
-            >
-              Cancel Edit
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-          <div className="sm:col-span-4">
-            <label className="block text-xs font-bold uppercase tracking-wider text-dim mb-1">
-              Category Name *
-            </label>
-            <input
-              required
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (!slugTouched) setSlug(slugify(e.target.value));
-              }}
-              placeholder="e.g. Silk Sarees & Drapes"
-              className="w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-primary transition-all"
-              style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}
-            />
-          </div>
-
-          <div className="sm:col-span-4">
-            <label className="block text-xs font-bold uppercase tracking-wider text-dim mb-1">
-              Slug (URL Identifier) *
-            </label>
-            <input
-              required
-              value={slug}
-              onChange={(e) => {
-                setSlug(slugify(e.target.value));
-                setSlugTouched(true);
-              }}
-              placeholder="e.g. silk-sarees"
-              className="w-full px-3.5 py-2.5 rounded-xl border text-xs font-mono outline-none focus:border-primary transition-all"
-              style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}
-            />
-          </div>
-
-          <div className="sm:col-span-4">
-            <label className="block text-xs font-bold uppercase tracking-wider text-dim mb-1">
-              Parent Category (Optional)
-            </label>
-            <select
-              value={parentId}
-              onChange={(e) => setParentId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-primary transition-all"
-              style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}
-            >
-              <option value="">None (Top-Level Main Department)</option>
-              {topLevel
-                .filter((c) => c.id !== editingId)
-                .map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    Under: {cat.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-        </div>
-
-        {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-500 font-semibold">
-            {error}
-          </div>
-        )}
-
-        <div className="flex justify-end gap-2 pt-2">
-          {editingId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="px-4 py-2.5 rounded-xl border text-xs font-bold text-dim hover:text-primary transition-colors cursor-pointer"
-              style={{ borderColor: "var(--fc-border)" }}
-            >
-              Cancel
-            </button>
-          )}
+        <div className="flex items-center gap-2.5">
           <button
-            type="submit"
-            disabled={saving || !name.trim()}
-            className="px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:brightness-110 disabled:opacity-50 cursor-pointer"
-            style={{ backgroundColor: "var(--fc-primary)" }}
+            onClick={openNewParentModal}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] shadow-md transition-all cursor-pointer"
           >
-            {saving ? "Saving…" : editingId ? "Update Category →" : "Create Category →"}
+            <span>+</span> Add Department Category
           </button>
         </div>
-      </form>
+      </div>
+
+      {/* KPI Stats & Search Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Main Departments</p>
+            <p className="text-xl font-bold font-display text-slate-900 mt-0.5">{categories.length}</p>
+          </div>
+          <span className="text-2xl">👑</span>
+        </div>
+
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Subcategories</p>
+            <p className="text-xl font-bold font-display text-[#C59B27] mt-0.5">{totalSubcategories}</p>
+          </div>
+          <span className="text-2xl">✨</span>
+        </div>
+
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Quick Search</p>
+          <input
+            type="text"
+            placeholder="Search categories or subcategories..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full text-xs px-3 py-1.5 rounded-lg border border-slate-200 focus:outline-hidden focus:border-[#141416]"
+          />
+        </div>
+      </div>
+
+      {/* Category List Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {filteredCategories.map((cat) => {
+          const subCount = (cat.children ?? []).length;
+
+          return (
+            <div
+              key={cat.id}
+              className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4 shadow-sm hover:shadow-md transition-shadow"
+            >
+              {/* Category Header */}
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-base text-slate-900 font-display">
+                      {cat.name}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 font-mono">
+                      {cat._count?.products || 0} products
+                    </span>
+                  </div>
+                  <p className="text-xs font-mono text-[#C59B27] mt-0.5">/{cat.slug}</p>
+                </div>
+
+                {/* Parent Category Actions */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => toggleActive(cat)}
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
+                      cat.isActive
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-neutral-100 text-neutral-500 border-neutral-300"
+                    }`}
+                  >
+                    {cat.isActive ? "● Active" : "○ Hidden"}
+                  </button>
+
+                  <button
+                    onClick={() => openEditModal(cat)}
+                    className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs text-slate-700 transition-colors cursor-pointer"
+                    title="Edit parent category"
+                  >
+                    ✏️
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(cat, false)}
+                    className="p-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 text-xs text-rose-600 transition-colors cursor-pointer"
+                    title="Delete category"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+
+              {/* Subcategories Container */}
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] uppercase font-extrabold tracking-wider text-slate-500">
+                    SUBCATEGORIES ({subCount}):
+                  </p>
+                  <button
+                    onClick={() => openNewSubModal(cat.id)}
+                    className="text-[11px] font-bold text-[#141416] hover:text-[#C59B27] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>+</span> Add Subcategory
+                  </button>
+                </div>
+
+                {/* Subcategory Pills */}
+                {subCount > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {cat.children!.map((sub) => (
+                      <span
+                        key={sub.id}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border shadow-2xs transition-all ${
+                          sub.isActive
+                            ? "bg-white text-slate-800 border-slate-200"
+                            : "bg-slate-100 text-slate-400 border-slate-200 line-through"
+                        }`}
+                      >
+                        <span>{sub.name}</span>
+                        <span className="text-[10px] font-mono text-slate-400">({sub._count?.products || 0})</span>
+
+                        <button
+                          onClick={() => openEditModal(sub)}
+                          className="ml-1 text-[11px] text-[#C59B27] hover:scale-115 transition-transform cursor-pointer"
+                          title="Edit subcategory name/slug"
+                        >
+                          ✏️
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(sub, true)}
+                          className="text-[11px] text-rose-500 hover:scale-115 transition-transform cursor-pointer"
+                          title="Delete subcategory"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-lg border border-dashed border-slate-300 text-center text-slate-400 text-xs">
+                    No subcategories added yet. Use the quick add bar below!
+                  </div>
+                )}
+
+                {/* 1-Click Quick Add Subcategory Input Bar */}
+                <div className="pt-2 border-t border-slate-200/80 flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder={`Add subcategory to ${cat.name}...`}
+                    value={quickSubName[cat.id] || ""}
+                    onChange={(e) =>
+                      setQuickSubName((prev) => ({ ...prev, [cat.id]: e.target.value }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleQuickAddSub(cat.id, cat.name);
+                      }
+                    }}
+                    className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-slate-300 bg-white focus:outline-hidden focus:border-[#141416]"
+                  />
+                  <button
+                    onClick={() => handleQuickAddSub(cat.id, cat.name)}
+                    disabled={!quickSubName[cat.id]?.trim() || quickSubSaving === cat.id}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#141416] text-white hover:bg-[#25262B] disabled:opacity-50 transition-all cursor-pointer shrink-0"
+                  >
+                    {quickSubSaving === cat.id ? "Adding..." : "+ Quick Add"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {filteredCategories.length === 0 && !loading && (
+          <div className="col-span-2 p-12 text-center text-slate-400 rounded-2xl border border-slate-200 bg-white">
+            <p className="text-4xl">🏷️</p>
+            <p className="font-bold text-sm text-slate-800 mt-2">No matching categories found.</p>
+            <button
+              onClick={openNewParentModal}
+              className="mt-3 inline-block px-4 py-2 rounded-xl text-xs font-bold uppercase bg-[#141416] text-white cursor-pointer"
+            >
+              + Create Category Now
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Interactive Modal for Add / Edit Category & Subcategory */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="font-display text-xl font-bold text-slate-900">
+                  {modalMode === "EDIT"
+                    ? "Edit Category / Subcategory"
+                    : modalMode === "NEW_SUB"
+                    ? "Add New Subcategory"
+                    : "Add Main Department Category"}
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {modalMode === "EDIT"
+                    ? `Update details for "${name}"`
+                    : modalMode === "NEW_SUB"
+                    ? `Adding subcategory under ${categories.find((c) => c.id === parentId)?.name || "selected parent"}`
+                    : "Create a top-level department in the catalog"}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="h-8 w-8 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {formError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+                ⚠️ {formError}
+              </div>
+            )}
+
+            <form onSubmit={handleModalSubmit} className="space-y-4">
+              {/* Category Name */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Category / Subcategory Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g., Mulberry Silk Sarees, Cotton Kurtis, Linen Shirts..."
+                  value={name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:border-[#141416]"
+                />
+              </div>
+
+              {/* Slug */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    URL Slug *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSlug(slugify(name));
+                      setSlugAuto(true);
+                    }}
+                    className="text-[10px] text-[#C59B27] hover:underline font-semibold cursor-pointer"
+                  >
+                    Auto-generate from Name
+                  </button>
+                </div>
+                <div className="flex items-center rounded-xl border border-slate-300 overflow-hidden bg-slate-50">
+                  <span className="px-3 text-xs text-slate-400 font-mono">/</span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="mulberry-silk-sarees"
+                    value={slug}
+                    onChange={(e) => {
+                      setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"));
+                      setSlugAuto(false);
+                    }}
+                    className="w-full text-xs font-mono py-2.5 pr-3.5 bg-transparent focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Parent Category Selector */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Department / Parent Category
+                </label>
+                <select
+                  value={parentId}
+                  onChange={(e) => setParentId(e.target.value)}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white focus:outline-hidden focus:border-[#141416]"
+                >
+                  <option value="">(None - Top Level Department Category)</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id} disabled={c.id === editingId}>
+                      📁 {c.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Select a parent to make this a subcategory, or choose &quot;None&quot; for a root department.
+                </p>
+              </div>
+
+              {/* Active Toggle & Sort Order */}
+              <div className="grid grid-cols-2 gap-4 pt-1">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    Sort Order
+                  </label>
+                  <input
+                    type="number"
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(Number(e.target.value))}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    Catalog Visibility
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsActive(!isActive)}
+                    className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
+                      isActive
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                        : "bg-slate-100 text-slate-500 border-slate-300"
+                    }`}
+                  >
+                    {isActive ? "✓ Active (Visible)" : "○ Hidden / Archived"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] disabled:opacity-50 transition-all shadow-md cursor-pointer"
+                >
+                  {saving ? "Saving..." : editingId ? "Save Changes" : "Create Category"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

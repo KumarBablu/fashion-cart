@@ -3,15 +3,26 @@ import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { categorySchema } from "@/lib/validation/schemas";
 
-// Public: list categories (with subcategories) for nav/filters.
-export async function GET() {
+// Public & Admin: list categories (with subcategories and product counts).
+export async function GET(req: NextRequest) {
+  const includeInactive = req.nextUrl.searchParams.get("includeInactive") === "true";
+  const whereClause = includeInactive ? {} : { isActive: true };
+
   const categories = await prisma.category.findMany({
-    where: { isActive: true },
+    where: whereClause,
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     include: {
       children: {
-        where: { isActive: true },
+        where: whereClause,
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        include: {
+          _count: {
+            select: { products: true },
+          },
+        },
+      },
+      _count: {
+        select: { products: true },
       },
     },
   });
