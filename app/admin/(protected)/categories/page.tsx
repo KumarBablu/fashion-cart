@@ -37,6 +37,7 @@ export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "HIDDEN">("ALL");
 
   // Modal / Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -208,13 +209,19 @@ export default function AdminCategoriesPage() {
 
   async function toggleActive(cat: Category | SubCategory) {
     try {
+      const nextStatus = !cat.isActive;
       const res = await fetch(`/api/categories/${cat.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !cat.isActive }),
+        body: JSON.stringify({ isActive: nextStatus }),
       });
       if (!res.ok) throw new Error("Failed to update status");
-      success("Status Updated", `"${cat.name}" is now ${!cat.isActive ? "Active" : "Hidden"}`);
+      
+      if (nextStatus) {
+        success("Category Activated 🎉", `"${cat.name}" is now visible on the storefront.`);
+      } else {
+        success("Category Hidden", `"${cat.name}" is now hidden from the storefront (can be unhidden anytime).`);
+      }
       load();
     } catch {
       toastError("Error", "Could not update status.");
@@ -224,7 +231,7 @@ export default function AdminCategoriesPage() {
   async function handleDelete(cat: Category | SubCategory, isSub: boolean) {
     const message = isSub
       ? `Are you sure you want to delete subcategory "${cat.name}"?`
-      : `Are you sure you want to delete category "${cat.name}" and all its subcategories?`;
+      : `Are you sure you want to delete department "${cat.name}" and its subcategories?`;
 
     if (!confirm(message)) return;
 
@@ -238,7 +245,15 @@ export default function AdminCategoriesPage() {
     }
   }
 
+  const activeCount = categories.filter((c) => c.isActive).length;
+  const hiddenCount = categories.filter((c) => !c.isActive).length;
+
   const filteredCategories = categories.filter((cat) => {
+    // Status filter
+    if (statusFilter === "ACTIVE" && !cat.isActive) return false;
+    if (statusFilter === "HIDDEN" && cat.isActive) return false;
+
+    // Search query
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     const matchesParent = cat.name.toLowerCase().includes(q) || cat.slug.toLowerCase().includes(q);
@@ -259,7 +274,7 @@ export default function AdminCategoriesPage() {
             <span>🏷️</span> Categories &amp; Subcategories Manager
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Full control to create, modify, sort, activate, and manage all {categories.length} departments and {totalSubcategories} subcategories
+            Full control to create, modify, unhide, sort, and manage all {categories.length} departments and {totalSubcategories} subcategories
           </p>
         </div>
 
@@ -273,14 +288,37 @@ export default function AdminCategoriesPage() {
         </div>
       </div>
 
-      {/* KPI Stats & Search Bar */}
+      {/* Filter Tabs & KPI Stats & Search Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Main Departments</p>
-            <p className="text-xl font-bold font-display text-slate-900 mt-0.5">{categories.length}</p>
+        {/* Status Filter Tabs */}
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Department Status</p>
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+            <button
+              onClick={() => setStatusFilter("ALL")}
+              className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                statusFilter === "ALL" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              All ({categories.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter("ACTIVE")}
+              className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                statusFilter === "ACTIVE" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-500 hover:text-emerald-700"
+              }`}
+            >
+              Active ({activeCount})
+            </button>
+            <button
+              onClick={() => setStatusFilter("HIDDEN")}
+              className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                statusFilter === "HIDDEN" ? "bg-amber-600 text-white shadow-xs" : "text-slate-500 hover:text-amber-700"
+              }`}
+            >
+              Hidden ({hiddenCount})
+            </button>
           </div>
-          <span className="text-2xl">👑</span>
         </div>
 
         <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs flex items-center justify-between">
@@ -311,7 +349,9 @@ export default function AdminCategoriesPage() {
           return (
             <div
               key={cat.id}
-              className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4 shadow-sm hover:shadow-md transition-shadow"
+              className={`rounded-2xl border bg-white p-5 space-y-4 shadow-sm hover:shadow-md transition-all ${
+                cat.isActive ? "border-slate-200" : "border-amber-300 bg-amber-50/20"
+              }`}
             >
               {/* Category Header */}
               <div className="flex items-start justify-between gap-3">
@@ -327,23 +367,24 @@ export default function AdminCategoriesPage() {
                   <p className="text-xs font-mono text-[#C59B27] mt-0.5">/{cat.slug}</p>
                 </div>
 
-                {/* Parent Category Actions */}
+                {/* Parent Category Actions & Unhide Toggle */}
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => toggleActive(cat)}
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
+                    className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer flex items-center gap-1 ${
                       cat.isActive
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-neutral-100 text-neutral-500 border-neutral-300"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+                        : "bg-amber-100 text-amber-800 border-amber-400 hover:bg-amber-200 shadow-xs"
                     }`}
+                    title={cat.isActive ? "Click to Hide from Storefront" : "Click to Unhide / Activate on Storefront"}
                   >
-                    {cat.isActive ? "● Active" : "○ Hidden"}
+                    <span>{cat.isActive ? "● Active" : "👁️ Unhide / Activate"}</span>
                   </button>
 
                   <button
                     onClick={() => openEditModal(cat)}
                     className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs text-slate-700 transition-colors cursor-pointer"
-                    title="Edit parent category"
+                    title="Edit category"
                   >
                     ✏️
                   </button>
@@ -381,15 +422,28 @@ export default function AdminCategoriesPage() {
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border shadow-2xs transition-all ${
                           sub.isActive
                             ? "bg-white text-slate-800 border-slate-200"
-                            : "bg-slate-100 text-slate-400 border-slate-200 line-through"
+                            : "bg-amber-50 text-amber-900 border-amber-300"
                         }`}
                       >
                         <span>{sub.name}</span>
                         <span className="text-[10px] font-mono text-slate-400">({sub._count?.products || 0})</span>
 
                         <button
+                          onClick={() => toggleActive(sub)}
+                          className="ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold border transition-all cursor-pointer"
+                          style={{
+                            backgroundColor: sub.isActive ? "#f0fdf4" : "#fef3c7",
+                            color: sub.isActive ? "#15803d" : "#92400e",
+                            borderColor: sub.isActive ? "#bbf7d0" : "#fde68a",
+                          }}
+                          title={sub.isActive ? "Click to Hide Subcategory" : "Click to Unhide Subcategory"}
+                        >
+                          {sub.isActive ? "Active" : "Unhide"}
+                        </button>
+
+                        <button
                           onClick={() => openEditModal(sub)}
-                          className="ml-1 text-[11px] text-[#C59B27] hover:scale-115 transition-transform cursor-pointer"
+                          className="text-[11px] text-[#C59B27] hover:scale-115 transition-transform cursor-pointer"
                           title="Edit subcategory name/slug"
                         >
                           ✏️
@@ -585,10 +639,10 @@ export default function AdminCategoriesPage() {
                     className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
                       isActive
                         ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-                        : "bg-slate-100 text-slate-500 border-slate-300"
+                        : "bg-amber-50 text-amber-800 border-amber-300"
                     }`}
                   >
-                    {isActive ? "✓ Active (Visible)" : "○ Hidden / Archived"}
+                    {isActive ? "✓ Active (Visible on Storefront)" : "○ Hidden (Click to Unhide)"}
                   </button>
                 </div>
               </div>

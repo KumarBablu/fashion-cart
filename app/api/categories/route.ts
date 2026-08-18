@@ -5,7 +5,8 @@ import { categorySchema } from "@/lib/validation/schemas";
 
 // Public & Admin: list categories (with subcategories and product counts).
 export async function GET(req: NextRequest) {
-  const includeInactive = req.nextUrl.searchParams.get("includeInactive") === "true";
+  const admin = await getCurrentAdmin();
+  const includeInactive = req.nextUrl.searchParams.get("includeInactive") === "true" || !!admin;
   const whereClause = includeInactive ? {} : { isActive: true };
 
   const categories = await prisma.category.findMany({
