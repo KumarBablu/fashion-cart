@@ -13,23 +13,39 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   const [product, categories] = await Promise.all([
     prisma.product.findUnique({
       where: { id },
-      include: { variants: { orderBy: [{ colour: "asc" }, { size: "asc" }] }, images: { orderBy: { sortOrder: "asc" } } },
+      include: {
+        variants: { orderBy: [{ colour: "asc" }, { size: "asc" }] },
+        images: { orderBy: { sortOrder: "asc" } },
+      },
     }),
-    prisma.category.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
+    prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
   ]);
 
   if (!product) notFound();
 
   return (
-    <div className="max-w-3xl">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl">Edit Product</h1>
+    <div className="max-w-4xl space-y-8">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-slate-900 flex items-center gap-2">
+            <span>✏️</span> Edit Garment Listing
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5 font-mono">ID: {product.id} • Slug: /{product.slug}</p>
+        </div>
         <ArchiveProductButton slug={product.slug} archived={product.status === "ARCHIVED"} />
       </div>
 
-      <div className="mt-6">
+      <div>
         <ProductForm
-          categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+          categories={categories.map((c) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            parentId: c.parentId,
+          }))}
           existing={{
             id: product.id,
             name: product.name,
@@ -38,7 +54,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
             categoryId: product.categoryId,
             brand: product.brand,
             fabric: product.fabric,
-            status: product.status,
+            status: product.status as "ACTIVE" | "ARCHIVED" | "DRAFT",
             isFeatured: product.isFeatured,
             isNewArrival: product.isNewArrival,
             isBestSeller: product.isBestSeller,
@@ -46,8 +62,10 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         />
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft mb-3">Variants &amp; Stock</h2>
+      <div className="space-y-3 pt-6 border-t border-slate-200">
+        <h2 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
+          <span>📦</span> Variants &amp; Inventory Quantities
+        </h2>
         <VariantManager
           productId={product.id}
           variants={product.variants.map((v) => ({
@@ -58,8 +76,10 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         />
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft mb-3">Images</h2>
+      <div className="space-y-3 pt-6 border-t border-slate-200">
+        <h2 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
+          <span>🖼️</span> Lookbook &amp; Product Images
+        </h2>
         <ImageManager productId={product.id} images={product.images} />
       </div>
     </div>

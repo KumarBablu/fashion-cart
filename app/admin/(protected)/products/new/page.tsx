@@ -6,17 +6,29 @@ export const dynamic = "force-dynamic";
 export default async function NewProductPage() {
   const categories = await prisma.category.findMany({
     where: { isActive: true },
-    orderBy: { name: "asc" },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
 
   return (
-    <div>
-      <h1 className="font-display text-2xl">Add Product</h1>
-      <p className="mt-1 text-sm text-ink-soft">
-        Save the product first, then add variants (size/colour/stock) and images on the next screen.
-      </p>
-      <div className="mt-6 max-w-2xl">
-        <ProductForm categories={categories.map((c) => ({ id: c.id, name: c.name }))} />
+    <div className="max-w-4xl space-y-4">
+      <div>
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-slate-900 flex items-center gap-2">
+          <span>✨</span> Add New Luxury Garment
+        </h1>
+        <p className="mt-1 text-xs text-slate-500">
+          Save the primary product information first, then configure sizes, SKU variants, stock quantities, and high-resolution lookbook photos.
+        </p>
+      </div>
+
+      <div className="mt-4">
+        <ProductForm
+          categories={categories.map((c) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            parentId: c.parentId,
+          }))}
+        />
       </div>
     </div>
   );
