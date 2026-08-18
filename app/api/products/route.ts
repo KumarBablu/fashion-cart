@@ -49,7 +49,10 @@ export async function GET(req: NextRequest) {
             { description: { contains: q, mode: "insensitive" } },
             { brand: { contains: q, mode: "insensitive" } },
             { category: { name: { contains: q, mode: "insensitive" } } },
+            { category: { parent: { name: { contains: q, mode: "insensitive" } } } },
             { variants: { some: { sku: { contains: q, mode: "insensitive" } } } },
+            { variants: { some: { colour: { contains: q, mode: "insensitive" } } } },
+            { variants: { some: { size: { contains: q, mode: "insensitive" } } } },
           ],
         }
       : {}),
@@ -73,12 +76,14 @@ export async function GET(req: NextRequest) {
       ? { createdAt: "desc" }
       : { createdAt: "desc" };
 
+  const limit = sp.get("take") ? Math.min(50, Number(sp.get("take"))) : PAGE_SIZE;
+
   const [items, total] = await Promise.all([
     prisma.product.findMany({
       where,
       orderBy,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      skip: (page - 1) * limit,
+      take: limit,
       include: {
         images: { orderBy: { sortOrder: "asc" }, take: 1 },
         variants: { where: { isActive: true }, orderBy: { price: "asc" } },
