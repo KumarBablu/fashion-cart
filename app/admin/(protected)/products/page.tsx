@@ -8,7 +8,15 @@ export default async function AdminProductsPage() {
     prisma.product.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        category: { select: { id: true, name: true } },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            parentId: true,
+            parent: { select: { id: true, name: true, slug: true } },
+          },
+        },
         variants: {
           select: {
             id: true,
@@ -28,8 +36,13 @@ export default async function AdminProductsPage() {
       },
     }),
     prisma.category.findMany({
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        parentId: true,
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     }),
   ]);
 
@@ -50,5 +63,5 @@ export default async function AdminProductsPage() {
     createdAt: p.createdAt.toISOString(),
   }));
 
-  return <ProductsManager initialProducts={serializedProducts} categories={categories} />;
+  return <ProductsManager initialProducts={serializedProducts as any} categories={categories} />;
 }
