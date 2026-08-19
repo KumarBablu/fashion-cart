@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/providers/ToastProvider";
+import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -89,14 +90,12 @@ export default function ContactPage() {
                 <span className="text-xl">💬</span>
                 <div>
                   <p className="font-bold">WhatsApp Concierge Desk</p>
-                  <a
-                    href="https://wa.me/919771039201?text=Hi%20Fashion%20Cart%20Team%2C%20I%20have%20an%20inquiry%20regarding%20an%20order"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#C59B27] font-bold hover:underline"
+                  <WhatsAppConciergeButton
+                    className="text-[#C59B27] font-bold hover:underline bg-transparent border-none p-0 cursor-pointer text-xs text-left"
+                    customMessage="Hi Fashion Cart Concierge, I have an inquiry and would like personal assistance."
                   >
                     +91 97710 39201 ↗
-                  </a>
+                  </WhatsAppConciergeButton>
                   <p className="text-[10px] text-dim mt-0.5">Instant chat &amp; exchange assistance</p>
                 </div>
               </div>

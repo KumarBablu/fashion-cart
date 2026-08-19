@@ -10,7 +10,7 @@ const APP_URL =
   (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
   "https://fashion-cart-5p7k.vercel.app";
 
-const BOUTIQUE_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE || "919771039201";
+export const BOUTIQUE_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE || "919771039201";
 
 /**
  * Clean phone number to standard international format (e.g. 919876543210)
@@ -31,7 +31,73 @@ export function createWhatsAppUrl(phone: string, text: string): string {
 }
 
 // -------------------------------------------------------------
-// 1. Welcome / Signup WhatsApp
+// 1. Universal Customer Inquiry & Concierge WhatsApp Message
+// -------------------------------------------------------------
+export function getCustomerInquiryWhatsAppMessage(params: {
+  userName?: string | null;
+  userPhone?: string | null;
+  userEmail?: string | null;
+  pageTitle?: string | null;
+  pageUrl?: string | null;
+  productName?: string | null;
+  productPrice?: number | null;
+  productSku?: string | null;
+  orderNumber?: string | null;
+  customMessage?: string | null;
+}): string {
+  const lines: string[] = [
+    "Namaste Fashion Cart Atelier! 👗✨",
+    "",
+    "👤 *Customer Information:*",
+  ];
+
+  if (params.userName) {
+    lines.push(`• *Name:* ${params.userName}`);
+  } else {
+    lines.push("• *Customer:* Storefront Visitor");
+  }
+
+  if (params.userPhone) {
+    lines.push(`• *Mobile:* ${params.userPhone}`);
+  }
+
+  if (params.userEmail) {
+    lines.push(`• *Email:* ${params.userEmail}`);
+  }
+
+  lines.push("");
+  lines.push("📍 *Inquiry Details & Context:*");
+
+  if (params.productName) {
+    const priceStr = params.productPrice ? ` (${formatINR(params.productPrice)})` : "";
+    const skuStr = params.productSku ? ` [SKU: ${params.productSku}]` : "";
+    lines.push(`• *Garment:* ${params.productName}${priceStr}${skuStr}`);
+  }
+
+  if (params.orderNumber) {
+    lines.push(`• *Order Reference:* #${params.orderNumber}`);
+  }
+
+  if (params.pageTitle) {
+    lines.push(`• *Viewing Page:* ${params.pageTitle}`);
+  }
+
+  if (params.pageUrl) {
+    lines.push(`• *Storefront Link:* ${params.pageUrl}`);
+  }
+
+  lines.push("");
+  lines.push("💬 *Message / Query:*");
+  lines.push(
+    params.customMessage ||
+      "Hi Fashion Cart team, I would like assistance with outfit styling, sizing details, or placing an order."
+  );
+
+  return lines.join("\n");
+}
+
+// -------------------------------------------------------------
+// 2. Welcome / Signup WhatsApp
 // -------------------------------------------------------------
 export function getWelcomeWhatsAppMessage(name: string): string {
   return `Namaste ${name}! 👗 Welcome to Fashion Cart Luxury Atelier.
@@ -42,7 +108,7 @@ Explore latest collection: ${APP_URL}/shop`;
 }
 
 // -------------------------------------------------------------
-// 2. Order Placed WhatsApp
+// 3. Order Placed WhatsApp
 // -------------------------------------------------------------
 export function getOrderPlacedWhatsAppMessage(order: {
   orderNumber: string;
@@ -59,7 +125,7 @@ ${APP_URL}/account/orders/${order.id}`;
 }
 
 // -------------------------------------------------------------
-// 3. Payment Verified & Processing WhatsApp
+// 4. Payment Verified & Processing WhatsApp
 // -------------------------------------------------------------
 export function getPaymentVerifiedWhatsAppMessage(order: {
   orderNumber: string;
@@ -76,7 +142,7 @@ ${APP_URL}/invoices/${order.id}`;
 }
 
 // -------------------------------------------------------------
-// 4. Order Shipped with Live AWB Tracking WhatsApp
+// 5. Order Shipped with Live AWB Tracking WhatsApp
 // -------------------------------------------------------------
 export function getOrderShippedWhatsAppMessage(order: {
   orderNumber: string;
@@ -99,7 +165,7 @@ ${APP_URL}/account/orders/${order.id}`;
 }
 
 // -------------------------------------------------------------
-// 5. Order Delivered WhatsApp
+// 6. Order Delivered WhatsApp
 // -------------------------------------------------------------
 export function getOrderDeliveredWhatsAppMessage(order: {
   orderNumber: string;
@@ -116,7 +182,7 @@ ${APP_URL}/account/orders/${order.id}`;
 }
 
 // -------------------------------------------------------------
-// 6. Payment Proof Submission WhatsApp (Customer to Store Owner)
+// 7. Payment Proof Submission WhatsApp (Customer to Store Owner)
 // -------------------------------------------------------------
 export function getPaymentProofWhatsAppMessage(orderNumber: string, total: any, utr?: string | null): string {
   return `Namaste Fashion Cart Boutique! 💳
@@ -127,7 +193,7 @@ Please find my payment screenshot attached for verification.`;
 }
 
 // -------------------------------------------------------------
-// 7. Password Recovery / Account Assistance WhatsApp
+// 8. Password Recovery / Account Assistance WhatsApp
 // -------------------------------------------------------------
 export function getPasswordResetSupportWhatsAppMessage(emailOrPhone: string): string {
   return `Namaste Fashion Cart Support! 🔑

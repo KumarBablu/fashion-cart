@@ -8,6 +8,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import SizeGuideModal from "./SizeGuideModal";
 import ProductReviews from "./ProductReviews";
 import RecentlyViewed from "./RecentlyViewed";
+import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 type Variant = {
   id: string;
@@ -431,6 +432,20 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               >
                 Buy Now →
               </button>
+            </div>
+
+            {/* Direct WhatsApp Concierge & Custom Sizing Inquiry */}
+            <div className="pt-1">
+              <WhatsAppConciergeButton
+                productName={product.name}
+                productPrice={Number(selected?.price || product.variants[0]?.price)}
+                productSku={product.slug}
+                customMessage={`Hi Fashion Cart Stylist, I am looking at "${product.name}" (${colour}/${size}) and would like assistance with sizing, fabric details, or custom order styling.`}
+                className="w-full py-3 rounded-full border border-[#25D366] bg-[#25D366]/10 hover:bg-[#25D366] text-[#141416] hover:text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <span>💬</span>
+                <span>Inquire &amp; Order on WhatsApp</span>
+              </WhatsAppConciergeButton>
             </div>
           </div>
 

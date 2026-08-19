@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
+import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 export default function OrderDetailActions({
   orderId,
@@ -68,16 +69,13 @@ export default function OrderDetailActions({
           </div>
         ) : null}
 
-        <a
-          href={`https://wa.me/919771039201?text=${encodeURIComponent(
-            `Hello Fashion Cart! I need assistance with my Order ID: ${orderId}.`
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm flex items-center gap-1"
+        <WhatsAppConciergeButton
+          orderNumber={orderId}
+          customMessage={`Hello Fashion Cart Support! I need assistance with my Order Reference #${orderId}.`}
+          className="px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm flex items-center gap-1 cursor-pointer"
         >
           <span>💬</span> WhatsApp Support
-        </a>
+        </WhatsAppConciergeButton>
 
         {/* Cancel Order Button */}
         {cancellable && (

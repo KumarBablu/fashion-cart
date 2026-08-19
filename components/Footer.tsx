@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 export default function Footer() {
   return (
@@ -81,14 +82,12 @@ export default function Footer() {
             <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-white/70">
               <span>📍 Bengaluru, India</span>
               <span>·</span>
-              <a
-                href="https://wa.me/919771039201?text=Hello%20Fashion%20Cart!%20I%20have%20an%20inquiry%20regarding%20an%20order."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#C59B27] hover:underline font-bold flex items-center gap-1"
+              <WhatsAppConciergeButton
+                className="text-[#C59B27] hover:underline font-bold flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-xs"
+                customMessage="Hello Fashion Cart Atelier! I have an inquiry regarding your boutique and catalog."
               >
                 <span>💬</span> WhatsApp Concierge
-              </a>
+              </WhatsAppConciergeButton>
               <span>·</span>
               <a href="mailto:bablusoni2825@gmail.com" className="hover:text-white">
                 ✉️ bablusoni2825@gmail.com

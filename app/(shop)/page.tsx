@@ -3,6 +3,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import HomeClient from "@/components/home/HomeClient";
+import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 export const dynamic = "force-dynamic";
 
@@ -230,14 +231,12 @@ export default async function HomePage() {
               >
                 Browse Categories
               </Link>
-              <a
-                href="https://wa.me/919771039201?text=Hi%20Fashion%20Cart%20Stylist%2C%20I%20need%20outfit%20recommendations"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-5 py-3.5 rounded-full text-xs font-bold text-[#141416] border border-[#C59B27] bg-[#C59B27]/10 hover:bg-[#C59B27]/20 transition-colors flex items-center gap-1.5"
+              <WhatsAppConciergeButton
+                className="px-5 py-3.5 rounded-full text-xs font-bold text-[#141416] border border-[#C59B27] bg-[#C59B27]/10 hover:bg-[#C59B27]/20 transition-colors flex items-center gap-1.5 cursor-pointer"
+                customMessage="Hi Fashion Cart Stylist, I am exploring the 2026 luxury collection and would like personal outfit recommendations!"
               >
                 <span>💬</span> WhatsApp Stylist
-              </a>
+              </WhatsAppConciergeButton>
             </div>
 
             {/* Trust Assurance Strip */}

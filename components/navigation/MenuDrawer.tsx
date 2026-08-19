@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
+import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 type SubCat = {
   id: string;
@@ -347,14 +348,13 @@ export default function MenuDrawer({
                   <span>📦 Track Live Orders &amp; Invoices</span>
                   <span>→</span>
                 </Link>
-                <Link
-                  href="/contact"
-                  onClick={onClose}
-                  className="flex items-center justify-between py-1 text-[#141416] hover:text-[#C59B27] transition-colors"
+                <WhatsAppConciergeButton
+                  className="w-full flex items-center justify-between py-1 text-[#141416] hover:text-[#C59B27] transition-colors cursor-pointer bg-transparent border-none p-0 text-left font-semibold text-xs"
+                  customMessage="Hi Fashion Cart Stylist, I am exploring your catalog from the menu drawer and would like personalized styling advice."
                 >
                   <span>💬 WhatsApp Stylist Concierge</span>
                   <span>→</span>
-                </Link>
+                </WhatsAppConciergeButton>
               </div>
             </div>
 

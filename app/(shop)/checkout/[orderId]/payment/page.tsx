@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatINR } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
+import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 type OrderData = {
   order: {
@@ -289,16 +290,13 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           </button>
 
           <div className="pt-2 text-center">
-            <a
-              href={`https://wa.me/919771039201?text=${encodeURIComponent(
-                `Namaste Fashion Cart! I have completed payment for Order #${data.order.orderNumber} (Amount: ₹${Number(data.order.total).toLocaleString("en-IN")}). UTR Reference: ${utr || "Attached"}. Please find my payment screenshot attached.`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline py-1"
+            <WhatsAppConciergeButton
+              orderNumber={data.order.orderNumber}
+              customMessage={`Namaste Fashion Cart Boutique! 💳 I have completed UPI payment for Order #${data.order.orderNumber} (Amount: ₹${Number(data.order.total).toLocaleString("en-IN")}). UTR Reference: ${utr || "Attached in chat"}. Please find my payment screenshot attached for verification.`}
+              className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline py-1 bg-transparent border-none p-0 cursor-pointer w-full text-center"
             >
               <span>📲</span> Or Send Payment Screenshot Directly via WhatsApp
-            </a>
+            </WhatsAppConciergeButton>
           </div>
         </form>
       </div>
