@@ -9,6 +9,7 @@ import SizeGuideModal from "./SizeGuideModal";
 import ProductReviews from "./ProductReviews";
 import RecentlyViewed from "./RecentlyViewed";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
+import ProductImageLightbox from "./ProductImageLightbox";
 
 type Variant = {
   id: string;
@@ -49,6 +50,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
 
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [adding, setAdding] = useState(false);
 
@@ -78,14 +80,44 @@ export default function ProductDetailClient({ product }: { product: Product }) {
     }
   }, [product, selected]);
 
-  const rawImages = product.images.filter((img) => !img.variantId || img.variantId === selected?.id);
   const displayImages =
-    rawImages.length > 0
-      ? rawImages
-      : product.images.length > 0
+    product.images && product.images.length > 0
       ? product.images
       : [{ id: "0", imageUrl: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80", altText: product.name, variantId: null }];
   const pct = selected ? discountPercent(selected.price, selected.compareAtPrice) : null;
+
+  // Dynamic Image Switching when customer selects a colour variant
+  function handleColourChange(newColour: string) {
+    setColour(newColour);
+    const newSizes = product.variants.filter((v) => v.colour === newColour);
+    const firstAvailable = newSizes.find((s) => s.stockQuantity > 0)?.size || newSizes[0]?.size || "";
+    setSize(firstAvailable);
+
+    // Find image that corresponds to this colour variant
+    const matchingVariant = product.variants.find((v) => v.colour === newColour);
+    let matchedIndex = -1;
+
+    if (matchingVariant) {
+      matchedIndex = displayImages.findIndex((img) => img.variantId === matchingVariant.id);
+    }
+
+    if (matchedIndex === -1) {
+      matchedIndex = displayImages.findIndex((img) =>
+        img.altText?.toLowerCase().includes(newColour.toLowerCase())
+      );
+    }
+
+    if (matchedIndex === -1 && colours.length > 1 && displayImages.length > 1) {
+      const colourIdx = colours.indexOf(newColour);
+      if (colourIdx >= 0 && colourIdx < displayImages.length) {
+        matchedIndex = colourIdx;
+      }
+    }
+
+    if (matchedIndex !== -1) {
+      setActiveImage(matchedIndex);
+    }
+  }
 
   async function addToCart(redirectToCheckout = false) {
     if (!selected) {
@@ -196,14 +228,18 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         
         {/* Left Column: Image Gallery + Trust Badges (5 Cols) */}
         <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
-          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 group shadow-sm">
+          <div
+            onClick={() => setLightboxOpen(true)}
+            className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl border border-[#E7DFD5] bg-[#F4EFEA] group shadow-sm cursor-zoom-in transition-all duration-300 hover:shadow-xl"
+            title="Click or tap to view high definition preview"
+          >
             {displayImages[activeImage] ? (
               <Image
                 src={displayImages[activeImage].imageUrl}
                 alt={displayImages[activeImage].altText ?? product.name}
                 fill
                 sizes="(min-width: 1024px) 42vw, 100vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                 priority
               />
             ) : (
@@ -212,17 +248,27 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               </div>
             )}
 
+            {/* Floating High-Definition Zoom Indicator Badge */}
+            <div className="absolute bottom-3 right-3 z-10 opacity-90 group-hover:opacity-100 transition-opacity">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#141416]/85 backdrop-blur-md text-white border border-white/20 shadow-md">
+                <span>🔍</span> Tap for HD Preview
+              </span>
+            </div>
+
             {pct && (
               <div className="absolute top-3 left-3 z-10">
-                <span className="px-3 py-1 rounded-md text-xs font-extrabold uppercase tracking-wide bg-amber-600 text-white shadow-md">
+                <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-[#C59B27] text-white shadow-md">
                   {pct}% OFF
                 </span>
               </div>
             )}
 
             <button
-              onClick={addToWishlist}
-              className="absolute top-3 right-3 z-10 h-9 w-9 rounded-full bg-white/90 border border-slate-200 shadow-sm flex items-center justify-center text-slate-700 hover:text-rose-600 hover:scale-110 transition-all"
+              onClick={(e) => {
+                e.stopPropagation();
+                addToWishlist();
+              }}
+              className="absolute top-3 right-3 z-10 h-9 w-9 rounded-full bg-white/90 border border-slate-200 shadow-sm flex items-center justify-center text-slate-700 hover:text-rose-600 hover:scale-110 transition-all cursor-pointer"
               title="Save to Wishlist"
             >
               ❤️
@@ -333,19 +379,15 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               {colours.map((c) => (
                 <button
                   key={c}
-                  onClick={() => {
-                    setColour(c);
-                    const firstAvailable = product.variants.find((v) => v.colour === c);
-                    setSize(firstAvailable?.size || "");
-                    setActiveImage(0);
-                  }}
-                  className={`rounded-xl border px-4 py-2 text-xs font-semibold transition-all ${
+                  onClick={() => handleColourChange(c)}
+                  className={`rounded-2xl border px-4 py-2 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                     c === colour
-                      ? "border-slate-900 bg-slate-900 text-white font-bold shadow-xs"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                      ? "border-[#141416] bg-[#141416] text-white shadow-md scale-105"
+                      : "border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27]"
                   }`}
                 >
-                  {c}
+                  <span className={`w-2 h-2 rounded-full ${c === colour ? "bg-[#C59B27]" : "bg-[#C59B27]/60"}`} />
+                  <span>{c}</span>
                 </button>
               ))}
             </div>
@@ -620,6 +662,15 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         isOpen={sizeGuideOpen}
         onClose={() => setSizeGuideOpen(false)}
         category={product.brand || "Apparel"}
+      />
+
+      {/* High-Definition Image Lightbox Preview Modal */}
+      <ProductImageLightbox
+        isOpen={lightboxOpen}
+        images={displayImages}
+        initialIndex={activeImage}
+        productName={product.name}
+        onClose={() => setLightboxOpen(false)}
       />
     </div>
   );
