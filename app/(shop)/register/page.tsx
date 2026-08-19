@@ -57,10 +57,12 @@ export default function RegisterPage() {
       if (typeof window !== "undefined") {
         sessionStorage.setItem("fc_user_session", "active");
         sessionStorage.setItem("fc_window_session", "active");
+        sessionStorage.setItem("fc_just_logged_in", "true");
+        sessionStorage.setItem("fc_session_start_time", Date.now().toString());
       }
 
       success("Account Created! 🎉", `Welcome to Fashion Cart, ${name.trim()}!`);
-      window.location.href = "/account";
+      window.location.href = "/";
     } catch {
       setError("Network error while creating your account.");
       setLoading(false);

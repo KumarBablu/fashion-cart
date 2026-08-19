@@ -40,14 +40,25 @@ export default function PromotionModal() {
       .then((data) => {
         if (data?.promotions && data.promotions.length > 0) {
           const promo = data.promotions[0] as Promotion;
+
+          // Check if customer just logged in: if so, prioritize showing login promo!
+          const justLoggedIn = typeof window !== "undefined" && sessionStorage.getItem("fc_just_logged_in") === "true";
           
-          // Check frequency cap in localStorage (24-hour dismissal memory)
-          const closedAt = localStorage.getItem(`fc_promo_modal_closed_${promo.id}`);
-          if (closedAt) {
-            const lastClosed = parseInt(closedAt, 10);
-            const hoursPassed = (Date.now() - lastClosed) / (1000 * 60 * 60);
-            if (hoursPassed < 24) {
-              return;
+          if (justLoggedIn) {
+            sessionStorage.removeItem("fc_just_logged_in");
+            // Always show on fresh login!
+          } else {
+            // Check session dismissal memory
+            const closedInSession = sessionStorage.getItem(`fc_promo_modal_closed_${promo.id}`);
+            if (closedInSession) return;
+
+            const closedAt = localStorage.getItem(`fc_promo_modal_closed_${promo.id}`);
+            if (closedAt) {
+              const lastClosed = parseInt(closedAt, 10);
+              const hoursPassed = (Date.now() - lastClosed) / (1000 * 60 * 60);
+              if (hoursPassed < 24) {
+                return;
+              }
             }
           }
 
@@ -77,10 +88,13 @@ export default function PromotionModal() {
 
   if (!isOpen || !activePromo) return null;
 
-  function handleClose() {
+  function handleClose(dontShowToday = false) {
     setIsOpen(false);
     if (activePromo) {
-      localStorage.setItem(`fc_promo_modal_closed_${activePromo.id}`, Date.now().toString());
+      sessionStorage.setItem(`fc_promo_modal_closed_${activePromo.id}`, "true");
+      if (dontShowToday) {
+        localStorage.setItem(`fc_promo_modal_closed_${activePromo.id}`, Date.now().toString());
+      }
     }
   }
 
@@ -104,7 +118,7 @@ export default function PromotionModal() {
       >
         {/* Close Icon Button */}
         <button
-          onClick={handleClose}
+          onClick={() => handleClose(false)}
           className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all cursor-pointer shadow-md"
           aria-label="Close promotion dialog"
         >
@@ -177,14 +191,14 @@ export default function PromotionModal() {
           <div className="pt-2 flex flex-col gap-2">
             <Link
               href={activePromo.ctaUrl || "/shop"}
-              onClick={handleClose}
+              onClick={() => handleClose(false)}
               className="w-full py-3.5 px-6 rounded-full text-xs font-extrabold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-md text-center block"
             >
               {activePromo.ctaText || "Explore Boutique Collection →"}
             </Link>
 
             <button
-              onClick={handleClose}
+              onClick={() => handleClose(true)}
               className="text-[11px] font-semibold text-[#787C87] hover:text-[#141416] transition-colors py-1 cursor-pointer"
             >
               Maybe later · Don&apos;t show again today

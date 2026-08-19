@@ -16,8 +16,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const { success } = useToast();
-  const rawNext = searchParams.get("next");
-  const next = rawNext && rawNext !== "/" ? rawNext : "/account";
+  const next = searchParams.get("next") || "/";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +40,8 @@ function LoginForm() {
       if (typeof window !== "undefined") {
         sessionStorage.setItem("fc_user_session", "active");
         sessionStorage.setItem("fc_window_session", "active");
+        sessionStorage.setItem("fc_just_logged_in", "true");
+        sessionStorage.setItem("fc_session_start_time", Date.now().toString());
         if (data.user?.role === "ADMIN") {
           sessionStorage.setItem("fc_admin_session", "active");
         }

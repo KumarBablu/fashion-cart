@@ -35,7 +35,7 @@ declare global {
 
 export default function GoogleSignInButton({
   text = "continue_with",
-  next = "/account",
+  next = "/",
   label = "Continue with Google",
 }: {
   text?: "signin_with" | "signup_with" | "continue_with" | "signin";
@@ -73,6 +73,8 @@ export default function GoogleSignInButton({
       if (typeof window !== "undefined") {
         sessionStorage.setItem("fc_user_session", "active");
         sessionStorage.setItem("fc_window_session", "active");
+        sessionStorage.setItem("fc_just_logged_in", "true");
+        sessionStorage.setItem("fc_session_start_time", Date.now().toString());
         if (data.user?.role === "ADMIN") {
           sessionStorage.setItem("fc_admin_session", "active");
         }
