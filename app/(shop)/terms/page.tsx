@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export const metadata = {
   title: "Terms & Conditions — Fashion Cart",
-  description: "Review Fashion Cart's terms of service, purchasing agreements, GST billing regulations, intellectual property protections, and Karnataka legal jurisdiction.",
+  description: "Review Fashion Cart's terms of service, purchasing agreements, GST billing regulations, intellectual property protections, and Siwan, Bihar legal jurisdiction.",
 };
 
 export default function TermsPage() {
@@ -74,7 +74,7 @@ export default function TermsPage() {
             6. Governing Law &amp; Jurisdiction
           </h2>
           <p>
-            These Terms shall be governed by and construed in accordance with the laws of the Republic of India. Any disputes arising in connection with orders or website usage shall be subject to the exclusive jurisdiction of the competent courts in Bengaluru, Karnataka.
+            These Terms shall be governed by and construed in accordance with the laws of the Republic of India. Any disputes arising in connection with orders or website usage shall be subject to the exclusive jurisdiction of the competent courts in Siwan, Bihar.
           </p>
         </section>
       </div>
@@ -83,7 +83,7 @@ export default function TermsPage() {
       <div className="p-6 rounded-2xl border border-[#E7DFD5] bg-[#F4EFEA] flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
           <p className="font-bold text-sm text-[#141416]">Have legal or partnership questions?</p>
-          <p className="text-xs text-[#787C87]">Contact our legal compliance team at bablusoni2825@gmail.com</p>
+          <p className="text-xs text-[#787C87]">Contact our legal compliance team at Fashioncart.support@gmail.com</p>
         </div>
         <Link
           href="/contact"

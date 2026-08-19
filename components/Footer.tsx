@@ -72,7 +72,7 @@ export default function Footer() {
                   Fashion Cart
                 </span>
                 <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-[#C59B27] leading-tight mt-0.5">
-                  Luxury Atelier
+                  Premium Outlet
                 </span>
               </div>
             </Link>
@@ -80,17 +80,17 @@ export default function Footer() {
               Your premier destination for contemporary everyday apparel, luxury ethnic kurtis, breathable shirts, and precision-tailored garments. Designed for comfort and confidence.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-white/70">
-              <span>📍 Bengaluru, India</span>
+              <span>📍 Sonar Toli, Siwan, Bihar - 841226</span>
               <span>·</span>
               <WhatsAppConciergeButton
                 className="text-[#C59B27] hover:underline font-bold flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-xs"
-                customMessage="Hello Fashion Cart Atelier! I have an inquiry regarding your boutique and catalog."
+                customMessage="Hello Fashion Cart! I have an inquiry regarding your products and orders."
               >
                 <span>💬</span> WhatsApp Concierge
               </WhatsAppConciergeButton>
               <span>·</span>
-              <a href="mailto:bablusoni2825@gmail.com" className="hover:text-white">
-                ✉️ bablusoni2825@gmail.com
+              <a href="mailto:Fashioncart.support@gmail.com" className="hover:text-white">
+                ✉️ Fashioncart.support@gmail.com
               </a>
             </div>
           </div>

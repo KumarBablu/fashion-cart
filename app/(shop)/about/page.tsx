@@ -2,8 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 
 export const metadata = {
-  title: "About Our Atelier — Fashion Cart Luxury Atelier",
-  description: "Discover the heritage of Fashion Cart — blending timeless Indian artisanal craftsmanship with modern architectural silhouettes, certified pure fabrics, and everyday luxury.",
+  title: "About Fashion Cart — Premium Outlet & Fine Apparel",
+  description: "Discover the heritage of Fashion Cart — blending timeless Indian craftsmanship with modern architectural silhouettes, certified pure fabrics, and premium everyday fashion.",
 };
 
 export default function AboutPage() {
@@ -59,14 +59,14 @@ export default function AboutPage() {
           <div className="lg:col-span-6 relative aspect-[4/3] rounded-3xl overflow-hidden shadow-xl border border-[#E7DFD5]">
             <Image
               src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1000&auto=format&fit=crop&q=80"
-              alt="Fashion Cart Master Tailoring Atelier"
+              alt="Fashion Cart Master Tailoring Outlet"
               fill
               sizes="(min-width: 1024px) 50vw, 100vw"
               className="object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/60 via-transparent to-transparent" />
             <span className="absolute bottom-4 left-4 px-3 py-1 rounded-full text-xs font-bold uppercase bg-white text-[#141416] shadow-sm">
-              ✨ Master Atelier Craftsmanship
+              ✨ Premium Outlet Craftsmanship
             </span>
           </div>
         </div>
@@ -121,18 +121,19 @@ export default function AboutPage() {
         <div className="p-8 sm:p-12 rounded-3xl border border-[#E7DFD5] bg-[#F4EFEA] grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div className="space-y-4">
             <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FBF4E2] text-[#8E6C0C] border border-[#C59B27]/40">
-              📍 Flagship Showroom
+              📍 Registered Office &amp; Outlet Hub
             </span>
             <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">
-              Experience Fashion Cart in Bengaluru
+              Experience Fashion Cart in Siwan, Bihar
             </h2>
             <p className="text-xs sm:text-sm text-[#4B4E56] leading-relaxed">
-              Visit our boutique studio to experience fabric textures in person, get personalized sizing consultations, or pick up custom tailored wedding edits.
+              Visit our flagship boutique outlet to experience fabric textures in person, get personalized sizing consultations, or pick up custom tailored festival edits.
             </p>
             <div className="space-y-1.5 text-xs text-[#141416] font-medium">
-              <p>📍 <strong>Address:</strong> 108 Fashion Avenue, 100ft Road, Indiranagar, Bengaluru - 560038</p>
+              <p>📍 <strong>Registered Address:</strong> Sonar Toli, City: Siwan, State: Bihar, PIN: 841226</p>
               <p>⏰ <strong>Timings:</strong> Monday to Sunday: 10:00 AM – 9:00 PM IST</p>
               <p>📞 <strong>Direct Concierge:</strong> +91 9771039201</p>
+              <p>✉️ <strong>Support Email:</strong> Fashioncart.support@gmail.com</p>
             </div>
             <div className="pt-2 flex flex-wrap gap-3">
               <Link

@@ -85,7 +85,7 @@ export default function PrivacyPolicyPage() {
             Under the Indian Digital Personal Data Protection (DPDP) Act, you have the right to access, rectify, or request permanent deletion of your personal account data.
           </p>
           <p>
-            To request data export or account closure, please email our Data Privacy Officer at <a href="mailto:bablusoni2825@gmail.com" className="text-[#C59B27] font-bold underline">bablusoni2825@gmail.com</a>. Requests are completed within 7 business days.
+            To request data export or account closure, please email our Data Privacy Officer at <a href="mailto:Fashioncart.support@gmail.com" className="text-[#C59B27] font-bold underline">Fashioncart.support@gmail.com</a>. Requests are completed within 7 business days.
           </p>
         </section>
       </div>

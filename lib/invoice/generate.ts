@@ -88,7 +88,7 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
     color: goldAccent,
   });
 
-  page.drawText("LUXURY ATELIER - OFFICIAL GST TAX INVOICE", {
+  page.drawText("PREMIUM OUTLET - OFFICIAL GST TAX INVOICE", {
     x: 52,
     y: headerBoxY + 38,
     size: 8,
@@ -138,16 +138,16 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   // Left Column: Seller Info
   page.drawText("Sold By / Registered Dispatcher:", { x: 36, y: currentY, size: 8.5, font: fontBold, color: textDark });
   page.drawText(business?.businessName || "Fashion Cart", { x: 36, y: currentY - 14, size: 9, font: fontBold, color: goldAccent });
-  page.drawText("Atelier Logistics Hub, 108 Fashion Avenue", { x: 36, y: currentY - 26, size: 7.5, font: fontRegular, color: textMuted });
-  page.drawText("Indiranagar, Bengaluru, Karnataka - 560038", { x: 36, y: currentY - 37, size: 7.5, font: fontRegular, color: textMuted });
-  page.drawText(`GSTIN: ${business?.gstin || "29AABCU9603R1ZM"} - State: Karnataka (29)`, {
+  page.drawText("Sonar Toli, City: Siwan", { x: 36, y: currentY - 26, size: 7.5, font: fontRegular, color: textMuted });
+  page.drawText("State: Bihar, PIN: 841226", { x: 36, y: currentY - 37, size: 7.5, font: fontRegular, color: textMuted });
+  page.drawText(`GSTIN: ${business?.gstin || "10AABCU9603R1ZM"} - State: Bihar (10)`, {
     x: 36,
     y: currentY - 49,
     size: 7.5,
     font: fontBold,
     color: textDark,
   });
-  page.drawText(`Contact: ${business?.email || "fashioncart.support@gmail.com"} - ${business?.phone || "+91 97710 39201"}`, {
+  page.drawText(`Contact: ${business?.email || "Fashioncart.support@gmail.com"} - ${business?.phone || "+91 97710 39201"}`, {
     x: 36,
     y: currentY - 60,
     size: 7.5,

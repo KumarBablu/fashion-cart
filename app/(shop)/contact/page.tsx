@@ -79,8 +79,8 @@ export default function ContactPage() {
                 <span className="text-xl">✉️</span>
                 <div>
                   <p className="font-bold">Email Support Desk</p>
-                  <a href="mailto:bablusoni2825@gmail.com" className="text-dim hover:text-primary transition-colors font-medium">
-                    bablusoni2825@gmail.com
+                  <a href="mailto:Fashioncart.support@gmail.com" className="text-dim hover:text-primary transition-colors font-medium">
+                    Fashioncart.support@gmail.com
                   </a>
                   <p className="text-[10px] text-dim mt-0.5">Average response time: &lt; 2 hours</p>
                 </div>
@@ -103,10 +103,10 @@ export default function ContactPage() {
               <div className="flex items-start gap-3">
                 <span className="text-xl">📍</span>
                 <div>
-                  <p className="font-bold">Flagship Showroom &amp; Logistics Hub</p>
+                  <p className="font-bold">Registered Office &amp; Logistics Hub</p>
                   <p className="text-dim leading-relaxed">
-                    Fashion Cart Luxury Atelier<br />
-                    108 Fashion Avenue, 100 Feet Road, Indiranagar, Bengaluru - 560038
+                    Fashion Cart Premium Outlet<br />
+                    Sonar Toli, City: Siwan, State: Bihar, PIN: 841226
                   </p>
                 </div>
               </div>

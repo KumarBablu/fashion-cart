@@ -109,7 +109,7 @@ export default function BrandIntroSplash() {
           </div>
 
           <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.35em] font-semibold text-[#C59B27]">
-            The Luxury Atelier · Bengaluru
+            The Premium Outlet · Siwan, Bihar
           </p>
         </div>
 

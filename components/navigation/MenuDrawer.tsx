@@ -116,7 +116,7 @@ export default function MenuDrawer({
                   Fashion Cart
                 </h2>
                 <p className="text-[9px] text-[#C59B27] uppercase tracking-[0.22em] font-bold mt-0.5 leading-none">
-                  Luxury Atelier
+                  Premium Outlet
                 </p>
               </div>
             </div>
@@ -334,10 +334,10 @@ export default function MenuDrawer({
               </Link>
             </div>
 
-            {/* Atelier Services & Concierge */}
+            {/* Store Services & Concierge */}
             <div className="p-3.5 rounded-2xl bg-white border border-[#E7DFD5] space-y-2 shadow-2xs">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87] block">
-                Atelier Concierge
+                Store Concierge
               </span>
               <div className="space-y-1 text-xs font-semibold">
                 <Link

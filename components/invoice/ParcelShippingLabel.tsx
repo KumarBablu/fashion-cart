@@ -154,7 +154,7 @@ export default function ParcelShippingLabel({ order, business }: ParcelProps) {
             <p className="font-bold uppercase text-[9px] tracking-wider text-slate-600">IF UNDELIVERED, RETURN TO:</p>
             <p className="font-extrabold text-slate-900 mt-0.5">{business?.businessName || "Fashion Cart"} (Returns Dept)</p>
             <p className="text-slate-600 leading-tight">
-              {business?.businessAddress || "Atelier Logistics Hub, 108 Fashion Avenue, Indiranagar, Bengaluru, Karnataka - 560038"}
+              {business?.businessAddress || "Sonar Toli, City: Siwan, State: Bihar, PIN: 841226"}
             </p>
             <p className="text-slate-700 mt-0.5 font-semibold">Ph: {business?.phone || "+91 97710 39201"}</p>
           </div>

@@ -13,7 +13,7 @@ const APP_URL =
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: "Fashion Cart — The Luxury Atelier & Fine Apparel",
+    default: "Fashion Cart — The Premium Outlet & Fine Apparel",
     template: "%s | Fashion Cart",
   },
   description: "Explore curated artisanal kurtis, pure mulberry silk sarees, bespoke French linen shirts, and everyday luxury essentials.",
@@ -31,20 +31,20 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: APP_URL,
     siteName: "Fashion Cart",
-    title: "Fashion Cart — The Luxury Atelier & Fine Apparel",
+    title: "Fashion Cart — The Premium Outlet & Fine Apparel",
     description: "Explore curated artisanal kurtis, pure mulberry silk sarees, bespoke French linen shirts, and everyday luxury essentials.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Fashion Cart — Luxury Atelier & Fine Apparel",
+        alt: "Fashion Cart — Premium Outlet & Fine Apparel",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Fashion Cart — The Luxury Atelier & Fine Apparel",
+    title: "Fashion Cart — The Premium Outlet & Fine Apparel",
     description: "Explore curated artisanal kurtis, pure mulberry silk sarees, bespoke French linen shirts, and everyday luxury essentials.",
     images: ["/og-image.png"],
   },

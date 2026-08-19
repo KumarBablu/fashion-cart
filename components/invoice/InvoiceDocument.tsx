@@ -160,19 +160,19 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
                   {business?.businessName || "Fashion Cart"}
                 </span>
                 <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-white/90">
-                  Luxury Atelier &amp; Designer Apparel
+                  Premium Outlet &amp; Fine Apparel
                 </span>
               </div>
             </div>
 
             <p className="text-[10px] text-white/70 max-w-sm pt-1 leading-relaxed">
-              Atelier Logistics Hub, 108 Fashion Avenue, Indiranagar, Bengaluru, Karnataka - 560038
+              {business?.businessAddress || "Sonar Toli, City: Siwan, State: Bihar, PIN: 841226"}
             </p>
             <p className="text-[10px] text-white/80 font-medium">
-              GSTIN: <span className="font-mono font-bold text-[#C59B27]">{business?.gstin || "29AABCU9603R1ZM"}</span> · State: Karnataka (29)
+              GSTIN: <span className="font-mono font-bold text-[#C59B27]">{business?.gstin || "10AABCU9603R1ZM"}</span> · State: Bihar (10)
             </p>
             <p className="text-[10px] text-white/70">
-              Support: {business?.email || "fashioncart.support@gmail.com"} · Contact: {business?.phone || "+91 97710 39201"}
+              Support: {business?.email || "Fashioncart.support@gmail.com"} · Contact: {business?.phone || "+91 97710 39201"}
             </p>
           </div>
 

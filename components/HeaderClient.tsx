@@ -123,7 +123,7 @@ export default function HeaderClient({
               Fashion Cart
             </span>
             <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.24em] font-bold text-[#C59B27] leading-none mt-0.5 sm:mt-1">
-              Luxury Atelier
+              Premium Outlet
             </span>
           </div>
         </Link>

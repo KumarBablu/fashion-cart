@@ -67,8 +67,8 @@ export default function ShippingPolicyPage() {
               </thead>
               <tbody className="divide-y divide-[#E7DFD5]">
                 <tr>
-                  <td className="p-3 font-semibold text-[#141416]">Bengaluru &amp; Karnataka</td>
-                  <td className="p-3">1 to 2 Business Days (Express)</td>
+                  <td className="p-3 font-semibold text-[#141416]">Bihar &amp; Neighboring States</td>
+                  <td className="p-3">1 to 2 Business Days (Express Hub)</td>
                   <td className="p-3 text-[#787C87]">BlueDart / Delhivery Express</td>
                 </tr>
                 <tr>

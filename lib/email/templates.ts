@@ -35,14 +35,14 @@ function layout(title: string, content: string) {
     <div class="header">
       <img src="${BASE_URL}/fashion-cart-logo-transparent.svg" alt="Fashion Cart" width="44" height="44" style="margin: 0 auto 6px auto; display: block; border-radius: 8px;" />
       <div class="brand">Fashion Cart</div>
-      <div style="font-size: 10px; color: #C59B27; margin-top: 4px; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">The Luxury Atelier &amp; Fine Apparel</div>
+      <div style="font-size: 10px; color: #C59B27; margin-top: 4px; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">The Premium Outlet &amp; Fine Apparel</div>
     </div>
     <div class="body">
       ${content}
     </div>
     <div class="footer">
       <p style="margin: 0 0 6px 0;">&copy; ${new Date().getFullYear()} Fashion Cart Boutique. All rights reserved.</p>
-      <p style="margin: 0;">Need assistance? Contact us at <a href="mailto:fashioncart.support@gmail.com">fashioncart.support@gmail.com</a></p>
+      <p style="margin: 0;">Need assistance? Contact us at <a href="mailto:Fashioncart.support@gmail.com">Fashioncart.support@gmail.com</a></p>
     </div>
   </div>
 </body>

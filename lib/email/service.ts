@@ -35,12 +35,12 @@ async function getEmailTransport() {
 
   const host = settings?.smtpHost || process.env.SMTP_HOST || "smtp.gmail.com";
   const port = settings?.smtpPort || (process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465);
-  const user = settings?.smtpUser || process.env.SMTP_USER || "fashioncart.support@gmail.com";
+  const user = settings?.smtpUser || process.env.SMTP_USER || "Fashioncart.support@gmail.com";
   const rawPass = settings?.smtpPassword || process.env.SMTP_PASS || "dlpy ilmox lksr fdx";
   const pass = rawPass ? rawPass.replace(/\s+/g, "") : undefined;
   const secure = settings?.smtpSecure ?? (port === 465);
-  const fromEmail = settings?.fromEmail || user || "fashioncart.support@gmail.com";
-  const fromName = settings?.fromName || process.env.FROM_NAME || "Fashion Cart Boutique";
+  const fromEmail = settings?.fromEmail || user || "Fashioncart.support@gmail.com";
+  const fromName = settings?.fromName || process.env.FROM_NAME || "Fashion Cart Premium Outlet";
 
   const isConfigured = !!(host && user && pass);
 

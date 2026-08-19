@@ -46,7 +46,7 @@ export function getCustomerInquiryWhatsAppMessage(params: {
   customMessage?: string | null;
 }): string {
   const lines: string[] = [
-    "Namaste Fashion Cart Atelier! 🛍️",
+    "Namaste Fashion Cart Outlet! 🛍️",
     "",
     "*Customer Information:*",
   ];
@@ -100,7 +100,7 @@ export function getCustomerInquiryWhatsAppMessage(params: {
 // 2. Welcome / Signup WhatsApp
 // -------------------------------------------------------------
 export function getWelcomeWhatsAppMessage(name: string): string {
-  return `Namaste ${name}! 👗 Welcome to Fashion Cart Luxury Atelier.
+  return `Namaste ${name}! 👗 Welcome to Fashion Cart Premium Outlet.
 Your shopping account is now active. Enjoy our mastercrafted kurtis, tailored shirts, and luxury apparel.
 
 🎁 Special Welcome Gift: Use code *FIRST10* at checkout for 10% OFF + Free Express Delivery.
@@ -135,7 +135,7 @@ export function getPaymentVerifiedWhatsAppMessage(order: {
   const name = order.user?.name || "Customer";
   return `Namaste ${name}! 🎉
 Your payment for Fashion Cart Order *#${order.orderNumber}* has been verified!
-Our master atelier is now preparing and packing your pieces for dispatch.
+Our master packaging team is now preparing and packing your pieces for dispatch.
 
 📄 Download Official GST Tax Invoice PDF:
 ${APP_URL}/invoices/${order.id}`;
