@@ -120,13 +120,13 @@ export default function PromotionModal() {
         {/* Visual Promotional Poster Image */}
         {showImage && (
           <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#141416]">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={normalizedImage}
               alt={activePromo.title}
-              fill
-              unoptimized
-              sizes="(max-width: 768px) 100vw, 500px"
-              className="object-cover"
+              referrerPolicy="no-referrer"
+              crossOrigin="anonymous"
+              className="w-full h-full object-cover"
               onError={() => setImageError(true)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#FAF8F5] via-transparent to-black/30" />

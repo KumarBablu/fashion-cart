@@ -170,31 +170,65 @@ export default function PromotionsManager() {
     }
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadingImage(true);
-    const formData = new FormData();
-    formData.append("file", file);
+    const reader = new FileReader();
 
-    try {
-      const res = await fetch("/api/admin/promotions/upload", {
-        method: "POST",
-        body: formData,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setFormImageUrl(data.url);
-        success("Poster Image Uploaded Successfully! 🖼️");
-      } else {
-        error("Failed to upload image file");
+    reader.onload = (event) => {
+      const src = event.target?.result as string;
+      if (!src) {
+        setUploadingImage(false);
+        error("Failed to read image file");
+        return;
       }
-    } catch {
-      error("Network error while uploading image");
-    } finally {
+
+      // Automatically compress image if needed using HTML5 canvas
+      const img = new (window as any).Image();
+      img.src = src;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          setFormImageUrl(compressedDataUrl);
+        } else {
+          setFormImageUrl(src);
+        }
+        setUploadingImage(false);
+        success("Poster Image Ready! 🖼️");
+      };
+
+      img.onerror = () => {
+        setFormImageUrl(src);
+        setUploadingImage(false);
+        success("Poster Image Ready! 🖼️");
+      };
+    };
+
+    reader.onerror = () => {
       setUploadingImage(false);
-    }
+      error("Failed to read image file");
+    };
+
+    reader.readAsDataURL(file);
   }
 
   async function resolveImageUrl(rawUrl: string) {
@@ -228,11 +262,26 @@ export default function PromotionsManager() {
     }
 
     setSaving(true);
+    let finalImageUrl = formImageUrl.trim();
+
+    // Auto-resolve Google Image / Share links before saving
+    if (finalImageUrl.includes("share.google") || finalImageUrl.includes("google.com/imgres")) {
+      try {
+        const res = await fetch(`/api/admin/promotions/resolve-image?url=${encodeURIComponent(finalImageUrl)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.resolvedUrl) {
+            finalImageUrl = data.resolvedUrl;
+          }
+        }
+      } catch {}
+    }
+
     const payload = {
       title: formTitle,
       subtitle: formSubtitle,
       badgeText: formBadgeText,
-      imageUrl: formImageUrl,
+      imageUrl: finalImageUrl,
       ctaText: formCtaText,
       ctaUrl: formCtaUrl,
       discountCode: formDiscountCode,
@@ -467,6 +516,8 @@ export default function PromotionsManager() {
                           <img
                             src={normalizedImg}
                             alt="Promo graphic"
+                            referrerPolicy="no-referrer"
+                            crossOrigin="anonymous"
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -624,7 +675,7 @@ export default function PromotionsManager() {
                     Promotional Poster Image (Supports Google Drive / Share links, URLs &amp; Uploads)
                   </label>
                   <label className="px-3 py-1 rounded-xl bg-white border border-[#E8E3D8] hover:border-[#0C3B2E] text-[11px] font-bold text-[#0C3B2E] cursor-pointer shadow-2xs">
-                    <span>{uploadingImage ? "Uploading…" : "📁 Upload Image File"}</span>
+                    <span>{uploadingImage ? "Processing…" : "📁 Upload Image File"}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -656,15 +707,17 @@ export default function PromotionsManager() {
                         key={formImageUrl}
                         src={normalizeImageUrl(formImageUrl)}
                         alt="Preview"
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          (e.target as HTMLElement).style.display = "none";
+                          (e.target as HTMLElement).style.opacity = "0.4";
                         }}
                       />
                     </div>
                     <div className="text-[10px] text-[#5B7A6F] leading-tight flex-1 min-w-0">
-                      <p className="font-bold text-[#0C3B2E]">✓ Image Connected &amp; Normalized</p>
-                      <p className="truncate opacity-80">{formImageUrl}</p>
+                      <p className="font-bold text-[#0C3B2E]">✓ Image Connected &amp; Ready</p>
+                      <p className="truncate opacity-80">{formImageUrl.startsWith("data:") ? "Direct Image File Uploaded" : formImageUrl}</p>
                     </div>
                   </div>
                 )}
