@@ -50,6 +50,9 @@ async function getEmailTransport() {
       port,
       secure,
       auth: { user, pass },
+      connectionTimeout: 3000,
+      greetingTimeout: 3000,
+      socketTimeout: 5000,
     });
     return { transporter, from: `"${fromName}" <${fromEmail}>`, isConfigured: true };
   }
@@ -70,7 +73,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ success: bool
     const { transporter, from, isConfigured } = await getEmailTransport();
 
     if (isConfigured && transporter) {
-      await transporter.sendMail({
+      const sendPromise = transporter.sendMail({
         from,
         to: opts.to,
         subject: opts.subject,
@@ -79,8 +82,14 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ success: bool
         attachments: opts.attachments,
       });
 
-      // Log successful send
-      await prisma.emailLog.create({
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Email dispatch timed out after 4s")), 4000)
+      );
+
+      await Promise.race([sendPromise, timeoutPromise]);
+
+      // Log successful send asynchronously
+      prisma.emailLog.create({
         data: {
           recipient: opts.to,
           subject: opts.subject,

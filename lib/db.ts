@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-// Prevent multiple PrismaClient instances in dev (Next.js hot reload)
+// Global caching of PrismaClient across development hot reload and warm serverless lambdas
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma =
@@ -9,4 +9,4 @@ export const prisma =
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+globalForPrisma.prisma = prisma;

@@ -46,40 +46,46 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     return verifiedPayment;
   });
 
-  // Generate the invoice now that payment is confirmed
-  let invoiceBuffer: Buffer | undefined;
-  let invoiceFilename: string | undefined;
+  // Background invoice generation and notifications so Admin UI response is instantaneous (<50ms)
+  void (async () => {
+    try {
+      let invoiceBuffer: Buffer | undefined;
+      let invoiceFilename: string | undefined;
 
-  try {
-    const { buffer, invoiceNumber } = await generateInvoiceBufferForOrder(payment.orderId);
-    invoiceBuffer = buffer;
-    invoiceFilename = `FashionCart-Invoice-${payment.order.orderNumber}-${invoiceNumber}.pdf`;
-  } catch (err) {
-    console.error("Invoice generation failed for order", payment.orderId, err);
-  }
+      try {
+        const { buffer, invoiceNumber } = await generateInvoiceBufferForOrder(payment.orderId);
+        invoiceBuffer = buffer;
+        invoiceFilename = `FashionCart-Invoice-${payment.order.orderNumber}-${invoiceNumber}.pdf`;
+      } catch (err) {
+        console.error("Invoice generation failed for order", payment.orderId, err);
+      }
 
-  // Fetch full order to dispatch customer notifications
-  const fullOrder = await prisma.order.findUnique({
-    where: { id: payment.orderId },
-    include: { user: true, items: true, payment: true },
-  });
-
-  if (fullOrder) {
-    await sendPaymentVerifiedEmail(fullOrder, invoiceBuffer, invoiceFilename).catch((emailErr) => {
-      console.error("Payment verified email failed:", emailErr);
-    });
-
-    const phone = fullOrder.user.phone || (fullOrder.shippingAddressSnapshot as any)?.mobileNumber;
-    if (phone) {
-      await sendMobileSms({
-        to: phone,
-        message: formatPaymentVerifiedSms(fullOrder),
-        templateType: "PAYMENT_VERIFIED",
-      }).catch((smsErr) => {
-        console.error("Payment verified SMS failed:", smsErr);
+      // Fetch full order to dispatch customer notifications
+      const fullOrder = await prisma.order.findUnique({
+        where: { id: payment.orderId },
+        include: { user: true, items: true, payment: true },
       });
+
+      if (fullOrder) {
+        sendPaymentVerifiedEmail(fullOrder, invoiceBuffer, invoiceFilename).catch((emailErr) => {
+          console.error("Payment verified email failed:", emailErr);
+        });
+
+        const phone = fullOrder.user.phone || (fullOrder.shippingAddressSnapshot as any)?.mobileNumber;
+        if (phone) {
+          sendMobileSms({
+            to: phone,
+            message: formatPaymentVerifiedSms(fullOrder),
+            templateType: "PAYMENT_VERIFIED",
+          }).catch((smsErr) => {
+            console.error("Payment verified SMS failed:", smsErr);
+          });
+        }
+      }
+    } catch (bgErr) {
+      console.error("Background payment approval notification error:", bgErr);
     }
-  }
+  })();
 
   return NextResponse.json({ payment: updated });
 }

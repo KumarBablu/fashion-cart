@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
   const { name, email, subject, orderNumber, message } = parsed.data;
   const fullSubject = orderNumber ? `[Order #${orderNumber}] ${subject}` : subject;
 
-  // 1. Notify Admin/Store Owner
-  await sendContactInquiryEmail(name, email, fullSubject, message).catch((err) => {
+  // 1. Notify Admin/Store Owner asynchronously
+  sendContactInquiryEmail(name, email, fullSubject, message).catch((err) => {
     console.error("Admin contact inquiry email failed:", err);
   });
 
