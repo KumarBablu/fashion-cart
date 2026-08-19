@@ -171,6 +171,29 @@ export default function HeaderClient({
             </span>
           )}
         </button>
+
+        {/* User Account Portal / Sign In Button */}
+        {isLoggedIn ? (
+          <Link
+            href="/account"
+            className="flex items-center gap-1.5 h-10 px-2.5 sm:px-3.5 rounded-full border border-[#C59B27]/40 bg-[#FBF4E2] hover:bg-[#F4EFEA] text-[#141416] active:scale-95 transition-all shadow-2xs group shrink-0"
+            title="My Account & Orders"
+          >
+            <span className="w-5 h-5 rounded-full bg-[#141416] text-[#C59B27] flex items-center justify-center text-[10px] font-bold font-mono">
+              {userName ? userName.charAt(0).toUpperCase() : "👤"}
+            </span>
+            <span className="hidden sm:inline font-bold text-xs text-[#141416] max-w-[90px] truncate">
+              {userName ? userName.split(" ")[0] : "Account"}
+            </span>
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className="hidden sm:flex items-center gap-1.5 h-10 px-3.5 rounded-full border border-[#E7DFD5] bg-white hover:border-[#C59B27] hover:text-[#C59B27] text-[#141416] font-bold text-xs active:scale-95 transition-all shadow-2xs shrink-0"
+          >
+            <span>Sign In</span>
+          </Link>
+        )}
       </div>
 
       {/* Full-Height Slide-Over Navigation & Category Drawer */}
