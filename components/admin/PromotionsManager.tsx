@@ -517,7 +517,6 @@ export default function PromotionsManager() {
                             src={normalizedImg}
                             alt="Promo graphic"
                             referrerPolicy="no-referrer"
-                            crossOrigin="anonymous"
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -708,7 +707,6 @@ export default function PromotionsManager() {
                         src={normalizeImageUrl(formImageUrl)}
                         alt="Preview"
                         referrerPolicy="no-referrer"
-                        crossOrigin="anonymous"
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.target as HTMLElement).style.opacity = "0.4";

@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
@@ -26,15 +24,19 @@ export default function PromotionModal() {
   const [activePromo, setActivePromo] = useState<Promotion | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const pathname = usePathname();
   const { success } = useToast();
 
   const evaluatePromotion = useCallback(() => {
-    // Record or retrieve current window session start time
-    if (typeof window !== "undefined") {
-      if (!sessionStorage.getItem("fc_session_start_time")) {
-        sessionStorage.setItem("fc_session_start_time", Date.now().toString());
-      }
+    if (typeof window === "undefined") return;
+
+    // Prevent immediate re-opening if dismissed or clicked in this browsing session
+    if (sessionStorage.getItem("fc_promo_modal_dismissed") === "true") {
+      return;
+    }
+
+    // Record session start time for time-delayed delivery
+    if (!sessionStorage.getItem("fc_session_start_time")) {
+      sessionStorage.setItem("fc_session_start_time", Date.now().toString());
     }
 
     fetch("/api/promotions/active?placement=POPUP_MODAL")
@@ -46,9 +48,9 @@ export default function PromotionModal() {
           setActivePromo(promo);
           setImageError(false);
 
-          // Calculate time delay based on admin configured delayMinutes
+          // Calculate delay based on admin configuration
           const delayMinutes = Number(promo.delayMinutes || 0);
-          let delayMs = 1200; // default smooth 1.2s entrance on fresh refresh/login
+          let delayMs = 1200;
 
           if (delayMinutes > 0) {
             const sessionStartStr = sessionStorage.getItem("fc_session_start_time");
@@ -59,7 +61,9 @@ export default function PromotionModal() {
           }
 
           const timer = setTimeout(() => {
-            setIsOpen(true);
+            if (sessionStorage.getItem("fc_promo_modal_dismissed") !== "true") {
+              setIsOpen(true);
+            }
           }, delayMs);
 
           return () => clearTimeout(timer);
@@ -72,6 +76,9 @@ export default function PromotionModal() {
     evaluatePromotion();
 
     const handleRefresh = () => {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("fc_promo_modal_dismissed");
+      }
       evaluatePromotion();
     };
 
@@ -79,11 +86,14 @@ export default function PromotionModal() {
     return () => {
       window.removeEventListener("fc_refresh_promotions", handleRefresh);
     };
-  }, [evaluatePromotion, pathname]);
+  }, [evaluatePromotion]);
 
   if (!isOpen || !activePromo) return null;
 
   function handleClose() {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("fc_promo_modal_dismissed", "true");
+    }
     setIsOpen(false);
   }
 
@@ -102,9 +112,8 @@ export default function PromotionModal() {
       aria-modal="true"
       aria-labelledby="promo-modal-title"
     >
-      <div
-        className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] shadow-2xl animate-in zoom-in-95 duration-300 my-auto"
-      >
+      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] shadow-2xl animate-in zoom-in-95 duration-300 my-auto">
+        
         {/* Close Icon Button */}
         <button
           onClick={handleClose}
@@ -117,7 +126,7 @@ export default function PromotionModal() {
           </svg>
         </button>
 
-        {/* Visual Promotional Poster Image (Clickable Link to Product/Collection) */}
+        {/* Visual Promotional Poster Image (Clickable Link to Promoted Product) */}
         {showImage && (
           <Link
             href={activePromo.ctaUrl || "/shop"}
@@ -130,7 +139,6 @@ export default function PromotionModal() {
               src={normalizedImage}
               alt={activePromo.title}
               referrerPolicy="no-referrer"
-              crossOrigin="anonymous"
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               onError={() => setImageError(true)}
             />
@@ -179,6 +187,7 @@ export default function PromotionModal() {
                 <p className="font-mono text-base font-black text-[#141416] tracking-widest">{activePromo.discountCode}</p>
               </div>
               <button
+                type="button"
                 onClick={() => handleCopy(activePromo.discountCode!)}
                 className="px-4 py-2 rounded-xl text-xs font-extrabold uppercase bg-[#141416] text-[#C59B27] hover:bg-[#25262B] transition-all cursor-pointer shadow-xs"
               >
@@ -198,6 +207,7 @@ export default function PromotionModal() {
             </Link>
 
             <button
+              type="button"
               onClick={handleClose}
               className="text-[11px] font-semibold text-[#787C87] hover:text-[#141416] transition-colors py-1 cursor-pointer"
             >
