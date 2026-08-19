@@ -197,6 +197,29 @@ export default function PromotionsManager() {
     }
   }
 
+  async function resolveImageUrl(rawUrl: string) {
+    const trimmed = rawUrl.trim();
+    if (!trimmed) return;
+
+    const normalized = normalizeImageUrl(trimmed);
+    if (normalized !== trimmed) {
+      setFormImageUrl(normalized);
+      return;
+    }
+
+    if (trimmed.includes("share.google") || trimmed.includes("google.com/imgres") || trimmed.includes("drive.google.com")) {
+      try {
+        const res = await fetch(`/api/admin/promotions/resolve-image?url=${encodeURIComponent(trimmed)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.resolvedUrl && data.resolvedUrl !== trimmed) {
+            setFormImageUrl(data.resolvedUrl);
+          }
+        }
+      } catch {}
+    }
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!formTitle.trim()) {
@@ -616,21 +639,26 @@ export default function PromotionsManager() {
                   type="text"
                   placeholder="Paste any image URL or Google Drive link (e.g. https://... or /uploads/...)"
                   value={formImageUrl}
-                  onChange={(e) => setFormImageUrl(e.target.value)}
+                  onChange={(e) => {
+                    setFormImageUrl(e.target.value);
+                    resolveImageUrl(e.target.value);
+                  }}
+                  onBlur={(e) => resolveImageUrl(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-white text-xs"
                 />
 
                 {/* Live Image Preview Box */}
                 {formImageUrl && (
                   <div className="pt-2 flex items-center gap-3 bg-white p-2.5 rounded-xl border border-[#E8E3D8]">
-                    <div className="relative w-20 h-14 rounded-lg overflow-hidden border border-[#E8E3D8] bg-slate-100 shrink-0 shadow-2xs">
+                    <div className="relative w-24 h-16 rounded-lg overflow-hidden border border-[#E8E3D8] bg-slate-100 shrink-0 shadow-2xs">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
+                        key={formImageUrl}
                         src={normalizeImageUrl(formImageUrl)}
                         alt="Preview"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          (e.target as HTMLElement).style.opacity = "0.3";
+                          (e.target as HTMLElement).style.display = "none";
                         }}
                       />
                     </div>
