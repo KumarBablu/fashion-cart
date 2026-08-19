@@ -5,16 +5,48 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import NavigationProgress from "@/components/providers/NavigationProgress";
 
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
+  "https://fashion-cart-5p7k.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Fashion Cart — The Luxury Atelier & Fine Apparel",
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: "Fashion Cart — The Luxury Atelier & Fine Apparel",
+    template: "%s | Fashion Cart",
+  },
   description: "Explore curated artisanal kurtis, pure mulberry silk sarees, bespoke French linen shirts, and everyday luxury essentials.",
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/fashion-cart-logo.png", type: "image/png" },
       { url: "/fashion-cart-logo-transparent.svg", type: "image/svg+xml" },
-      { url: "/logo.svg", type: "image/svg+xml" },
     ],
-    shortcut: "/fashion-cart-logo-transparent.svg",
-    apple: "/fashion-cart-logo-transparent.svg",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: APP_URL,
+    siteName: "Fashion Cart",
+    title: "Fashion Cart — The Luxury Atelier & Fine Apparel",
+    description: "Explore curated artisanal kurtis, pure mulberry silk sarees, bespoke French linen shirts, and everyday luxury essentials.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Fashion Cart — Luxury Atelier & Fine Apparel",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fashion Cart — The Luxury Atelier & Fine Apparel",
+    description: "Explore curated artisanal kurtis, pure mulberry silk sarees, bespoke French linen shirts, and everyday luxury essentials.",
+    images: ["/og-image.png"],
   },
 };
 
@@ -34,8 +66,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
-        <link rel="icon" href="/fashion-cart-logo-transparent.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/fashion-cart-logo-transparent.svg" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className="min-h-full flex flex-col transition-colors duration-300 overflow-x-hidden w-full max-w-full">
         <ThemeProvider>

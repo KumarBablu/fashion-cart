@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
@@ -7,6 +8,46 @@ import ProductDetailClient from "@/components/products/ProductDetailClient";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await prisma.product.findFirst({
+    where: { slug },
+    include: {
+      images: { orderBy: { sortOrder: "asc" } },
+      category: true,
+    },
+  });
+
+  if (!product) {
+    return {
+      title: "Product Not Found | Fashion Cart",
+    };
+  }
+
+  const primaryImage = product.images[0]?.imageUrl || "/og-image.png";
+
+  return {
+    title: `${product.name} | Fashion Cart Luxury Atelier`,
+    description: product.description || `Discover ${product.name} mastercrafted with certified fabrics at Fashion Cart.`,
+    openGraph: {
+      title: `${product.name} | Fashion Cart Luxury Atelier`,
+      description: product.description || `Discover ${product.name} at Fashion Cart.`,
+      images: [
+        {
+          url: primaryImage,
+          alt: product.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${product.name} | Fashion Cart Luxury Atelier`,
+      description: product.description || `Discover ${product.name} at Fashion Cart.`,
+      images: [primaryImage],
+    },
+  };
+}
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

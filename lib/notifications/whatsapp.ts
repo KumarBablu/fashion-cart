@@ -46,48 +46,48 @@ export function getCustomerInquiryWhatsAppMessage(params: {
   customMessage?: string | null;
 }): string {
   const lines: string[] = [
-    "Namaste Fashion Cart Atelier! 👗✨",
+    "Namaste Fashion Cart Atelier! 🛍️",
     "",
-    "👤 *Customer Information:*",
+    "*Customer Information:*",
   ];
 
   if (params.userName) {
-    lines.push(`• *Name:* ${params.userName}`);
+    lines.push(`- *Name:* ${params.userName}`);
   } else {
-    lines.push("• *Customer:* Storefront Visitor");
+    lines.push("- *Customer:* Storefront Visitor");
   }
 
   if (params.userPhone) {
-    lines.push(`• *Mobile:* ${params.userPhone}`);
+    lines.push(`- *Mobile:* ${params.userPhone}`);
   }
 
   if (params.userEmail) {
-    lines.push(`• *Email:* ${params.userEmail}`);
+    lines.push(`- *Email:* ${params.userEmail}`);
   }
 
   lines.push("");
-  lines.push("📍 *Inquiry Details & Context:*");
+  lines.push("*Inquiry Details & Context:*");
 
   if (params.productName) {
     const priceStr = params.productPrice ? ` (${formatINR(params.productPrice)})` : "";
     const skuStr = params.productSku ? ` [SKU: ${params.productSku}]` : "";
-    lines.push(`• *Garment:* ${params.productName}${priceStr}${skuStr}`);
+    lines.push(`- *Garment:* ${params.productName}${priceStr}${skuStr}`);
   }
 
   if (params.orderNumber) {
-    lines.push(`• *Order Reference:* #${params.orderNumber}`);
+    lines.push(`- *Order Reference:* #${params.orderNumber}`);
   }
 
   if (params.pageTitle) {
-    lines.push(`• *Viewing Page:* ${params.pageTitle}`);
+    lines.push(`- *Viewing Page:* ${params.pageTitle}`);
   }
 
   if (params.pageUrl) {
-    lines.push(`• *Storefront Link:* ${params.pageUrl}`);
+    lines.push(`- *Storefront Link:* ${params.pageUrl}`);
   }
 
   lines.push("");
-  lines.push("💬 *Message / Query:*");
+  lines.push("*Message / Query:*");
   lines.push(
     params.customMessage ||
       "Hi Fashion Cart team, I would like assistance with outfit styling, sizing details, or placing an order."
