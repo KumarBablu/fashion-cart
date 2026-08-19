@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
 
 type Promotion = {
@@ -56,25 +57,34 @@ const THEME_STYLES: Record<string, { bg: string; text: string; badgeBg: string; 
 export default function PromotionBanner() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [dismissed, setDismissed] = useState(false);
+  const pathname = usePathname();
   const { success } = useToast();
 
-  useEffect(() => {
-    // Check if dismissed in this session
-    const isDismissed = sessionStorage.getItem("fc_promo_banner_dismissed");
-    if (isDismissed) {
-      setDismissed(true);
-      return;
-    }
-
+  const loadBanners = useCallback(() => {
     fetch("/api/promotions/active?placement=TOP_BANNER")
       .then((res) => res.json())
       .then((data) => {
         if (data?.promotions && data.promotions.length > 0) {
           setPromotions(data.promotions);
+          setDismissed(false);
         }
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    loadBanners();
+
+    // Listen for custom promotion refresh events (e.g. clicking Fashion Cart logo)
+    const handleRefresh = () => {
+      loadBanners();
+    };
+
+    window.addEventListener("fc_refresh_promotions", handleRefresh);
+    return () => {
+      window.removeEventListener("fc_refresh_promotions", handleRefresh);
+    };
+  }, [loadBanners, pathname]);
 
   if (dismissed || promotions.length === 0) return null;
 
@@ -83,7 +93,6 @@ export default function PromotionBanner() {
 
   function handleDismiss() {
     setDismissed(true);
-    sessionStorage.setItem("fc_promo_banner_dismissed", "true");
   }
 
   function handleCopyCode(e: React.MouseEvent, code: string) {

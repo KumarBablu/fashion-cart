@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
@@ -25,9 +26,10 @@ export default function PromotionModal() {
   const [activePromo, setActivePromo] = useState<Promotion | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const pathname = usePathname();
   const { success } = useToast();
 
-  useEffect(() => {
+  const evaluatePromotion = useCallback(() => {
     // Record or retrieve current window session start time
     if (typeof window !== "undefined") {
       if (!sessionStorage.getItem("fc_session_start_time")) {
@@ -41,14 +43,16 @@ export default function PromotionModal() {
         if (data?.promotions && data.promotions.length > 0) {
           const promo = data.promotions[0] as Promotion;
 
-          // Check if customer just logged in: if so, prioritize showing login promo!
+          // Check if customer just logged in or clicked brand logo to go Home
           const justLoggedIn = typeof window !== "undefined" && sessionStorage.getItem("fc_just_logged_in") === "true";
-          
-          if (justLoggedIn) {
+          const justNavigatedHome = typeof window !== "undefined" && sessionStorage.getItem("fc_just_navigated_home") === "true";
+
+          if (justLoggedIn || justNavigatedHome) {
             sessionStorage.removeItem("fc_just_logged_in");
-            // Always show on fresh login!
+            sessionStorage.removeItem("fc_just_navigated_home");
+            sessionStorage.removeItem(`fc_promo_modal_closed_${promo.id}`);
+            // Always display on fresh login or home logo click!
           } else {
-            // Check session dismissal memory
             const closedInSession = sessionStorage.getItem(`fc_promo_modal_closed_${promo.id}`);
             if (closedInSession) return;
 
@@ -63,6 +67,7 @@ export default function PromotionModal() {
           }
 
           setActivePromo(promo);
+          setImageError(false);
 
           // Calculate time delay based on admin configured delayMinutes
           const delayMinutes = Number(promo.delayMinutes || 0);
@@ -85,6 +90,19 @@ export default function PromotionModal() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    evaluatePromotion();
+
+    const handleRefresh = () => {
+      evaluatePromotion();
+    };
+
+    window.addEventListener("fc_refresh_promotions", handleRefresh);
+    return () => {
+      window.removeEventListener("fc_refresh_promotions", handleRefresh);
+    };
+  }, [evaluatePromotion, pathname]);
 
   if (!isOpen || !activePromo) return null;
 

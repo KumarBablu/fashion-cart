@@ -101,6 +101,13 @@ export default function HeaderClient({
         <Link
           href="/"
           prefetch={true}
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              sessionStorage.removeItem("fc_promo_banner_dismissed");
+              sessionStorage.setItem("fc_just_navigated_home", "true");
+              window.dispatchEvent(new CustomEvent("fc_refresh_promotions"));
+            }
+          }}
           className="flex items-center gap-2 sm:gap-2.5 group shrink-0"
           aria-label="Fashion Cart Homepage"
         >
