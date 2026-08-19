@@ -6,6 +6,7 @@ import Image from "next/image";
 import { formatINR } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
 import CouponDrawer from "@/components/checkout/CouponDrawer";
+import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
 type CartItem = {
   id: string;
@@ -148,7 +149,15 @@ export default function CartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Shop", href: "/shop" },
+          { label: "Shopping Bag" },
+        ]}
+      />
+
       <div className="flex items-center justify-between pb-4 border-b border-[#E8E3D8]">
         <div className="flex items-center gap-3">
           <div className="relative h-9 w-9 overflow-hidden">

@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import ProductCard from "@/components/products/ProductCard";
 import ShopFilters from "@/components/products/ShopFilters";
 import Link from "next/link";
+import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
@@ -129,7 +130,22 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+      {/* Luxury Breadcrumbs Navigation Trail */}
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Shop", href: "/shop" },
+          ...(categorySlug
+            ? [{ label: categories.find((c) => c.slug === categorySlug)?.name ?? "Category" }]
+            : q
+            ? [{ label: `Search: "${q}"` }]
+            : onSale
+            ? [{ label: "Special Offers" }]
+            : [{ label: "All Collections" }]),
+        ]}
+      />
+
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-6 border-b" style={{ borderColor: "var(--fc-border)" }}>
         <div>

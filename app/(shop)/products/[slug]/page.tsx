@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import ProductCard from "@/components/products/ProductCard";
 import ProductDetailClient from "@/components/products/ProductDetailClient";
+import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
@@ -95,37 +96,21 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         </div>
       )}
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-16">
-        {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="text-xs text-[#787C87] flex items-center gap-2">
-          <Link href="/" className="hover:text-[#141416] transition-colors">
-            Home
-          </Link>
-          <span>/</span>
-          <Link href="/shop" className="hover:text-[#141416] transition-colors">
-            Shop
-          </Link>
-          {product.category?.parent && (
-            <>
-              <span>/</span>
-              <Link href={`/shop?category=${product.category.parent.slug}`} className="hover:text-[#141416] transition-colors">
-                {product.category.parent.name}
-              </Link>
-            </>
-          )}
-          {product.category && (
-            <>
-              <span>/</span>
-              <Link href={`/shop?category=${product.category.slug}`} className="hover:text-[#141416] transition-colors">
-                {product.category.name}
-              </Link>
-            </>
-          )}
-          <span>/</span>
-          <span className="text-[#141416] font-semibold truncate max-w-[200px] sm:max-w-none">
-            {product.name}
-          </span>
-        </nav>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-12 sm:space-y-16">
+        {/* Luxury Breadcrumb Navigation Trail */}
+        <Breadcrumbs
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Shop", href: "/shop" },
+            ...(product.category?.parent
+              ? [{ label: product.category.parent.name, href: `/shop?category=${product.category.parent.slug}` }]
+              : []),
+            ...(product.category
+              ? [{ label: product.category.name, href: `/shop?category=${product.category.slug}` }]
+              : []),
+            { label: product.name },
+          ]}
+        />
 
         {/* Client Product Interactive Container */}
         <ProductDetailClient product={serialized as any} />

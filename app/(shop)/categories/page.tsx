@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { formatINR } from "@/lib/format";
+import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
 export const revalidate = 30;
 
@@ -84,9 +85,18 @@ export default async function CategoriesPage() {
     <div className="space-y-16 pb-20">
       
       {/* 🌟 Directory Hero Banner */}
-      <section className="bg-gradient-to-b from-[#F4EFEA] via-[#FAF8F5] to-[#F4EFEA] border-b border-[#E7DFD5] py-12 sm:py-16">
+      <section className="bg-gradient-to-b from-[#F4EFEA] via-[#FAF8F5] to-[#F4EFEA] border-b border-[#E7DFD5] py-8 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-4 text-center sm:text-left">
           
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Shop", href: "/shop" },
+              { label: "Department Hub" },
+            ]}
+            className="mb-3"
+          />
+
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FBF4E2] border border-[#C59B27]/40 text-xs font-bold uppercase tracking-wider text-[#8E6C0C]">
             <span>✦ Department Directory</span>
           </div>
