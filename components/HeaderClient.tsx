@@ -81,30 +81,34 @@ export default function HeaderClient({
   const activeCategories = categories;
 
   return (
-    <div className="flex h-16 items-center justify-between gap-3 w-full max-w-full">
+    <div className="flex h-16 sm:h-18 items-center justify-between gap-2 sm:gap-4 w-full max-w-full">
       
-      {/* 1. Left Group: Menu Trigger + Official Brand Logo */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      {/* 1. Left Group: Luxury Menu Button + Official Brand Logo */}
+      <div className="flex items-center gap-2 sm:gap-3.5 shrink-0">
         
         {/* Menu Drawer Trigger Button */}
         <button
           type="button"
           onClick={() => setMenuDrawerOpen(true)}
-          className="flex items-center gap-2 h-9 px-3 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-[#141416] transition-all cursor-pointer shadow-2xs group shrink-0"
+          className="flex items-center justify-center gap-2 h-10 w-10 sm:w-auto sm:px-3.5 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-[#141416] active:scale-95 transition-all cursor-pointer shadow-2xs group shrink-0"
           aria-label="Open Navigation Menu"
         >
-          <span className="text-[#C59B27] font-bold text-sm leading-none group-hover:scale-110 transition-transform">☰</span>
-          <span className="hidden sm:inline text-xs font-extrabold uppercase tracking-wider">Menu</span>
+          <span className="text-[#C59B27] font-bold text-sm sm:text-base leading-none group-hover:scale-110 transition-transform">
+            ☰
+          </span>
+          <span className="hidden sm:inline text-xs font-extrabold uppercase tracking-wider text-[#141416]">
+            Menu
+          </span>
         </button>
 
-        {/* Official Brand Logo */}
+        {/* Official Brand Logo & Monogram */}
         <Link
           href="/"
           prefetch={true}
-          className="flex items-center gap-2 group shrink-0"
+          className="flex items-center gap-2 sm:gap-2.5 group shrink-0"
           aria-label="Fashion Cart Homepage"
         >
-          <div className="relative h-9 w-9 sm:h-10 sm:w-10 overflow-hidden transition-transform duration-200 group-hover:scale-105">
+          <div className="relative h-9 w-9 sm:h-10 sm:w-10 overflow-hidden transition-transform duration-200 group-hover:scale-105 shrink-0">
             <Image
               src="/fashion-cart-logo-transparent.svg"
               alt="Fashion Cart Luxury Monogram Logo"
@@ -114,24 +118,24 @@ export default function HeaderClient({
               className="object-contain"
             />
           </div>
-          <div className="flex flex-col">
-            <span className="font-display font-black text-base sm:text-xl tracking-tight text-[#141416] leading-none">
+          <div className="flex flex-col justify-center">
+            <span className="font-display font-black text-base sm:text-lg lg:text-xl tracking-tight text-[#141416] leading-none">
               Fashion Cart
             </span>
-            <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.22em] font-semibold text-[#C59B27] leading-tight mt-0.5">
+            <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.24em] font-bold text-[#C59B27] leading-none mt-0.5 sm:mt-1">
               Luxury Atelier
             </span>
           </div>
         </Link>
       </div>
 
-      {/* 2. Right Group: ONLY Search, Wishlist, and Shopping Bag */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      {/* 2. Right Group: Search, Wishlist, and Shopping Bag */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         
         {/* Search Trigger Button */}
         <button
           onClick={() => setSearchModalOpen(true)}
-          className="flex items-center gap-2 h-9 px-3 sm:px-4 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-xs text-[#787C87] hover:text-[#141416] transition-all shadow-2xs cursor-pointer group shrink-0"
+          className="flex items-center justify-center gap-2 h-10 w-10 md:w-auto md:px-4 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-[#787C87] hover:text-[#141416] active:scale-95 transition-all shadow-2xs cursor-pointer group shrink-0"
           aria-label="Search fine apparel"
           title="Quick search (Ctrl+K)"
         >
@@ -139,7 +143,7 @@ export default function HeaderClient({
           <span className="hidden md:inline font-medium text-xs text-[#787C87] group-hover:text-[#141416] transition-colors">
             Search apparel…
           </span>
-          <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded-md bg-white text-[#141416] font-bold border border-[#E7DFD5] shadow-2xs">
+          <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded-md bg-white text-[#141416] font-bold border border-[#E7DFD5] shadow-2xs">
             ⌘K
           </kbd>
         </button>
@@ -147,12 +151,12 @@ export default function HeaderClient({
         {/* Wishlist Button */}
         <Link
           href="/account/wishlist"
-          className="relative w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs flex items-center justify-center group shrink-0"
+          className="relative w-10 h-10 rounded-full border border-[#E7DFD5] bg-white hover:border-[#C59B27] text-[#141416] hover:text-[#C59B27] active:scale-95 transition-all shadow-2xs flex items-center justify-center group shrink-0"
           aria-label="View Wishlist"
         >
           <WishlistIcon />
           {wishlistCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#873E4C] px-1 text-[9px] font-bold text-white shadow-xs">
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#873E4C] text-[9px] font-bold text-white shadow-xs">
               {wishlistCount}
             </span>
           )}
@@ -161,12 +165,12 @@ export default function HeaderClient({
         {/* Shopping Bag Button */}
         <button
           onClick={() => setCartDrawerOpen(true)}
-          className="relative w-9 h-9 rounded-full border border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs flex items-center justify-center cursor-pointer group shrink-0"
+          className="relative w-10 h-10 rounded-full border border-[#E7DFD5] bg-white hover:border-[#C59B27] text-[#141416] hover:text-[#C59B27] active:scale-95 transition-all shadow-2xs flex items-center justify-center cursor-pointer group shrink-0"
           aria-label="Open Shopping Bag"
         >
           <CartIcon />
           {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#C59B27] px-1 text-[9px] font-bold text-white shadow-xs font-mono">
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#C59B27] text-[9px] font-bold text-white shadow-xs font-mono">
               {cartCount}
             </span>
           )}
@@ -199,7 +203,7 @@ export default function HeaderClient({
 
 function SearchIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="11" cy="11" r="8" />
       <path d="m21 21-4.3-4.3" />
     </svg>
