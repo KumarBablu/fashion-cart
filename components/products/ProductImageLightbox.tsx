@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { createPortal } from "react-dom";
+import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
 type LightboxImage = {
   id?: string;
@@ -152,7 +153,6 @@ export default function ProductImageLightbox({
     const diffX = touchStartRef.current.x - touchEnd.clientX;
     const diffY = Math.abs(touchStartRef.current.y - touchEnd.clientY);
 
-    // If horizontal swipe > 50px and vertical movement is low
     if (Math.abs(diffX) > 50 && diffY < 60) {
       if (diffX > 0) {
         handleNext();
@@ -166,6 +166,7 @@ export default function ProductImageLightbox({
   if (!isOpen || !mounted || images.length === 0) return null;
 
   const currentImage = images[currentIndex] || images[0];
+  const normalizedSrc = normalizeImageUrl(currentImage?.imageUrl);
 
   const modalContent = (
     <div
@@ -271,12 +272,13 @@ export default function ProductImageLightbox({
         >
           <div className="relative w-[85vw] max-w-[700px] h-[65vh] sm:h-[72vh]">
             <Image
-              src={currentImage.imageUrl}
+              src={normalizedSrc}
               alt={currentImage.altText || productName}
               fill
               sizes="(max-width: 1024px) 90vw, 800px"
               priority
               quality={95}
+              unoptimized={true}
               className="object-contain drop-shadow-2xl pointer-events-none"
             />
           </div>
@@ -325,10 +327,11 @@ export default function ProductImageLightbox({
                   aria-label={`View image ${idx + 1}`}
                 >
                   <Image
-                    src={img.imageUrl}
+                    src={normalizeImageUrl(img.imageUrl)}
                     alt=""
                     fill
                     sizes="64px"
+                    unoptimized={true}
                     className="object-cover"
                   />
                 </button>

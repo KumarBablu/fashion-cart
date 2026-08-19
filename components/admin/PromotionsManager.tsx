@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/providers/ToastProvider";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
+import ProductImageLightbox from "@/components/products/ProductImageLightbox";
 
 type Promotion = {
   id: string;
@@ -53,6 +54,15 @@ export default function PromotionsManager() {
   const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [previewLightbox, setPreviewLightbox] = useState<{
+    isOpen: boolean;
+    images: { imageUrl: string; altText?: string | null }[];
+    productName: string;
+  }>({
+    isOpen: false,
+    images: [],
+    productName: "",
+  });
 
   // Form State
   const [formTitle, setFormTitle] = useState("");
@@ -521,15 +531,29 @@ export default function PromotionsManager() {
                       </div>
 
                       {normalizedImg && (
-                        <div className="relative h-16 w-16 rounded-xl overflow-hidden shrink-0 border border-white/20 bg-black/40">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPreviewLightbox({
+                              isOpen: true,
+                              images: [{ imageUrl: normalizedImg, altText: promo.title }],
+                              productName: promo.title,
+                            })
+                          }
+                          className="relative h-16 w-16 rounded-xl overflow-hidden shrink-0 border border-white/20 bg-black/40 group cursor-pointer"
+                          title="Click for full-screen High Definition Detail Preview"
+                        >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={normalizedImg}
                             alt="Promo graphic"
                             referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           />
-                        </div>
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-extrabold tracking-wider">
+                            🔍 HD
+                          </div>
+                        </button>
                       )}
                     </div>
 
@@ -710,21 +734,35 @@ export default function PromotionsManager() {
                 {/* Live Image Preview Box */}
                 {formImageUrl && (
                   <div className="pt-2 flex items-center gap-3 bg-white p-2.5 rounded-xl border border-[#E8E3D8]">
-                    <div className="relative w-24 h-16 rounded-lg overflow-hidden border border-[#E8E3D8] bg-slate-100 shrink-0 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPreviewLightbox({
+                          isOpen: true,
+                          images: [{ imageUrl: normalizeImageUrl(formImageUrl), altText: formTitle || "Promotion Preview" }],
+                          productName: formTitle || "Promotional Poster Detail Preview",
+                        })
+                      }
+                      className="relative w-24 h-16 rounded-lg overflow-hidden border border-[#E8E3D8] bg-slate-100 shrink-0 shadow-2xs group cursor-pointer"
+                      title="Click for full-screen High Definition Detail Preview"
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         key={formImageUrl}
                         src={normalizeImageUrl(formImageUrl)}
                         alt="Preview"
                         referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         onError={(e) => {
                           (e.target as HTMLElement).style.opacity = "0.4";
                         }}
                       />
-                    </div>
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-extrabold tracking-wider">
+                        🔍 ZOOM
+                      </div>
+                    </button>
                     <div className="text-[10px] text-[#5B7A6F] leading-tight flex-1 min-w-0">
-                      <p className="font-bold text-[#0C3B2E]">✓ Image Connected &amp; Ready</p>
+                      <p className="font-bold text-[#0C3B2E]">✓ Image Connected &amp; Ready (Click image for HD Zoom)</p>
                       <p className="truncate opacity-80">{formImageUrl.startsWith("data:") ? "Direct Image File Uploaded" : formImageUrl}</p>
                     </div>
                   </div>
@@ -932,6 +970,14 @@ export default function PromotionsManager() {
           </div>
         </div>
       )}
+
+      {/* High-Definition Luxury Image Preview Lightbox */}
+      <ProductImageLightbox
+        isOpen={previewLightbox.isOpen}
+        images={previewLightbox.images}
+        productName={previewLightbox.productName}
+        onClose={() => setPreviewLightbox({ isOpen: false, images: [], productName: "" })}
+      />
     </div>
   );
 }
