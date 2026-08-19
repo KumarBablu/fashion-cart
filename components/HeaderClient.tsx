@@ -1,32 +1,27 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import CartDrawer from "@/components/cart/CartDrawer";
 import MenuDrawer from "@/components/navigation/MenuDrawer";
+import CartDrawer from "@/components/cart/CartDrawer";
 import SearchModal from "@/components/search/SearchModal";
 
-type SubCat = {
+interface HeaderCategory {
   id: string;
   name: string;
   slug: string;
-};
-
-type HeaderCategory = {
-  id: string;
-  name: string;
-  slug: string;
-  children?: SubCat[];
-};
+  imageUrl?: string | null;
+  children?: { id: string; name: string; slug: string }[];
+}
 
 export default function HeaderClient({
   isLoggedIn,
   userName,
-  categories = [],
+  categories,
 }: {
   isLoggedIn: boolean;
-  userName?: string;
+  userName?: string | null;
   categories?: HeaderCategory[];
 }) {
   const [menuDrawerOpen, setMenuDrawerOpen] = useState(false);
@@ -34,6 +29,22 @@ export default function HeaderClient({
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [cartCount, setCartCount] = useState<number>(0);
   const [wishlistCount, setWishlistCount] = useState<number>(0);
+  const [hasActiveSession, setHasActiveSession] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const active = sessionStorage.getItem("fc_user_session") === "active";
+      if (isLoggedIn && active) {
+        setHasActiveSession(true);
+      } else if (isLoggedIn && !active) {
+        // Window was closed and reopened: purge stale session quietly
+        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+        setHasActiveSession(false);
+      } else {
+        setHasActiveSession(false);
+      }
+    }
+  }, [isLoggedIn]);
 
   function refreshCartCount() {
     if (!isLoggedIn) return;
@@ -60,8 +71,10 @@ export default function HeaderClient({
   }
 
   useEffect(() => {
-    refreshCartCount();
-    refreshWishlistCount();
+    if (hasActiveSession) {
+      refreshCartCount();
+      refreshWishlistCount();
+    }
 
     const handleCartUpdate = () => refreshCartCount();
     const handleWishlistUpdate = () => refreshWishlistCount();
@@ -72,7 +85,7 @@ export default function HeaderClient({
       window.removeEventListener("cart-updated", handleCartUpdate);
       window.removeEventListener("wishlist-updated", handleWishlistUpdate);
     };
-  }, [isLoggedIn]);
+  }, [hasActiveSession]);
 
   const activeCategories = categories;
 
@@ -89,9 +102,11 @@ export default function HeaderClient({
           className="flex items-center justify-center gap-2 h-10 w-10 sm:w-auto sm:px-3.5 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-white hover:border-[#C59B27] text-[#141416] active:scale-95 transition-all cursor-pointer shadow-2xs group shrink-0"
           aria-label="Open Navigation Menu"
         >
-          <span className="text-[#C59B27] font-bold text-sm sm:text-base leading-none group-hover:scale-110 transition-transform">
-            ☰
-          </span>
+          <div className="flex flex-col gap-1 w-4 sm:w-4.5 justify-center items-center">
+            <span className="w-full h-0.5 bg-[#141416] rounded-full transition-transform duration-200 group-hover:bg-[#C59B27]" />
+            <span className="w-full h-0.5 bg-[#141416] rounded-full transition-transform duration-200 group-hover:bg-[#C59B27]" />
+            <span className="w-3/4 h-0.5 bg-[#141416] rounded-full self-start transition-all duration-200 group-hover:w-full group-hover:bg-[#C59B27]" />
+          </div>
           <span className="hidden sm:inline text-xs font-extrabold uppercase tracking-wider text-[#141416]">
             Menu
           </span>
@@ -180,7 +195,7 @@ export default function HeaderClient({
         </button>
 
         {/* User Account Portal / Sign In Button */}
-        {isLoggedIn ? (
+        {hasActiveSession ? (
           <Link
             href="/account"
             className="flex items-center gap-1.5 h-10 px-2.5 sm:px-3.5 rounded-full border border-[#C59B27]/40 bg-[#FBF4E2] hover:bg-[#F4EFEA] text-[#141416] active:scale-95 transition-all shadow-2xs group shrink-0"
@@ -207,8 +222,8 @@ export default function HeaderClient({
       <MenuDrawer
         isOpen={menuDrawerOpen}
         onClose={() => setMenuDrawerOpen(false)}
-        isLoggedIn={isLoggedIn}
-        userName={userName}
+        isLoggedIn={hasActiveSession}
+        userName={hasActiveSession ? (userName ?? undefined) : undefined}
         categories={activeCategories}
       />
 
