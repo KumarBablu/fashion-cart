@@ -109,8 +109,10 @@ export default function Footer() {
 
           {/* Account & Policies */}
           <div className="space-y-2.5">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">Customer Care</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">Company &amp; Care</p>
             <ul className="space-y-2 text-xs text-white/80">
+              <li><Link href="/about" className="hover:text-[#C59B27] font-semibold transition-colors">About Fashion Cart</Link></li>
+              <li><Link href="/contact" className="hover:text-[#C59B27] transition-colors">Contact Support Desk</Link></li>
               <li><Link href="/account" className="hover:text-[#C59B27] transition-colors">Track Your Order</Link></li>
               <li><Link href="/account/wishlist" className="hover:text-[#C59B27] transition-colors">My Wishlist</Link></li>
               <li><Link href="/shipping-policy" className="hover:text-[#C59B27] transition-colors">Shipping &amp; Delivery</Link></li>
@@ -143,11 +145,13 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/60">
-          <p>© {new Date().getFullYear()} Fashion Cart Boutique. All rights reserved.</p>
-          <div className="flex items-center gap-4">
+          <p>© {new Date().getFullYear()} Fashion Cart Premium Outlet. All rights reserved.</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/about" className="hover:text-[#C59B27] font-semibold transition-colors">About Us</Link>
+            <Link href="/contact" className="hover:text-[#C59B27] transition-colors">Contact</Link>
             <Link href="/terms" className="hover:text-[#C59B27] transition-colors">Terms of Service</Link>
             <Link href="/privacy-policy" className="hover:text-[#C59B27] transition-colors">Privacy Policy</Link>
-            <Link href="/return-policy" className="hover:text-[#C59B27] transition-colors">Returns & Refunds</Link>
+            <Link href="/return-policy" className="hover:text-[#C59B27] transition-colors">Returns &amp; Refunds</Link>
             <Link href="/shipping-policy" className="hover:text-[#C59B27] transition-colors">Shipping Info</Link>
           </div>
         </div>

@@ -70,7 +70,7 @@ export default function MenuDrawer({
     }
   }
 
-  if (!isOpen || !mounted) return null;
+  if (!mounted) return null;
 
   function getCategoryIcon(name: string) {
     const n = name.toLowerCase();
@@ -84,21 +84,28 @@ export default function MenuDrawer({
 
   const drawerContent = (
     <div
-      className="fixed inset-0 z-[999999] overflow-hidden"
+      className={`fixed inset-0 z-[999999] overflow-hidden transition-all duration-300 ${
+        isOpen ? "visible pointer-events-auto" : "invisible pointer-events-none"
+      }`}
       role="dialog"
       aria-modal="true"
-      aria-label="Atelier Navigation Menu"
+      aria-label="Navigation Menu"
     >
-      {/* Darkened Frosted Backdrop Overlay */}
+      {/* Darkened Frosted Backdrop Overlay with Smooth Fade */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-[#141416]/70 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in cursor-pointer"
+        className={`fixed inset-0 bg-[#141416]/70 backdrop-blur-xs transition-opacity duration-300 ease-out cursor-pointer ${
+          isOpen ? "opacity-100" : "opacity-0"
+        }`}
       />
 
-      {/* Slide-in Full-Height Luxury Drawer Panel from Left */}
+      {/* Slide-in Full-Height Luxury Drawer Panel from Left with Smooth Transform */}
       <div className="fixed inset-y-0 left-0 max-w-full flex">
-        <aside className="w-[88vw] max-w-[370px] sm:max-w-[400px] h-full bg-[#FAF8F5] text-[#141416] shadow-2xl border-r border-[#E7DFD5] flex flex-col justify-between transition-transform duration-300 ease-out animate-in slide-in-from-left">
-          
+        <aside
+          className={`w-[88vw] max-w-[370px] sm:max-w-[400px] h-full bg-[#FAF8F5] text-[#141416] shadow-2xl border-r border-[#E7DFD5] flex flex-col justify-between transform transition-transform duration-300 ease-out ${
+            isOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
           {/* 1. Header Section */}
           <div className="p-4 sm:p-5 border-b border-[#E7DFD5] bg-white flex items-center justify-between shrink-0 shadow-xs">
             <div className="flex items-center gap-2.5 sm:gap-3">
@@ -178,20 +185,22 @@ export default function MenuDrawer({
               <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-[#141416] to-[#25262B] text-white space-y-2.5 shadow-sm">
                 <div>
                   <h4 className="font-display text-sm font-bold text-white">Welcome to Fashion Cart</h4>
-                  <p className="text-[11px] text-slate-300">Sign in to track orders, save wishlists, and unlock member privileges.</p>
+                  <p className="text-[11px] text-white/70 mt-0.5 leading-relaxed">
+                    Sign in to track orders, save wishlists, and unlock member discounts.
+                  </p>
                 </div>
-                <div className="flex items-center gap-2 pt-0.5">
+                <div className="flex items-center gap-2 pt-1">
                   <Link
                     href="/login"
                     onClick={onClose}
-                    className="flex-1 py-2 px-3 rounded-xl bg-[#C59B27] hover:bg-[#D8AE3A] text-black font-bold text-xs text-center uppercase tracking-wider transition-colors shadow-xs"
+                    className="flex-1 text-center py-2 px-3 rounded-full text-xs font-bold bg-[#C59B27] text-white hover:bg-[#B0881E] transition-all shadow-xs"
                   >
                     Sign In
                   </Link>
                   <Link
                     href="/register"
                     onClick={onClose}
-                    className="flex-1 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs text-center uppercase tracking-wider transition-colors border border-white/20"
+                    className="flex-1 text-center py-2 px-3 rounded-full text-xs font-bold border border-white/30 text-white hover:bg-white/10 transition-all"
                   >
                     Register
                   </Link>
@@ -200,86 +209,103 @@ export default function MenuDrawer({
             )}
           </div>
 
-          {/* 3. VIP Promo Gift Ribbon */}
-          <div className="px-4 py-2 border-b border-[#E7DFD5] bg-[#FBF4E2] flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-1.5 text-xs text-[#8E6C0C]">
-              <span>🏷️</span>
-              <span className="text-[11px]">Use code <strong>FIRST10</strong> for 10% OFF</span>
-            </div>
-            <span className="text-[9px] font-mono font-bold uppercase bg-[#C59B27]/15 text-[#8E6C0C] px-1.5 py-0.5 rounded-md">
-              VIP GIFT
-            </span>
-          </div>
-
-          {/* 4. Main Scrollable Categories & Navigation Body */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-4 space-y-3.5">
+          {/* 3. Navigation Links List (Scrollable) */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             
-            {/* Curated Department Cards */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between px-1">
+            {/* Quick Actions Strip */}
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                href="/shop"
+                onClick={onClose}
+                className="p-3 rounded-2xl bg-white border border-[#E7DFD5] hover:border-[#C59B27] flex items-center gap-2.5 transition-all shadow-2xs group"
+              >
+                <span className="text-lg group-hover:scale-110 transition-transform">🛍️</span>
+                <div>
+                  <p className="text-xs font-bold text-[#141416] leading-tight">All Products</p>
+                  <p className="text-[10px] text-[#787C87]">Browse Catalog</p>
+                </div>
+              </Link>
+              <Link
+                href="/shop?sort=newest"
+                onClick={onClose}
+                className="p-3 rounded-2xl bg-[#FBF4E2] border border-[#C59B27]/40 hover:border-[#C59B27] flex items-center gap-2.5 transition-all shadow-2xs group"
+              >
+                <span className="text-lg group-hover:scale-110 transition-transform">✨</span>
+                <div>
+                  <p className="text-xs font-bold text-[#8E6C0C] leading-tight">New Arrivals</p>
+                  <p className="text-[10px] text-[#8E6C0C]/80">Fresh Drops</p>
+                </div>
+              </Link>
+            </div>
+
+            {/* Department Categories (Dynamic from DB) */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between px-1 pb-1">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87]">
-                  Departments &amp; Catalog
+                  Departments
                 </span>
-                <span className="text-[10px] font-mono text-[#C59B27] font-bold">
-                  {categories.length} Collections
-                </span>
+                <Link
+                  href="/categories"
+                  onClick={onClose}
+                  className="text-[10px] font-bold text-[#C59B27] hover:underline"
+                >
+                  View All Hub →
+                </Link>
               </div>
 
               {categories.map((cat) => {
-                const hasChildren = (cat.children ?? []).length > 0;
+                const hasSubs = cat.children && cat.children.length > 0;
                 const isExpanded = expandedCat === cat.id;
-                const icon = getCategoryIcon(cat.name);
 
                 return (
                   <div
                     key={cat.id}
-                    className="rounded-2xl bg-white border border-[#E7DFD5] overflow-hidden shadow-2xs transition-all duration-200"
+                    className="rounded-2xl border border-[#E7DFD5] bg-white overflow-hidden shadow-2xs transition-all"
                   >
-                    {/* Department Header Row */}
-                    <div className="flex items-center justify-between p-3 hover:bg-[#FAF8F5] transition-colors">
+                    <div className="flex items-center justify-between p-3">
                       <Link
                         href={`/shop?category=${cat.slug}`}
                         onClick={onClose}
-                        className="flex items-center gap-2 text-xs font-bold text-[#141416] hover:text-[#C59B27] transition-colors"
+                        className="flex items-center gap-2.5 flex-1 text-xs font-bold text-[#141416] hover:text-[#C59B27] transition-colors"
                       >
-                        <span className="text-sm">{icon}</span>
+                        <span className="text-base">{getCategoryIcon(cat.name)}</span>
                         <span>{cat.name}</span>
                       </Link>
 
-                      {hasChildren ? (
+                      {hasSubs && (
                         <button
-                          type="button"
                           onClick={() => setExpandedCat(isExpanded ? null : cat.id)}
-                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#FAF8F5] hover:bg-[#E7DFD5] border border-[#E7DFD5] text-[10px] font-bold text-[#787C87] hover:text-[#141416] transition-all cursor-pointer"
+                          className="p-1 text-[#787C87] hover:text-[#141416] transition-colors cursor-pointer rounded-lg hover:bg-[#FAF8F5]"
+                          aria-label={`Expand ${cat.name} subcategories`}
                         >
-                          <span>{cat.children!.length}</span>
-                          <span className="text-[9px] font-mono">{isExpanded ? "▲" : "▼"}</span>
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className={`transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
                         </button>
-                      ) : (
-                        <Link
-                          href={`/shop?category=${cat.slug}`}
-                          onClick={onClose}
-                          className="text-xs font-bold text-[#C59B27] px-1"
-                        >
-                          →
-                        </Link>
                       )}
                     </div>
 
-                    {/* Subcategories Pill List */}
-                    {hasChildren && isExpanded && (
-                      <div className="px-2.5 pb-2.5 pt-1 border-t border-[#E7DFD5]/60 bg-[#FAF8F5]/60 space-y-1 animate-in fade-in duration-150">
+                    {/* Subcategories Accordion */}
+                    {hasSubs && isExpanded && (
+                      <div className="bg-[#FAF8F5] border-t border-[#E7DFD5] p-2.5 pl-9 space-y-1 text-xs">
                         {cat.children!.map((sub) => (
                           <Link
                             key={sub.id}
                             href={`/shop?category=${sub.slug}`}
                             onClick={onClose}
-                            className="flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-[#4B4E56] hover:text-[#C59B27] hover:bg-white transition-all group"
+                            className="block py-1 text-[#4B4E56] hover:text-[#C59B27] font-semibold transition-colors"
                           >
-                            <span className="truncate">• {sub.name}</span>
-                            <span className="text-[10px] text-[#C59B27] opacity-0 group-hover:opacity-100 transition-opacity">
-                              →
-                            </span>
+                            • {sub.name}
                           </Link>
                         ))}
                       </div>
@@ -289,48 +315,42 @@ export default function MenuDrawer({
               })}
             </div>
 
-            {/* Featured Highlights & Quick Edits */}
-            <div className="space-y-2 pt-1">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87] px-1 block">
-                Highlights &amp; Offers
+            {/* Essential Boutique Pages */}
+            <div className="space-y-1 pt-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#787C87] px-1 block pb-1">
+                Explore &amp; Company
               </span>
-
-              <div className="grid grid-cols-2 gap-2">
-                <Link
-                  href="/shop?sort=newest"
-                  onClick={onClose}
-                  className="p-3 rounded-2xl bg-white border border-[#E7DFD5] hover:border-[#C59B27] text-xs font-bold text-[#141416] flex items-center justify-between shadow-2xs group transition-all"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#C59B27] pulse-dot" />
-                    <span>New Drops</span>
-                  </span>
-                  <span className="text-[#C59B27] group-hover:translate-x-0.5 transition-transform">→</span>
-                </Link>
-
-                <Link
-                  href="/shop?onSale=true"
-                  onClick={onClose}
-                  className="p-3 rounded-2xl bg-white border border-[#873E4C]/30 hover:border-[#873E4C] text-xs font-bold text-[#873E4C] flex items-center justify-between shadow-2xs group transition-all"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span>🏷️</span>
-                    <span>Super Deals</span>
-                  </span>
-                  <span className="text-[#873E4C] group-hover:translate-x-0.5 transition-transform">→</span>
-                </Link>
-              </div>
-
               <Link
-                href="/categories"
+                href="/about"
                 onClick={onClose}
-                className="w-full p-3 rounded-2xl bg-gradient-to-r from-[#141416] to-[#25262B] text-white text-xs font-bold flex items-center justify-between shadow-xs mt-1.5"
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-white border border-[#E7DFD5] text-xs font-bold text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs"
               >
-                <div className="flex items-center gap-2">
-                  <span>🗂️</span>
-                  <span>Explore Complete Category Hub</span>
-                </div>
-                <span className="text-[#C59B27]">→</span>
+                <span>🏛️</span>
+                <span>About Fashion Cart</span>
+              </Link>
+              <Link
+                href="/contact"
+                onClick={onClose}
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-white border border-[#E7DFD5] text-xs font-bold text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs"
+              >
+                <span>📞</span>
+                <span>Contact Desk &amp; Concierge</span>
+              </Link>
+              <Link
+                href="/shipping-policy"
+                onClick={onClose}
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-white border border-[#E7DFD5] text-xs font-bold text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs"
+              >
+                <span>🚚</span>
+                <span>Shipping &amp; Delivery Policies</span>
+              </Link>
+              <Link
+                href="/return-policy"
+                onClick={onClose}
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-white border border-[#E7DFD5] text-xs font-bold text-[#141416] hover:border-[#C59B27] hover:text-[#C59B27] transition-all shadow-2xs"
+              >
+                <span>🔄</span>
+                <span>7-Day Return &amp; Exchange Guarantee</span>
               </Link>
             </div>
 
@@ -362,7 +382,7 @@ export default function MenuDrawer({
 
           {/* 5. Bottom Footer */}
           <div className="p-3.5 border-t border-[#E7DFD5] bg-white flex items-center justify-between text-xs text-[#787C87] shrink-0">
-            <span className="text-[11px]">Fashion Cart Atelier · 2026</span>
+            <span className="text-[11px]">Fashion Cart Premium Outlet · 2026</span>
             <Link
               href="/contact"
               onClick={onClose}

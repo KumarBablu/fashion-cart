@@ -142,7 +142,7 @@ export default function CartDrawer({
                   </span>
                 </div>
                 <p className="text-[10px] text-[#C59B27] uppercase tracking-[0.2em] font-bold mt-0.5">
-                  Fashion Cart Luxury Atelier
+                  Fashion Cart Premium Outlet
                 </p>
               </div>
             </div>
@@ -187,7 +187,7 @@ export default function CartDrawer({
             {loading && items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-xs text-[#787C87] space-y-3">
                 <span className="w-8 h-8 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />
-                <span className="font-medium">Loading your luxury apparel selection…</span>
+                <span className="font-medium">Loading your shopping bag…</span>
               </div>
             ) : items.length === 0 ? (
               <div className="text-center py-20 px-4 space-y-5">

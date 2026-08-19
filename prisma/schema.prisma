@@ -529,3 +529,45 @@ model Counter {
   id    String @id
   value Int    @default(0)
 }
+
+// ============================================================
+// PROMOTIONS & FESTIVE OFFERS ENGINE
+// ============================================================
+
+enum PromotionPlacement {
+  TOP_BANNER
+  POPUP_MODAL
+  HERO_SPOTLIGHT
+  FLOAT_SNACKBAR
+}
+
+enum PromotionTheme {
+  FESTIVE_GOLD
+  ROYAL_RUBY
+  EMERALD_EID
+  SUNSET_ORANGE
+  MODERN_DARK
+}
+
+model Promotion {
+  id           String             @id @default(cuid())
+  title        String
+  subtitle     String?
+  badgeText    String?
+  imageUrl     String?
+  ctaText      String?            @default("Shop Now")
+  ctaUrl       String?            @default("/shop")
+  discountCode String?
+  placement    PromotionPlacement @default(TOP_BANNER)
+  theme        PromotionTheme     @default(FESTIVE_GOLD)
+  isActive     Boolean            @default(true)
+  showOnLogin  Boolean            @default(false)
+  showOnGuest  Boolean            @default(true)
+  sortOrder    Int                @default(0)
+  startDate    DateTime?
+  endDate      DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([placement, isActive])
+}
