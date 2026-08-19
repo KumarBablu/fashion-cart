@@ -59,6 +59,8 @@ export default function RegisterPage() {
         sessionStorage.setItem("fc_window_session", "active");
         sessionStorage.setItem("fc_just_logged_in", "true");
         sessionStorage.setItem("fc_session_start_time", Date.now().toString());
+        sessionStorage.removeItem("fc_promo_modal_closed_in_view");
+        sessionStorage.removeItem("fc_promo_banner_dismissed");
       }
 
       success("Account Created! 🎉", `Welcome to Fashion Cart, ${name.trim()}!`);

@@ -119,6 +119,7 @@ export default function HeaderClient({
           onClick={() => {
             if (typeof window !== "undefined") {
               sessionStorage.removeItem("fc_promo_banner_dismissed");
+              sessionStorage.removeItem("fc_promo_modal_closed_in_view");
               sessionStorage.setItem("fc_just_navigated_home", "true");
               window.dispatchEvent(new CustomEvent("fc_refresh_promotions"));
             }

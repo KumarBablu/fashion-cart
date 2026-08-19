@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/providers/ToastProvider";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
@@ -25,18 +25,13 @@ export default function PromotionModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const { success } = useToast();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const evaluatePromotion = useCallback(() => {
+  const evaluatePromotion = useCallback((forceShow = false) => {
     if (typeof window === "undefined") return;
 
-    // Prevent immediate re-opening if dismissed or clicked in this browsing session
-    if (sessionStorage.getItem("fc_promo_modal_dismissed") === "true") {
+    if (!forceShow && sessionStorage.getItem("fc_promo_modal_closed_in_view") === "true") {
       return;
-    }
-
-    // Record session start time for time-delayed delivery
-    if (!sessionStorage.getItem("fc_session_start_time")) {
-      sessionStorage.setItem("fc_session_start_time", Date.now().toString());
     }
 
     fetch("/api/promotions/active?placement=POPUP_MODAL")
@@ -48,43 +43,48 @@ export default function PromotionModal() {
           setActivePromo(promo);
           setImageError(false);
 
-          // Calculate delay based on admin configuration
-          const delayMinutes = Number(promo.delayMinutes || 0);
-          let delayMs = 1200;
+          if (timerRef.current) {
+            clearTimeout(timerRef.current);
+          }
 
-          if (delayMinutes > 0) {
+          const delayMinutes = Number(promo.delayMinutes || 0);
+          let delayMs = 600;
+
+          if (delayMinutes > 0 && !forceShow) {
             const sessionStartStr = sessionStorage.getItem("fc_session_start_time");
             const sessionStart = sessionStartStr ? parseInt(sessionStartStr, 10) : Date.now();
             const elapsedMs = Date.now() - sessionStart;
             const targetDelayMs = delayMinutes * 60 * 1000;
-            delayMs = Math.max(1000, targetDelayMs - elapsedMs);
+            delayMs = Math.max(600, targetDelayMs - elapsedMs);
           }
 
-          const timer = setTimeout(() => {
-            if (sessionStorage.getItem("fc_promo_modal_dismissed") !== "true") {
-              setIsOpen(true);
-            }
+          timerRef.current = setTimeout(() => {
+            setIsOpen(true);
           }, delayMs);
-
-          return () => clearTimeout(timer);
         }
       })
       .catch(() => {});
   }, []);
 
   useEffect(() => {
-    evaluatePromotion();
+    // Clear closed-in-view on initial page mount (fresh visit/manual reload)
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("fc_promo_modal_closed_in_view");
+    }
+
+    evaluatePromotion(true);
 
     const handleRefresh = () => {
       if (typeof window !== "undefined") {
-        sessionStorage.removeItem("fc_promo_modal_dismissed");
+        sessionStorage.removeItem("fc_promo_modal_closed_in_view");
       }
-      evaluatePromotion();
+      evaluatePromotion(true);
     };
 
     window.addEventListener("fc_refresh_promotions", handleRefresh);
     return () => {
       window.removeEventListener("fc_refresh_promotions", handleRefresh);
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [evaluatePromotion]);
 
@@ -92,7 +92,7 @@ export default function PromotionModal() {
 
   function handleClose() {
     if (typeof window !== "undefined") {
-      sessionStorage.setItem("fc_promo_modal_dismissed", "true");
+      sessionStorage.setItem("fc_promo_modal_closed_in_view", "true");
     }
     setIsOpen(false);
   }
