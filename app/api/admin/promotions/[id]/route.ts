@@ -39,6 +39,7 @@ export async function PUT(
         ...(body.isActive !== undefined && { isActive: Boolean(body.isActive) }),
         ...(body.showOnLogin !== undefined && { showOnLogin: Boolean(body.showOnLogin) }),
         ...(body.showOnGuest !== undefined && { showOnGuest: Boolean(body.showOnGuest) }),
+        ...(body.delayMinutes !== undefined && { delayMinutes: Number(body.delayMinutes || 0) }),
         ...(body.sortOrder !== undefined && { sortOrder: Number(body.sortOrder) }),
         ...(body.startDate !== undefined && { startDate: body.startDate ? new Date(body.startDate) : null }),
         ...(body.endDate !== undefined && { endDate: body.endDate ? new Date(body.endDate) : null }),

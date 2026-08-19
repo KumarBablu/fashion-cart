@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useToast } from "@/components/providers/ToastProvider";
+import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
 type Promotion = {
   id: string;
@@ -16,36 +17,58 @@ type Promotion = {
   ctaUrl?: string | null;
   showOnLogin?: boolean;
   showOnGuest?: boolean;
+  delayMinutes?: number;
   theme: "FESTIVE_GOLD" | "ROYAL_RUBY" | "EMERALD_EID" | "SUNSET_ORANGE" | "MODERN_DARK";
 };
 
 export default function PromotionModal() {
   const [activePromo, setActivePromo] = useState<Promotion | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const { success } = useToast();
 
   useEffect(() => {
+    // Record or retrieve current window session start time
+    if (typeof window !== "undefined") {
+      if (!sessionStorage.getItem("fc_session_start_time")) {
+        sessionStorage.setItem("fc_session_start_time", Date.now().toString());
+      }
+    }
+
     fetch("/api/promotions/active?placement=POPUP_MODAL")
       .then((res) => res.json())
       .then((data) => {
         if (data?.promotions && data.promotions.length > 0) {
           const promo = data.promotions[0] as Promotion;
           
-          // Check frequency cap in localStorage
+          // Check frequency cap in localStorage (24-hour dismissal memory)
           const closedAt = localStorage.getItem(`fc_promo_modal_closed_${promo.id}`);
           if (closedAt) {
             const lastClosed = parseInt(closedAt, 10);
             const hoursPassed = (Date.now() - lastClosed) / (1000 * 60 * 60);
             if (hoursPassed < 24) {
-              return; // Do not show again within 24 hours
+              return;
             }
           }
 
           setActivePromo(promo);
-          // Snappy gentle entrance after 1.2s of browsing
+
+          // Calculate time delay based on admin configured delayMinutes
+          const delayMinutes = Number(promo.delayMinutes || 0);
+          let delayMs = 1200; // default smooth 1.2s entrance
+
+          if (delayMinutes > 0) {
+            const sessionStartStr = sessionStorage.getItem("fc_session_start_time");
+            const sessionStart = sessionStartStr ? parseInt(sessionStartStr, 10) : Date.now();
+            const elapsedMs = Date.now() - sessionStart;
+            const targetDelayMs = delayMinutes * 60 * 1000;
+            delayMs = Math.max(1000, targetDelayMs - elapsedMs);
+          }
+
           const timer = setTimeout(() => {
             setIsOpen(true);
-          }, 1200);
+          }, delayMs);
+
           return () => clearTimeout(timer);
         }
       })
@@ -66,6 +89,9 @@ export default function PromotionModal() {
     success(`Promo code "${code}" copied to clipboard!`);
   }
 
+  const normalizedImage = normalizeImageUrl(activePromo.imageUrl);
+  const showImage = Boolean(normalizedImage && !imageError);
+
   return (
     <div
       className="fixed inset-0 z-[99999] flex items-center justify-center p-4 overflow-y-auto bg-black/70 backdrop-blur-xs animate-in fade-in duration-300"
@@ -74,7 +100,7 @@ export default function PromotionModal() {
       aria-labelledby="promo-modal-title"
     >
       <div
-        className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] shadow-2xl animate-in zoom-in-95 duration-300"
+        className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] shadow-2xl animate-in zoom-in-95 duration-300 my-auto"
       >
         {/* Close Icon Button */}
         <button
@@ -88,15 +114,17 @@ export default function PromotionModal() {
           </svg>
         </button>
 
-        {/* Optional Visual Promotional Poster Image */}
-        {activePromo.imageUrl && (
+        {/* Visual Promotional Poster Image */}
+        {showImage && (
           <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#141416]">
             <Image
-              src={activePromo.imageUrl}
+              src={normalizedImage}
               alt={activePromo.title}
               fill
+              unoptimized
               sizes="(max-width: 768px) 100vw, 500px"
               className="object-cover"
+              onError={() => setImageError(true)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#FAF8F5] via-transparent to-black/30" />
             {activePromo.badgeText && (
@@ -109,7 +137,7 @@ export default function PromotionModal() {
 
         {/* Content Body */}
         <div className="p-6 sm:p-8 space-y-4 text-center">
-          {!activePromo.imageUrl && activePromo.badgeText && (
+          {(!showImage || !activePromo.imageUrl) && activePromo.badgeText && (
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#FBF4E2] border border-[#C59B27]/40 text-xs font-bold uppercase tracking-widest text-[#8E6C0C]">
               <span>✦ {activePromo.badgeText}</span>
             </div>

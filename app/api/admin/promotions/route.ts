@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
         isActive: typeof isActive === "boolean" ? isActive : true,
         showOnLogin: typeof showOnLogin === "boolean" ? showOnLogin : false,
         showOnGuest: typeof showOnGuest === "boolean" ? showOnGuest : true,
+        delayMinutes: typeof body.delayMinutes === "number" ? body.delayMinutes : Number(body.delayMinutes || 0),
         sortOrder: typeof sortOrder === "number" ? sortOrder : 0,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/providers/ToastProvider";
+import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
 type Promotion = {
   id: string;
@@ -18,6 +19,7 @@ type Promotion = {
   isActive: boolean;
   showOnLogin: boolean;
   showOnGuest: boolean;
+  delayMinutes: number;
   sortOrder: number;
   startDate?: string | null;
   endDate?: string | null;
@@ -50,6 +52,7 @@ export default function PromotionsManager() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Form State
   const [formTitle, setFormTitle] = useState("");
@@ -64,6 +67,7 @@ export default function PromotionsManager() {
   const [formIsActive, setFormIsActive] = useState(true);
   const [formShowOnLogin, setFormShowOnLogin] = useState(false);
   const [formShowOnGuest, setFormShowOnGuest] = useState(true);
+  const [formDelayMinutes, setFormDelayMinutes] = useState(0);
   const [formSortOrder, setFormSortOrder] = useState(0);
 
   const { success, error } = useToast();
@@ -103,6 +107,7 @@ export default function PromotionsManager() {
     setFormIsActive(true);
     setFormShowOnLogin(false);
     setFormShowOnGuest(true);
+    setFormDelayMinutes(0);
     setFormSortOrder(0);
     setIsModalOpen(true);
   }
@@ -121,6 +126,7 @@ export default function PromotionsManager() {
     setFormIsActive(promo.isActive);
     setFormShowOnLogin(promo.showOnLogin);
     setFormShowOnGuest(promo.showOnGuest);
+    setFormDelayMinutes(promo.delayMinutes || 0);
     setFormSortOrder(promo.sortOrder);
     setIsModalOpen(true);
   }
@@ -164,6 +170,33 @@ export default function PromotionsManager() {
     }
   }
 
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/admin/promotions/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFormImageUrl(data.url);
+        success("Poster Image Uploaded Successfully! 🖼️");
+      } else {
+        error("Failed to upload image file");
+      }
+    } catch {
+      error("Network error while uploading image");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!formTitle.trim()) {
@@ -185,6 +218,7 @@ export default function PromotionsManager() {
       isActive: formIsActive,
       showOnLogin: formShowOnLogin,
       showOnGuest: formShowOnGuest,
+      delayMinutes: formDelayMinutes,
       sortOrder: formSortOrder,
     };
 
@@ -251,7 +285,7 @@ export default function PromotionsManager() {
             Promotions &amp; Announcement Banners
           </h1>
           <p className="text-xs text-[#5B7A6F] mt-0.5">
-            Manage top announcement bars, festival image popups on login, discount flash banners, and customer reach.
+            Manage top announcement bars, time-delayed login poster popups, discount flash banners, and customer reach.
           </p>
         </div>
 
@@ -318,7 +352,7 @@ export default function PromotionsManager() {
           <div className="space-y-1">
             <h3 className="font-display text-base font-bold text-[#0C3B2E]">No promotions found</h3>
             <p className="text-xs text-[#5B7A6F] max-w-sm mx-auto">
-              Create your first festive announcement, discount code banner, or login image popup.
+              Create your first festive announcement, discount code banner, or time-delayed login poster popup.
             </p>
           </div>
           <button
@@ -333,6 +367,7 @@ export default function PromotionsManager() {
           {filtered.map((promo) => {
             const theme = THEME_LABELS[promo.theme] || THEME_LABELS.FESTIVE_GOLD;
             const placement = PLACEMENT_LABELS[promo.placement] || { label: promo.placement, icon: "📢" };
+            const normalizedImg = normalizeImageUrl(promo.imageUrl);
 
             return (
               <div
@@ -353,6 +388,12 @@ export default function PromotionsManager() {
                       {promo.showOnLogin && (
                         <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
                           👤 On Login
+                        </span>
+                      )}
+
+                      {promo.placement === "POPUP_MODAL" && (
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
+                          ⏱️ {promo.delayMinutes > 0 ? `${promo.delayMinutes} min delay` : "Immediate"}
                         </span>
                       )}
                     </div>
@@ -397,14 +438,13 @@ export default function PromotionsManager() {
                         )}
                       </div>
 
-                      {promo.imageUrl && (
+                      {normalizedImg && (
                         <div className="relative h-16 w-16 rounded-xl overflow-hidden shrink-0 border border-white/20 bg-black/40">
-                          <Image
-                            src={promo.imageUrl}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={normalizedImg}
                             alt="Promo graphic"
-                            fill
-                            sizes="64px"
-                            className="object-cover"
+                            className="w-full h-full object-cover"
                           />
                         </div>
                       )}
@@ -470,7 +510,7 @@ export default function PromotionsManager() {
                   {editingPromo ? "Edit Promotion & Banner" : "Create New Promotion"}
                 </h3>
                 <p className="text-xs text-[#5B7A6F]">
-                  Configure banner copy, festive image poster, discount code, and display placements.
+                  Configure banner copy, time-delayed login poster, discount code, and display placements.
                 </p>
               </div>
               <button
@@ -502,7 +542,7 @@ export default function PromotionsManager() {
                   <label className="font-bold text-[#0C3B2E] block">Badge Text (Short)</label>
                   <input
                     type="text"
-                    placeholder="e.g. DIWALI SPECIAL"
+                    placeholder="e.g. FESTIVE OFFER"
                     value={formBadgeText}
                     onChange={(e) => setFormBadgeText(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5] uppercase"
@@ -554,19 +594,77 @@ export default function PromotionsManager() {
                 </div>
               </div>
 
-              {/* Image URL (Optional Graphic/Poster) */}
-              <div className="space-y-1">
-                <label className="font-bold text-[#0C3B2E] block">
-                  Promotional Poster Image URL (Recommended for Popup Modals)
-                </label>
+              {/* Image URL & Direct File Upload */}
+              <div className="space-y-2 p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E8E3D8]">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-[#0C3B2E] block text-xs">
+                    Promotional Poster Image (Supports Google Drive / Share links, URLs &amp; Uploads)
+                  </label>
+                  <label className="px-3 py-1 rounded-xl bg-white border border-[#E8E3D8] hover:border-[#0C3B2E] text-[11px] font-bold text-[#0C3B2E] cursor-pointer shadow-2xs">
+                    <span>{uploadingImage ? "Uploading…" : "📁 Upload Image File"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                    />
+                  </label>
+                </div>
+
                 <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/photo-... or /uploads/..."
+                  type="text"
+                  placeholder="Paste any image URL or Google Drive link (e.g. https://... or /uploads/...)"
                   value={formImageUrl}
                   onChange={(e) => setFormImageUrl(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5]"
+                  className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-white text-xs"
                 />
+
+                {/* Live Image Preview Box */}
+                {formImageUrl && (
+                  <div className="pt-2 flex items-center gap-3 bg-white p-2.5 rounded-xl border border-[#E8E3D8]">
+                    <div className="relative w-20 h-14 rounded-lg overflow-hidden border border-[#E8E3D8] bg-slate-100 shrink-0 shadow-2xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={normalizeImageUrl(formImageUrl)}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.opacity = "0.3";
+                        }}
+                      />
+                    </div>
+                    <div className="text-[10px] text-[#5B7A6F] leading-tight flex-1 min-w-0">
+                      <p className="font-bold text-[#0C3B2E]">✓ Image Connected &amp; Normalized</p>
+                      <p className="truncate opacity-80">{formImageUrl}</p>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Time-Delayed Display Control (Minutes after login / visit) */}
+              {formPlacement === "POPUP_MODAL" && (
+                <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-1.5">
+                  <label className="font-bold text-[#0C3B2E] block text-xs">
+                    ⏱️ Popup Display Delay after Customer Login / Visit (Minutes)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      max="120"
+                      value={formDelayMinutes}
+                      onChange={(e) => setFormDelayMinutes(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                      className="w-28 px-3 py-2 rounded-xl border border-amber-300 outline-none focus:border-[#0C3B2E] bg-white font-bold text-xs"
+                    />
+                    <span className="text-[11px] text-[#5B7A6F]">
+                      {formDelayMinutes === 0
+                        ? "⚡ Appears Immediately (1-2 seconds after login)"
+                        : `⏱️ Poster will popup after ${formDelayMinutes} minute${formDelayMinutes > 1 ? "s" : ""} of customer login`}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Coupon Code, CTA Text & CTA URL */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -585,7 +683,7 @@ export default function PromotionsManager() {
                   <label className="font-bold text-[#0C3B2E] block">Button Text</label>
                   <input
                     type="text"
-                    placeholder="Shop Now"
+                    placeholder="Shop Collection"
                     value={formCtaText}
                     onChange={(e) => setFormCtaText(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5]"
@@ -652,7 +750,7 @@ export default function PromotionsManager() {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={saving || uploadingImage}
                   className="px-6 py-2.5 rounded-full font-bold uppercase tracking-wider bg-[#0C3B2E] text-white hover:bg-[#145241] transition-all shadow-md cursor-pointer disabled:opacity-50"
                 >
                   {saving ? "Saving…" : editingPromo ? "Update Promotion" : "Publish Promotion"}

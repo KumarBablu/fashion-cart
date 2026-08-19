@@ -563,6 +563,7 @@ model Promotion {
   isActive     Boolean            @default(true)
   showOnLogin  Boolean            @default(false)
   showOnGuest  Boolean            @default(true)
+  delayMinutes Int                @default(0)
   sortOrder    Int                @default(0)
   startDate    DateTime?
   endDate      DateTime?
