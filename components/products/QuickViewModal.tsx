@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { formatINR, discountPercent } from "@/lib/format";
@@ -46,6 +46,27 @@ export default function QuickViewModal({
   const [activeImage, setActiveImage] = useState<number>(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [cartVariantIds, setCartVariantIds] = useState<string[]>([]);
+
+  function refreshCartState() {
+    fetch("/api/cart")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.cart?.items) {
+          setCartVariantIds(data.cart.items.map((item: { variantId: string }) => item.variantId));
+        } else {
+          setCartVariantIds([]);
+        }
+      })
+      .catch(() => {});
+  }
+
+  useEffect(() => {
+    refreshCartState();
+    const handleCartUpdate = () => refreshCartState();
+    window.addEventListener("cart-updated", handleCartUpdate);
+    return () => window.removeEventListener("cart-updated", handleCartUpdate);
+  }, []);
 
   // Initialize selected colour & size when product loads
   if (product && !colour && product.variants.length > 0) {
@@ -297,13 +318,27 @@ export default function QuickViewModal({
               {/* Action Buttons */}
               <div className="space-y-2 pt-2 border-t border-[#E7DFD5]">
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => handleAddToCart(false)}
-                    disabled={adding || !selectedVariant || selectedVariant.stockQuantity === 0}
-                    className="flex-1 py-3 px-4 rounded-full text-xs font-extrabold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all disabled:opacity-50 cursor-pointer shadow-sm"
-                  >
-                    {adding ? "Adding…" : "Add to Bag 🛍️"}
-                  </button>
+                  {selectedVariant && cartVariantIds.includes(selectedVariant.id) ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        router.push("/cart");
+                      }}
+                      className="flex-1 py-3 px-4 rounded-full text-xs font-black uppercase tracking-wider bg-[#0C3B2E] text-white hover:bg-[#145241] transition-all cursor-pointer shadow-md flex items-center justify-center gap-1.5 animate-in fade-in"
+                    >
+                      <span>🛍️</span>
+                      <span>Go to Bag →</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleAddToCart(false)}
+                      disabled={adding || !selectedVariant || selectedVariant.stockQuantity === 0}
+                      className="flex-1 py-3 px-4 rounded-full text-xs font-extrabold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+                    >
+                      {adding ? "Adding…" : "Add to Bag 🛍️"}
+                    </button>
+                  )}
 
                   <button
                     onClick={() => handleAddToCart(true)}

@@ -53,6 +53,27 @@ export default function ProductDetailClient({ product }: { product: Product }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [cartVariantIds, setCartVariantIds] = useState<string[]>([]);
+
+  function refreshCartState() {
+    fetch("/api/cart")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.cart?.items) {
+          setCartVariantIds(data.cart.items.map((item: { variantId: string }) => item.variantId));
+        } else {
+          setCartVariantIds([]);
+        }
+      })
+      .catch(() => {});
+  }
+
+  useEffect(() => {
+    refreshCartState();
+    const handleCartUpdate = () => refreshCartState();
+    window.addEventListener("cart-updated", handleCartUpdate);
+    return () => window.removeEventListener("cart-updated", handleCartUpdate);
+  }, []);
 
   // Pincode Delivery Estimator state
   const [pincode, setPincode] = useState("");
@@ -460,17 +481,29 @@ export default function ProductDetailClient({ product }: { product: Product }) {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                disabled={!selected || selected.stockQuantity === 0 || adding}
-                onClick={() => addToCart(false)}
-                className="flex-1 rounded-full border border-slate-300 bg-white text-slate-900 py-3.5 text-xs font-bold uppercase tracking-wider hover:bg-slate-50 transition-all disabled:opacity-40 shadow-xs"
-              >
-                {adding ? "Adding to Bag…" : "Add to Bag"}
-              </button>
+              {selected && cartVariantIds.includes(selected.id) ? (
+                <button
+                  type="button"
+                  onClick={() => router.push("/cart")}
+                  className="flex-1 rounded-full border border-[#0C3B2E] bg-[#0C3B2E] hover:bg-[#145241] text-white py-3.5 text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer group animate-in fade-in"
+                >
+                  <span className="text-sm">🛍️</span>
+                  <span>Go to Bag →</span>
+                </button>
+              ) : (
+                <button
+                  disabled={!selected || selected.stockQuantity === 0 || adding}
+                  onClick={() => addToCart(false)}
+                  className="flex-1 rounded-full border border-slate-300 bg-white text-slate-900 py-3.5 text-xs font-bold uppercase tracking-wider hover:bg-slate-50 transition-all disabled:opacity-40 shadow-xs cursor-pointer"
+                >
+                  {adding ? "Adding to Bag…" : "Add to Bag"}
+                </button>
+              )}
+
               <button
                 disabled={!selected || selected.stockQuantity === 0 || adding}
                 onClick={() => addToCart(true)}
-                className="flex-1 rounded-full py-3.5 text-xs font-bold uppercase tracking-wider shadow-md bg-slate-900 hover:bg-amber-600 text-white transition-colors disabled:opacity-40"
+                className="flex-1 rounded-full py-3.5 text-xs font-bold uppercase tracking-wider shadow-md bg-slate-900 hover:bg-[#C59B27] text-white transition-colors disabled:opacity-40 cursor-pointer"
               >
                 Buy Now →
               </button>
