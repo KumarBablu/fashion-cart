@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import LogoutButton from "@/components/account/LogoutButton";
+import AccountSessionGuard from "@/components/account/AccountSessionGuard";
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -17,6 +18,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10">
+      <AccountSessionGuard />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E8E3D8]">
         <div className="flex items-center gap-3">
           <div className="relative h-10 w-10 overflow-hidden">
