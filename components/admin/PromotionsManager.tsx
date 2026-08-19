@@ -457,17 +457,27 @@ export default function PromotionsManager() {
                         <span>{placement.label}</span>
                       </span>
 
-                      {promo.showOnLogin && (
-                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
-                          👤 On Login
+                      {promo.showOnLogin && promo.showOnGuest && (
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200">
+                          👥 All Visitors
                         </span>
                       )}
 
-                      {promo.placement === "POPUP_MODAL" && (
-                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
-                          ⏱️ {promo.delayMinutes > 0 ? `${promo.delayMinutes} min delay` : "Immediate"}
+                      {promo.showOnLogin && !promo.showOnGuest && (
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
+                          👤 Logged In Only
                         </span>
                       )}
+
+                      {!promo.showOnLogin && promo.showOnGuest && (
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-teal-100 text-teal-800 border border-teal-200">
+                          🌐 Guests Only
+                        </span>
+                      )}
+
+                      <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
+                        ⏱️ {promo.delayMinutes > 0 ? `${promo.delayMinutes} min delay` : "⚡ Instant"}
+                      </span>
                     </div>
 
                     {/* Interactive Active / Deactive Switch */}
@@ -838,41 +848,67 @@ export default function PromotionsManager() {
                 </div>
               </div>
 
-              {/* Checkbox Triggers & Display Controls */}
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E3D8] space-y-2.5">
-                <p className="font-bold text-[#0C3B2E] text-[11px] uppercase tracking-wider">Display &amp; Trigger Conditions</p>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer font-medium text-[#0C3B2E]">
-                    <input
-                      type="checkbox"
-                      checked={formIsActive}
-                      onChange={(e) => setFormIsActive(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#0C3B2E] accent-[#0C3B2E]"
-                    />
-                    <span>Is Active (Live)</span>
+              {/* Target Audience & Event Triggers */}
+              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E3D8] space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-[#0C3B2E] block text-xs">
+                    🎯 Target Audience &amp; Event Trigger
                   </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer font-medium text-[#0C3B2E]">
-                    <input
-                      type="checkbox"
-                      checked={formShowOnLogin}
-                      onChange={(e) => setFormShowOnLogin(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#0C3B2E] accent-[#0C3B2E]"
-                    />
-                    <span>Show on Customer Login</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer font-medium text-[#0C3B2E]">
-                    <input
-                      type="checkbox"
-                      checked={formShowOnGuest}
-                      onChange={(e) => setFormShowOnGuest(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#0C3B2E] accent-[#0C3B2E]"
-                    />
-                    <span>Show to Guest Visitors</span>
-                  </label>
+                  <span className="text-[10px] text-[#5B7A6F]">Controls who sees this promotion</span>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {[
+                    {
+                      label: "👥 All Visitors",
+                      desc: "Guests & Logged-in Customers",
+                      guest: true,
+                      login: true,
+                    },
+                    {
+                      label: "👤 Logged-in Only",
+                      desc: "Appears upon / after login",
+                      guest: false,
+                      login: true,
+                    },
+                    {
+                      label: "🌐 Guests Only",
+                      desc: "Pre-login visitors without account",
+                      guest: true,
+                      login: false,
+                    },
+                  ].map((aud) => {
+                    const isSelected = formShowOnGuest === aud.guest && formShowOnLogin === aud.login;
+                    return (
+                      <button
+                        type="button"
+                        key={aud.label}
+                        onClick={() => {
+                          setFormShowOnGuest(aud.guest);
+                          setFormShowOnLogin(aud.login);
+                        }}
+                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? "border-[#0C3B2E] bg-white shadow-xs ring-1 ring-[#0C3B2E]"
+                            : "border-[#E8E3D8] bg-[#FAF8F5] hover:bg-white"
+                        }`}
+                      >
+                        <p className={`font-bold text-xs ${isSelected ? "text-[#0C3B2E]" : "text-slate-700"}`}>{aud.label}</p>
+                        <p className="text-[10px] text-[#5B7A6F] mt-0.5 leading-tight">{aud.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <label className="flex items-center gap-2 cursor-pointer font-medium text-[#0C3B2E] pt-1">
+                  <input
+                    type="checkbox"
+                    checked={formIsActive}
+                    onChange={(e) => setFormIsActive(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#0C3B2E] accent-[#0C3B2E]"
+                  />
+                  <span className="font-bold text-xs">Promotion Status: Active (Live on Storefront)</span>
+                </label>
               </div>
 
               {/* Action Buttons */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -13,6 +13,7 @@ type Promotion = {
   discountCode?: string | null;
   ctaText?: string | null;
   ctaUrl?: string | null;
+  delayMinutes?: number;
   theme: "FESTIVE_GOLD" | "ROYAL_RUBY" | "EMERALD_EID" | "SUNSET_ORANGE" | "MODERN_DARK";
 };
 
@@ -57,16 +58,35 @@ const THEME_STYLES: Record<string, { bg: string; text: string; badgeBg: string; 
 export default function PromotionBanner() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [dismissed, setDismissed] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const pathname = usePathname();
   const { success } = useToast();
+  const bannerTimer = useRef<NodeJS.Timeout | null>(null);
 
   const loadBanners = useCallback(() => {
     fetch("/api/promotions/active?placement=TOP_BANNER")
       .then((res) => res.json())
       .then((data) => {
         if (data?.promotions && data.promotions.length > 0) {
+          const promo = data.promotions[0] as Promotion;
           setPromotions(data.promotions);
           setDismissed(false);
+
+          if (bannerTimer.current) clearTimeout(bannerTimer.current);
+
+          const delayMinutes = Number(promo.delayMinutes || 0);
+          if (delayMinutes > 0) {
+            const sessionStartStr = sessionStorage.getItem("fc_session_start_time");
+            const sessionStart = sessionStartStr ? parseInt(sessionStartStr, 10) : Date.now();
+            const elapsedMs = Date.now() - sessionStart;
+            const targetDelayMs = delayMinutes * 60 * 1000;
+            const delayMs = Math.max(0, targetDelayMs - elapsedMs);
+            bannerTimer.current = setTimeout(() => setIsVisible(true), delayMs);
+          } else {
+            setIsVisible(true);
+          }
+        } else {
+          setIsVisible(false);
         }
       })
       .catch(() => {});
@@ -83,10 +103,11 @@ export default function PromotionBanner() {
     window.addEventListener("fc_refresh_promotions", handleRefresh);
     return () => {
       window.removeEventListener("fc_refresh_promotions", handleRefresh);
+      if (bannerTimer.current) clearTimeout(bannerTimer.current);
     };
   }, [loadBanners, pathname]);
 
-  if (dismissed || promotions.length === 0) return null;
+  if (dismissed || !isVisible || promotions.length === 0) return null;
 
   const currentPromo = promotions[0];
   const theme = THEME_STYLES[currentPromo.theme] || THEME_STYLES.FESTIVE_GOLD;
@@ -104,7 +125,7 @@ export default function PromotionBanner() {
   return (
     <aside
       aria-label="Promotional announcement"
-      className={`relative z-40 px-3 sm:px-4 py-2 sm:py-2.5 ${theme.bg} ${theme.text} transition-all duration-300 text-xs shadow-xs`}
+      className={`relative z-40 px-3 sm:px-4 py-2 sm:py-2.5 ${theme.bg} ${theme.text} transition-all duration-300 text-xs shadow-xs animate-in fade-in`}
     >
       <div className="mx-auto max-w-7xl flex items-center justify-between gap-2 sm:gap-4">
         

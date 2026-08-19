@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { PromotionPlacement } from "@prisma/client";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -8,21 +9,41 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const placementParam = searchParams.get("placement");
+    const user = await getCurrentUser();
+    const isLoggedIn = !!user;
 
     const now = new Date();
 
     const whereClause: any = {
       isActive: true,
-      OR: [
-        { startDate: null, endDate: null },
-        { startDate: { lte: now }, endDate: null },
-        { startDate: null, endDate: { gte: now } },
-        { startDate: { lte: now }, endDate: { gte: now } },
+      AND: [
+        {
+          OR: [
+            { startDate: null, endDate: null },
+            { startDate: { lte: now }, endDate: null },
+            { startDate: null, endDate: { gte: now } },
+            { startDate: { lte: now }, endDate: { gte: now } },
+          ],
+        },
       ],
     };
 
     if (placementParam && Object.values(PromotionPlacement).includes(placementParam as PromotionPlacement)) {
       whereClause.placement = placementParam as PromotionPlacement;
+    }
+
+    // Audience event filtering (Guest vs Logged-In Customer)
+    if (isLoggedIn) {
+      whereClause.AND.push({
+        OR: [
+          { showOnLogin: true },
+          { AND: [{ showOnGuest: true }, { showOnLogin: true }] },
+        ],
+      });
+    } else {
+      whereClause.AND.push({
+        showOnGuest: true,
+      });
     }
 
     const promotions = await prisma.promotion.findMany({
