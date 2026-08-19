@@ -43,35 +43,12 @@ export default function PromotionModal() {
         if (data?.promotions && data.promotions.length > 0) {
           const promo = data.promotions[0] as Promotion;
 
-          // Check if customer just logged in or clicked brand logo to go Home
-          const justLoggedIn = typeof window !== "undefined" && sessionStorage.getItem("fc_just_logged_in") === "true";
-          const justNavigatedHome = typeof window !== "undefined" && sessionStorage.getItem("fc_just_navigated_home") === "true";
-
-          if (justLoggedIn || justNavigatedHome) {
-            sessionStorage.removeItem("fc_just_logged_in");
-            sessionStorage.removeItem("fc_just_navigated_home");
-            sessionStorage.removeItem(`fc_promo_modal_closed_${promo.id}`);
-            // Always display on fresh login or home logo click!
-          } else {
-            const closedInSession = sessionStorage.getItem(`fc_promo_modal_closed_${promo.id}`);
-            if (closedInSession) return;
-
-            const closedAt = localStorage.getItem(`fc_promo_modal_closed_${promo.id}`);
-            if (closedAt) {
-              const lastClosed = parseInt(closedAt, 10);
-              const hoursPassed = (Date.now() - lastClosed) / (1000 * 60 * 60);
-              if (hoursPassed < 24) {
-                return;
-              }
-            }
-          }
-
           setActivePromo(promo);
           setImageError(false);
 
           // Calculate time delay based on admin configured delayMinutes
           const delayMinutes = Number(promo.delayMinutes || 0);
-          let delayMs = 1200; // default smooth 1.2s entrance
+          let delayMs = 1200; // default smooth 1.2s entrance on fresh refresh/login
 
           if (delayMinutes > 0) {
             const sessionStartStr = sessionStorage.getItem("fc_session_start_time");
@@ -106,14 +83,8 @@ export default function PromotionModal() {
 
   if (!isOpen || !activePromo) return null;
 
-  function handleClose(dontShowToday = false) {
+  function handleClose() {
     setIsOpen(false);
-    if (activePromo) {
-      sessionStorage.setItem(`fc_promo_modal_closed_${activePromo.id}`, "true");
-      if (dontShowToday) {
-        localStorage.setItem(`fc_promo_modal_closed_${activePromo.id}`, Date.now().toString());
-      }
-    }
   }
 
   function handleCopy(code: string) {
@@ -136,7 +107,7 @@ export default function PromotionModal() {
       >
         {/* Close Icon Button */}
         <button
-          onClick={() => handleClose(false)}
+          onClick={handleClose}
           className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all cursor-pointer shadow-md"
           aria-label="Close promotion dialog"
         >
@@ -209,17 +180,17 @@ export default function PromotionModal() {
           <div className="pt-2 flex flex-col gap-2">
             <Link
               href={activePromo.ctaUrl || "/shop"}
-              onClick={() => handleClose(false)}
+              onClick={handleClose}
               className="w-full py-3.5 px-6 rounded-full text-xs font-extrabold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-md text-center block"
             >
               {activePromo.ctaText || "Explore Boutique Collection →"}
             </Link>
 
             <button
-              onClick={() => handleClose(true)}
+              onClick={handleClose}
               className="text-[11px] font-semibold text-[#787C87] hover:text-[#141416] transition-colors py-1 cursor-pointer"
             >
-              Maybe later · Don&apos;t show again today
+              Maybe later · Close
             </button>
           </div>
         </div>
