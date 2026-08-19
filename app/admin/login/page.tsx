@@ -47,6 +47,8 @@ export default function AdminLoginPage() {
       }
 
       if (typeof window !== "undefined") {
+        sessionStorage.setItem("fc_admin_session", "active");
+        sessionStorage.setItem("fc_user_session", "active");
         sessionStorage.setItem("fc_window_session", "active");
       }
 

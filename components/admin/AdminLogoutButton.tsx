@@ -12,6 +12,11 @@ export default function AdminLogoutButton({ className }: { className?: string })
     setLoggingOut(true);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("fc_admin_session");
+        sessionStorage.removeItem("fc_user_session");
+        sessionStorage.removeItem("fc_window_session");
+      }
     } catch {
       // ignore
     } finally {

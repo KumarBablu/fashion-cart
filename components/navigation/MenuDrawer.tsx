@@ -63,7 +63,11 @@ export default function MenuDrawer({
   async function handleLogout() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      sessionStorage.removeItem("fc_window_session");
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("fc_user_session");
+        sessionStorage.removeItem("fc_admin_session");
+        sessionStorage.removeItem("fc_window_session");
+      }
       window.location.href = "/login";
     } catch {
       window.location.href = "/login";

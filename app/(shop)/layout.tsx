@@ -3,12 +3,17 @@ import Footer from "@/components/Footer";
 import WhatsAppFloatingWidget from "@/components/ui/WhatsAppFloatingWidget";
 import PromotionBanner from "@/components/promotions/PromotionBanner";
 import PromotionModal from "@/components/promotions/PromotionModal";
+import CustomerWindowSessionGuard from "@/components/auth/CustomerWindowSessionGuard";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
-export default function ShopLayout({ children }: { children: React.ReactNode }) {
+export default async function ShopLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+
   return (
     <>
+      <CustomerWindowSessionGuard isLoggedIn={!!user} />
       <PromotionBanner />
       <Header />
       <main className="flex-1">{children}</main>

@@ -55,6 +55,7 @@ export default function RegisterPage() {
       }
 
       if (typeof window !== "undefined") {
+        sessionStorage.setItem("fc_user_session", "active");
         sessionStorage.setItem("fc_window_session", "active");
       }
 

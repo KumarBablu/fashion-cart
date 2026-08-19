@@ -60,10 +60,6 @@ export default function HeaderClient({
   }
 
   useEffect(() => {
-    if (isLoggedIn && typeof window !== "undefined") {
-      sessionStorage.setItem("fc_window_session", "active");
-    }
-
     refreshCartCount();
     refreshWishlistCount();
 

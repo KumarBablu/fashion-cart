@@ -70,6 +70,14 @@ export default function GoogleSignInButton({
         return;
       }
 
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("fc_user_session", "active");
+        sessionStorage.setItem("fc_window_session", "active");
+        if (data.user?.role === "ADMIN") {
+          sessionStorage.setItem("fc_admin_session", "active");
+        }
+      }
+
       if (data.user?.role === "ADMIN") {
         success("Administrator Portal 👑", "Redirecting to Admin Management Console...");
         window.location.href = "/admin/dashboard";
