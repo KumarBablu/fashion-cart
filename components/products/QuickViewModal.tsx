@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { formatINR, discountPercent } from "@/lib/format";
@@ -47,6 +48,22 @@ export default function QuickViewModal({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [cartVariantIds, setCartVariantIds] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
   function refreshCartState() {
     fetch("/api/cart")
@@ -76,7 +93,7 @@ export default function QuickViewModal({
     setSize(firstSize);
   }
 
-  if (!isOpen || !product) return null;
+  if (!isOpen || !mounted || !product) return null;
 
   const colours = Array.from(new Set(product.variants.map((v) => v.colour)));
   const sizesForColour = product.variants.filter((v) => v.colour === colour);
@@ -157,13 +174,17 @@ export default function QuickViewModal({
     }
   }
 
-  return (
+  const modalContent = (
     <>
-      <div className="fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 md:p-10 flex items-center justify-center animate-in fade-in duration-200">
+      <div
+        className="fixed inset-0 z-[99999] overflow-y-auto p-4 sm:p-6 md:p-10 flex items-center justify-center bg-black/75 backdrop-blur-xs animate-in fade-in duration-200"
+        role="dialog"
+        aria-modal="true"
+      >
         {/* Backdrop */}
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity cursor-pointer"
+          className="fixed inset-0 bg-transparent cursor-pointer"
         />
 
         {/* Modal Dialog */}
@@ -183,41 +204,36 @@ export default function QuickViewModal({
             <div>
               <div
                 onClick={() => setLightboxOpen(true)}
-                className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-[#F4EFEA] border border-[#E7DFD5] cursor-zoom-in group shadow-xs"
-                title="Click to preview HD details"
+                className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-[#FAF8F5] border border-[#E7DFD5] group cursor-zoom-in shadow-xs"
+                title="Click for full-screen High Definition Detail Preview"
               >
-                {displayImages[activeImage]?.imageUrl ? (
+                {displayImages[activeImage] ? (
                   <Image
                     src={displayImages[activeImage].imageUrl}
-                    alt={product.name}
+                    alt={displayImages[activeImage].altText || product.name}
                     fill
+                    sizes="400px"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="h-full w-full flex items-center justify-center text-xs text-[#787C87]">
-                    No image available
+                  <div className="flex h-full items-center justify-center text-xs text-[#787C87]">
+                    No image
                   </div>
                 )}
-
-                {/* Floating Tap to Preview Badge */}
-                <div className="absolute bottom-2.5 right-2.5 z-10 opacity-90 group-hover:opacity-100 transition-opacity">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#141416]/80 backdrop-blur-md text-white border border-white/20 shadow-xs">
-                    <span>🔍</span> HD View
+                {/* HD Zoom Badge Indicator */}
+                <div className="absolute bottom-2.5 right-2.5 z-10">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#141416]/85 backdrop-blur-md text-white border border-white/20 shadow-md">
+                    <span>🔍</span> HD Zoom
                   </span>
                 </div>
-
-                {pct && (
-                  <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-[#C59B27] text-white shadow-xs">
-                    {pct}% OFF
-                  </span>
-                )}
               </div>
 
+              {/* Thumbnails if multiple images */}
               {displayImages.length > 1 && (
-                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
                   {displayImages.map((img, i) => (
                     <button
-                      key={i}
+                      key={img.id || i}
                       onClick={() => setActiveImage(i)}
                       className={`relative h-14 w-12 rounded-xl overflow-hidden border-2 shrink-0 transition-all cursor-pointer ${
                         i === activeImage ? "border-[#141416] scale-105 shadow-xs" : "border-[#E7DFD5] opacity-60 hover:opacity-100"
@@ -372,4 +388,6 @@ export default function QuickViewModal({
       />
     </>
   );
+
+  return createPortal(modalContent, document.body);
 }

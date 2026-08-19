@@ -88,6 +88,17 @@ export default function PromotionModal() {
     };
   }, [evaluatePromotion]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   if (!isOpen || !activePromo) return null;
 
   function handleClose() {

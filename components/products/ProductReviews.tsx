@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useToast } from "@/components/providers/ToastProvider";
 
 type Review = {
@@ -51,6 +52,22 @@ export default function ProductReviews({
   const [surveySummary, setSurveySummary] = useState<SurveySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSurveyModal, setShowSurveyModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (showSurveyModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showSurveyModal]);
 
   // Survey Form State
   const [rating, setRating] = useState(5);
@@ -319,27 +336,33 @@ export default function ProductReviews({
       </div>
 
       {/* Structured Survey Modal */}
-      {showSurveyModal && (
-        <div className="fixed inset-0 z-50 p-4 flex items-center justify-center animate-in fade-in duration-200">
+      {showSurveyModal && mounted && createPortal(
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/75 backdrop-blur-xs animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="survey-modal-title"
+        >
           <div
             onClick={() => setShowSurveyModal(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs"
+            className="fixed inset-0 bg-transparent"
           />
 
           <div
-            className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border p-6 shadow-2xl z-10 space-y-5 animate-in zoom-in-95"
+            className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border p-6 sm:p-8 shadow-2xl z-10 space-y-5 animate-in zoom-in-95 my-auto"
             style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}
           >
             <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: "var(--fc-border)" }}>
               <div>
-                <h3 className="font-display text-lg font-bold text-primary">
+                <h3 id="survey-modal-title" className="font-display text-lg sm:text-xl font-bold text-primary">
                   ✍️ Customer Evaluation Survey
                 </h3>
-                <p className="text-xs text-dim">{productName}</p>
+                <p className="text-xs text-dim mt-0.5">{productName}</p>
               </div>
               <button
                 onClick={() => setShowSurveyModal(false)}
-                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-xs font-bold"
+                className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                aria-label="Close Evaluation Dialog"
               >
                 ✕
               </button>
@@ -534,7 +557,8 @@ export default function ProductReviews({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );

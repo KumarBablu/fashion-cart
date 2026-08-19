@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export default function SizeGuideModal({
   isOpen,
@@ -12,8 +13,24 @@ export default function SizeGuideModal({
   category?: string;
 }) {
   const [unit, setUnit] = useState<"in" | "cm">("in");
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
 
   const sizeChartInches = [
     { size: "S", chest: "36 - 38", waist: "30 - 32", shoulder: "17.0", length: "28.0" },
@@ -33,15 +50,20 @@ export default function SizeGuideModal({
 
   const currentChart = unit === "in" ? sizeChartInches : sizeChartCm;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 md:p-10 flex items-center justify-center animate-in fade-in duration-200">
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-[99999] overflow-y-auto p-4 sm:p-6 md:p-10 flex items-center justify-center bg-black/75 backdrop-blur-xs animate-in fade-in duration-200"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="size-guide-modal-title"
+    >
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-transparent"
       />
 
       <div
-        className="relative w-full max-w-xl rounded-2xl shadow-2xl border overflow-hidden z-10 animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-xl rounded-3xl shadow-2xl border overflow-hidden z-10 animate-in zoom-in-95 duration-200 my-auto"
         style={{
           backgroundColor: "var(--fc-surface)",
           borderColor: "var(--fc-border)",
@@ -50,12 +72,13 @@ export default function SizeGuideModal({
       >
         <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: "var(--fc-border)" }}>
           <div>
-            <h3 className="font-display text-xl font-bold">Size Guide & Fit Chart</h3>
+            <h3 id="size-guide-modal-title" className="font-display text-xl font-bold">Size Guide &amp; Fit Chart</h3>
             <p className="text-xs text-dim mt-0.5">{category} Apparel Measurements</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-xs font-bold"
+            className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+            aria-label="Close Size Guide"
           >
             ✕
           </button>
@@ -64,11 +87,11 @@ export default function SizeGuideModal({
         <div className="p-6 space-y-6">
           {/* Unit Toggle */}
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-dim uppercase">Measurement Unit</span>
+            <span className="text-xs font-semibold text-dim uppercase tracking-wider">Measurement Unit</span>
             <div className="flex rounded-lg border p-0.5 text-xs font-medium" style={{ borderColor: "var(--fc-border)" }}>
               <button
                 onClick={() => setUnit("in")}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                   unit === "in" ? "font-bold shadow-xs text-white" : "opacity-70 hover:opacity-100"
                 }`}
                 style={{
@@ -79,7 +102,7 @@ export default function SizeGuideModal({
               </button>
               <button
                 onClick={() => setUnit("cm")}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                   unit === "cm" ? "font-bold shadow-xs text-white" : "opacity-70 hover:opacity-100"
                 }`}
                 style={{
@@ -131,4 +154,6 @@ export default function SizeGuideModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
