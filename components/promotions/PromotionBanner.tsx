@@ -108,20 +108,24 @@ export default function PromotionBanner() {
     >
       <div className="mx-auto max-w-7xl flex items-center justify-between gap-2 sm:gap-4">
         
-        {/* Left / Center: Promotion Message */}
-        <div className="flex-1 flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2.5 text-center sm:text-left">
+        {/* Left / Center: Promotion Message (Clickable to Promoted Product) */}
+        <Link
+          href={currentPromo.ctaUrl || "/shop"}
+          className="flex-1 flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2.5 text-center sm:text-left group cursor-pointer"
+        >
           {currentPromo.badgeText && (
             <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${theme.badgeBg}`}>
               {currentPromo.badgeText}
             </span>
           )}
 
-          <span className="font-bold text-xs leading-tight">
+          <span className="font-bold text-xs leading-tight group-hover:underline">
             {currentPromo.title}
           </span>
 
           {currentPromo.discountCode && (
             <button
+              type="button"
               onClick={(e) => handleCopyCode(e, currentPromo.discountCode!)}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[10px] font-extrabold uppercase tracking-wider bg-white/10 hover:bg-white/20 border border-white/20 transition-all cursor-pointer text-[#C59B27]"
               title="Click to copy promo code"
@@ -132,16 +136,11 @@ export default function PromotionBanner() {
             </button>
           )}
 
-          {currentPromo.ctaUrl && (
-            <Link
-              href={currentPromo.ctaUrl}
-              className="hidden md:inline-flex items-center gap-1 font-extrabold text-[11px] text-[#C59B27] hover:underline"
-            >
-              <span>{currentPromo.ctaText || "Shop Now"}</span>
-              <span>→</span>
-            </Link>
-          )}
-        </div>
+          <span className="hidden md:inline-flex items-center gap-1 font-extrabold text-[11px] text-[#C59B27] group-hover:underline">
+            <span>{currentPromo.ctaText || "Shop Now"}</span>
+            <span>→</span>
+          </span>
+        </Link>
 
         {/* Right: Dismiss Button */}
         <button

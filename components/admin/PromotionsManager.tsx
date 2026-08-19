@@ -802,14 +802,41 @@ export default function PromotionsManager() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold text-[#0C3B2E] block">Target Destination URL</label>
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-[#0C3B2E] block">Target Destination URL / Promoted Product *</label>
+                    <span className="text-[10px] text-[#5B7A6F]">Clicking poster opens this</span>
+                  </div>
                   <input
                     type="text"
-                    placeholder="/shop"
+                    placeholder="e.g. /shop or /products/slug-name"
                     value={formCtaUrl}
                     onChange={(e) => setFormCtaUrl(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5]"
                   />
+                  {/* Quick destination presets */}
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {[
+                      { label: "All Shop", url: "/shop" },
+                      { label: "New Arrivals", url: "/shop?sort=newest" },
+                      { label: "Festive Saree", url: "/products/tussar-silk-hand-block-printed-saree" },
+                      { label: "Organza Silk", url: "/products/zari-woven-organza-silk-saree-scalloped" },
+                      { label: "Kurta Set", url: "/products/georgette-chikankari-embroidered-straight-kurta-set" },
+                      { label: "Nehru Jacket", url: "/products/raw-silk-blend-bandhgala-nehru-jacket" },
+                    ].map((dest) => (
+                      <button
+                        type="button"
+                        key={dest.url}
+                        onClick={() => setFormCtaUrl(dest.url)}
+                        className={`text-[10px] px-2 py-0.5 rounded-md border font-medium transition-colors cursor-pointer ${
+                          formCtaUrl === dest.url
+                            ? "bg-[#0C3B2E] text-white border-[#0C3B2E]"
+                            : "bg-white border-[#E8E3D8] text-[#5B7A6F] hover:border-[#0C3B2E]"
+                        }`}
+                      >
+                        {dest.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

@@ -117,16 +117,21 @@ export default function PromotionModal() {
           </svg>
         </button>
 
-        {/* Visual Promotional Poster Image */}
+        {/* Visual Promotional Poster Image (Clickable Link to Product/Collection) */}
         {showImage && (
-          <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#141416]">
+          <Link
+            href={activePromo.ctaUrl || "/shop"}
+            onClick={handleClose}
+            className="relative aspect-[16/9] w-full overflow-hidden bg-[#141416] block group cursor-pointer"
+            title={`View ${activePromo.title}`}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={normalizedImage}
               alt={activePromo.title}
               referrerPolicy="no-referrer"
               crossOrigin="anonymous"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               onError={() => setImageError(true)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#FAF8F5] via-transparent to-black/30" />
@@ -135,7 +140,7 @@ export default function PromotionModal() {
                 ✨ {activePromo.badgeText}
               </span>
             )}
-          </div>
+          </Link>
         )}
 
         {/* Content Body */}
@@ -151,7 +156,13 @@ export default function PromotionModal() {
               id="promo-modal-title"
               className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#141416]"
             >
-              {activePromo.title}
+              <Link
+                href={activePromo.ctaUrl || "/shop"}
+                onClick={handleClose}
+                className="hover:text-[#C59B27] transition-colors"
+              >
+                {activePromo.title}
+              </Link>
             </h3>
             {activePromo.subtitle && (
               <p className="text-xs sm:text-sm text-[#4B4E56] max-w-sm mx-auto leading-relaxed">
