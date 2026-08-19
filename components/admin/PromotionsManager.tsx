@@ -642,29 +642,59 @@ export default function PromotionsManager() {
                 )}
               </div>
 
-              {/* Time-Delayed Display Control (Minutes after login / visit) */}
-              {formPlacement === "POPUP_MODAL" && (
-                <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-1.5">
+              {/* Time-Delayed Display Timing & Control (Always Visible) */}
+              <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2.5">
+                <div className="flex items-center justify-between">
                   <label className="font-bold text-[#0C3B2E] block text-xs">
-                    ⏱️ Popup Display Delay after Customer Login / Visit (Minutes)
+                    ⏱️ Promotion Display Timing &amp; Delay (Minutes after Login / Visit)
                   </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      min="0"
-                      max="120"
-                      value={formDelayMinutes}
-                      onChange={(e) => setFormDelayMinutes(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                      className="w-28 px-3 py-2 rounded-xl border border-amber-300 outline-none focus:border-[#0C3B2E] bg-white font-bold text-xs"
-                    />
-                    <span className="text-[11px] text-[#5B7A6F]">
-                      {formDelayMinutes === 0
-                        ? "⚡ Appears Immediately (1-2 seconds after login)"
-                        : `⏱️ Poster will popup after ${formDelayMinutes} minute${formDelayMinutes > 1 ? "s" : ""} of customer login`}
-                    </span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-200/60 text-amber-900">
+                    {formPlacement === "POPUP_MODAL" ? "🖼️ Controls Popup Poster Timing" : "📢 Controls Announcement Timing"}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <input
+                    type="number"
+                    min="0"
+                    max="120"
+                    value={formDelayMinutes}
+                    onChange={(e) => setFormDelayMinutes(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    className="w-24 px-3 py-2 rounded-xl border border-amber-300 outline-none focus:border-[#0C3B2E] bg-white font-black text-sm"
+                  />
+
+                  {/* Quick Preset Buttons */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[
+                      { label: "⚡ Instant (0m)", val: 0 },
+                      { label: "1 min", val: 1 },
+                      { label: "2 mins", val: 2 },
+                      { label: "3 mins", val: 3 },
+                      { label: "5 mins", val: 5 },
+                      { label: "10 mins", val: 10 },
+                    ].map((preset) => (
+                      <button
+                        type="button"
+                        key={preset.val}
+                        onClick={() => setFormDelayMinutes(preset.val)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                          formDelayMinutes === preset.val
+                            ? "bg-[#0C3B2E] text-white shadow-xs"
+                            : "bg-white border border-amber-300/80 text-[#0C3B2E] hover:bg-amber-100"
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              )}
+
+                <p className="text-[11px] text-[#5B7A6F] leading-tight">
+                  {formDelayMinutes === 0
+                    ? "⚡ Instant Delivery: Promotion appears immediately (1-2 seconds after login / page visit)."
+                    : `⏱️ Time-Delayed Delivery: Promotion will wait and popup precisely after the customer has spent ${formDelayMinutes} minute${formDelayMinutes > 1 ? "s" : ""} browsing.`}
+                </p>
+              </div>
 
               {/* Coupon Code, CTA Text & CTA URL */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
