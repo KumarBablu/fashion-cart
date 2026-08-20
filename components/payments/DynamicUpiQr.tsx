@@ -284,20 +284,13 @@ export default function DynamicUpiQr({
 
                 {qrSubTab === "DYNAMIC" ? (
                   qrDataUrl && !loading ? (
-                    <div className="relative w-full h-full">
+                    <div className="relative w-full h-full flex items-center justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={qrDataUrl}
                         alt={`NPCI Dynamic UPI QR Code for ${formatINR(amount)}`}
                         className="w-full h-full object-contain"
                       />
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="bg-white p-1 rounded-xl shadow-lg border border-[#C59B27]/60 flex items-center justify-center">
-                          <div className="px-1.5 py-0.5 rounded-lg bg-[#141416] text-[#C59B27] font-black text-xs">
-                            ₹
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center text-[#787C87] space-y-3">
