@@ -108,17 +108,24 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
     return () => clearInterval(interval);
   }, [orderId]);
 
-  // Smooth scroll to upload form if returning from payment app
+  // Detect return from UPI app and capture any transaction reference
   useEffect(() => {
     const isPaidParam = searchParams.get("paid") === "true";
+    const appRef = searchParams.get("ApprovalRefNo") || searchParams.get("approvalRefNo") || searchParams.get("txnId") || searchParams.get("txnRef") || searchParams.get("refId");
+    const statusParam = searchParams.get("Status") || searchParams.get("status") || searchParams.get("responseCode");
     const hadAppLaunch = typeof window !== "undefined" && sessionStorage.getItem("fc_app_payment_initiated") === "true";
 
-    if (isPaidParam || hadAppLaunch) {
+    if (appRef && !utr) {
+      setUtr(appRef);
+      success("Payment Reference Detected", `Auto-filled UTR: #${appRef}`);
+    }
+
+    if (isPaidParam || hadAppLaunch || statusParam) {
       setTimeout(() => {
         uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 500);
     }
-  }, [searchParams]);
+  }, [searchParams, utr, success]);
 
   function manualCheckStatus() {
     if (!orderId) return;
@@ -503,7 +510,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           upiId={upiId}
           amount={amount}
           orderNumber={data.order.orderNumber}
-          payeeName="Fashion Cart Premium Outlet"
+          payeeName="Fashion Cart"
           staticQrPath={data.paymentSettings?.qrCodePath}
         />
 
