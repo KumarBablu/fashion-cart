@@ -496,46 +496,28 @@ export default function DynamicUpiQr({
             </span>
           </div>
 
+          {/* Direct Mobile Number Search Option */}
           <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#787C87]">Merchant UPI ID / VPA:</p>
-              <p className="font-mono text-base sm:text-lg font-black text-[#141416] dark:text-white tracking-wide mt-0.5">{upiId}</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#787C87]">📱 Pay via Mobile Number:</p>
+              <p className="font-mono text-base sm:text-lg font-black text-[#141416] dark:text-white tracking-wide mt-0.5">9771039201</p>
+              <p className="text-[10px] text-[#787C87]">Verified: Bablu Kumar (Linked on BHIM / UPI)</p>
             </div>
             <button
               type="button"
-              onClick={() => copyText(upiId, "UPI", "UPI ID")}
-              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-xs ${
-                copiedUpi ? "bg-emerald-600 text-white" : "bg-[#141416] text-[#C59B27] hover:bg-[#25262B]"
-              }`}
+              onClick={() => copyText("9771039201", "AMOUNT", "Mobile Number")}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#141416] text-[#C59B27] hover:bg-[#25262B] transition-all cursor-pointer shadow-xs"
             >
-              {copiedUpi ? "✓ UPI ID Copied" : "Copy UPI ID"}
-            </button>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#787C87]">Exact Amount to Enter:</p>
-              <p className="font-mono text-lg font-black text-[#C59B27] tracking-tight mt-0.5">{formatINR(amount)}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => copyText(amount.toString(), "AMOUNT", "Payable Amount")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs ${
-                copiedAmount
-                  ? "bg-emerald-600 border-emerald-600 text-white"
-                  : "bg-white dark:bg-neutral-800 border-[#D9D0C5] text-[#141416] dark:text-white hover:border-[#C59B27]"
-              }`}
-            >
-              {copiedAmount ? "✓ Amount Copied" : "Copy Amount"}
+              Copy Mobile No
             </button>
           </div>
 
           <div className="p-3.5 rounded-2xl bg-[#FAF6EE] border border-[#E7D6A8] space-y-1 text-xs text-[#5A5E69]">
-            <p className="font-bold text-[#141416]">💡 Simple 3-Step Guide:</p>
+            <p className="font-bold text-[#141416]">💡 Avoid Bank Limits &amp; Intent Errors:</p>
             <ol className="list-decimal list-inside space-y-1 text-[11px]">
-              <li>Open any UPI app ➔ Select <strong>&quot;Pay to UPI ID&quot;</strong>.</li>
-              <li>Paste <strong>{upiId}</strong> and enter <strong>{formatINR(amount)}</strong>.</li>
-              <li>Complete payment with your UPI PIN & attach the screenshot below.</li>
+              <li>Scan the <strong>Amount-Locked QR Code</strong> with your phone app, OR</li>
+              <li>Open Google Pay / PhonePe / Paytm ➔ Enter <strong>9771039201</strong> (Bablu Kumar) ➔ Pay <strong>{formatINR(amount)}</strong>.</li>
+              <li>Attach your transaction screenshot below to confirm your order.</li>
             </ol>
           </div>
         </div>
