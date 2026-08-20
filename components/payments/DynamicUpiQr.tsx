@@ -434,10 +434,10 @@ export default function DynamicUpiQr({
             <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] text-center space-y-3 animate-in fade-in zoom-in-95 duration-200">
               <div className="space-y-0.5">
                 <p className="text-xs font-black text-[#141416] dark:text-white">
-                  📲 Scan with {selectedApp} on your phone
+                  📲 Pay via {selectedApp}
                 </p>
                 <p className="text-[10px] text-[#787C87]">
-                  Open {selectedApp} on your mobile, scan this code, and enter your UPI PIN.
+                  Verified Receiver: <strong className="text-emerald-700 dark:text-emerald-400">{payeeName || "Bablu Kumar"}</strong> ({upiId})
                 </p>
               </div>
 
