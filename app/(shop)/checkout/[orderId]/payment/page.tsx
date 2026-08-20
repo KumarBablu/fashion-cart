@@ -72,6 +72,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
   const [isDragging, setIsDragging] = useState(false);
   const [showOrderItems, setShowOrderItems] = useState(false);
   const [showUtrHelper, setShowUtrHelper] = useState(false);
+  const [appPaymentAttempted, setAppPaymentAttempted] = useState(false);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -121,6 +122,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
     }
 
     if (isPaidParam || hadAppLaunch || statusParam) {
+      setAppPaymentAttempted(true);
       setTimeout(() => {
         uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 500);
@@ -504,7 +506,52 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           )}
         </div>
 
-        {/* 2. DYNAMIC PAYMENT METHOD DESK WITH CUSTOM DROPDOWN */}
+        {/* 2. RETURN FROM APP STATUS PROMPT */}
+        {appPaymentAttempted && !submitted && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-neutral-800 border border-[#E7DFD5] shadow-sm space-y-3 text-left animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-[#141416] dark:text-white flex items-center gap-1.5">
+                <span>⚡</span> Payment Status Check:
+              </span>
+              <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-200">
+                ⏳ Payment Pending
+              </span>
+            </div>
+
+            <p className="text-xs text-[#5A5E69] dark:text-neutral-300">
+              Did you complete the payment of <strong>{formatINR(amount)}</strong> in your UPI app?
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="p-3 rounded-2xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-950 text-xs font-bold transition-all text-center cursor-pointer shadow-2xs flex items-center justify-center gap-2"
+              >
+                <span>✅ Yes, I Paid</span>
+                <span className="text-[10px] font-medium text-emerald-700">(Attach Receipt Below ↓)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    sessionStorage.removeItem("fc_app_payment_initiated");
+                  }
+                  setAppPaymentAttempted(false);
+                }}
+                className="p-3 rounded-2xl border border-[#D9D0C5] bg-[#FAF8F5] dark:bg-neutral-900 hover:bg-[#F0EBE4] text-[#5A5E69] dark:text-neutral-300 text-xs font-bold transition-all text-center cursor-pointer shadow-2xs flex items-center justify-center gap-2"
+              >
+                <span>❌ Didn&apos;t Pay / Backed Out</span>
+                <span className="text-[10px] font-medium text-[#787C87]">(Try Again / Use QR)</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 3. DYNAMIC PAYMENT METHOD DESK WITH CUSTOM DROPDOWN */}
         <DynamicUpiQr
           orderId={orderId || undefined}
           upiId={upiId}
