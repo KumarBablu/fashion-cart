@@ -49,6 +49,7 @@ export default function DynamicUpiQr({
   onAppLaunched,
 }: DynamicUpiQrProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodOption>("QR");
+  const [selectedApp, setSelectedApp] = useState<string>("Google Pay");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,9 +120,15 @@ export default function DynamicUpiQr({
     success(`${label} Copied!`, text);
   }
 
-  const handleAppLaunch = () => {
+  const handleAppClick = (appName: string) => {
+    setSelectedApp(appName);
     if (typeof window !== "undefined") {
       sessionStorage.setItem("fc_app_payment_initiated", "true");
+      // If on mobile, launch the UPI protocol handler
+      const isMobile = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent || "");
+      if (isMobile) {
+        window.location.href = upiUri;
+      }
     }
     onAppLaunched?.();
   };
@@ -325,73 +332,134 @@ export default function DynamicUpiQr({
         </div>
       )}
 
-      {/* --- OPTION 2: UPI APPS --- */}
+      {/* --- OPTION 2: UPI APPS (WITH INSTANT APP SELECTION & QR CODE ON LAPTOP / MOBILE) --- */}
       {selectedMethod === "APPS" && (
-        <div className="p-4 sm:p-5 rounded-3xl border border-[#E7DFD5] bg-white dark:bg-neutral-800 shadow-xs space-y-3.5 text-left animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-4 sm:p-6 rounded-3xl border border-[#E7DFD5] bg-white dark:bg-neutral-800 shadow-xs space-y-5 text-left animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <span className="text-amber-500 text-sm">⚡</span>
               <span className="text-xs font-black uppercase tracking-wider text-[#141416] dark:text-white">
-                Choose Your Preferred UPI App
+                Select Your UPI App:
               </span>
             </div>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-              Pre-Filled {formatINR(amount)}
+              Locked {formatINR(amount)}
             </span>
           </div>
 
+          {/* 4 App Selectors */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {/* Google Pay */}
-            <a
-              href={upiUri}
-              onClick={handleAppLaunch}
-              className="flex flex-col items-center justify-center p-3 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 hover:border-[#4285F4] hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all text-center group cursor-pointer"
+            <button
+              type="button"
+              onClick={() => handleAppClick("Google Pay")}
+              className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer text-center group ${
+                selectedApp === "Google Pay"
+                  ? "border-[#4285F4] bg-[#4285F4]/10 shadow-md ring-2 ring-[#4285F4]/30"
+                  : "border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 hover:border-[#4285F4]"
+              }`}
             >
               <div className="w-9 h-9 rounded-xl bg-white dark:bg-neutral-800 flex items-center justify-center font-black text-[#4285F4] text-sm shadow-xs mb-1.5 group-hover:scale-105 transition-transform">
                 G
               </div>
               <p className="text-[11px] font-extrabold text-[#141416] dark:text-white group-hover:text-[#4285F4] transition-colors">Google Pay</p>
-              <span className="text-[9px] font-bold text-[#4285F4]">Pay Now →</span>
-            </a>
+              <span className="text-[9px] font-bold text-[#4285F4]">
+                {selectedApp === "Google Pay" ? "✓ Selected" : "Tap / Scan →"}
+              </span>
+            </button>
 
             {/* PhonePe */}
-            <a
-              href={upiUri}
-              onClick={handleAppLaunch}
-              className="flex flex-col items-center justify-center p-3 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 hover:border-[#5F259F] hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all text-center group cursor-pointer"
+            <button
+              type="button"
+              onClick={() => handleAppClick("PhonePe")}
+              className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer text-center group ${
+                selectedApp === "PhonePe"
+                  ? "border-[#5F259F] bg-[#5F259F]/10 shadow-md ring-2 ring-[#5F259F]/30"
+                  : "border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 hover:border-[#5F259F]"
+              }`}
             >
               <div className="w-9 h-9 rounded-xl bg-[#5F259F] flex items-center justify-center font-black text-white text-sm shadow-xs mb-1.5 group-hover:scale-105 transition-transform">
                 P
               </div>
               <p className="text-[11px] font-extrabold text-[#141416] dark:text-white group-hover:text-[#5F259F] transition-colors">PhonePe</p>
-              <span className="text-[9px] font-bold text-[#5F259F]">Pay Now →</span>
-            </a>
+              <span className="text-[9px] font-bold text-[#5F259F]">
+                {selectedApp === "PhonePe" ? "✓ Selected" : "Tap / Scan →"}
+              </span>
+            </button>
 
             {/* Paytm */}
-            <a
-              href={upiUri}
-              onClick={handleAppLaunch}
-              className="flex flex-col items-center justify-center p-3 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 hover:border-[#00BAF2] hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all text-center group cursor-pointer"
+            <button
+              type="button"
+              onClick={() => handleAppClick("Paytm")}
+              className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer text-center group ${
+                selectedApp === "Paytm"
+                  ? "border-[#00BAF2] bg-[#00BAF2]/10 shadow-md ring-2 ring-[#00BAF2]/30"
+                  : "border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 hover:border-[#00BAF2]"
+              }`}
             >
               <div className="w-9 h-9 rounded-xl bg-[#00BAF2] flex items-center justify-center font-black text-white text-sm shadow-xs mb-1.5 group-hover:scale-105 transition-transform">
                 ₹
               </div>
               <p className="text-[11px] font-extrabold text-[#141416] dark:text-white group-hover:text-[#00BAF2] transition-colors">Paytm</p>
-              <span className="text-[9px] font-bold text-[#00BAF2]">Pay Now →</span>
-            </a>
+              <span className="text-[9px] font-bold text-[#00BAF2]">
+                {selectedApp === "Paytm" ? "✓ Selected" : "Tap / Scan →"}
+              </span>
+            </button>
 
-            {/* BHIM / Any UPI */}
-            <a
-              href={upiUri}
-              onClick={handleAppLaunch}
-              className="flex flex-col items-center justify-center p-3 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 hover:border-[#C59B27] hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all text-center group cursor-pointer"
+            {/* BHIM / CRED */}
+            <button
+              type="button"
+              onClick={() => handleAppClick("BHIM / CRED")}
+              className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all cursor-pointer text-center group ${
+                selectedApp === "BHIM / CRED"
+                  ? "border-[#C59B27] bg-[#C59B27]/10 shadow-md ring-2 ring-[#C59B27]/30"
+                  : "border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 hover:border-[#C59B27]"
+              }`}
             >
               <div className="w-9 h-9 rounded-xl bg-[#141416] flex items-center justify-center font-black text-[#C59B27] text-sm shadow-xs mb-1.5 group-hover:scale-105 transition-transform">
                 ⚡
               </div>
               <p className="text-[11px] font-extrabold text-[#141416] dark:text-white group-hover:text-[#C59B27] transition-colors">BHIM / CRED</p>
-              <span className="text-[9px] font-bold text-[#C59B27]">Pay Now →</span>
-            </a>
+              <span className="text-[9px] font-bold text-[#C59B27]">
+                {selectedApp === "BHIM / CRED" ? "✓ Selected" : "Tap / Scan →"}
+              </span>
+            </button>
+          </div>
+
+          {/* Dynamic QR Display for the chosen app (Works on Laptop & Mobile) */}
+          <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] text-center space-y-3">
+            <div className="space-y-0.5">
+              <p className="text-xs font-black text-[#141416] dark:text-white">
+                📲 Scan with {selectedApp} on your phone
+              </p>
+              <p className="text-[10px] text-[#787C87]">
+                Open {selectedApp} on your phone, scan this code, and enter your UPI PIN.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-center justify-center">
+              <div
+                className="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl border-2 p-3 bg-white shadow-lg flex flex-col items-center justify-center relative"
+                style={{ borderColor: "#C59B27" }}
+              >
+                {qrDataUrl && !loading ? (
+                  <div className="relative w-full h-full">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrDataUrl}
+                      alt={`UPI QR Code for ${formatINR(amount)}`}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-7 h-7 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />
+                )}
+              </div>
+
+              <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-[#FAF6EE] text-[#8E6C0C] border border-[#E7D6A8]">
+                <span>Pre-filled & locked: <strong>{formatINR(amount)}</strong></span>
+              </div>
+            </div>
           </div>
         </div>
       )}
