@@ -186,7 +186,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           <span>⚜️ Official Boutique Payment Desk</span>
         </div>
         <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#141416] dark:text-white">
-          Scan & Authorize Payment
+          Choose Payment Option & Authorize
         </h1>
         <p className="text-xs font-semibold text-[#787C87] tracking-wider">
           Order Reference: <strong className="font-mono text-[#141416] dark:text-white">#{data.order.orderNumber}</strong>
@@ -219,7 +219,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           </div>
         </div>
 
-        {/* Dynamic NPCI UPI QR Code Card */}
+        {/* Multi-Method Dynamic Payment Desk (QR / UPI ID / Apps / Card & Bank Transfer) */}
         <DynamicUpiQr
           upiId={upiId}
           amount={amount}
@@ -244,10 +244,10 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
             <div className="p-3 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] space-y-1">
               <div className="flex items-center gap-1.5">
                 <span className="w-5 h-5 rounded-full bg-[#141416] text-[#C59B27] font-black text-[10px] flex items-center justify-center">1</span>
-                <span className="text-xs font-bold text-[#141416] dark:text-white">Scan & Authorize</span>
+                <span className="text-xs font-bold text-[#141416] dark:text-white">Choose & Pay</span>
               </div>
               <p className="text-[11px] text-[#6B7280] leading-snug">
-                Scan QR in GPay, PhonePe, or Paytm. Amount is pre-locked.
+                Pay using QR Scan, UPI ID, 1-Tap App, or Bank Transfer.
               </p>
             </div>
 
@@ -258,7 +258,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
                 <span className="text-xs font-bold text-[#141416] dark:text-white">Save Receipt</span>
               </div>
               <p className="text-[11px] text-[#6B7280] leading-snug">
-                Take a screenshot of the completed payment receipt with UTR.
+                Take a screenshot of completed payment with 12-digit UTR.
               </p>
             </div>
 
