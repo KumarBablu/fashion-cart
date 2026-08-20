@@ -9,7 +9,20 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
   const order = await prisma.order.findFirst({
     where: { id, userId: user.id },
-    include: { items: true, payment: true, invoice: true },
+    include: {
+      items: {
+        include: {
+          product: {
+            include: {
+              images: { orderBy: { sortOrder: "asc" } },
+            },
+          },
+        },
+      },
+      payment: true,
+      invoice: true,
+      address: true,
+    },
   });
 
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });

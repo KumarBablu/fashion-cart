@@ -9,15 +9,54 @@ import { useToast } from "@/components/providers/ToastProvider";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 import DynamicUpiQr from "@/components/payments/DynamicUpiQr";
 
+type OrderItemData = {
+  id: string;
+  productNameSnapshot: string;
+  sizeSnapshot: string;
+  colourSnapshot: string;
+  quantity: number;
+  unitPrice: string | number;
+  total: string | number;
+  product?: {
+    images?: { url: string; altText?: string | null }[];
+  };
+};
+
 type OrderData = {
   order: {
     id: string;
     orderNumber: string;
+    subtotal: string | number;
+    discount: string | number;
+    deliveryCharge: string | number;
     total: string | number;
     status: string;
-    payment: { id: string; status: string; utrNumber?: string | null } | null;
+    createdAt: string;
+    shippingAddressSnapshot?: {
+      fullName?: string;
+      mobileNumber?: string;
+      addressLine1?: string;
+      addressLine2?: string;
+      city?: string;
+      state?: string;
+      pinCode?: string;
+      landmark?: string;
+    } | null;
+    items?: OrderItemData[];
+    payment: {
+      id: string;
+      status: string;
+      utrNumber?: string | null;
+      screenshotPath?: string | null;
+      submittedAt?: string | null;
+      verifiedAt?: string | null;
+    } | null;
   };
-  paymentSettings: { qrCodePath: string | null; upiId: string | null; instructions: string | null } | null;
+  paymentSettings: {
+    qrCodePath: string | null;
+    upiId: string | null;
+    instructions: string | null;
+  } | null;
 };
 
 export default function PaymentPage({ params }: { params: Promise<{ orderId: string }> }) {
@@ -30,10 +69,11 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showOrderItems, setShowOrderItems] = useState(false);
   const [showUtrHelper, setShowUtrHelper] = useState(false);
   const [returnedFromApp, setReturnedFromApp] = useState(false);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const uploadFormRef = useRef<HTMLFormElement | null>(null);
   const searchParams = useSearchParams();
@@ -51,7 +91,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
       .then(setData);
   }, [orderId]);
 
-  // Background polling to auto-detect if admin approved or payment status changed
+  // Real-time live polling for Admin Payment Approval (every 3 seconds)
   useEffect(() => {
     if (!orderId) return;
     const interval = setInterval(() => {
@@ -63,7 +103,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           }
         })
         .catch(() => {});
-    }, 4000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [orderId]);
@@ -77,7 +117,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
       setReturnedFromApp(true);
       setTimeout(() => {
         uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 500);
+      }, 600);
     }
 
     const handleWindowFocus = () => {
@@ -103,7 +143,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
         if (fresh?.order) {
           setData(fresh);
           if (fresh.order.payment?.status === "VERIFIED" || fresh.order.status === "CONFIRMED") {
-            success("Payment Verified! 🎉", "Your order is confirmed.");
+            success("Payment Verified! 🎉", "Your order has been officially confirmed.");
           } else {
             success("Status Updated", `Current status: ${fresh.order.payment?.status || fresh.order.status}`);
           }
@@ -172,11 +212,16 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
       setSubmitting(false);
 
       if (!res.ok) {
-        setError(result?.error ?? "Could not submit payment. Please verify your file and UTR.");
+        setError(result?.error ?? "Could not submit payment. Please verify your file and 12-digit UTR.");
         return;
       }
       setSubmitted(true);
       success("Payment Proof Submitted! 🎉", "Admin will verify your payment shortly.");
+      
+      // Refresh order data
+      if (orderId) {
+        fetch(`/api/orders/${orderId}`).then((r) => r.json()).then(setData);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Network error while submitting proof.";
       setError(msg);
@@ -188,49 +233,99 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
     return (
       <div className="mx-auto max-w-lg px-4 py-28 text-center space-y-3">
         <div className="w-10 h-10 border-3 border-[#C59B27] border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-xs uppercase tracking-widest font-bold text-[#787C87]">Initializing Boutique Payment Desk…</p>
+        <p className="text-xs uppercase tracking-widest font-bold text-[#787C87]">Loading Boutique Payment Desk…</p>
       </div>
     );
   }
 
   const isVerified = data.order.payment?.status === "VERIFIED" || data.order.status === "CONFIRMED";
   const isUnderReview = data.order.payment?.status === "UNDER_REVIEW" || submitted;
+  const address = data.order.shippingAddressSnapshot;
+  const items = data.order.items || [];
+  const upiId = data.paymentSettings?.upiId || "9771039201@upi";
+  const amount = Number(data.order.total);
+  const isUtrValid = utr.trim().length >= 10;
 
+  // Render Confirmation or Under Review View
   if (isVerified || isUnderReview) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-20 text-center animate-in fade-in zoom-in-95 duration-400">
-        <div className="p-8 sm:p-10 rounded-[32px] border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-2xl space-y-5 relative overflow-hidden">
+      <div className="mx-auto max-w-xl px-4 py-16 sm:py-20 text-center animate-in fade-in zoom-in-95 duration-400">
+        <div className="p-7 sm:p-10 rounded-[32px] border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-2xl space-y-6 relative overflow-hidden text-left">
           <div className="absolute -top-12 -right-12 w-36 h-36 bg-[#C59B27]/10 rounded-full blur-2xl pointer-events-none" />
           
-          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#141416] to-[#2B2C30] text-[#C59B27] border border-[#C59B27]/50 shadow-xl flex items-center justify-center text-3xl mx-auto">
-            {isVerified ? "✓" : "⏳"}
+          <div className="flex items-center gap-4">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg ${
+              isVerified ? "bg-emerald-600 text-white" : "bg-gradient-to-tr from-[#141416] to-[#2B2C30] text-[#C59B27] border border-[#C59B27]/50"
+            }`}>
+              {isVerified ? "✓" : "⏳"}
+            </div>
+            <div>
+              <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${isVerified ? "text-emerald-700" : "text-[#C59B27]"}`}>
+                {isVerified ? "Order Confirmed & Invoiced" : "Payment Verification In Progress"}
+              </span>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416] dark:text-white">
+                {isVerified ? "Payment Successfully Verified!" : "Proof Logged & Under Review"}
+              </h1>
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#C59B27]">
-              {isVerified ? "Order Confirmed" : "Verification in Progress"}
-            </span>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416] dark:text-white">
-              {isVerified ? "Payment Verified & Order Confirmed!" : "Payment Proof Under Review"}
-            </h1>
-          </div>
-
-          <p className="text-xs sm:text-sm text-[#5A5E69] dark:text-neutral-300 leading-relaxed max-w-sm mx-auto">
+          <p className="text-xs sm:text-sm text-[#5A5E69] dark:text-neutral-300 leading-relaxed">
             {isVerified
-              ? "We have verified your UPI payment transaction. Your boutique order is now officially confirmed and transitioning to dispatch."
-              : "Your payment screenshot and UTR reference have been logged into our secure payment desk. Our verification team will process it within minutes."}
+              ? "We have verified your direct UPI transaction. Your boutique package is now queued for priority dispatch."
+              : "Your payment screenshot and UTR reference have been recorded. Our team will verify and confirm your order within minutes."}
           </p>
 
-          <div className="pt-3 flex flex-col gap-3">
+          {/* Verification Timeline Status */}
+          <div className="p-4 rounded-2xl bg-white dark:bg-neutral-800 border border-[#E7DFD5] space-y-3">
+            <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
+              <span>Order Reference:</span>
+              <span className="font-mono text-[#C59B27]">#{data.order.orderNumber}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
+              <span>Payable Amount:</span>
+              <span className="font-mono">{formatINR(data.order.total)}</span>
+            </div>
+            {data.order.payment?.utrNumber && (
+              <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
+                <span>Submitted UTR / Ref:</span>
+                <span className="font-mono text-[#5A5E69]">{data.order.payment.utrNumber}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
+              <span>Status:</span>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                isVerified ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+              }`}>
+                {isVerified ? "Confirmed ✓" : "Under Review ⏳"}
+              </span>
+            </div>
+          </div>
+
+          {!isVerified && (
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF6EE] border border-[#E7D6A8] text-xs text-[#5A5E69]">
+              <span>Waiting for admin approval?</span>
+              <button
+                type="button"
+                onClick={manualCheckStatus}
+                disabled={refreshingStatus}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#141416] text-[#C59B27] hover:bg-[#25262B] transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+              >
+                {refreshingStatus && <span className="w-3 h-3 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />}
+                <span>{refreshingStatus ? "Checking…" : "🔄 Re-Check Status"}</span>
+              </button>
+            </div>
+          )}
+
+          <div className="pt-2 flex flex-col gap-3">
             <Link
               href={`/account/orders/${data.order.id}`}
-              className="w-full py-4 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider bg-[#141416] text-[#C59B27] hover:bg-[#25262B] hover:text-white transition-all shadow-lg text-center block"
+              className="w-full py-3.5 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider bg-[#141416] text-[#C59B27] hover:bg-[#25262B] hover:text-white transition-all shadow-lg text-center block"
             >
               View Order Tracking & Invoice →
             </Link>
             <Link
               href="/shop"
-              className="text-xs font-semibold text-[#787C87] hover:text-[#141416] transition-colors py-1"
+              className="text-xs font-semibold text-[#787C87] hover:text-[#141416] transition-colors py-1 text-center"
             >
               ← Return to Boutique Collections
             </Link>
@@ -240,15 +335,11 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
     );
   }
 
-  const upiId = data.paymentSettings?.upiId || "9771039201@upi";
-  const amount = Number(data.order.total);
-  const isUtrValid = utr.trim().length >= 10;
-
   return (
-    <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 animate-in fade-in duration-300">
+    <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-in fade-in duration-300 space-y-6">
       
       {/* Header Banner */}
-      <div className="text-center mb-6 space-y-1.5">
+      <div className="text-center space-y-1.5">
         <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#FBF4E2] border border-[#C59B27]/40 text-[#8E6C0C] text-[10px] font-extrabold uppercase tracking-widest shadow-2xs">
           <span>⚜️ Secure Boutique Payment</span>
         </div>
@@ -260,58 +351,122 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
         </p>
       </div>
 
-      {/* Main Luxury Frame */}
+      {/* Main Luxury Container */}
       <div className="rounded-[32px] border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900/90 shadow-xl p-5 sm:p-8 space-y-6 relative overflow-hidden backdrop-blur-xs">
         
-        {/* Luxury Obsidian Payable Total Header Card */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#141416] via-[#1C1D21] to-[#25262B] text-white p-5 sm:p-6 border border-[#C59B27]/40 shadow-lg">
-          <div className="absolute top-0 right-0 w-36 h-36 bg-[#C59B27]/15 rounded-full blur-3xl pointer-events-none" />
+        {/* 1. BASIC ORDER DETAILS & AMOUNT SUMMARY CARD */}
+        <div className="rounded-3xl bg-white dark:bg-neutral-800/90 border border-[#E7DFD5] p-5 sm:p-6 shadow-sm space-y-4 text-left">
           
-          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          {/* Header Row */}
+          <div className="flex items-center justify-between border-b border-[#E7DFD5] pb-3">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#C59B27] block mb-0.5">
-                Total Amount Payable
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#787C87] block">
+                Order Summary
               </span>
-              <p className="text-2xl sm:text-3xl font-black tracking-tight text-white font-display">
-                {formatINR(data.order.total)}
+              <p className="font-mono text-sm font-black text-[#141416] dark:text-white">
+                #{data.order.orderNumber}
               </p>
             </div>
 
-            <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                <span>🛡️</span> 100% Direct Bank Transfer
+            <div className="text-right">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#787C87] block">
+                Total Payable
               </span>
-              <span className="text-[10px] text-white/60 font-medium">0% Gateway Convenience Fees</span>
+              <p className="text-xl sm:text-2xl font-black text-[#C59B27] font-display">
+                {formatINR(data.order.total)}
+              </p>
             </div>
           </div>
+
+          {/* Shipping Address Summary Snapshot */}
+          {address && (
+            <div className="p-3 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] text-xs text-[#5A5E69] space-y-1">
+              <p className="font-bold text-[#141416] dark:text-white flex items-center gap-1.5">
+                <span>📍</span> Deliver To: {address.fullName || "Customer"} ({address.mobileNumber})
+              </p>
+              <p className="text-[11px] text-[#787C87] truncate">
+                {[address.addressLine1, address.addressLine2, address.city, address.state, address.pinCode].filter(Boolean).join(", ")}
+              </p>
+            </div>
+          )}
+
+          {/* Collapsible Ordered Items List */}
+          {items.length > 0 && (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setShowOrderItems(!showOrderItems)}
+                className="w-full flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white py-1 hover:text-[#C59B27] transition-colors cursor-pointer"
+              >
+                <span>📦 {items.length} Item{items.length > 1 ? "s" : ""} in Order</span>
+                <span className="text-xs text-[#787C87]">{showOrderItems ? "▲ Hide Items" : "▼ View Items"}</span>
+              </button>
+
+              {showOrderItems && (
+                <div className="space-y-2 pt-1 divide-y divide-[#E7DFD5] animate-in fade-in duration-200">
+                  {items.map((item) => {
+                    const imgUrl = item.product?.images?.[0]?.url;
+                    return (
+                      <div key={item.id} className="pt-2 flex items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {imgUrl ? (
+                            <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#FAF8F5] shrink-0 border border-[#E7DFD5]">
+                              <Image src={imgUrl} alt={item.productNameSnapshot} fill className="object-cover" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-[#FAF8F5] shrink-0 flex items-center justify-center text-xs">
+                              👗
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-bold text-[#141416] dark:text-white truncate">{item.productNameSnapshot}</p>
+                            <p className="text-[10px] text-[#787C87]">
+                              Size: {item.sizeSnapshot} · Qty: {item.quantity}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="font-mono font-bold text-[#141416] dark:text-white shrink-0">
+                          {formatINR(item.total)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Return from UPI App Alert Banner */}
+        {/* 2. RETURN FROM UPI APP CROSS-CHECK CARD */}
         {returnedFromApp && (
-          <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 text-emerald-900 dark:text-emerald-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in shadow-xs">
-            <div className="flex items-center gap-2.5">
-              <span className="text-xl">🎉</span>
-              <div>
-                <p className="font-extrabold text-emerald-950 dark:text-emerald-100">Welcome Back from UPI App!</p>
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
-                  Please attach your payment screenshot & 12-digit UTR below for instant order confirmation.
-                </p>
+          <div className="p-4 sm:p-5 rounded-3xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 text-emerald-900 dark:text-emerald-200 text-xs space-y-2 animate-in fade-in shadow-xs text-left">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🎉</span>
+                <div>
+                  <p className="font-black text-emerald-950 dark:text-emerald-100 text-xs sm:text-sm">
+                    Returned from UPI Payment App!
+                  </p>
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
+                    Cross-check your payable total ({formatINR(amount)}) and attach your screenshot below.
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <button
-              type="button"
-              onClick={manualCheckStatus}
-              disabled={refreshingStatus}
-              className="px-3.5 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer shrink-0 shadow-2xs flex items-center gap-1.5"
-            >
-              {refreshingStatus && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-              <span>{refreshingStatus ? "Checking…" : "🔄 Check Status"}</span>
-            </button>
+              <button
+                type="button"
+                onClick={manualCheckStatus}
+                disabled={refreshingStatus}
+                className="px-3.5 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer shrink-0 shadow-2xs flex items-center gap-1"
+              >
+                {refreshingStatus && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                <span>{refreshingStatus ? "Checking…" : "🔄 Verify Now"}</span>
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Multi-Method Dynamic Payment Desk with Clean Dropdown (QR / 1-Tap Apps / UPI ID) */}
+        {/* 3. DYNAMIC PAYMENT METHOD DESK WITH DROPDOWN SELECTOR */}
         <DynamicUpiQr
           orderId={orderId || undefined}
           upiId={upiId}
@@ -322,14 +477,27 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           onAppLaunched={() => setReturnedFromApp(true)}
         />
 
-        {/* Payment Confirmation Submission Form */}
-        <form ref={uploadFormRef} onSubmit={submitPayment} className="space-y-5 text-left pt-2 border-t border-[#E7DFD5] dark:border-neutral-800">
-          
+        {/* 4. PAYMENT CONFIRMATION SUBMISSION FORM */}
+        <form
+          ref={uploadFormRef}
+          onSubmit={submitPayment}
+          className="space-y-5 text-left pt-3 border-t border-[#E7DFD5] dark:border-neutral-800"
+        >
+          {/* Section Title */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black uppercase tracking-wider text-[#141416] dark:text-white flex items-center gap-1.5">
+              <span>📸</span> Confirm Your Payment Proof
+            </span>
+            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+              Required for Dispatch
+            </span>
+          </div>
+
           {/* Screenshot Upload Dropzone */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-extrabold text-[#141416] dark:text-white uppercase tracking-wider">
-                1. Upload Payment Screenshot <span className="text-rose-500">*</span>
+                1. Attach Payment Screenshot <span className="text-rose-500">*</span>
               </label>
               <span className="text-[10px] font-semibold text-[#787C87]">PNG, JPG, WebP (Max 10MB)</span>
             </div>
@@ -358,59 +526,52 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
                 <div className="w-12 h-12 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] flex items-center justify-center text-xl shadow-2xs">
                   📸
                 </div>
-                <div className="space-y-0.5">
-                  <p className="text-xs sm:text-sm font-bold text-[#141416] dark:text-white">
-                    Click to browse or drag & drop payment screenshot
+                <div>
+                  <p className="text-xs sm:text-sm font-extrabold text-[#141416] dark:text-white">
+                    Click to Upload or Drag & Drop Receipt
                   </p>
-                  <p className="text-[11px] text-[#787C87]">
-                    Attach the payment success screen from GPay, PhonePe, or Paytm
+                  <p className="text-[11px] text-[#787C87] mt-0.5">
+                    Screenshot showing completed payment with UPI reference / UTR
                   </p>
                 </div>
-                <span className="px-4 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#141416] text-[#C59B27] hover:bg-[#25262B] shadow-2xs transition-colors mt-1">
-                  Select Screenshot File
-                </span>
               </div>
             ) : (
-              <div className="p-4 rounded-3xl border border-[#C59B27]/40 bg-white dark:bg-neutral-800 flex items-center justify-between gap-4 shadow-sm animate-in fade-in">
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-[#E7DFD5] shrink-0 shadow-2xs">
-                    <Image src={previewUrl} alt="Receipt Screenshot preview" fill unoptimized className="object-cover" />
+              <div className="p-3.5 rounded-2xl border border-[#E7DFD5] bg-white dark:bg-neutral-800/80 flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-[#E7DFD5] shrink-0 bg-neutral-100">
+                    <Image src={previewUrl} alt="Payment Receipt Preview" fill className="object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                      <span>✓</span> Screenshot Attached
-                    </span>
-                    <p className="text-xs font-bold text-[#141416] dark:text-white truncate max-w-[200px] sm:max-w-xs">
-                      {file?.name || "Payment Receipt Screenshot"}
+                    <p className="text-xs font-bold text-[#141416] dark:text-white truncate">
+                      {file?.name ?? "payment-screenshot.png"}
                     </p>
-                    <p className="text-[10px] text-[#787C87]">
-                      {(file ? file.size / (1024 * 1024) : 0).toFixed(2)} MB
+                    <p className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                      <span>✓</span> Screenshot Attached
                     </p>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => handleFileSelection(null)}
-                  className="px-3 py-1.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors cursor-pointer shrink-0"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold border border-[#D9D0C5] text-[#141416] hover:border-[#C59B27] transition-all cursor-pointer shrink-0"
                 >
-                  ✕ Remove
+                  Change File
                 </button>
               </div>
             )}
           </div>
 
-          {/* UTR / Transaction Reference Number Input */}
-          <div className="space-y-2">
+          {/* 12-Digit UTR / Transaction Reference Number */}
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-extrabold text-[#141416] dark:text-white uppercase tracking-wider">
-                2. 12-Digit UTR / UPI Reference Number <span className="text-rose-500">*</span>
+              <label htmlFor="utr-input" className="block text-xs font-extrabold text-[#141416] dark:text-white uppercase tracking-wider">
+                2. 12-Digit UPI Ref / UTR Number <span className="text-rose-500">*</span>
               </label>
-              
               <button
                 type="button"
                 onClick={() => setShowUtrHelper(!showUtrHelper)}
-                className="text-[11px] font-bold text-[#C59B27] hover:underline cursor-pointer flex items-center gap-1"
+                className="text-[10px] font-bold text-[#C59B27] hover:underline cursor-pointer flex items-center gap-1"
               >
                 <span>ℹ️</span> Where to find UTR?
               </button>
@@ -418,78 +579,64 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
 
             <div className="relative">
               <input
+                id="utr-input"
                 type="text"
                 required
                 value={utr}
-                onChange={(e) => setUtr(e.target.value.replace(/[^a-zA-Z0-9]/g, ""))}
-                placeholder="e.g. 423918274910 or UPI Reference ID"
-                maxLength={24}
-                className="w-full px-4 py-3.5 rounded-2xl border text-sm font-mono font-bold tracking-wider outline-none transition-all focus:border-[#C59B27] focus:ring-2 focus:ring-[#C59B27]/20 bg-white dark:bg-neutral-800"
-                style={{ borderColor: isUtrValid ? "#10B981" : "#E7DFD5" }}
+                onChange={(e) => setUtr(e.target.value.replace(/[^0-9a-zA-Z]/g, ""))}
+                placeholder="e.g. 423918274910"
+                maxLength={22}
+                className="w-full px-4 py-3.5 rounded-2xl border border-[#D9D0C5] dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs sm:text-sm font-mono font-bold text-[#141416] dark:text-white outline-none focus:border-[#C59B27] focus:ring-2 focus:ring-[#C59B27]/20 shadow-2xs transition-all tracking-wider"
               />
-
               {isUtrValid && (
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
-                  ✓ Valid Format
-                </span>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  ✓ Valid Ref
+                </div>
               )}
             </div>
 
             {/* Collapsible UTR Helper */}
             {showUtrHelper && (
-              <div className="p-4 rounded-2xl bg-[#FAF6EE] border border-[#E7D6A8] text-xs text-[#5A5E69] space-y-1.5 animate-in fade-in">
-                <p className="font-bold text-[#141416]">💡 Where to find your 12-Digit UTR Number:</p>
-                <ul className="list-disc list-inside space-y-1 text-[11px]">
-                  <li><strong>Google Pay</strong>: Tap the transaction ➔ Look for <strong>&quot;UPI transaction ID&quot;</strong> (12 digits).</li>
-                  <li><strong>PhonePe</strong>: Tap transaction history ➔ Look for <strong>&quot;UTR&quot;</strong> under Transfer Details.</li>
-                  <li><strong>Paytm</strong>: Open payment receipt ➔ Look for <strong>&quot;UPI Ref No&quot;</strong>.</li>
+              <div className="p-3.5 rounded-2xl bg-[#FAF6EE] border border-[#E7D6A8] text-xs text-[#5A5E69] space-y-1 animate-in fade-in duration-200">
+                <p className="font-bold text-[#141416]">💡 Where is my 12-digit UTR?</p>
+                <ul className="list-disc list-inside space-y-0.5 text-[11px]">
+                  <li><strong>Google Pay</strong>: Tap transaction ➔ Look for <strong>&quot;UPI transaction ID&quot;</strong> (12 digits).</li>
+                  <li><strong>PhonePe</strong>: Tap transaction ➔ Look for <strong>&quot;UTR&quot;</strong>.</li>
+                  <li><strong>Paytm</strong>: Tap transaction ➔ Look for <strong>&quot;UPI Ref No&quot;</strong>.</li>
                 </ul>
               </div>
             )}
           </div>
 
           {error && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold animate-in shake">
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 animate-in fade-in">
               ⚠️ {error}
             </div>
           )}
 
-          {/* Luxury Action Button */}
+          {/* Submit Button */}
           <button
             type="submit"
-            disabled={submitting || !file || !utr.trim()}
-            className="w-full py-4 px-8 rounded-full font-black text-xs uppercase tracking-[0.2em] bg-gradient-to-r from-[#141416] via-[#2B2C30] to-[#141416] text-[#C59B27] hover:text-white hover:brightness-110 active:scale-[0.99] transition-all shadow-xl disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2"
+            disabled={submitting || !file || !isUtrValid}
+            className="w-full py-4 px-6 rounded-full font-black text-xs uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-[#141416] to-[#25262B] text-[#C59B27] hover:brightness-110 active:scale-[0.99]"
           >
             {submitting ? (
               <>
-                <span className="w-4 h-4 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />
-                <span>Validating Payment Proof…</span>
+                <div className="w-4 h-4 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />
+                <span>Logging Payment Proof…</span>
               </>
             ) : (
-              <span>Submit Payment Confirmation →</span>
+              <span>Submit Payment Proof for Verification →</span>
             )}
           </button>
 
-          {/* Direct WhatsApp Concierge VIP Option */}
+          {/* VIP WhatsApp Concierge Alternative */}
           <div className="pt-2">
-            <div className="p-4 rounded-2xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-              <div>
-                <p className="text-xs font-extrabold text-emerald-900 dark:text-emerald-300">
-                  Prefer Direct WhatsApp Verification?
-                </p>
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
-                  Send payment screenshot directly to our boutique manager for 2-minute VIP approval.
-                </p>
-              </div>
-
-              <WhatsAppConciergeButton
-                orderNumber={data.order.orderNumber}
-                customMessage={`Namaste Fashion Cart Boutique! 💳 I have completed UPI payment of ${formatINR(data.order.total)} for Order #${data.order.orderNumber}. UTR Reference: ${utr || "Attached in chat"}. Please find my payment screenshot attached for priority verification.`}
-                className="px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer shrink-0"
-              >
-                <span>📲 Chat on WhatsApp</span>
-              </WhatsAppConciergeButton>
-            </div>
+            <WhatsAppConciergeButton
+              orderNumber={data.order.orderNumber}
+              productPrice={amount}
+              className="w-full justify-center"
+            />
           </div>
         </form>
       </div>
