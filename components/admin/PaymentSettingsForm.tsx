@@ -84,14 +84,20 @@ export default function PaymentSettingsForm({
       </label>
 
       <label className="block">
-        <span className="text-xs font-bold uppercase tracking-wide text-dim">Shop UPI ID (e.g. yourshop@okaxis)</span>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wide text-dim">Company / Shop Receiver UPI ID</span>
+          <span className="text-[10px] font-bold text-[#C59B27] bg-[#FBF4E2] px-2 py-0.5 rounded-full">Funds credit directly to this account</span>
+        </div>
         <input
           value={upiId}
           onChange={(e) => setUpiId(e.target.value)}
-          placeholder="fashioncart@okaxis"
-          className="mt-1 w-full rounded-xl border px-3.5 py-2.5 text-xs font-mono font-bold outline-none focus:border-[#C59B27] bg-[#FAF8F5]"
+          placeholder="e.g. yourcompany@okaxis, merchant@icici, 9876543210@paytm"
+          className="mt-1.5 w-full rounded-xl border px-3.5 py-2.5 text-xs font-mono font-bold outline-none focus:border-[#C59B27] bg-[#FAF8F5]"
           style={{ borderColor: "var(--fc-border)" }}
         />
+        <span className="text-[11px] text-dim block mt-1 leading-relaxed">
+          💡 Enter your company&apos;s official Business/Current Bank Account UPI ID (e.g. <strong>Google Pay Business, PhonePe Merchant, Paytm Merchant, or Bank VPA</strong>). When customers scan the Dynamic Amount-Locked QR code at checkout, 100% of their payment is instantly deposited directly into the bank account linked with this UPI ID with <strong>0% middleman fees</strong>.
+        </span>
       </label>
 
       <div className="p-4 rounded-xl border space-y-3 bg-[#FAF8F5]" style={{ borderColor: "var(--fc-border)" }}>
