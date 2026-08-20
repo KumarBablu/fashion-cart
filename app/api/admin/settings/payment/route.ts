@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("qrCode");
     const upiId = formData.get("upiId");
+    const payeeName = formData.get("payeeName");
     const instructions = formData.get("instructions");
     const codEnabled = formData.get("codEnabled") === "true";
     const codFee = Number(formData.get("codFee") || 0);
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
           data: {
             ...(qrCodePath ? { qrCodePath } : {}),
             upiId: typeof upiId === "string" ? upiId : existing.upiId,
+            payeeName: typeof payeeName === "string" ? payeeName : existing.payeeName,
             instructions: typeof instructions === "string" ? instructions : existing.instructions,
             codEnabled,
             codFee,
@@ -51,6 +53,7 @@ export async function POST(req: NextRequest) {
           data: {
             qrCodePath,
             upiId: typeof upiId === "string" ? upiId : undefined,
+            payeeName: typeof payeeName === "string" ? payeeName : "Bablu Kumar",
             instructions: typeof instructions === "string" ? instructions : undefined,
             codEnabled,
             codFee,

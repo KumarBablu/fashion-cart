@@ -32,7 +32,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json({
     order,
     paymentSettings: settings
-      ? { qrCodePath: settings.qrCodePath, upiId: settings.upiId, instructions: settings.instructions }
+      ? { qrCodePath: settings.qrCodePath, upiId: settings.upiId, payeeName: settings.payeeName, instructions: settings.instructions }
       : null,
   });
 }

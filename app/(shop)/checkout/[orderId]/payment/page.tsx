@@ -56,6 +56,7 @@ type OrderData = {
   paymentSettings: {
     qrCodePath: string | null;
     upiId: string | null;
+    payeeName?: string | null;
     instructions: string | null;
   } | null;
 };
@@ -557,7 +558,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           upiId={upiId}
           amount={amount}
           orderNumber={data.order.orderNumber}
-          payeeName="Fashion Cart"
+          payeeName={data.paymentSettings?.payeeName || "Bablu Kumar"}
           staticQrPath={data.paymentSettings?.qrCodePath}
         />
 

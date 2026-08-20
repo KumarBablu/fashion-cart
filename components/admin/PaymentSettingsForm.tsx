@@ -8,12 +8,13 @@ import { useToast } from "@/components/providers/ToastProvider";
 export default function PaymentSettingsForm({
   initial,
 }: {
-  initial: { qrCodePath: string | null; upiId: string; instructions: string; codEnabled?: boolean; codFee?: number };
+  initial: { qrCodePath: string | null; upiId: string; payeeName?: string | null; instructions: string; codEnabled?: boolean; codFee?: number };
 }) {
   const router = useRouter();
   const { success, error: toastError } = useToast();
 
   const [upiId, setUpiId] = useState(initial.upiId);
+  const [payeeName, setPayeeName] = useState(initial.payeeName || "Bablu Kumar");
   const [instructions, setInstructions] = useState(initial.instructions);
   const [codEnabled, setCodEnabled] = useState(initial.codEnabled ?? true);
   const [codFee, setCodFee] = useState(String(initial.codFee ?? 0));
@@ -30,6 +31,7 @@ export default function PaymentSettingsForm({
     const formData = new FormData();
     if (file) formData.append("qrCode", file);
     formData.append("upiId", upiId);
+    formData.append("payeeName", payeeName);
     formData.append("instructions", instructions);
     formData.append("codEnabled", String(codEnabled));
     formData.append("codFee", codFee);
@@ -91,12 +93,29 @@ export default function PaymentSettingsForm({
         <input
           value={upiId}
           onChange={(e) => setUpiId(e.target.value)}
-          placeholder="e.g. yourcompany@okaxis, merchant@icici, 9876543210@paytm"
+          placeholder="e.g. 9771039201@upi, merchant@icici, yourcompany@okaxis"
           className="mt-1.5 w-full rounded-xl border px-3.5 py-2.5 text-xs font-mono font-bold outline-none focus:border-[#C59B27] bg-[#FAF8F5]"
           style={{ borderColor: "var(--fc-border)" }}
         />
         <span className="text-[11px] text-dim block mt-1 leading-relaxed">
-          💡 Enter your company&apos;s official Business/Current Bank Account UPI ID (e.g. <strong>Google Pay Business, PhonePe Merchant, Paytm Merchant, or Bank VPA</strong>). When customers scan the Dynamic Amount-Locked QR code at checkout, 100% of their payment is instantly deposited directly into the bank account linked with this UPI ID with <strong>0% middleman fees</strong>.
+          💡 Enter your official UPI ID (e.g. <strong>9771039201@upi</strong>). 100% of customer payments are deposited directly into this account with <strong>0% middleman fees</strong>.
+        </span>
+      </label>
+
+      <label className="block">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wide text-dim">Receiver Bank Account Name / Payee Name</span>
+          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">NPCI Name Verification</span>
+        </div>
+        <input
+          value={payeeName}
+          onChange={(e) => setPayeeName(e.target.value)}
+          placeholder="e.g. Bablu Kumar (Name registered on bank account/BHIM)"
+          className="mt-1.5 w-full rounded-xl border px-3.5 py-2.5 text-xs font-bold outline-none focus:border-[#C59B27] bg-[#FAF8F5]"
+          style={{ borderColor: "var(--fc-border)" }}
+        />
+        <span className="text-[11px] text-dim block mt-1 leading-relaxed">
+          Must match the registered bank account name for this UPI ID (e.g. <strong>Bablu Kumar</strong>) to ensure Google Pay and PhonePe pass NPCI payee verification without mismatch errors.
         </span>
       </label>
 

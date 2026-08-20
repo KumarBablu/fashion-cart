@@ -103,6 +103,7 @@ export default async function AdminSettingsPage() {
           initial={{
             qrCodePath: paymentSettings?.qrCodePath ?? null,
             upiId: paymentSettings?.upiId ?? "",
+            payeeName: paymentSettings?.payeeName ?? "Bablu Kumar",
             instructions: paymentSettings?.instructions ?? "",
             codEnabled: paymentSettings?.codEnabled ?? true,
             codFee: paymentSettings?.codFee ? Number(paymentSettings.codFee) : 0,
