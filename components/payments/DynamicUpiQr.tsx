@@ -321,14 +321,45 @@ export default function DynamicUpiQr({
             </div>
 
             {qrSubTab === "DYNAMIC" && (
-              <div className="mt-3.5 inline-flex items-center gap-2 px-4 py-1 rounded-full text-xs font-bold bg-[#FAF6EE] text-[#8E6C0C] border border-[#E7D6A8]">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                </span>
-                <span>
-                  Amount locked: <strong className="text-[#141416] font-black">{formatINR(amount)}</strong>
-                </span>
+              <div className="mt-3.5 space-y-3 w-full max-w-sm">
+                <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-xs font-bold bg-[#FAF6EE] text-[#8E6C0C] border border-[#E7D6A8]">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span>
+                    Amount locked: <strong className="text-[#141416] font-black">{formatINR(amount)}</strong>
+                  </span>
+                </div>
+
+                {amount > 2000 && (
+                  <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 space-y-2 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-200 flex items-center gap-1">
+                        <span>📱</span> For Payments Above ₹2,000:
+                      </span>
+                      <span className="text-[9px] font-bold bg-amber-200 dark:bg-amber-800 text-amber-950 dark:text-amber-100 px-2 py-0.5 rounded-full">
+                        Fastest
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-amber-900 dark:text-amber-300 leading-tight">
+                      UPI apps block gallery screenshot scans above ₹2,000. You can scan this QR directly with another phone camera, or pay instantly via Mobile Number:
+                    </p>
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-neutral-900 border border-amber-200 dark:border-neutral-700">
+                      <div>
+                        <p className="font-mono text-sm font-black text-[#141416] dark:text-white">9771039201</p>
+                        <p className="text-[9px] text-emerald-700 dark:text-emerald-400 font-bold">Bablu Kumar (BHIM UPI)</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyText("9771039201", "AMOUNT", "Mobile Number")}
+                        className="px-3 py-1 rounded-lg text-[11px] font-bold bg-[#141416] text-[#C59B27] hover:bg-[#25262B] transition-all shadow-xs cursor-pointer"
+                      >
+                        Copy Number
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
