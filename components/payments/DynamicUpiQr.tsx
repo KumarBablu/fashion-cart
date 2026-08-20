@@ -462,7 +462,7 @@ export default function DynamicUpiQr({
 
                 <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-[#FAF6EE] text-[#8E6C0C] border border-[#E7D6A8]">
-                    <span>Pre-filled & locked: <strong>{formatINR(amount)}</strong></span>
+                    <span>Pre-filled &amp; locked: <strong>{formatINR(amount)}</strong></span>
                   </div>
 
                   <a
@@ -475,8 +475,24 @@ export default function DynamicUpiQr({
                     }}
                     className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[10px] font-bold bg-[#141416] text-[#C59B27] hover:bg-[#25262B] transition-all shadow-xs cursor-pointer"
                   >
-                    <span>🚀 Launch {selectedApp} →</span>
+                    <span>🚀 Open {selectedApp} →</span>
                   </a>
+
+                  <button
+                    type="button"
+                    onClick={() => copyText("9771039201", "AMOUNT", "Mobile Number")}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-white dark:bg-neutral-800 border border-[#D9D0C5] text-[#141416] dark:text-white hover:border-[#C59B27] transition-all shadow-xs cursor-pointer"
+                  >
+                    <span>📱 Copy Mobile (9771039201)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => copyText(upiId, "UPI", "UPI ID")}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-white dark:bg-neutral-800 border border-[#D9D0C5] text-[#141416] dark:text-white hover:border-[#C59B27] transition-all shadow-xs cursor-pointer"
+                  >
+                    <span>{copiedUpi ? "✓ Copied" : "📋 Copy UPI ID"}</span>
+                  </button>
                 </div>
               </div>
             </div>

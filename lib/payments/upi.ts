@@ -10,31 +10,39 @@ export type UpiPaymentParams = {
 };
 
 /**
- * Builds the official string payload for scanning by QR code scanners (BHIM, GPay, PhonePe, Paytm).
- * Uses clean unescaped UTF-8 string format required by NPCI QR scanners so regex doesn't fail on '%' characters.
+ * Builds the official string payload for scanning by camera QR code scanners (BHIM, GPay, PhonePe, Paytm).
+ * Uses universal '+' for spaces conforming to NPCI Common QR Specification.
  */
 export function buildUpiQrString(params: UpiPaymentParams): string {
   const cleanUpi = params.upiId.trim();
   const cleanAmount = Number(params.amount).toFixed(2);
-  const payee = cleanUpi.includes("9771039201")
-    ? "Bablu Kumar"
-    : (params.payeeName || "Bablu Kumar").replace(/[^a-zA-Z0-9 ]/g, " ").trim();
-  const cleanNote = (params.transactionNote || `Order ${params.orderNumber}`).replace(/[^a-zA-Z0-9 -]/g, "").trim();
+  const payee = (cleanUpi.includes("9771039201") ? "Bablu Kumar" : (params.payeeName || "Bablu Kumar"))
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .trim()
+    .replace(/\s+/g, "+");
+  const cleanNote = (params.transactionNote || `Order ${params.orderNumber}`)
+    .replace(/[^a-zA-Z0-9 -]/g, "")
+    .trim()
+    .replace(/\s+/g, "+");
 
   return `upi://pay?pa=${cleanUpi}&pn=${payee}&am=${cleanAmount}&cu=INR&tn=${cleanNote}`;
 }
 
 /**
  * Builds an official, 100% compliant NPCI UPI Payment Deep Link URI for mobile browser intent handlers.
- * Preserves literal spaces so BHIM, GPay, and PhonePe never show literal '%20' on mobile screens.
+ * Uses universal '+' encoding so BHIM, GPay, PhonePe, and Paytm decode clean 'Bablu Kumar' without '%20' or beneficiary errors.
  */
 export function buildUpiPaymentUri(params: UpiPaymentParams): string {
   const cleanUpi = params.upiId.trim();
   const cleanAmount = Number(params.amount).toFixed(2);
-  const payee = cleanUpi.includes("9771039201")
-    ? "Bablu Kumar"
-    : (params.payeeName || "Bablu Kumar").replace(/[^a-zA-Z0-9 ]/g, " ").trim();
-  const cleanNote = (params.transactionNote || `Order ${params.orderNumber}`).replace(/[^a-zA-Z0-9 -]/g, "").trim();
+  const payee = (cleanUpi.includes("9771039201") ? "Bablu Kumar" : (params.payeeName || "Bablu Kumar"))
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .trim()
+    .replace(/\s+/g, "+");
+  const cleanNote = (params.transactionNote || `Order ${params.orderNumber}`)
+    .replace(/[^a-zA-Z0-9 -]/g, "")
+    .trim()
+    .replace(/\s+/g, "+");
 
   const query = `pa=${cleanUpi}&pn=${payee}&am=${cleanAmount}&cu=INR&tn=${cleanNote}`;
 
