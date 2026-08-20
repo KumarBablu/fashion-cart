@@ -49,7 +49,7 @@ export default function DynamicUpiQr({
   onAppLaunched,
 }: DynamicUpiQrProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodOption>("QR");
-  const [selectedApp, setSelectedApp] = useState<string>("Google Pay");
+  const [selectedApp, setSelectedApp] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -364,7 +364,7 @@ export default function DynamicUpiQr({
               </div>
               <p className="text-[11px] font-extrabold text-[#141416] dark:text-white group-hover:text-[#4285F4] transition-colors">Google Pay</p>
               <span className="text-[9px] font-bold text-[#4285F4]">
-                {selectedApp === "Google Pay" ? "✓ Selected" : "Tap / Scan →"}
+                {selectedApp === "Google Pay" ? "✓ Showing QR" : "Pay / Show QR →"}
               </span>
             </button>
 
@@ -383,7 +383,7 @@ export default function DynamicUpiQr({
               </div>
               <p className="text-[11px] font-extrabold text-[#141416] dark:text-white group-hover:text-[#5F259F] transition-colors">PhonePe</p>
               <span className="text-[9px] font-bold text-[#5F259F]">
-                {selectedApp === "PhonePe" ? "✓ Selected" : "Tap / Scan →"}
+                {selectedApp === "PhonePe" ? "✓ Showing QR" : "Pay / Show QR →"}
               </span>
             </button>
 
@@ -402,7 +402,7 @@ export default function DynamicUpiQr({
               </div>
               <p className="text-[11px] font-extrabold text-[#141416] dark:text-white group-hover:text-[#00BAF2] transition-colors">Paytm</p>
               <span className="text-[9px] font-bold text-[#00BAF2]">
-                {selectedApp === "Paytm" ? "✓ Selected" : "Tap / Scan →"}
+                {selectedApp === "Paytm" ? "✓ Showing QR" : "Pay / Show QR →"}
               </span>
             </button>
 
@@ -421,46 +421,48 @@ export default function DynamicUpiQr({
               </div>
               <p className="text-[11px] font-extrabold text-[#141416] dark:text-white group-hover:text-[#C59B27] transition-colors">BHIM / CRED</p>
               <span className="text-[9px] font-bold text-[#C59B27]">
-                {selectedApp === "BHIM / CRED" ? "✓ Selected" : "Tap / Scan →"}
+                {selectedApp === "BHIM / CRED" ? "✓ Showing QR" : "Pay / Show QR →"}
               </span>
             </button>
           </div>
 
-          {/* Dynamic QR Display for the chosen app (Works on Laptop & Mobile) */}
-          <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] text-center space-y-3">
-            <div className="space-y-0.5">
-              <p className="text-xs font-black text-[#141416] dark:text-white">
-                📲 Scan with {selectedApp} on your phone
-              </p>
-              <p className="text-[10px] text-[#787C87]">
-                Open {selectedApp} on your phone, scan this code, and enter your UPI PIN.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center justify-center">
-              <div
-                className="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl border-2 p-3 bg-white shadow-lg flex flex-col items-center justify-center relative"
-                style={{ borderColor: "#C59B27" }}
-              >
-                {qrDataUrl && !loading ? (
-                  <div className="relative w-full h-full">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={qrDataUrl}
-                      alt={`UPI QR Code for ${formatINR(amount)}`}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-7 h-7 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />
-                )}
+          {/* Dynamic QR Display - Revealed after clicking an app */}
+          {selectedApp && (
+            <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] text-center space-y-3 animate-in fade-in zoom-in-95 duration-200">
+              <div className="space-y-0.5">
+                <p className="text-xs font-black text-[#141416] dark:text-white">
+                  📲 Scan with {selectedApp} on your phone
+                </p>
+                <p className="text-[10px] text-[#787C87]">
+                  Open {selectedApp} on your mobile, scan this code, and enter your UPI PIN.
+                </p>
               </div>
 
-              <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-[#FAF6EE] text-[#8E6C0C] border border-[#E7D6A8]">
-                <span>Pre-filled & locked: <strong>{formatINR(amount)}</strong></span>
+              <div className="flex flex-col items-center justify-center">
+                <div
+                  className="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl border-2 p-3 bg-white shadow-lg flex flex-col items-center justify-center relative"
+                  style={{ borderColor: "#C59B27" }}
+                >
+                  {qrDataUrl && !loading ? (
+                    <div className="relative w-full h-full">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={qrDataUrl}
+                        alt={`UPI QR Code for ${formatINR(amount)}`}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-7 h-7 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />
+                  )}
+                </div>
+
+                <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-[#FAF6EE] text-[#8E6C0C] border border-[#E7D6A8]">
+                  <span>Pre-filled & locked: <strong>{formatINR(amount)}</strong></span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
