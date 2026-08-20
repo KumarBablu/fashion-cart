@@ -181,12 +181,12 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
     <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 animate-in fade-in duration-300">
       
       {/* Header Banner */}
-      <div className="text-center mb-8 space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FBF4E2] border border-[#C59B27]/40 text-[#8E6C0C] text-[10px] font-extrabold uppercase tracking-widest shadow-2xs">
-          <span>⚜️ Official Boutique Payment Desk</span>
+      <div className="text-center mb-6 space-y-1.5">
+        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#FBF4E2] border border-[#C59B27]/40 text-[#8E6C0C] text-[10px] font-extrabold uppercase tracking-widest shadow-2xs">
+          <span>⚜️ Secure Boutique Payment</span>
         </div>
-        <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#141416] dark:text-white">
-          Choose Payment Option & Authorize
+        <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-[#141416] dark:text-white">
+          Complete Your Payment
         </h1>
         <p className="text-xs font-semibold text-[#787C87] tracking-wider">
           Order Reference: <strong className="font-mono text-[#141416] dark:text-white">#{data.order.orderNumber}</strong>
@@ -194,24 +194,24 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
       </div>
 
       {/* Main Luxury Frame */}
-      <div className="rounded-[36px] border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900/90 shadow-2xl p-6 sm:p-10 space-y-8 relative overflow-hidden backdrop-blur-xs">
+      <div className="rounded-[32px] border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900/90 shadow-xl p-5 sm:p-8 space-y-6 relative overflow-hidden backdrop-blur-xs">
         
         {/* Luxury Obsidian Payable Total Header Card */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#141416] via-[#1C1D21] to-[#25262B] text-white p-6 sm:p-7 border border-[#C59B27]/40 shadow-xl">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-[#C59B27]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#141416] via-[#1C1D21] to-[#25262B] text-white p-5 sm:p-6 border border-[#C59B27]/40 shadow-lg">
+          <div className="absolute top-0 right-0 w-36 h-36 bg-[#C59B27]/15 rounded-full blur-3xl pointer-events-none" />
           
-          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#C59B27] block mb-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#C59B27] block mb-0.5">
                 Total Amount Payable
               </span>
-              <p className="text-3xl sm:text-4xl font-black tracking-tight text-white font-display">
+              <p className="text-2xl sm:text-3xl font-black tracking-tight text-white font-display">
                 {formatINR(data.order.total)}
               </p>
             </div>
 
-            <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1.5">
-              <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+            <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                 <span>🛡️</span> 100% Direct Bank Transfer
               </span>
               <span className="text-[10px] text-white/60 font-medium">0% Gateway Convenience Fees</span>
@@ -219,7 +219,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           </div>
         </div>
 
-        {/* Multi-Method Dynamic Payment Desk (QR / UPI ID / Apps / Card & Bank Transfer) */}
+        {/* Multi-Method Dynamic Payment Desk with Clean Dropdown (QR / 1-Tap Apps / UPI ID) */}
         <DynamicUpiQr
           upiId={upiId}
           amount={amount}
@@ -228,55 +228,8 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           staticQrPath={data.paymentSettings?.qrCodePath}
         />
 
-        {/* Visual 3-Step Verification Journey */}
-        <div className="p-5 sm:p-6 rounded-3xl border border-[#E7DFD5] bg-white dark:bg-neutral-800/80 shadow-xs space-y-3.5 text-left">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-[#141416] dark:text-white flex items-center gap-1.5">
-              <span>📋</span> Step-by-Step Payment Journey
-            </span>
-            <span className="text-[10px] font-bold text-[#C59B27] bg-[#FAF6EE] px-2.5 py-0.5 rounded-full border border-[#E7D6A8]">
-              3 Simple Steps
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-            {/* Step 1 */}
-            <div className="p-3 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] space-y-1">
-              <div className="flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-full bg-[#141416] text-[#C59B27] font-black text-[10px] flex items-center justify-center">1</span>
-                <span className="text-xs font-bold text-[#141416] dark:text-white">Choose & Pay</span>
-              </div>
-              <p className="text-[11px] text-[#6B7280] leading-snug">
-                Pay using QR Scan, UPI ID, 1-Tap App, or Bank Transfer.
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="p-3 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] space-y-1">
-              <div className="flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-full bg-[#141416] text-[#C59B27] font-black text-[10px] flex items-center justify-center">2</span>
-                <span className="text-xs font-bold text-[#141416] dark:text-white">Save Receipt</span>
-              </div>
-              <p className="text-[11px] text-[#6B7280] leading-snug">
-                Take a screenshot of completed payment with 12-digit UTR.
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="p-3 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-900 border border-[#E7DFD5] space-y-1">
-              <div className="flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-full bg-[#141416] text-[#C59B27] font-black text-[10px] flex items-center justify-center">3</span>
-                <span className="text-xs font-bold text-[#141416] dark:text-white">Upload & Confirm</span>
-              </div>
-              <p className="text-[11px] text-[#6B7280] leading-snug">
-                Upload image & enter 12-digit UTR below for priority dispatch.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Luxury Payment Confirmation Submission Form */}
-        <form onSubmit={submitPayment} className="space-y-6 text-left pt-2 border-t border-[#E7DFD5] dark:border-neutral-800">
+        {/* Payment Confirmation Submission Form */}
+        <form onSubmit={submitPayment} className="space-y-5 text-left pt-2 border-t border-[#E7DFD5] dark:border-neutral-800">
           
           {/* Screenshot Upload Dropzone */}
           <div className="space-y-2">
