@@ -74,6 +74,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
   const [showOrderItems, setShowOrderItems] = useState(false);
   const [showUtrHelper, setShowUtrHelper] = useState(false);
   const [appPaymentAttempted, setAppPaymentAttempted] = useState(false);
+  const [paymentAttemptResult, setPaymentAttemptResult] = useState<"SUCCESS" | "FAILED" | null>(null);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -114,7 +115,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
   useEffect(() => {
     const isPaidParam = searchParams.get("paid") === "true";
     const appRef = searchParams.get("ApprovalRefNo") || searchParams.get("approvalRefNo") || searchParams.get("txnId") || searchParams.get("txnRef") || searchParams.get("refId");
-    const statusParam = searchParams.get("Status") || searchParams.get("status") || searchParams.get("responseCode");
+    const statusParam = (searchParams.get("Status") || searchParams.get("status") || searchParams.get("responseCode") || "").toUpperCase();
     const hadAppLaunch = typeof window !== "undefined" && sessionStorage.getItem("fc_app_payment_initiated") === "true";
 
     if (appRef && !utr) {
@@ -122,7 +123,16 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
       success("Payment Reference Detected", `Auto-filled UTR: #${appRef}`);
     }
 
-    if (isPaidParam || hadAppLaunch || statusParam) {
+    if (statusParam === "SUCCESS" || statusParam === "00") {
+      setPaymentAttemptResult("SUCCESS");
+      setAppPaymentAttempted(false);
+      setTimeout(() => {
+        uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
+    } else if (statusParam === "FAILURE" || statusParam === "FAILED" || statusParam === "CANCELLED" || statusParam === "DECLINED") {
+      setPaymentAttemptResult("FAILED");
+      setAppPaymentAttempted(false);
+    } else if (isPaidParam || hadAppLaunch) {
       setAppPaymentAttempted(true);
       setTimeout(() => {
         uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -527,6 +537,8 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
               <button
                 type="button"
                 onClick={() => {
+                  setPaymentAttemptResult("SUCCESS");
+                  setAppPaymentAttempted(false);
                   uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
                 }}
                 className="p-3 rounded-2xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-950 text-xs font-bold transition-all text-center cursor-pointer shadow-2xs flex items-center justify-center gap-2"
@@ -541,14 +553,49 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
                   if (typeof window !== "undefined") {
                     sessionStorage.removeItem("fc_app_payment_initiated");
                   }
+                  setPaymentAttemptResult("FAILED");
                   setAppPaymentAttempted(false);
                 }}
                 className="p-3 rounded-2xl border border-[#D9D0C5] bg-[#FAF8F5] dark:bg-neutral-900 hover:bg-[#F0EBE4] text-[#5A5E69] dark:text-neutral-300 text-xs font-bold transition-all text-center cursor-pointer shadow-2xs flex items-center justify-center gap-2"
               >
                 <span>❌ Didn&apos;t Pay / Backed Out</span>
-                <span className="text-[10px] font-medium text-[#787C87]">(Try Again / Use QR)</span>
+                <span className="text-[10px] font-medium text-[#787C87]">(Keep in Care / Retry)</span>
               </button>
             </div>
+          </div>
+        )}
+
+        {/* 2B. EXPLICIT SUCCESS BANNER */}
+        {paymentAttemptResult === "SUCCESS" && !submitted && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100 space-y-2 text-left animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                <span>✅</span> Paid Successfully in App!
+              </span>
+              <span className="text-[10px] font-bold bg-emerald-200/80 dark:bg-emerald-800 text-emerald-950 dark:text-emerald-100 px-2.5 py-0.5 rounded-full">
+                Step 2: Submit Proof
+              </span>
+            </div>
+            <p className="text-xs text-emerald-800 dark:text-emerald-300">
+              Great! Please attach your transaction screenshot or enter your 12-digit UTR below so our team can verify and dispatch your order.
+            </p>
+          </div>
+        )}
+
+        {/* 2C. EXPLICIT INCOMPLETE / BACKED OUT BANNER */}
+        {paymentAttemptResult === "FAILED" && !submitted && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-100 space-y-2 text-left animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                <span>⏳</span> Payment Incomplete / Backed Out
+              </span>
+              <span className="text-[10px] font-bold bg-amber-200/80 dark:bg-amber-800 text-amber-950 dark:text-amber-100 px-2.5 py-0.5 rounded-full">
+                Order Kept in Care
+              </span>
+            </div>
+            <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+              No worries! Your order <strong>#{data.order.orderNumber}</strong> is safely kept in your account. You can retry paying with any UPI app or scan the Amount-Locked QR code below.
+            </p>
           </div>
         )}
 
