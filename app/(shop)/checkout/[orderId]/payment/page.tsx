@@ -48,6 +48,7 @@ type OrderData = {
       status: string;
       utrNumber?: string | null;
       screenshotPath?: string | null;
+      rejectionReason?: string | null;
       submittedAt?: string | null;
       verifiedAt?: string | null;
     } | null;
@@ -225,12 +226,72 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
   }
 
   const isVerified = data.order.payment?.status === "VERIFIED" || data.order.status === "CONFIRMED";
-  const isUnderReview = data.order.payment?.status === "UNDER_REVIEW" || submitted;
+  const isRejected = data.order.payment?.status === "REJECTED";
+  const isUnderReview = (data.order.payment?.status === "UNDER_REVIEW" || submitted) && !isRejected;
   const address = data.order.shippingAddressSnapshot;
   const items = data.order.items || [];
   const upiId = data.paymentSettings?.upiId || "9771039201@upi";
   const amount = Number(data.order.total);
   const isUtrValid = utr.trim().length >= 10;
+
+  // Render Rejected / Verification Unsuccessful View
+  if (isRejected) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16 sm:py-20 text-center animate-in fade-in zoom-in-95 duration-400">
+        <div className="p-7 sm:p-10 rounded-[32px] border border-rose-200 bg-[#FAF8F5] dark:bg-neutral-900 shadow-2xl space-y-6 relative overflow-hidden text-left">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-3xl shadow-lg">
+              ✕
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-rose-600">
+                Payment Verification Issue
+              </span>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416] dark:text-white">
+                Payment Verification Unsuccessful
+              </h1>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-1">
+            <p className="font-bold">Reason for Rejection:</p>
+            <p className="text-[11px] leading-relaxed">
+              {data.order.payment?.rejectionReason || "We could not verify the transaction screenshot or UTR number provided."}
+            </p>
+          </div>
+
+          <p className="text-xs text-[#5A5E69] leading-relaxed">
+            Please re-check your payment app receipt and submit the correct payment screenshot and 12-digit UTR reference.
+          </p>
+
+          <div className="pt-2 flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setSubmitted(false);
+                setFile(null);
+                setPreviewUrl(null);
+                setUtr("");
+                setError(null);
+                if (data.order.payment) {
+                  data.order.payment.status = "PAYMENT_PENDING";
+                }
+              }}
+              className="w-full py-3.5 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider bg-[#141416] text-[#C59B27] hover:bg-[#25262B] hover:text-white transition-all shadow-lg text-center cursor-pointer block"
+            >
+              🔁 Re-Submit Payment Screenshot & UTR →
+            </button>
+            <Link
+              href="/shop"
+              className="text-xs font-semibold text-[#787C87] hover:text-[#141416] transition-colors py-1 text-center"
+            >
+              ← Return to Boutique Collections
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Render Confirmation or Under Review View
   if (isVerified || isUnderReview) {
@@ -241,24 +302,24 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           
           <div className="flex items-center gap-4">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg ${
-              isVerified ? "bg-emerald-600 text-white" : "bg-emerald-600 text-white"
+              isVerified ? "bg-emerald-600 text-white" : "bg-gradient-to-tr from-[#141416] to-[#2B2C30] text-[#C59B27] border border-[#C59B27]/50"
             }`}>
-              {isVerified ? "✓" : "🎉"}
+              {isVerified ? "✓" : "⏳"}
             </div>
             <div>
-              <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${isVerified ? "text-emerald-700" : "text-emerald-600"}`}>
-                {isVerified ? "Order Confirmed & Invoiced" : "Payment Successful · Awaiting Admin Verification"}
+              <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${isVerified ? "text-emerald-700" : "text-[#C59B27]"}`}>
+                {isVerified ? "Order Confirmed & Invoiced" : "Payment Proof Submitted · Under Review"}
               </span>
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416] dark:text-white">
-                {isVerified ? "Payment Verified & Confirmed!" : "Payment Completed Successfully!"}
+                {isVerified ? "Payment Verified & Order Confirmed!" : "Payment Proof Logged Successfully"}
               </h1>
             </div>
           </div>
 
           <p className="text-xs sm:text-sm text-[#5A5E69] dark:text-neutral-300 leading-relaxed">
             {isVerified
-              ? "We have verified your direct UPI transaction. Your boutique package is now confirmed and transitioning to priority dispatch."
-              : `Your payment of ${formatINR(data.order.total)} has been successfully recorded with UTR reference #${data.order.payment?.utrNumber || utr}. Our boutique verification team is conducting a quick security check to release your package for dispatch.`}
+              ? "We have verified your direct UPI transaction. Your boutique package is now officially confirmed and transitioning to priority dispatch."
+              : `Your payment of ${formatINR(data.order.total)} has been recorded with UTR reference #${data.order.payment?.utrNumber || utr}. Our verification desk is conducting a standard security confirmation to release your package for dispatch.`}
           </p>
 
           {/* Verification Timeline Status */}
@@ -282,7 +343,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
                 isVerified ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
               }`}>
-                {isVerified ? "Confirmed & Verified ✓" : "Payment Received · Under Review ⏳"}
+                {isVerified ? "Payment Verified & Confirmed ✓" : "Payment Proof Received · Under Review ⏳"}
               </span>
             </div>
           </div>
