@@ -44,7 +44,7 @@ export default function DynamicUpiQr({
   upiId,
   amount,
   orderNumber,
-  payeeName = "Fashion Cart",
+  payeeName = "Bablu Kumar",
   staticQrPath,
   onAppLaunched,
 }: DynamicUpiQrProps) {
