@@ -11,27 +11,28 @@ export type UpiPaymentParams = {
 
 /**
  * Builds an official NPCI standard UPI Payment URI.
- * When scanned or launched by any UPI app (GPay, PhonePe, Paytm, BHIM, CRED, etc.),
- * the app automatically pre-populates and locks the exact order amount,
- * and passes the return callback URL to redirect back after payment.
+ * Uses %20 for spaces and preserves raw @ in UPI ID for clean rendering in Google Pay / PhonePe.
  */
 export function buildUpiPaymentUri(params: UpiPaymentParams): string {
   const cleanUpi = params.upiId.trim();
   const cleanAmount = Number(params.amount).toFixed(2);
-  const cleanPayee = (params.payeeName || "Fashion Cart").replace(/[^a-zA-Z0-9 ]/g, "").trim() || "Fashion Cart";
+  const payee = (params.payeeName || "Fashion Cart").trim();
   const note = params.transactionNote || `Order #${params.orderNumber}`;
 
-  const searchParams = new URLSearchParams({
-    pa: cleanUpi,
-    pn: cleanPayee,
-    am: cleanAmount,
-    cu: "INR",
-    tn: note,
-    tr: params.orderNumber,
-    ...(params.callbackUrl ? { url: params.callbackUrl } : {}),
-  });
+  const queryParts = [
+    `pa=${encodeURIComponent(cleanUpi).replace(/%40/g, "@")}`,
+    `pn=${encodeURIComponent(payee).replace(/%20/g, "%20")}`,
+    `am=${cleanAmount}`,
+    `cu=INR`,
+    `tn=${encodeURIComponent(note)}`,
+    `tr=${encodeURIComponent(params.orderNumber)}`,
+  ];
 
-  return `upi://pay?${searchParams.toString()}`;
+  if (params.callbackUrl) {
+    queryParts.push(`url=${encodeURIComponent(params.callbackUrl)}`);
+  }
+
+  return `upi://pay?${queryParts.join("&")}`;
 }
 
 /**

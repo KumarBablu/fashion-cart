@@ -237,34 +237,30 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
   // Render Rejected / Verification Unsuccessful View
   if (isRejected) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-16 sm:py-20 text-center animate-in fade-in zoom-in-95 duration-400">
-        <div className="p-7 sm:p-10 rounded-[32px] border border-rose-200 bg-[#FAF8F5] dark:bg-neutral-900 shadow-2xl space-y-6 relative overflow-hidden text-left">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-3xl shadow-lg">
+      <div className="mx-auto max-w-lg px-4 py-16 text-center animate-in fade-in zoom-in-95 duration-300">
+        <div className="p-7 sm:p-8 rounded-[32px] border border-rose-200 bg-white dark:bg-neutral-900 shadow-xl space-y-5 text-left">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-2xl shadow-md shrink-0">
               ✕
             </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-rose-600">
-                Payment Verification Issue
+              <span className="text-[10px] font-black uppercase tracking-wider text-rose-600">
+                Action Required
               </span>
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416] dark:text-white">
-                Payment Verification Unsuccessful
+              <h1 className="font-display text-xl font-bold text-[#141416] dark:text-white">
+                Payment Verification Issue
               </h1>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-1">
-            <p className="font-bold">Reason for Rejection:</p>
+          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-1">
+            <p className="font-bold">Reason:</p>
             <p className="text-[11px] leading-relaxed">
-              {data.order.payment?.rejectionReason || "We could not verify the transaction screenshot or UTR number provided."}
+              {data.order.payment?.rejectionReason || "UTR number or screenshot mismatched."}
             </p>
           </div>
 
-          <p className="text-xs text-[#5A5E69] leading-relaxed">
-            Please re-check your payment app receipt and submit the correct payment screenshot and 12-digit UTR reference.
-          </p>
-
-          <div className="pt-2 flex flex-col gap-3">
+          <div className="pt-1 flex flex-col gap-2.5">
             <button
               type="button"
               onClick={() => {
@@ -277,15 +273,15 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
                   data.order.payment.status = "PAYMENT_PENDING";
                 }
               }}
-              className="w-full py-3.5 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider bg-[#141416] text-[#C59B27] hover:bg-[#25262B] hover:text-white transition-all shadow-lg text-center cursor-pointer block"
+              className="w-full py-3 px-5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#141416] text-[#C59B27] hover:bg-[#25262B] hover:text-white transition-all shadow-md text-center cursor-pointer block"
             >
-              🔁 Re-Submit Payment Screenshot & UTR →
+              🔁 Re-Submit Screenshot & UTR →
             </button>
             <Link
               href="/shop"
               className="text-xs font-semibold text-[#787C87] hover:text-[#141416] transition-colors py-1 text-center"
             >
-              ← Return to Boutique Collections
+              ← Back to Boutique
             </Link>
           </div>
         </div>
@@ -296,77 +292,76 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
   // Render Confirmation or Under Review View
   if (isVerified || isUnderReview) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-16 sm:py-20 text-center animate-in fade-in zoom-in-95 duration-400">
-        <div className="p-7 sm:p-10 rounded-[32px] border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-2xl space-y-6 relative overflow-hidden text-left">
-          <div className="absolute -top-12 -right-12 w-36 h-36 bg-[#C59B27]/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="mx-auto max-w-lg px-4 py-16 text-center animate-in fade-in zoom-in-95 duration-300">
+        <div className="p-7 sm:p-8 rounded-[32px] border border-[#E7DFD5] bg-white dark:bg-neutral-900 shadow-xl space-y-5 text-left">
           
-          <div className="flex items-center gap-4">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg ${
-              isVerified ? "bg-emerald-600 text-white" : "bg-gradient-to-tr from-[#141416] to-[#2B2C30] text-[#C59B27] border border-[#C59B27]/50"
+          <div className="flex items-center gap-3.5">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-md shrink-0 ${
+              isVerified ? "bg-emerald-600 text-white" : "bg-[#141416] text-[#C59B27] border border-[#C59B27]/40"
             }`}>
               {isVerified ? "✓" : "⏳"}
             </div>
             <div>
-              <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${isVerified ? "text-emerald-700" : "text-[#C59B27]"}`}>
-                {isVerified ? "Order Confirmed & Invoiced" : "Payment Proof Submitted · Under Review"}
+              <span className={`text-[10px] font-black uppercase tracking-wider ${isVerified ? "text-emerald-700" : "text-[#C59B27]"}`}>
+                {isVerified ? "Confirmed & Invoiced" : "Payment Proof Received"}
               </span>
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416] dark:text-white">
-                {isVerified ? "Payment Verified & Order Confirmed!" : "Payment Proof Logged Successfully"}
+              <h1 className="font-display text-xl sm:text-2xl font-bold text-[#141416] dark:text-white">
+                {isVerified ? "Payment Confirmed!" : "Verification in Progress"}
               </h1>
             </div>
           </div>
 
-          <p className="text-xs sm:text-sm text-[#5A5E69] dark:text-neutral-300 leading-relaxed">
+          <p className="text-xs text-[#5A5E69] dark:text-neutral-300 leading-relaxed">
             {isVerified
-              ? "We have verified your direct UPI transaction. Your boutique package is now officially confirmed and transitioning to priority dispatch."
-              : `Your payment of ${formatINR(data.order.total)} has been recorded with UTR reference #${data.order.payment?.utrNumber || utr}. Our verification desk is conducting a standard security confirmation to release your package for dispatch.`}
+              ? "Payment verified. Your order is confirmed and queued for priority dispatch."
+              : "Your payment proof has been recorded. Our team will verify and confirm your order shortly."}
           </p>
 
-          {/* Verification Timeline Status */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-neutral-800 border border-[#E7DFD5] space-y-3">
-            <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
-              <span>Order Reference:</span>
-              <span className="font-mono text-[#C59B27]">#{data.order.orderNumber}</span>
+          {/* Quick Summary Card */}
+          <div className="p-4 rounded-2xl bg-[#FAF8F5] dark:bg-neutral-800 border border-[#E7DFD5] space-y-2.5 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[#787C87]">Order Reference:</span>
+              <span className="font-mono font-bold text-[#141416] dark:text-white">#{data.order.orderNumber}</span>
             </div>
-            <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
-              <span>Paid Amount:</span>
-              <span className="font-mono text-emerald-600 font-black">{formatINR(data.order.total)}</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[#787C87]">Amount Paid:</span>
+              <span className="font-mono font-black text-emerald-600">{formatINR(data.order.total)}</span>
             </div>
             {data.order.payment?.utrNumber && (
-              <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
-                <span>Submitted UTR / Ref:</span>
-                <span className="font-mono text-[#5A5E69]">{data.order.payment.utrNumber}</span>
+              <div className="flex items-center justify-between">
+                <span className="text-[#787C87]">UTR Number:</span>
+                <span className="font-mono font-bold text-[#141416] dark:text-white">{data.order.payment.utrNumber}</span>
               </div>
             )}
-            <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
-              <span>Current Status:</span>
+            <div className="flex items-center justify-between pt-1 border-t border-[#E7DFD5]">
+              <span className="text-[#787C87]">Status:</span>
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
                 isVerified ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
               }`}>
-                {isVerified ? "Payment Verified & Confirmed ✓" : "Payment Proof Received · Under Review ⏳"}
+                {isVerified ? "Verified ✓" : "Under Review ⏳"}
               </span>
             </div>
           </div>
 
           {!isVerified && (
             <div className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF6EE] border border-[#E7D6A8] text-xs text-[#5A5E69]">
-              <span>Waiting for admin approval?</span>
+              <span>Waiting for approval?</span>
               <button
                 type="button"
                 onClick={manualCheckStatus}
                 disabled={refreshingStatus}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#141416] text-[#C59B27] hover:bg-[#25262B] transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#141416] text-[#C59B27] hover:bg-[#25262B] transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
               >
                 {refreshingStatus && <span className="w-3 h-3 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />}
-                <span>{refreshingStatus ? "Checking…" : "🔄 Re-Check Status"}</span>
+                <span>{refreshingStatus ? "Checking…" : "🔄 Refresh"}</span>
               </button>
             </div>
           )}
 
-          <div className="pt-2 flex flex-col gap-3">
+          <div className="pt-1 flex flex-col gap-2.5">
             <Link
               href={`/account/orders/${data.order.id}`}
-              className="w-full py-3.5 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider bg-[#141416] text-[#C59B27] hover:bg-[#25262B] hover:text-white transition-all shadow-lg text-center block"
+              className="w-full py-3 px-5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#141416] text-[#C59B27] hover:bg-[#25262B] hover:text-white transition-all shadow-md text-center block"
             >
               View Order Tracking & Invoice →
             </Link>
@@ -374,7 +369,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
               href="/shop"
               className="text-xs font-semibold text-[#787C87] hover:text-[#141416] transition-colors py-1 text-center"
             >
-              ← Return to Boutique Collections
+              ← Back to Boutique
             </Link>
           </div>
         </div>
@@ -401,6 +396,19 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
       {/* Main Luxury Container */}
       <div className="rounded-[32px] border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900/90 shadow-xl p-5 sm:p-8 space-y-6 relative overflow-hidden backdrop-blur-xs">
         
+        {/* Step Progression Bar */}
+        <div className="flex items-center justify-between p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-neutral-800 border border-[#E7DFD5] text-xs">
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-[#141416] text-[#C59B27] flex items-center justify-center font-bold text-[10px]">1</span>
+            <span className="font-bold text-[#141416] dark:text-white text-[11px] sm:text-xs">Pay via UPI App / QR</span>
+          </div>
+          <span className="text-[#C59B27] font-black text-xs">➔</span>
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-[#C59B27] text-white flex items-center justify-center font-bold text-[10px]">2</span>
+            <span className="font-bold text-[#141416] dark:text-white text-[11px] sm:text-xs">Attach Screenshot to Confirm</span>
+          </div>
+        </div>
+
         {/* 1. BASIC ORDER DETAILS & AMOUNT SUMMARY CARD */}
         <div className="rounded-3xl bg-white dark:bg-neutral-800/90 border border-[#E7DFD5] p-5 sm:p-6 shadow-sm space-y-4 text-left">
           
