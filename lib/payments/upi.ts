@@ -26,6 +26,7 @@ export function buildUpiQrString(params: UpiPaymentParams): string {
 
 /**
  * Builds an official, 100% compliant NPCI UPI Payment Deep Link URI for mobile browser intent handlers.
+ * Preserves literal spaces so BHIM, GPay, and PhonePe never show literal '%20' on mobile screens.
  */
 export function buildUpiPaymentUri(params: UpiPaymentParams): string {
   const cleanUpi = params.upiId.trim();
@@ -33,9 +34,9 @@ export function buildUpiPaymentUri(params: UpiPaymentParams): string {
   const payee = cleanUpi.includes("9771039201")
     ? "Bablu Kumar"
     : (params.payeeName || "Bablu Kumar").replace(/[^a-zA-Z0-9 ]/g, " ").trim();
-  const cleanNote = (params.transactionNote || `Order ${params.orderNumber}`).replace(/[^a-zA-Z0-9 ]/g, " ").trim();
+  const cleanNote = (params.transactionNote || `Order ${params.orderNumber}`).replace(/[^a-zA-Z0-9 -]/g, "").trim();
 
-  const query = `pa=${cleanUpi}&pn=${encodeURIComponent(payee)}&am=${cleanAmount}&cu=INR&tn=${encodeURIComponent(cleanNote)}`;
+  const query = `pa=${cleanUpi}&pn=${payee}&am=${cleanAmount}&cu=INR&tn=${cleanNote}`;
 
   switch (params.appScheme) {
     case "phonepe":
