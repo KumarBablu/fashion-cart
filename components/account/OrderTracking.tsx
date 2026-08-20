@@ -11,9 +11,15 @@ type OrderTrackingProps = {
 
 const STAGES = [
   {
+    key: "PAYMENT",
+    title: "Payment Verification",
+    desc: "Awaiting payment proof and billing verification.",
+    icon: "⏳",
+  },
+  {
     key: "CONFIRMED",
     title: "Order Confirmed",
-    desc: "Your order has been verified and confirmed.",
+    desc: "Payment verified. Your order is officially confirmed.",
     icon: "✓",
   },
   {
@@ -48,14 +54,16 @@ function getStageIndex(status: string): number {
     case "PAYMENT_REVIEW":
       return 0;
     case "CONFIRMED":
-      return 0;
+      return 1;
     case "PROCESSING":
     case "PACKED":
-      return 1;
-    case "SHIPPED":
       return 2;
-    case "DELIVERED":
+    case "SHIPPED":
+      return 3;
+    case "OUT_FOR_DELIVERY":
       return 4;
+    case "DELIVERED":
+      return 5;
     default:
       return 0;
   }
@@ -151,7 +159,8 @@ export default function OrderTracking({
       {/* Flipkart-Style Vertical / Stepper Timeline */}
       <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-300 dark:before:bg-slate-700">
         {STAGES.map((stage, idx) => {
-          const isDone = idx <= activeIndex;
+          const isPendingPayment = status === "PENDING_PAYMENT" || status === "PAYMENT_REVIEW";
+          const isDone = isPendingPayment ? false : idx <= activeIndex;
           const isCurrent = idx === activeIndex && !isDelivered;
 
           return (
