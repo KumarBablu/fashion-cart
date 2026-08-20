@@ -255,24 +255,24 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           
           <div className="flex items-center gap-4">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg ${
-              isVerified ? "bg-emerald-600 text-white" : "bg-gradient-to-tr from-[#141416] to-[#2B2C30] text-[#C59B27] border border-[#C59B27]/50"
+              isVerified ? "bg-emerald-600 text-white" : "bg-emerald-600 text-white"
             }`}>
-              {isVerified ? "✓" : "⏳"}
+              {isVerified ? "✓" : "🎉"}
             </div>
             <div>
-              <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${isVerified ? "text-emerald-700" : "text-[#C59B27]"}`}>
-                {isVerified ? "Order Confirmed & Invoiced" : "Payment Verification In Progress"}
+              <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${isVerified ? "text-emerald-700" : "text-emerald-600"}`}>
+                {isVerified ? "Order Confirmed & Invoiced" : "Payment Successful · Awaiting Admin Verification"}
               </span>
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416] dark:text-white">
-                {isVerified ? "Payment Successfully Verified!" : "Proof Logged & Under Review"}
+                {isVerified ? "Payment Verified & Confirmed!" : "Payment Completed Successfully!"}
               </h1>
             </div>
           </div>
 
           <p className="text-xs sm:text-sm text-[#5A5E69] dark:text-neutral-300 leading-relaxed">
             {isVerified
-              ? "We have verified your direct UPI transaction. Your boutique package is now queued for priority dispatch."
-              : "Your payment screenshot and UTR reference have been recorded. Our team will verify and confirm your order within minutes."}
+              ? "We have verified your direct UPI transaction. Your boutique package is now confirmed and transitioning to priority dispatch."
+              : `Your payment of ${formatINR(data.order.total)} has been successfully recorded with UTR reference #${data.order.payment?.utrNumber || utr}. Our boutique verification team is conducting a quick security check to release your package for dispatch.`}
           </p>
 
           {/* Verification Timeline Status */}
@@ -282,8 +282,8 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
               <span className="font-mono text-[#C59B27]">#{data.order.orderNumber}</span>
             </div>
             <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
-              <span>Payable Amount:</span>
-              <span className="font-mono">{formatINR(data.order.total)}</span>
+              <span>Paid Amount:</span>
+              <span className="font-mono text-emerald-600 font-black">{formatINR(data.order.total)}</span>
             </div>
             {data.order.payment?.utrNumber && (
               <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
@@ -292,11 +292,11 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
               </div>
             )}
             <div className="flex items-center justify-between text-xs font-bold text-[#141416] dark:text-white">
-              <span>Status:</span>
+              <span>Current Status:</span>
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
                 isVerified ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
               }`}>
-                {isVerified ? "Confirmed ✓" : "Under Review ⏳"}
+                {isVerified ? "Confirmed & Verified ✓" : "Payment Received · Under Review ⏳"}
               </span>
             </div>
           </div>
@@ -360,10 +360,15 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           {/* Header Row */}
           <div className="flex items-center justify-between border-b border-[#E7DFD5] pb-3">
             <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#787C87] block">
-                Order Summary
-              </span>
-              <p className="font-mono text-sm font-black text-[#141416] dark:text-white">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#787C87]">
+                  Order Summary
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
+                  ⏳ Payment Pending
+                </span>
+              </div>
+              <p className="font-mono text-sm font-black text-[#141416] dark:text-white mt-0.5">
                 #{data.order.orderNumber}
               </p>
             </div>
