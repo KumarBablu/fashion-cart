@@ -72,13 +72,22 @@ export default function FloatingOfferBadge() {
   );
 
   const loadSnackbar = useCallback(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("fc_promo_snackbar_dismissed") === "true") {
+      setDismissed(true);
+      return;
+    }
+
     fetch("/api/promotions/active?placement=FLOAT_SNACKBAR")
       .then((res) => res.json())
       .then((data) => {
         if (data?.promotions && data.promotions.length > 0) {
+          if (typeof window !== "undefined" && sessionStorage.getItem("fc_promo_snackbar_dismissed") === "true") {
+            setDismissed(true);
+            return;
+          }
+
           const promo = data.promotions[0] as Promotion;
           setPromotions(data.promotions);
-          setDismissed(false);
 
           if (timerRef.current) clearTimeout(timerRef.current);
 
@@ -101,11 +110,20 @@ export default function FloatingOfferBadge() {
   }, []);
 
   useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("fc_promo_snackbar_dismissed") === "true") {
+      setDismissed(true);
+      return;
+    }
+
     if (!isExcludedPage) {
       loadSnackbar();
     }
 
     const handleRefresh = () => {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("fc_promo_snackbar_dismissed");
+      }
+      setDismissed(false);
       if (!isExcludedPage) {
         loadSnackbar();
       }
@@ -130,12 +148,19 @@ export default function FloatingOfferBadge() {
     success(`Promo code "${code}" copied!`);
   }
 
+  function handleDismiss() {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("fc_promo_snackbar_dismissed", "true");
+    }
+    setDismissed(true);
+  }
+
   return (
     <div className="fixed bottom-5 right-5 z-40 max-w-sm w-full animate-in slide-in-from-bottom-5 duration-300">
       <div className={`p-4 rounded-3xl ${theme.bg} ${theme.text} border ${theme.border} shadow-2xl flex items-center gap-3.5 relative overflow-hidden`}>
         {/* Dismiss Button */}
         <button
-          onClick={() => setDismissed(true)}
+          onClick={handleDismiss}
           className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 text-white/80 flex items-center justify-center text-xs transition-colors cursor-pointer"
           aria-label="Dismiss offer"
         >

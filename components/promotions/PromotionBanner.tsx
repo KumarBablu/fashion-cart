@@ -64,13 +64,22 @@ export default function PromotionBanner() {
   const bannerTimer = useRef<NodeJS.Timeout | null>(null);
 
   const loadBanners = useCallback(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("fc_promo_banner_dismissed") === "true") {
+      setDismissed(true);
+      return;
+    }
+
     fetch("/api/promotions/active?placement=TOP_BANNER")
       .then((res) => res.json())
       .then((data) => {
         if (data?.promotions && data.promotions.length > 0) {
+          if (typeof window !== "undefined" && sessionStorage.getItem("fc_promo_banner_dismissed") === "true") {
+            setDismissed(true);
+            return;
+          }
+
           const promo = data.promotions[0] as Promotion;
           setPromotions(data.promotions);
-          setDismissed(false);
 
           if (bannerTimer.current) clearTimeout(bannerTimer.current);
 
@@ -93,10 +102,19 @@ export default function PromotionBanner() {
   }, []);
 
   useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("fc_promo_banner_dismissed") === "true") {
+      setDismissed(true);
+      return;
+    }
+
     loadBanners();
 
     // Listen for custom promotion refresh events (e.g. clicking Fashion Cart logo)
     const handleRefresh = () => {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("fc_promo_banner_dismissed");
+      }
+      setDismissed(false);
       loadBanners();
     };
 
@@ -105,7 +123,7 @@ export default function PromotionBanner() {
       window.removeEventListener("fc_refresh_promotions", handleRefresh);
       if (bannerTimer.current) clearTimeout(bannerTimer.current);
     };
-  }, [loadBanners, pathname]);
+  }, [loadBanners]);
 
   if (dismissed || !isVisible || promotions.length === 0) return null;
 
@@ -113,6 +131,9 @@ export default function PromotionBanner() {
   const theme = THEME_STYLES[currentPromo.theme] || THEME_STYLES.FESTIVE_GOLD;
 
   function handleDismiss() {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("fc_promo_banner_dismissed", "true");
+    }
     setDismissed(true);
   }
 
