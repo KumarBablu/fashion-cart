@@ -163,6 +163,23 @@ export default function OrderTracking({
           const isDone = isPendingPayment ? false : idx <= activeIndex;
           const isCurrent = idx === activeIndex && !isDelivered;
 
+          // Dynamic title & description for payment stage
+          let stageTitle = stage.title;
+          let stageDesc = stage.desc;
+
+          if (stage.key === "PAYMENT") {
+            if (status === "PENDING_PAYMENT") {
+              stageTitle = "Payment Pending";
+              stageDesc = "Payment not yet received. Please complete payment to confirm your order.";
+            } else if (status === "PAYMENT_REVIEW") {
+              stageTitle = "Payment Under Review";
+              stageDesc = "Payment proof submitted. Our billing desk is verifying your transaction.";
+            } else {
+              stageTitle = "Payment Verified";
+              stageDesc = "Payment received and verified successfully.";
+            }
+          }
+
           return (
             <div key={stage.key} className="relative flex items-start gap-4">
               {/* Stepper Node Icon */}
@@ -187,7 +204,7 @@ export default function OrderTracking({
                       isDone ? "text-emerald-600 dark:text-emerald-400" : isCurrent ? "text-primary" : "text-dim"
                     }`}
                   >
-                    {stage.title}
+                    {stageTitle}
                   </h4>
                   {isCurrent && (
                     <span className="px-2 py-0.2 rounded-full text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
@@ -195,7 +212,7 @@ export default function OrderTracking({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-dim leading-relaxed">{stage.desc}</p>
+                <p className="text-xs text-dim leading-relaxed">{stageDesc}</p>
 
                 {/* Additional context for shipped status */}
                 {stage.key === "SHIPPED" && carrierName && (
