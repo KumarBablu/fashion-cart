@@ -6,33 +6,38 @@ export type UpiPaymentParams = {
   amount: number;
   orderNumber: string;
   transactionNote?: string;
-  callbackUrl?: string;
+  appScheme?: "generic" | "gpay" | "phonepe" | "paytm" | "bhim";
 };
 
 /**
- * Builds an official NPCI standard UPI Payment URI.
- * Uses %20 for spaces and preserves raw @ in UPI ID for clean rendering in Google Pay / PhonePe.
+ * Builds an official, 100% compliant NPCI UPI Payment URI.
+ * - Strips risky parameters (like unsigned 'url' or hash '#' in note) that trigger
+ *   'UPI not verified' or 'Unverified merchant' security flags in Google Pay, PhonePe, and Paytm.
+ * - Uses clean percent-encoding for spaces and retains raw '@' in VPA.
  */
 export function buildUpiPaymentUri(params: UpiPaymentParams): string {
   const cleanUpi = params.upiId.trim();
   const cleanAmount = Number(params.amount).toFixed(2);
-  const payee = (params.payeeName || "Fashion Cart").trim();
-  const note = params.transactionNote || `Order #${params.orderNumber}`;
+  // Clean payee name to avoid bank name mismatch flags
+  const payee = (params.payeeName || "Fashion Cart").replace(/[^a-zA-Z0-9 ]/g, " ").trim();
+  // Clean note to avoid hash '#' symbol breaking URI parsing in Android intent handlers
+  const cleanNote = (params.transactionNote || `Order ${params.orderNumber}`).replace(/[#%&?]/g, "").trim();
 
-  const queryParts = [
-    `pa=${encodeURIComponent(cleanUpi).replace(/%40/g, "@")}`,
-    `pn=${encodeURIComponent(payee).replace(/%20/g, "%20")}`,
-    `am=${cleanAmount}`,
-    `cu=INR`,
-    `tn=${encodeURIComponent(note)}`,
-    `tr=${encodeURIComponent(params.orderNumber)}`,
-  ];
+  // Strict universal NPCI P2P/P2M compliant parameters
+  const query = `pa=${cleanUpi}&pn=${encodeURIComponent(payee)}&am=${cleanAmount}&cu=INR&tn=${encodeURIComponent(cleanNote)}`;
 
-  if (params.callbackUrl) {
-    queryParts.push(`url=${encodeURIComponent(params.callbackUrl)}`);
+  switch (params.appScheme) {
+    case "phonepe":
+      return `phonepe://pay?${query}`;
+    case "paytm":
+      return `paytmmp://pay?${query}`;
+    case "gpay":
+      return `gpay://upi/pay?${query}`;
+    case "bhim":
+    case "generic":
+    default:
+      return `upi://pay?${query}`;
   }
-
-  return `upi://pay?${queryParts.join("&")}`;
 }
 
 /**
@@ -42,7 +47,8 @@ export async function generateDynamicUpiQrDataUrl(
   params: UpiPaymentParams,
   options?: { size?: number; primaryColor?: string }
 ): Promise<string> {
-  const upiUri = buildUpiPaymentUri(params);
+  // Dynamic QR code always uses universal upi:// scheme
+  const upiUri = buildUpiPaymentUri({ ...params, appScheme: "generic" });
   return QRCode.toDataURL(upiUri, {
     width: options?.size || 340,
     margin: 1,
@@ -50,6 +56,6 @@ export async function generateDynamicUpiQrDataUrl(
       dark: options?.primaryColor || "#141416",
       light: "#FFFFFF",
     },
-    errorCorrectionLevel: "H",
+    errorCorrectionLevel: "M",
   });
 }

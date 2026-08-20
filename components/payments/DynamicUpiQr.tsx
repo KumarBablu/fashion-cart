@@ -59,16 +59,11 @@ export default function DynamicUpiQr({
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const { success } = useToast();
 
-  const callbackUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/checkout/${orderId || orderNumber}/payment?paid=true&from=upi_app`
-    : undefined;
-
   const upiUri = buildUpiPaymentUri({
     upiId,
     payeeName,
     amount,
     orderNumber,
-    callbackUrl,
   });
 
   // Close dropdown when clicking outside
@@ -120,6 +115,13 @@ export default function DynamicUpiQr({
     success(`${label} Copied!`, text);
   }
 
+  const getAppUri = (app: string) => {
+    let scheme: "generic" | "gpay" | "phonepe" | "paytm" | "bhim" = "generic";
+    if (app === "PhonePe") scheme = "phonepe";
+    else if (app === "Paytm") scheme = "paytm";
+    return buildUpiPaymentUri({ upiId, payeeName, amount, orderNumber, appScheme: scheme });
+  };
+
   const handleAppClick = (appName: string) => {
     setSelectedApp(appName);
     if (typeof window !== "undefined") {
@@ -127,7 +129,8 @@ export default function DynamicUpiQr({
       // If on mobile, launch the UPI protocol handler
       const isMobile = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent || "");
       if (isMobile) {
-        window.location.href = upiUri;
+        const targetUri = getAppUri(appName);
+        window.location.href = targetUri;
       }
     }
     onAppLaunched?.();
@@ -457,8 +460,23 @@ export default function DynamicUpiQr({
                   )}
                 </div>
 
-                <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-[#FAF6EE] text-[#8E6C0C] border border-[#E7D6A8]">
-                  <span>Pre-filled & locked: <strong>{formatINR(amount)}</strong></span>
+                <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-[#FAF6EE] text-[#8E6C0C] border border-[#E7D6A8]">
+                    <span>Pre-filled & locked: <strong>{formatINR(amount)}</strong></span>
+                  </div>
+
+                  <a
+                    href={getAppUri(selectedApp)}
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        sessionStorage.setItem("fc_app_payment_initiated", "true");
+                      }
+                      onAppLaunched?.();
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[10px] font-bold bg-[#141416] text-[#C59B27] hover:bg-[#25262B] transition-all shadow-xs cursor-pointer"
+                  >
+                    <span>🚀 Launch {selectedApp} →</span>
+                  </a>
                 </div>
               </div>
             </div>
