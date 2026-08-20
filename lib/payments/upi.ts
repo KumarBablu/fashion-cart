@@ -10,22 +10,31 @@ export type UpiPaymentParams = {
 };
 
 /**
- * Builds an official, 100% compliant NPCI UPI Payment URI.
- * - Uses exact registered bank name (Bablu Kumar for 9771039201@upi) to ensure 0% name mismatch errors in Google Pay and PhonePe.
- * - Strips special characters from transaction note to avoid URI breaking in Android intent handlers.
+ * Builds the official string payload for scanning by QR code scanners (BHIM, GPay, PhonePe, Paytm).
+ * Uses clean unescaped UTF-8 string format required by NPCI QR scanners so regex doesn't fail on '%' characters.
+ */
+export function buildUpiQrString(params: UpiPaymentParams): string {
+  const cleanUpi = params.upiId.trim();
+  const cleanAmount = Number(params.amount).toFixed(2);
+  const payee = cleanUpi.includes("9771039201")
+    ? "Bablu Kumar"
+    : (params.payeeName || "Bablu Kumar").replace(/[^a-zA-Z0-9 ]/g, " ").trim();
+  const cleanNote = (params.transactionNote || `Order ${params.orderNumber}`).replace(/[^a-zA-Z0-9 -]/g, "").trim();
+
+  return `upi://pay?pa=${cleanUpi}&pn=${payee}&am=${cleanAmount}&cu=INR&tn=${cleanNote}`;
+}
+
+/**
+ * Builds an official, 100% compliant NPCI UPI Payment Deep Link URI for mobile browser intent handlers.
  */
 export function buildUpiPaymentUri(params: UpiPaymentParams): string {
   const cleanUpi = params.upiId.trim();
   const cleanAmount = Number(params.amount).toFixed(2);
-  
-  // Use registered bank account name for individual VPAs to guarantee NPCI name-match validation
   const payee = cleanUpi.includes("9771039201")
     ? "Bablu Kumar"
-    : (params.payeeName || "Fashion Cart").replace(/[^a-zA-Z0-9 ]/g, " ").trim();
-
+    : (params.payeeName || "Bablu Kumar").replace(/[^a-zA-Z0-9 ]/g, " ").trim();
   const cleanNote = (params.transactionNote || `Order ${params.orderNumber}`).replace(/[^a-zA-Z0-9 ]/g, " ").trim();
 
-  // Strict universal NPCI compliant parameters
   const query = `pa=${cleanUpi}&pn=${encodeURIComponent(payee)}&am=${cleanAmount}&cu=INR&tn=${encodeURIComponent(cleanNote)}`;
 
   switch (params.appScheme) {
@@ -48,8 +57,8 @@ export async function generateDynamicUpiQrDataUrl(
   params: UpiPaymentParams,
   options?: { size?: number; primaryColor?: string }
 ): Promise<string> {
-  const upiUri = buildUpiPaymentUri({ ...params, appScheme: "generic" });
-  return QRCode.toDataURL(upiUri, {
+  const qrString = buildUpiQrString(params);
+  return QRCode.toDataURL(qrString, {
     width: options?.size || 340,
     margin: 1,
     color: {
