@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { formatINR } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
@@ -30,20 +31,86 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
   const [submitted, setSubmitted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [showUtrHelper, setShowUtrHelper] = useState(false);
+  const [returnedFromApp, setReturnedFromApp] = useState(false);
+  const [refreshingStatus, setRefreshingStatus] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
+  const uploadFormRef = useRef<HTMLFormElement | null>(null);
+  const searchParams = useSearchParams();
   const { success } = useToast();
 
   useEffect(() => {
     params.then(({ orderId }) => setOrderId(orderId));
   }, [params]);
 
+  // Initial load
   useEffect(() => {
     if (!orderId) return;
     fetch(`/api/orders/${orderId}`)
       .then((r) => r.json())
       .then(setData);
   }, [orderId]);
+
+  // Background polling to auto-detect if admin approved or payment status changed
+  useEffect(() => {
+    if (!orderId) return;
+    const interval = setInterval(() => {
+      fetch(`/api/orders/${orderId}`)
+        .then((r) => r.json())
+        .then((fresh) => {
+          if (fresh?.order) {
+            setData(fresh);
+          }
+        })
+        .catch(() => {});
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [orderId]);
+
+  // Return from UPI App detection (via URL query param or Tab Re-focus)
+  useEffect(() => {
+    const isPaidParam = searchParams.get("paid") === "true";
+    const hadAppLaunch = typeof window !== "undefined" && sessionStorage.getItem("fc_app_payment_initiated") === "true";
+
+    if (isPaidParam || hadAppLaunch) {
+      setReturnedFromApp(true);
+      setTimeout(() => {
+        uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
+    }
+
+    const handleWindowFocus = () => {
+      if (typeof window !== "undefined" && sessionStorage.getItem("fc_app_payment_initiated") === "true") {
+        setReturnedFromApp(true);
+        uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
+      }
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [searchParams]);
+
+  function manualCheckStatus() {
+    if (!orderId) return;
+    setRefreshingStatus(true);
+    fetch(`/api/orders/${orderId}`)
+      .then((r) => r.json())
+      .then((fresh) => {
+        setRefreshingStatus(false);
+        if (fresh?.order) {
+          setData(fresh);
+          if (fresh.order.payment?.status === "VERIFIED" || fresh.order.status === "CONFIRMED") {
+            success("Payment Verified! 🎉", "Your order is confirmed.");
+          } else {
+            success("Status Updated", `Current status: ${fresh.order.payment?.status || fresh.order.status}`);
+          }
+        }
+      })
+      .catch(() => setRefreshingStatus(false));
+  }
 
   function handleFileSelection(selected: File | null) {
     if (!selected) {
@@ -219,17 +286,44 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           </div>
         </div>
 
+        {/* Return from UPI App Alert Banner */}
+        {returnedFromApp && (
+          <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 text-emerald-900 dark:text-emerald-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">🎉</span>
+              <div>
+                <p className="font-extrabold text-emerald-950 dark:text-emerald-100">Welcome Back from UPI App!</p>
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
+                  Please attach your payment screenshot & 12-digit UTR below for instant order confirmation.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={manualCheckStatus}
+              disabled={refreshingStatus}
+              className="px-3.5 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer shrink-0 shadow-2xs flex items-center gap-1.5"
+            >
+              {refreshingStatus && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              <span>{refreshingStatus ? "Checking…" : "🔄 Check Status"}</span>
+            </button>
+          </div>
+        )}
+
         {/* Multi-Method Dynamic Payment Desk with Clean Dropdown (QR / 1-Tap Apps / UPI ID) */}
         <DynamicUpiQr
+          orderId={orderId || undefined}
           upiId={upiId}
           amount={amount}
           orderNumber={data.order.orderNumber}
           payeeName="Fashion Cart Premium Outlet"
           staticQrPath={data.paymentSettings?.qrCodePath}
+          onAppLaunched={() => setReturnedFromApp(true)}
         />
 
         {/* Payment Confirmation Submission Form */}
-        <form onSubmit={submitPayment} className="space-y-5 text-left pt-2 border-t border-[#E7DFD5] dark:border-neutral-800">
+        <form ref={uploadFormRef} onSubmit={submitPayment} className="space-y-5 text-left pt-2 border-t border-[#E7DFD5] dark:border-neutral-800">
           
           {/* Screenshot Upload Dropzone */}
           <div className="space-y-2">

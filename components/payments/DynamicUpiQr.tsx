@@ -7,21 +7,25 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { buildUpiPaymentUri, generateDynamicUpiQrDataUrl } from "@/lib/payments/upi";
 
 type DynamicUpiQrProps = {
+  orderId?: string;
   upiId: string;
   amount: number;
   orderNumber: string;
   payeeName?: string;
   staticQrPath?: string | null;
+  onAppLaunched?: () => void;
 };
 
 export type PaymentMethod = "QR" | "APPS" | "UPI_ID";
 
 export default function DynamicUpiQr({
+  orderId,
   upiId,
   amount,
   orderNumber,
   payeeName = "Fashion Cart Premium Outlet",
   staticQrPath,
+  onAppLaunched,
 }: DynamicUpiQrProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("QR");
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -32,11 +36,16 @@ export default function DynamicUpiQr({
   const [isMobile, setIsMobile] = useState(false);
   const { success } = useToast();
 
+  const callbackUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/checkout/${orderId || orderNumber}/payment?paid=true&from=upi_app`
+    : undefined;
+
   const upiUri = buildUpiPaymentUri({
     upiId,
     payeeName,
     amount,
     orderNumber,
+    callbackUrl,
   });
 
   // Detect Mobile vs Desktop for UPI App protocol support
@@ -257,7 +266,11 @@ export default function DynamicUpiQr({
             {/* Google Pay */}
             <a
               href={upiUri}
-              className="flex items-center justify-between p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-xs hover:border-[#4285F4] hover:shadow-md transition-all text-left group"
+              onClick={() => {
+                if (typeof window !== "undefined") sessionStorage.setItem("fc_app_payment_initiated", "true");
+                onAppLaunched?.();
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-xs hover:border-[#4285F4] hover:shadow-md transition-all text-left group cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#F1F5F9] flex items-center justify-center font-black text-[#4285F4] text-sm shadow-2xs">
@@ -274,7 +287,11 @@ export default function DynamicUpiQr({
             {/* PhonePe */}
             <a
               href={upiUri}
-              className="flex items-center justify-between p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-xs hover:border-[#5F259F] hover:shadow-md transition-all text-left group"
+              onClick={() => {
+                if (typeof window !== "undefined") sessionStorage.setItem("fc_app_payment_initiated", "true");
+                onAppLaunched?.();
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-xs hover:border-[#5F259F] hover:shadow-md transition-all text-left group cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#5F259F] flex items-center justify-center font-black text-white text-sm shadow-2xs">
@@ -291,7 +308,11 @@ export default function DynamicUpiQr({
             {/* Paytm */}
             <a
               href={upiUri}
-              className="flex items-center justify-between p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-xs hover:border-[#00BAF2] hover:shadow-md transition-all text-left group"
+              onClick={() => {
+                if (typeof window !== "undefined") sessionStorage.setItem("fc_app_payment_initiated", "true");
+                onAppLaunched?.();
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-xs hover:border-[#00BAF2] hover:shadow-md transition-all text-left group cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#00BAF2] flex items-center justify-center font-black text-white text-sm shadow-2xs">
@@ -308,7 +329,11 @@ export default function DynamicUpiQr({
             {/* BHIM / Any UPI */}
             <a
               href={upiUri}
-              className="flex items-center justify-between p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-xs hover:border-[#C59B27] hover:shadow-md transition-all text-left group"
+              onClick={() => {
+                if (typeof window !== "undefined") sessionStorage.setItem("fc_app_payment_initiated", "true");
+                onAppLaunched?.();
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] dark:bg-neutral-900 shadow-xs hover:border-[#C59B27] hover:shadow-md transition-all text-left group cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#141416] flex items-center justify-center font-black text-[#C59B27] text-sm shadow-2xs">

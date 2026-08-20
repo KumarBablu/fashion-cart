@@ -6,12 +6,14 @@ export type UpiPaymentParams = {
   amount: number;
   orderNumber: string;
   transactionNote?: string;
+  callbackUrl?: string;
 };
 
 /**
  * Builds an official NPCI standard UPI Payment URI.
- * When scanned by any UPI app (GPay, PhonePe, Paytm, BHIM, CRED, etc.),
- * the app automatically pre-populates and locks the exact order amount.
+ * When scanned or launched by any UPI app (GPay, PhonePe, Paytm, BHIM, CRED, etc.),
+ * the app automatically pre-populates and locks the exact order amount,
+ * and passes the return callback URL to redirect back after payment.
  */
 export function buildUpiPaymentUri(params: UpiPaymentParams): string {
   const cleanUpi = params.upiId.trim();
@@ -26,6 +28,7 @@ export function buildUpiPaymentUri(params: UpiPaymentParams): string {
     cu: "INR",
     tn: note,
     tr: params.orderNumber,
+    ...(params.callbackUrl ? { url: params.callbackUrl } : {}),
   });
 
   return `upi://pay?${searchParams.toString()}`;
