@@ -71,7 +71,6 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
   const [isDragging, setIsDragging] = useState(false);
   const [showOrderItems, setShowOrderItems] = useState(false);
   const [showUtrHelper, setShowUtrHelper] = useState(false);
-  const [returnedFromApp, setReturnedFromApp] = useState(false);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -108,29 +107,16 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
     return () => clearInterval(interval);
   }, [orderId]);
 
-  // Return from UPI App detection (via URL query param or Tab Re-focus)
+  // Smooth scroll to upload form if returning from payment app
   useEffect(() => {
     const isPaidParam = searchParams.get("paid") === "true";
     const hadAppLaunch = typeof window !== "undefined" && sessionStorage.getItem("fc_app_payment_initiated") === "true";
 
     if (isPaidParam || hadAppLaunch) {
-      setReturnedFromApp(true);
       setTimeout(() => {
         uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 600);
+      }, 500);
     }
-
-    const handleWindowFocus = () => {
-      if (typeof window !== "undefined" && sessionStorage.getItem("fc_app_payment_initiated") === "true") {
-        setReturnedFromApp(true);
-        uploadFormRef.current?.scrollIntoView({ behavior: "smooth" });
-      }
-    };
-
-    window.addEventListener("focus", handleWindowFocus);
-    return () => {
-      window.removeEventListener("focus", handleWindowFocus);
-    };
   }, [searchParams]);
 
   function manualCheckStatus() {
@@ -442,36 +428,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           )}
         </div>
 
-        {/* 2. RETURN FROM UPI APP CROSS-CHECK CARD */}
-        {returnedFromApp && (
-          <div className="p-4 sm:p-5 rounded-3xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 text-emerald-900 dark:text-emerald-200 text-xs space-y-2 animate-in fade-in shadow-xs text-left">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🎉</span>
-                <div>
-                  <p className="font-black text-emerald-950 dark:text-emerald-100 text-xs sm:text-sm">
-                    Returned from UPI Payment App!
-                  </p>
-                  <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
-                    Cross-check your payable total ({formatINR(amount)}) and attach your screenshot below.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={manualCheckStatus}
-                disabled={refreshingStatus}
-                className="px-3.5 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer shrink-0 shadow-2xs flex items-center gap-1"
-              >
-                {refreshingStatus && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-                <span>{refreshingStatus ? "Checking…" : "🔄 Verify Now"}</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 3. DYNAMIC PAYMENT METHOD DESK WITH DROPDOWN SELECTOR */}
+        {/* 2. DYNAMIC PAYMENT METHOD DESK WITH CUSTOM DROPDOWN */}
         <DynamicUpiQr
           orderId={orderId || undefined}
           upiId={upiId}
@@ -479,7 +436,6 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           orderNumber={data.order.orderNumber}
           payeeName="Fashion Cart Premium Outlet"
           staticQrPath={data.paymentSettings?.qrCodePath}
-          onAppLaunched={() => setReturnedFromApp(true)}
         />
 
         {/* 4. PAYMENT CONFIRMATION SUBMISSION FORM */}
