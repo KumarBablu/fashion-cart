@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
@@ -24,13 +25,37 @@ export default function PromotionModal() {
   const [activePromo, setActivePromo] = useState<Promotion | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const pathname = usePathname();
   const { success } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Suppress modal on transaction / account / admin pages
+  const isExcludedPage = Boolean(
+    pathname?.startsWith("/checkout") ||
+    pathname?.startsWith("/invoices") ||
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/account")
+  );
 
   const evaluatePromotion = useCallback((forceShow = false) => {
     if (typeof window === "undefined") return;
 
-    if (!forceShow && sessionStorage.getItem("fc_promo_modal_closed_in_view") === "true") {
+    // Never show on excluded transaction pages
+    const currentPath = window.location.pathname;
+    if (
+      currentPath.startsWith("/checkout") ||
+      currentPath.startsWith("/invoices") ||
+      currentPath.startsWith("/admin") ||
+      currentPath.startsWith("/account")
+    ) {
+      return;
+    }
+
+    // Strictly one-time only per browsing session unless explicitly refreshed
+    if (!forceShow && (
+      sessionStorage.getItem("fc_promo_modal_shown_session") === "true" ||
+      sessionStorage.getItem("fc_promo_modal_closed_in_view") === "true"
+    )) {
       return;
     }
 
@@ -38,8 +63,15 @@ export default function PromotionModal() {
       .then((res) => res.json())
       .then((data) => {
         if (data?.promotions && data.promotions.length > 0) {
-          const promo = data.promotions[0] as Promotion;
+          // Re-verify session check before opening
+          if (
+            !forceShow &&
+            sessionStorage.getItem("fc_promo_modal_shown_session") === "true"
+          ) {
+            return;
+          }
 
+          const promo = data.promotions[0] as Promotion;
           setActivePromo(promo);
           setImageError(false);
 
@@ -48,17 +80,28 @@ export default function PromotionModal() {
           }
 
           const delayMinutes = Number(promo.delayMinutes || 0);
-          let delayMs = 600;
+          let delayMs = 800;
 
           if (delayMinutes > 0 && !forceShow) {
             const sessionStartStr = sessionStorage.getItem("fc_session_start_time");
             const sessionStart = sessionStartStr ? parseInt(sessionStartStr, 10) : Date.now();
             const elapsedMs = Date.now() - sessionStart;
             const targetDelayMs = delayMinutes * 60 * 1000;
-            delayMs = Math.max(600, targetDelayMs - elapsedMs);
+            delayMs = Math.max(800, targetDelayMs - elapsedMs);
           }
 
           timerRef.current = setTimeout(() => {
+            // Check once more in case user navigated to checkout during timer
+            const nowPath = window.location.pathname;
+            if (
+              nowPath.startsWith("/checkout") ||
+              nowPath.startsWith("/invoices") ||
+              nowPath.startsWith("/admin")
+            ) {
+              return;
+            }
+
+            sessionStorage.setItem("fc_promo_modal_shown_session", "true");
             setIsOpen(true);
           }, delayMs);
         }
@@ -67,15 +110,17 @@ export default function PromotionModal() {
   }, []);
 
   useEffect(() => {
-    // Clear closed-in-view on initial page mount (fresh visit/manual reload)
+    // Only evaluate on initial entrance if not previously shown in this session
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("fc_promo_modal_closed_in_view");
+      const alreadyShown = sessionStorage.getItem("fc_promo_modal_shown_session") === "true";
+      if (!alreadyShown && !isExcludedPage) {
+        evaluatePromotion(false);
+      }
     }
-
-    evaluatePromotion(true);
 
     const handleRefresh = () => {
       if (typeof window !== "undefined") {
+        sessionStorage.removeItem("fc_promo_modal_shown_session");
         sessionStorage.removeItem("fc_promo_modal_closed_in_view");
       }
       evaluatePromotion(true);
@@ -86,7 +131,7 @@ export default function PromotionModal() {
       window.removeEventListener("fc_refresh_promotions", handleRefresh);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [evaluatePromotion]);
+  }, [evaluatePromotion, isExcludedPage]);
 
   useEffect(() => {
     if (isOpen) {
@@ -99,10 +144,11 @@ export default function PromotionModal() {
     };
   }, [isOpen]);
 
-  if (!isOpen || !activePromo) return null;
+  if (!isOpen || !activePromo || isExcludedPage) return null;
 
   function handleClose() {
     if (typeof window !== "undefined") {
+      sessionStorage.setItem("fc_promo_modal_shown_session", "true");
       sessionStorage.setItem("fc_promo_modal_closed_in_view", "true");
     }
     setIsOpen(false);

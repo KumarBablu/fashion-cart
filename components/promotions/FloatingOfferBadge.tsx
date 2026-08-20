@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
@@ -60,8 +61,15 @@ export default function FloatingOfferBadge() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [dismissed, setDismissed] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const pathname = usePathname();
   const { success } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const isExcludedPage = Boolean(
+    pathname?.startsWith("/checkout") ||
+    pathname?.startsWith("/invoices") ||
+    pathname?.startsWith("/admin")
+  );
 
   const loadSnackbar = useCallback(() => {
     fetch("/api/promotions/active?placement=FLOAT_SNACKBAR")
@@ -93,10 +101,14 @@ export default function FloatingOfferBadge() {
   }, []);
 
   useEffect(() => {
-    loadSnackbar();
+    if (!isExcludedPage) {
+      loadSnackbar();
+    }
 
     const handleRefresh = () => {
-      loadSnackbar();
+      if (!isExcludedPage) {
+        loadSnackbar();
+      }
     };
 
     window.addEventListener("fc_refresh_promotions", handleRefresh);
@@ -104,9 +116,9 @@ export default function FloatingOfferBadge() {
       window.removeEventListener("fc_refresh_promotions", handleRefresh);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [loadSnackbar]);
+  }, [loadSnackbar, isExcludedPage]);
 
-  if (dismissed || !isVisible || promotions.length === 0) return null;
+  if (dismissed || !isVisible || isExcludedPage || promotions.length === 0) return null;
 
   const currentPromo = promotions[0];
   const theme = THEME_STYLES[currentPromo.theme] || THEME_STYLES.FESTIVE_GOLD;

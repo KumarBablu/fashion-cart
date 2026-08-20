@@ -6,6 +6,7 @@ import Link from "next/link";
 import { formatINR } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
+import DynamicUpiQr from "@/components/payments/DynamicUpiQr";
 
 type OrderData = {
   order: {
@@ -135,7 +136,6 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
 
   const upiId = data.paymentSettings?.upiId || "fashioncart@okaxis";
   const amount = Number(data.order.total);
-  const upiDeepLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=FashionCart&am=${amount}&cu=INR&tn=${encodeURIComponent(`Order ${data.order.orderNumber}`)}`;
 
   return (
     <div className="mx-auto max-w-xl px-4 sm:px-6 lg:px-8 py-10">
@@ -157,76 +157,14 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           <p className="text-3xl font-black text-primary mt-1">{formatINR(data.order.total)}</p>
         </div>
 
-        {/* QR Code Display */}
-        <div className="flex flex-col items-center justify-center">
-          <div className="relative h-60 w-60 overflow-hidden rounded-2xl border-2 p-2 bg-white shadow-md" style={{ borderColor: "var(--fc-primary)" }}>
-            {data.paymentSettings?.qrCodePath ? (
-              <Image
-                src={data.paymentSettings.qrCodePath}
-                alt="Fashion Cart UPI QR Code"
-                fill
-                unoptimized
-                className="object-contain p-2"
-                priority
-              />
-            ) : (
-              <div className="h-full w-full flex flex-col items-center justify-center p-4 text-center text-slate-800">
-                <span className="text-4xl mb-2">📲</span>
-                <p className="text-xs font-bold">UPI QR Code</p>
-                <p className="text-[10px] text-slate-500 mt-1">Pay to: {upiId}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4 flex items-center gap-2 p-2 rounded-xl border text-xs" style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}>
-            <span className="text-dim font-medium">UPI ID:</span>
-            <span className="font-mono font-bold text-primary">{upiId}</span>
-            <button
-              onClick={copyUpiId}
-              className="ml-2 px-2.5 py-1 rounded-md text-[11px] font-bold border hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-              style={{ borderColor: "var(--fc-border)" }}
-            >
-              Copy
-            </button>
-          </div>
-        </div>
-
-        {/* UPI App Quick Links */}
-        <div>
-          <p className="text-xs font-bold text-dim uppercase tracking-wider mb-2.5">
-            Or Open Directly in UPI App:
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <a
-              href={upiDeepLink}
-              className="px-3.5 py-1.5 rounded-full border text-xs font-semibold hover:border-primary transition-colors flex items-center gap-1"
-              style={{ borderColor: "var(--fc-border)" }}
-            >
-              <span>⚡</span> GPay
-            </a>
-            <a
-              href={upiDeepLink}
-              className="px-3.5 py-1.5 rounded-full border text-xs font-semibold hover:border-primary transition-colors flex items-center gap-1"
-              style={{ borderColor: "var(--fc-border)" }}
-            >
-              <span>🟣</span> PhonePe
-            </a>
-            <a
-              href={upiDeepLink}
-              className="px-3.5 py-1.5 rounded-full border text-xs font-semibold hover:border-primary transition-colors flex items-center gap-1"
-              style={{ borderColor: "var(--fc-border)" }}
-            >
-              <span>🔵</span> Paytm
-            </a>
-            <a
-              href={upiDeepLink}
-              className="px-3.5 py-1.5 rounded-full border text-xs font-semibold hover:border-primary transition-colors flex items-center gap-1"
-              style={{ borderColor: "var(--fc-border)" }}
-            >
-              <span>🇮🇳</span> BHIM
-            </a>
-          </div>
-        </div>
+        {/* Dynamic NPCI UPI QR Code Auto-Locked to Exact Payable Amount */}
+        <DynamicUpiQr
+          upiId={upiId}
+          amount={amount}
+          orderNumber={data.order.orderNumber}
+          payeeName="Fashion Cart Premium Outlet"
+          staticQrPath={data.paymentSettings?.qrCodePath}
+        />
 
         {/* Step Guide */}
         <div className="text-left p-4 rounded-2xl border text-xs space-y-1.5" style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}>
