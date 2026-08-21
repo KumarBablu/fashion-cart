@@ -33,6 +33,65 @@ function sanitizeDescription(desc: string, title: string, brand: string, fabric:
   return cleaned;
 }
 
+// Auto-extracts fabric from title or description if blank
+function extractFabric(title: string, desc: string, rawFabric?: string): string {
+  if (rawFabric && rawFabric.trim()) return rawFabric.trim();
+
+  const combined = `${title} ${desc}`.toLowerCase();
+  if (combined.includes("georgette")) return "Pure Georgette";
+  if (combined.includes("silk") && combined.includes("satin")) return "Silk Satin Blend";
+  if (combined.includes("banarasi silk") || combined.includes("katan silk")) return "Pure Banarasi Silk";
+  if (combined.includes("silk")) return "Artisan Silk";
+  if (combined.includes("linen")) return "Pure French Linen";
+  if (combined.includes("cotton")) return "100% Breathable Cotton";
+  if (combined.includes("rayon")) return "Soft Premium Rayon";
+  if (combined.includes("chiffon")) return "Flowing Chiffon";
+  if (combined.includes("velvet")) return "Plush Velvet";
+  if (combined.includes("organza")) return "Delicate Organza";
+  if (combined.includes("crepe")) return "Draped Crepe";
+  if (combined.includes("denim")) return "Durable Denim";
+  if (combined.includes("leather")) return "Genuine Leather";
+
+  return "Premium Textile Blend";
+}
+
+// Auto-extracts size from title or image URLs if blank
+function extractSize(title: string, imageUrls: string[], rawSize?: string): string {
+  if (rawSize && rawSize.trim()) return rawSize.trim();
+
+  const combined = `${title} ${imageUrls.join(" ")}`.toLowerCase();
+
+  if (/(?:^|[^a-z0-9])xxxl(?:$|[^a-z0-9])/i.test(combined) || combined.includes("3xl")) return "3XL";
+  if (/(?:^|[^a-z0-9])xxl(?:$|[^a-z0-9])/i.test(combined) || combined.includes("2xl")) return "XXL";
+  if (/(?:^|[^a-z0-9])xl(?:$|[^a-z0-9])/i.test(combined)) return "XL";
+  if (/(?:^|[^a-z0-9])l(?:$|[^a-z0-9])/i.test(combined)) return "L";
+  if (/(?:^|[^a-z0-9])m(?:$|[^a-z0-9])/i.test(combined)) return "M";
+  if (/(?:^|[^a-z0-9])xs(?:$|[^a-z0-9])/i.test(combined)) return "XS";
+  if (/(?:^|[^a-z0-9])s(?:$|[^a-z0-9])/i.test(combined)) return "S";
+
+  if (combined.includes("free size") || combined.includes("free-size") || combined.includes("saree") || combined.includes("sari")) {
+    return "Free Size";
+  }
+
+  return "Free Size";
+}
+
+// Auto-extracts pattern from title or description
+function extractPattern(title: string, rawPattern?: string): string {
+  if (rawPattern && rawPattern.trim()) return rawPattern.trim();
+  const t = title.toLowerCase();
+
+  if (t.includes("floral")) return "Floral Print";
+  if (t.includes("printed") || t.includes("print")) return "Artisan Print";
+  if (t.includes("solid") || t.includes("plain")) return "Solid / Plain";
+  if (t.includes("embroidered") || t.includes("mirror work") || t.includes("zari")) return "Embroidered Zari";
+  if (t.includes("striped") || t.includes("stripe")) return "Striped";
+  if (t.includes("checked") || t.includes("check")) return "Checks";
+  if (t.includes("bandhani") || t.includes("tie dye")) return "Bandhani Tie-Dye";
+
+  return "Contemporary";
+}
+
 // Infers department and subcategory if empty in CSV
 function inferTaxonomy(title: string, dept?: string, cat?: string, subcat?: string) {
   const t = title.toLowerCase();
@@ -52,11 +111,13 @@ function inferTaxonomy(title: string, dept?: string, cat?: string, subcat?: stri
     }
   }
 
-  if (!subcategory) {
+  if (!subcategory || subcategory.toLowerCase() === "kurta") {
     if (t.includes("saree") || t.includes("sari")) {
       subcategory = "Sarees";
-    } else if (t.includes("kurta") || t.includes("kurti") || t.includes("ethnic set") || t.includes("dupatta set")) {
-      subcategory = "Kurtas & Sets";
+    } else if (t.includes("dupatta set") || t.includes("pant set") || t.includes("kurta set")) {
+      subcategory = "Kurta Sets";
+    } else if (t.includes("kurta") || t.includes("kurti")) {
+      subcategory = "Kurtas & Tunics";
     } else if (t.includes("anarkali") || t.includes("dress") || t.includes("gown") || t.includes("lehenga")) {
       subcategory = "Dresses & Gowns";
     } else if (t.includes("shirt")) {
@@ -74,7 +135,32 @@ function inferTaxonomy(title: string, dept?: string, cat?: string, subcat?: stri
   return { department, category, subcategory };
 }
 
-// Robust CSV row parser handling quoted text with commas and escaped quotes
+// Cloaks third-party image URLs through our internal proxy so source domains are hidden from shoppers
+function cloakImageUrl(rawUrl: string): string {
+  if (!rawUrl || !rawUrl.trim()) return "";
+  const clean = rawUrl.trim();
+
+  // If already relative, data URL, or internal proxy URL, keep as is
+  if (clean.startsWith("/") || clean.startsWith("data:") || clean.includes("/api/proxy-image")) {
+    return clean;
+  }
+
+  // Cloak external marketplace domains (Flipkart, Amazon, etc.) through our internal proxy
+  if (
+    clean.includes("flixcart.com") ||
+    clean.includes("amazon.com") ||
+    clean.includes("media-amazon.com") ||
+    clean.includes("myntassets.com") ||
+    clean.includes("ajio.com") ||
+    clean.includes("meesho.com")
+  ) {
+    return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
+  }
+
+  return clean;
+}
+
+// Simple robust CSV row parser handling quoted text with commas and escaped quotes
 function parseCsvRows(text: string): string[][] {
   const lines: string[][] = [];
   const rawLines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
@@ -134,7 +220,6 @@ async function resolveCategoryHierarchy(deptName: string, subcatName: string): P
         },
       });
     } catch {
-      // If slug collision or race condition, retrieve the existing category
       parentCat = await prisma.category.findFirst({
         where: { slug: deptSlug },
       });
@@ -289,20 +374,31 @@ export async function POST(req: NextRequest) {
 
       const getVal = (idx: number) => (idx >= 0 && idx < row.length ? row[idx].trim() : "");
 
-      const customProductId = getVal(colIndex.productId);
       const rawTitle = getVal(colIndex.title);
       const title = rawTitle || "Luxury Garment Listing";
+      const brand = getVal(colIndex.brand) || "Fashion Cart Atelier";
 
-      // Calculate clean slug
+      // 1. Slug calculation: Auto-create if empty or starts with item code
       let rawSlug = getVal(colIndex.slug);
-      let slug = rawSlug && rawSlug.length > 2 ? slugify(rawSlug) : slugify(title);
+      let slug = rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm") ? slugify(rawSlug) : slugify(title);
       if (!slug || slug.length < 2) {
         slug = `garment-${Date.now()}-${r}`;
       }
 
-      const productUrl = getVal(colIndex.productUrl);
+      // 2. ProductID: Auto-create if empty
+      let customProductId = getVal(colIndex.productId);
+      if (!customProductId) {
+        const brandCode = slugify(brand || "FC").toUpperCase().slice(0, 4) || "FC";
+        customProductId = `FC-PRD-${brandCode}-${r.toString().padStart(4, "0")}`;
+      }
 
-      // Infer Taxonomy if empty in CSV
+      // 3. ProductURL: Auto-create if empty
+      let productUrl = getVal(colIndex.productUrl);
+      if (!productUrl) {
+        productUrl = `/products/${slug}`;
+      }
+
+      // 4. Infer Taxonomy & Category Hierarchy
       const rawDept = getVal(colIndex.department);
       const rawCat = getVal(colIndex.category);
       const rawSubcat = getVal(colIndex.subcategory);
@@ -312,14 +408,16 @@ export async function POST(req: NextRequest) {
         .filter((v, i, a) => a.indexOf(v) === i)
         .join(" > ");
 
-      const brand = getVal(colIndex.brand) || "Fashion Cart Atelier";
-      const fabric = getVal(colIndex.fabric) || "Pure Fabric";
+      // 5. Fabric & Material: Auto-extract if empty
+      const rawFabric = getVal(colIndex.fabric);
+      const rawDesc = getVal(colIndex.description);
+      const fabric = extractFabric(title, rawDesc, rawFabric);
       const material = getVal(colIndex.material) || fabric;
 
-      // Sanitize Description: Clean out Flipkart / third-party noise
-      const rawDescription = getVal(colIndex.description);
-      const description = sanitizeDescription(rawDescription, title, brand, fabric);
+      // 6. Sanitize Description: Clean out Flipkart / third-party noise
+      const description = sanitizeDescription(rawDesc, title, brand, fabric);
 
+      // 7. Status & Availability: Normalize
       const statusRaw = getVal(colIndex.status).toUpperCase();
       const status: ProductStatus =
         statusRaw === "DRAFT"
@@ -327,37 +425,15 @@ export async function POST(req: NextRequest) {
           : statusRaw === "ARCHIVED"
           ? ProductStatus.ARCHIVED
           : ProductStatus.ACTIVE;
-      const availability = getVal(colIndex.availability) || "IN_STOCK";
 
-      // Variant Attributes
-      const sku = getVal(colIndex.sku) || `FC-SKU-${slug.slice(0, 10).toUpperCase()}-${r}`;
-      const colour = getVal(colIndex.colour) || "Classic";
-      const size = getVal(colIndex.size) || "Free Size";
-      const pattern = getVal(colIndex.pattern) || "Solid";
-      const fit = getVal(colIndex.fit) || "Regular Fit";
-      const occasion = getVal(colIndex.occasion) || "Festive & Casual";
-      const currency = getVal(colIndex.currency) || "INR";
+      const availRaw = getVal(colIndex.availability).toUpperCase();
+      const availability =
+        availRaw === "OUT_OF_STOCK" || availRaw === "OUTOFSTOCK"
+          ? "OUT_OF_STOCK"
+          : "IN_STOCK";
 
-      const priceNum = Number(getVal(colIndex.price).replace(/[^0-9.]/g, "")) || 999;
-      const compareNum = Number(getVal(colIndex.compareAtPrice).replace(/[^0-9.]/g, "")) || null;
-      let discountNum = Number(getVal(colIndex.discountPercent).replace(/[^0-9.]/g, "")) || null;
-      if (!discountNum && compareNum && compareNum > priceNum) {
-        discountNum = Math.round(((compareNum - priceNum) / compareNum) * 100);
-      }
-
-      const stockNum = parseInt(getVal(colIndex.stockQuantity).replace(/[^0-9]/g, "") || "25", 10);
-
-      // Seller / Supplier details (Admin Confidential)
-      const sellerName = getVal(colIndex.sellerName);
-      const sellerIdStr = getVal(colIndex.sellerId);
-
-      // Ratings & reviews
-      const ratingNum = Number(getVal(colIndex.rating).replace(/[^0-9.]/g, "")) || 4.8;
-      const ratingCountNum = parseInt(getVal(colIndex.ratingCount).replace(/[^0-9]/g, "") || "18", 10);
-      const reviewCountNum = parseInt(getVal(colIndex.reviewCount).replace(/[^0-9]/g, "") || "12", 10);
-
-      // Images (up to 5 lookbook URLs)
-      const imageUrls = [
+      // 8. Raw Images (up to 5 lookbook URLs) & Cloaking
+      const rawImageUrls = [
         getVal(colIndex.imageUrl),
         getVal(colIndex.imageUrl2),
         getVal(colIndex.imageUrl3),
@@ -365,11 +441,52 @@ export async function POST(req: NextRequest) {
         getVal(colIndex.imageUrl5),
       ].filter((u) => u && (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("/")));
 
+      const imageUrls = rawImageUrls.map(cloakImageUrl);
+
+      // 9. Variant Attributes: Auto-extract Size, Pattern, Fit
+      const rawSize = getVal(colIndex.size);
+      const size = extractSize(title, rawImageUrls, rawSize);
+      const colour = getVal(colIndex.colour) || "Classic Multi";
+      const pattern = extractPattern(title, getVal(colIndex.pattern));
+      const fit = getVal(colIndex.fit) || "Regular Fit";
+      const occasion = getVal(colIndex.occasion) || "Festive & Daily Luxury";
+      const currency = getVal(colIndex.currency) || "INR";
+
+      // 10. SKU: Auto-create if empty
+      let sku = getVal(colIndex.sku);
+      if (!sku) {
+        const brandCode = slugify(brand || "FC").toUpperCase().slice(0, 4) || "FC";
+        sku = `FC-SKU-${brandCode}-${slug.slice(0, 8).toUpperCase()}-${slugify(size).toUpperCase()}-${r}`;
+      }
+
+      // 11. Price & Discounts
+      const priceNum = Number(getVal(colIndex.price).replace(/[^0-9.]/g, "")) || 999;
+      const compareNum = Number(getVal(colIndex.compareAtPrice).replace(/[^0-9.]/g, "")) || null;
+      let discountNum = Number(getVal(colIndex.discountPercent).replace(/[^0-9.]/g, "")) || null;
+      if (!discountNum && compareNum && compareNum > priceNum) {
+        discountNum = Math.round(((compareNum - priceNum) / compareNum) * 100);
+      }
+
+      // 12. Stock Quantity: Default to 25 if empty
+      const stockNum = parseInt(getVal(colIndex.stockQuantity).replace(/[^0-9]/g, "") || "25", 10) || 25;
+
+      // 13. Seller / Supplier details: Auto-generate SellerID if empty
+      const sellerName = getVal(colIndex.sellerName);
+      let sellerIdStr = getVal(colIndex.sellerId);
+      if (!sellerIdStr && sellerName) {
+        sellerIdStr = `SLR-${slugify(sellerName).toUpperCase().slice(0, 8)}-101`;
+      }
+
+      // 14. Ratings & reviews
+      const ratingNum = Number(getVal(colIndex.rating).replace(/[^0-9.]/g, "")) || 4.8;
+      const ratingCountNum = parseInt(getVal(colIndex.ratingCount).replace(/[^0-9]/g, "") || "18", 10);
+      const reviewCountNum = parseInt(getVal(colIndex.reviewCount).replace(/[^0-9]/g, "") || "12", 10);
+
       try {
         // 1. Resolve Category Hierarchy safely
         const assignedCategoryId = await resolveCategoryHierarchy(department, subcategory);
 
-        // 2. Resolve or Create Seller / Supplier
+        // 2. Resolve or Create Seller / Supplier (Admin Confidential Entity)
         let linkedSellerId: string | null = null;
         if (sellerIdStr || sellerName) {
           const sellerLookupId = sellerIdStr || `SLR-${slugify(sellerName || "VENDOR").toUpperCase().slice(0, 10)}`;
@@ -411,10 +528,10 @@ export async function POST(req: NextRequest) {
         });
 
         const productData = {
-          productId: customProductId || null,
+          productId: customProductId,
           name: title,
           slug: product ? product.slug : slug,
-          productUrl: productUrl || null,
+          productUrl,
           department,
           subcategory,
           categoryPath,
@@ -475,7 +592,7 @@ export async function POST(req: NextRequest) {
         }
         variantsCreatedOrUpdated++;
 
-        // 5. Upsert Images (Up to 5 lookbook photos)
+        // 5. Upsert Cloaked Lookbook Images (Up to 5 photos)
         for (let imgIdx = 0; imgIdx < imageUrls.length; imgIdx++) {
           const imgUrl = imageUrls[imgIdx];
           const imgExists = await prisma.productImage.findFirst({
@@ -487,7 +604,7 @@ export async function POST(req: NextRequest) {
               data: {
                 productId: product.id,
                 imageUrl: imgUrl,
-                altText: `${title} - View ${imgIdx + 1}`,
+                altText: `${title} - Look ${imgIdx + 1}`,
                 sortOrder: imgIdx,
               },
             });
