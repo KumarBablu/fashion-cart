@@ -1,29 +1,77 @@
 import { prisma } from "@/lib/db";
-import SellersManager from "@/components/admin/SellersManager";
+import SellersManager, { MappedProductItem, SellerDirectoryItem } from "@/components/admin/SellersManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSellersPage() {
-  const sellers = await prisma.seller.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: {
-        select: { products: true },
-      },
-      products: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          brand: true,
-          status: true,
+  const [products, sellers] = await Promise.all([
+    prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        images: {
+          take: 1,
+          orderBy: { sortOrder: "asc" },
         },
-        take: 5,
+        variants: {
+          where: { isActive: true },
+          orderBy: [{ colour: "asc" }, { size: "asc" }],
+        },
+        category: {
+          include: { parent: true },
+        },
+        seller: true,
       },
-    },
-  });
+    }),
+    prisma.seller.findMany({
+      orderBy: { name: "asc" },
+      include: {
+        _count: {
+          select: { products: true },
+        },
+      },
+    }),
+  ]);
 
-  const serializedSellers = sellers.map((s) => ({
+  const serializedProducts: MappedProductItem[] = products.map((p) => ({
+    id: p.id,
+    productId: p.productId,
+    name: p.name,
+    slug: p.slug,
+    brand: p.brand,
+    department: p.department,
+    subcategory: p.subcategory,
+    categoryPath: p.categoryPath,
+    productUrl: p.productUrl,
+    sellerId: p.sellerId,
+    sellerName: p.sellerName,
+    sellerIdentifier: p.sellerIdentifier,
+    sellerPhone: p.sellerPhone,
+    sellerEmail: p.sellerEmail,
+    sellerUrl: p.sellerUrl,
+    categoryName: p.category?.name,
+    primaryImage: p.images[0]?.imageUrl || "",
+    variants: p.variants.map((v) => ({
+      id: v.id,
+      sku: v.sku,
+      colour: v.colour || "Standard",
+      size: v.size || "Free Size",
+      price: Number(v.price),
+      compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
+      stockQuantity: v.stockQuantity,
+    })),
+    seller: p.seller
+      ? {
+          id: p.seller.id,
+          sellerId: p.seller.sellerId,
+          name: p.seller.name,
+          phone: p.seller.phone,
+          email: p.seller.email,
+          url: p.seller.url,
+        }
+      : null,
+  }));
+
+  const serializedSellers: SellerDirectoryItem[] = sellers.map((s) => ({
     id: s.id,
     sellerId: s.sellerId,
     name: s.name,
@@ -33,10 +81,13 @@ export default async function AdminSellersPage() {
     address: s.address,
     notes: s.notes,
     isActive: s.isActive,
-    createdAt: s.createdAt.toISOString(),
-    _count: s._count,
-    products: s.products,
+    productCount: s._count.products,
   }));
 
-  return <SellersManager initialSellers={serializedSellers} />;
+  return (
+    <SellersManager
+      initialProducts={serializedProducts}
+      initialSellers={serializedSellers}
+    />
+  );
 }

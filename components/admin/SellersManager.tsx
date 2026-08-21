@@ -1,11 +1,49 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { formatINR } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
 
-type SellerItem = {
+export type MappedProductItem = {
+  id: string;
+  productId: string | null;
+  name: string;
+  slug: string;
+  brand: string | null;
+  department: string | null;
+  subcategory: string | null;
+  categoryPath: string | null;
+  productUrl: string | null;
+  sellerId: string | null;
+  sellerName: string | null;
+  sellerIdentifier: string | null;
+  sellerPhone: string | null;
+  sellerEmail: string | null;
+  sellerUrl: string | null;
+  categoryName?: string | null;
+  primaryImage: string;
+  variants: {
+    id: string;
+    sku: string;
+    colour: string;
+    size: string;
+    price: number;
+    compareAtPrice: number | null;
+    stockQuantity: number;
+  }[];
+  seller?: {
+    id: string;
+    sellerId: string;
+    name: string;
+    phone: string | null;
+    email: string | null;
+    url: string | null;
+  } | null;
+};
+
+export type SellerDirectoryItem = {
   id: string;
   sellerId: string;
   name: string;
@@ -15,29 +53,29 @@ type SellerItem = {
   address: string | null;
   notes: string | null;
   isActive: boolean;
-  createdAt: string;
-  _count: {
-    products: number;
-  };
-  products: {
-    id: string;
-    name: string;
-    slug: string;
-    brand: string | null;
-    status: string;
-  }[];
+  productCount: number;
 };
 
-export default function SellersManager({ initialSellers }: { initialSellers: SellerItem[] }) {
-  const router = useRouter();
+export default function SellersManager({
+  initialProducts,
+  initialSellers,
+}: {
+  initialProducts: MappedProductItem[];
+  initialSellers: SellerDirectoryItem[];
+}) {
   const { success, error: toastError } = useToast();
 
-  const [sellers, setSellers] = useState<SellerItem[]>(initialSellers);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingSeller, setEditingSeller] = useState<SellerItem | null>(null);
+  const [products] = useState<MappedProductItem[]>(initialProducts);
+  const [sellers, setSellers] = useState<SellerDirectoryItem[]>(initialSellers);
 
-  // Form State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSellerFilter, setSelectedSellerFilter] = useState("ALL");
+  const [selectedDeptFilter, setSelectedDeptFilter] = useState("ALL");
+  const [viewMode, setViewMode] = useState<"MAPPING" | "SUPPLIERS">("MAPPING");
+
+  // Supplier modal
+  const [isSellerModalOpen, setIsSellerModalOpen] = useState(false);
+  const [editingSeller, setEditingSeller] = useState<SellerDirectoryItem | null>(null);
   const [formSellerId, setFormSellerId] = useState("");
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
@@ -46,21 +84,181 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
   const [formAddress, setFormAddress] = useState("");
   const [formNotes, setFormNotes] = useState("");
   const [formIsActive, setFormIsActive] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingSeller, setSavingSeller] = useState(false);
 
-  // Filtered sellers
-  const filtered = sellers.filter((s) => {
-    if (!searchTerm.trim()) return true;
-    const q = searchTerm.toLowerCase();
-    return (
-      s.name.toLowerCase().includes(q) ||
-      s.sellerId.toLowerCase().includes(q) ||
-      (s.phone && s.phone.includes(q)) ||
-      (s.email && s.email.toLowerCase().includes(q))
-    );
-  });
+  // Flattened mapping rows (Product x Variant)
+  const flattenedRows = useMemo(() => {
+    const rows: {
+      rowId: string;
+      productId: string;
+      productMasterId: string;
+      productName: string;
+      slug: string;
+      brand: string;
+      categoryPath: string;
+      imageUrl: string;
+      sku: string;
+      colour: string;
+      size: string;
+      price: number;
+      stockQuantity: number;
+      sellerName: string;
+      sellerId: string;
+      sellerPhone: string;
+      sellerEmail: string;
+      sellerUrl: string;
+    }[] = [];
 
-  function openCreateModal() {
+    for (const p of products) {
+      const activeSellerName = p.seller?.name || p.sellerName || "Unassigned Supplier";
+      const activeSellerId = p.seller?.sellerId || p.sellerIdentifier || "—";
+      const activeSellerPhone = p.seller?.phone || p.sellerPhone || "";
+      const activeSellerEmail = p.seller?.email || p.sellerEmail || "";
+      const activeSellerUrl = p.seller?.url || p.sellerUrl || p.productUrl || "";
+      const catPath = p.categoryPath || (p.department ? `${p.department} > ${p.subcategory || "General"}` : p.categoryName || "Catalog");
+
+      if (p.variants.length === 0) {
+        rows.push({
+          rowId: `${p.id}-default`,
+          productId: p.id,
+          productMasterId: p.productId || `FC-PRD-${p.slug.slice(0, 8).toUpperCase()}`,
+          productName: p.name,
+          slug: p.slug,
+          brand: p.brand || "Fashion Cart",
+          categoryPath: catPath,
+          imageUrl: p.primaryImage,
+          sku: `FC-SKU-${p.slug.slice(0, 8).toUpperCase()}`,
+          colour: "Standard",
+          size: "Free Size",
+          price: 0,
+          stockQuantity: 0,
+          sellerName: activeSellerName,
+          sellerId: activeSellerId,
+          sellerPhone: activeSellerPhone,
+          sellerEmail: activeSellerEmail,
+          sellerUrl: activeSellerUrl,
+        });
+      } else {
+        for (const v of p.variants) {
+          rows.push({
+            rowId: `${p.id}-${v.id}`,
+            productId: p.id,
+            productMasterId: p.productId || `FC-PRD-${p.slug.slice(0, 8).toUpperCase()}`,
+            productName: p.name,
+            slug: p.slug,
+            brand: p.brand || "Fashion Cart",
+            categoryPath: catPath,
+            imageUrl: p.primaryImage,
+            sku: v.sku,
+            colour: v.colour || "Standard",
+            size: v.size || "Free Size",
+            price: v.price,
+            stockQuantity: v.stockQuantity,
+            sellerName: activeSellerName,
+            sellerId: activeSellerId,
+            sellerPhone: activeSellerPhone,
+            sellerEmail: activeSellerEmail,
+            sellerUrl: activeSellerUrl,
+          });
+        }
+      }
+    }
+
+    return rows;
+  }, [products]);
+
+  // Unique departments for filter
+  const departments = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of products) {
+      if (p.department) set.add(p.department);
+    }
+    return Array.from(set);
+  }, [products]);
+
+  // Filtered rows
+  const filteredRows = useMemo(() => {
+    return flattenedRows.filter((r) => {
+      // Seller Filter
+      if (selectedSellerFilter !== "ALL" && r.sellerName !== selectedSellerFilter && r.sellerId !== selectedSellerFilter) {
+        return false;
+      }
+      // Department Filter
+      if (selectedDeptFilter !== "ALL" && !r.categoryPath.toLowerCase().includes(selectedDeptFilter.toLowerCase())) {
+        return false;
+      }
+      // Global Search
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        r.productMasterId.toLowerCase().includes(q) ||
+        r.sku.toLowerCase().includes(q) ||
+        r.productName.toLowerCase().includes(q) ||
+        r.sellerName.toLowerCase().includes(q) ||
+        r.sellerId.toLowerCase().includes(q) ||
+        r.sellerPhone.includes(q) ||
+        r.sellerEmail.toLowerCase().includes(q) ||
+        r.brand.toLowerCase().includes(q) ||
+        r.categoryPath.toLowerCase().includes(q) ||
+        r.colour.toLowerCase().includes(q) ||
+        r.size.toLowerCase().includes(q)
+      );
+    });
+  }, [flattenedRows, searchQuery, selectedSellerFilter, selectedDeptFilter]);
+
+  // Export to CSV
+  function handleExportCsv() {
+    const headers = [
+      "ProductID",
+      "SKU",
+      "ProductTitle",
+      "Brand",
+      "CategoryPath",
+      "Colour",
+      "Size",
+      "Price",
+      "StockQuantity",
+      "SellerName",
+      "SellerID",
+      "SellerPhone",
+      "SellerEmail",
+      "SellerURL",
+    ];
+
+    const csvLines = [headers.join(",")];
+
+    for (const r of filteredRows) {
+      const cleanField = (val: string | number) => `"${String(val || "").replace(/"/g, '""')}"`;
+      const row = [
+        cleanField(r.productMasterId),
+        cleanField(r.sku),
+        cleanField(r.productName),
+        cleanField(r.brand),
+        cleanField(r.categoryPath),
+        cleanField(r.colour),
+        cleanField(r.size),
+        cleanField(r.price),
+        cleanField(r.stockQuantity),
+        cleanField(r.sellerName),
+        cleanField(r.sellerId),
+        cleanField(r.sellerPhone),
+        cleanField(r.sellerEmail),
+        cleanField(r.sellerUrl),
+      ];
+      csvLines.push(row.join(","));
+    }
+
+    const blob = new Blob([csvLines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `fashion-cart-product-seller-mapping-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    success("Mapping Exported 🎉", `Downloaded ${filteredRows.length} mapped SKU records.`);
+  }
+
+  function openCreateSellerModal() {
     setEditingSeller(null);
     setFormSellerId(`SLR-${Date.now().toString().slice(-4)}`);
     setFormName("");
@@ -70,10 +268,10 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
     setFormAddress("");
     setFormNotes("");
     setFormIsActive(true);
-    setIsModalOpen(true);
+    setIsSellerModalOpen(true);
   }
 
-  function openEditModal(seller: SellerItem) {
+  function openEditSellerModal(seller: SellerDirectoryItem) {
     setEditingSeller(seller);
     setFormSellerId(seller.sellerId);
     setFormName(seller.name);
@@ -83,17 +281,17 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
     setFormAddress(seller.address || "");
     setFormNotes(seller.notes || "");
     setFormIsActive(seller.isActive);
-    setIsModalOpen(true);
+    setIsSellerModalOpen(true);
   }
 
-  async function handleSave(e: React.FormEvent) {
+  async function handleSaveSeller(e: React.FormEvent) {
     e.preventDefault();
     if (!formName.trim() || !formSellerId.trim()) {
-      toastError("Validation Error", "Seller Name and Seller ID are required.");
+      toastError("Validation Error", "Supplier Name and ID are required.");
       return;
     }
 
-    setSaving(true);
+    setSavingSeller(true);
     const payload = {
       sellerId: formSellerId.trim(),
       name: formName.trim(),
@@ -116,145 +314,372 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
       });
 
       const data = await res.json();
-      setSaving(false);
+      setSavingSeller(false);
 
       if (!res.ok) {
-        toastError("Save Failed", data.error || "Could not save seller record.");
+        toastError("Save Failed", data.error || "Could not save supplier.");
         return;
       }
 
-      success(
-        editingSeller ? "Seller Updated 🎉" : "Seller Created 🎉",
-        `"${payload.name}" has been saved.`
-      );
+      success("Supplier Saved 🎉", `"${payload.name}" has been updated.`);
+      setIsSellerModalOpen(false);
 
-      setIsModalOpen(false);
-      router.refresh();
-
-      // Update local state
       if (editingSeller) {
         setSellers((prev) =>
-          prev.map((s) =>
-            s.id === editingSeller.id
-              ? { ...s, ...payload, updatedAt: new Date().toISOString() }
-              : s
-          )
+          prev.map((s) => (s.id === editingSeller.id ? { ...s, ...payload } : s))
         );
       } else {
         setSellers((prev) => [
-          {
-            ...data.seller,
-            _count: { products: 0 },
-            products: [],
-            createdAt: new Date().toISOString(),
-          },
+          { ...data.seller, productCount: 0 },
           ...prev,
         ]);
       }
     } catch {
-      setSaving(false);
-      toastError("Error", "Network error while saving seller.");
-    }
-  }
-
-  async function handleDelete(seller: SellerItem) {
-    if (!confirm(`Are you sure you want to delete supplier "${seller.name}" (${seller.sellerId})?`)) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/admin/sellers/${seller.id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) {
-        toastError("Delete Failed", data.error || "Could not delete seller.");
-        return;
-      }
-
-      success("Seller Deleted", `"${seller.name}" was removed.`);
-      setSellers((prev) => prev.filter((s) => s.id !== seller.id));
-      router.refresh();
-    } catch {
-      toastError("Error", "Network error during delete.");
+      setSavingSeller(false);
+      toastError("Error", "Network error while saving supplier.");
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
+      {/* Top Banner & KPI Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl bg-white border border-[#E8E3D8] shadow-xs">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <span className="text-2xl">🏭</span>
             <h1 className="font-display text-xl sm:text-2xl font-bold text-[#0C3B2E]">
               Sellers &amp; Suppliers Directory
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FAF8F5] border border-[#E8E3D8] text-[#0C3B2E]">
-              {sellers.length} Registered
+              {flattenedRows.length} Mapped SKUs
             </span>
           </div>
           <p className="text-xs text-[#5B7A6F] mt-1">
-            Manage your suppliers, vendor codes, direct WhatsApp connections, and source catalogue links for order fulfillment.
+            Realtime mapping of Product IDs, Variant SKUs, and respective supplier contact connections for seamless order fulfillment.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#141416] hover:bg-[#25262B] text-white shadow-md transition-all cursor-pointer shrink-0"
-        >
-          <span>✨</span>
-          <span>Add New Supplier</span>
-        </button>
-      </div>
-
-      {/* Search Bar */}
-      <div className="flex items-center gap-3 p-3 rounded-2xl bg-white border border-[#E8E3D8] shadow-xs">
-        <span className="text-slate-400 pl-2">🔍</span>
-        <input
-          type="text"
-          placeholder="Search suppliers by name, Seller ID (e.g. SLR-VNS-101), phone number, or email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full text-xs bg-transparent focus:outline-hidden text-[#0C3B2E]"
-        />
-        {searchTerm && (
-          <button
-            onClick={() => setSearchTerm("")}
-            className="text-xs text-slate-400 hover:text-slate-700 px-2 cursor-pointer"
-          >
-            ✕ Clear
-          </button>
-        )}
-      </div>
-
-      {/* Suppliers Grid / List */}
-      {filtered.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-white border border-[#E8E3D8] space-y-3">
-          <span className="text-4xl block">🏭</span>
-          <h3 className="font-bold text-sm text-[#0C3B2E]">No Suppliers Found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            {searchTerm
-              ? `No suppliers match "${searchTerm}".`
-              : "Upload products via CSV or add a supplier to start managing your vendor fulfillment directory."}
-          </p>
-          {!searchTerm && (
+        <div className="flex flex-wrap items-center gap-2">
+          {/* View Toggle */}
+          <div className="flex items-center bg-[#FAF8F5] border border-[#E8E3D8] p-1 rounded-xl text-xs font-bold">
             <button
-              onClick={openCreateModal}
-              className="mt-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#141416] text-white cursor-pointer"
+              onClick={() => setViewMode("MAPPING")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                viewMode === "MAPPING"
+                  ? "bg-[#0C3B2E] text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
             >
-              + Register First Supplier
+              📋 Product &amp; SKU Mapping ({flattenedRows.length})
+            </button>
+            <button
+              onClick={() => setViewMode("SUPPLIERS")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                viewMode === "SUPPLIERS"
+                  ? "bg-[#0C3B2E] text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              🏭 Registered Suppliers ({sellers.length})
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs cursor-pointer"
+          >
+            <span>📥</span>
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={openCreateSellerModal}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#141416] hover:bg-[#25262B] text-white shadow-md transition-all cursor-pointer"
+          >
+            <span>+</span>
+            <span>Add Supplier</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Global Realtime Search & Filter Toolbar */}
+      <div className="p-4 rounded-2xl bg-white border border-[#E8E3D8] shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          {/* Global Search Input */}
+          <div className="flex-1 w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-[#0C3B2E] transition-all">
+            <span className="text-slate-400">🔍</span>
+            <input
+              type="text"
+              placeholder="Global Search by Product ID (FC-PRD-...), SKU (FC-SKU-...), Title, Seller Name, Seller ID (SLR-...), Phone, Category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-xs bg-transparent focus:outline-hidden text-slate-900 placeholder:text-slate-400"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="text-xs text-slate-400 hover:text-slate-700 px-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Supplier Dropdown Filter */}
+          <div className="w-full sm:w-64">
+            <select
+              value={selectedSellerFilter}
+              onChange={(e) => setSelectedSellerFilter(e.target.value)}
+              className="w-full text-xs px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-hidden focus:border-[#0C3B2E]"
+            >
+              <option value="ALL">All Suppliers ({sellers.length})</option>
+              {sellers.map((s) => (
+                <option key={s.id} value={s.name}>
+                  🏭 {s.name} ({s.sellerId})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Department Filter */}
+          {departments.length > 0 && (
+            <div className="w-full sm:w-48">
+              <select
+                value={selectedDeptFilter}
+                onChange={(e) => setSelectedDeptFilter(e.target.value)}
+                className="w-full text-xs px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-hidden focus:border-[#0C3B2E]"
+              >
+                <option value="ALL">All Departments</option>
+                {departments.map((d) => (
+                  <option key={d} value={d}>
+                    📁 {d}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* Active Filters Summary */}
+        <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
+          <p>
+            Showing <strong>{viewMode === "MAPPING" ? filteredRows.length : sellers.length}</strong> records
+            {searchQuery && (
+              <span>
+                {" "}
+                matching &ldquo;<strong>{searchQuery}</strong>&rdquo;
+              </span>
+            )}
+          </p>
+          {(searchQuery || selectedSellerFilter !== "ALL" || selectedDeptFilter !== "ALL") && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedSellerFilter("ALL");
+                setSelectedDeptFilter("ALL");
+              }}
+              className="text-[11px] font-bold text-amber-700 hover:underline cursor-pointer"
+            >
+              Reset Filters
             </button>
           )}
         </div>
+      </div>
+
+      {/* Main Content Area */}
+      {viewMode === "MAPPING" ? (
+        /* PRODUCT ID & SKU TO SELLER MAPPING TABLE */
+        <div className="rounded-3xl bg-white border border-[#E8E3D8] shadow-xs overflow-hidden">
+          {filteredRows.length === 0 ? (
+            <div className="p-12 text-center space-y-3">
+              <span className="text-4xl block">🔍</span>
+              <h3 className="font-bold text-sm text-[#0C3B2E]">No Matching Product Mappings Found</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                No items match your active search query or filter. Try clearing the search bar.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs divide-y divide-slate-100">
+                <thead className="bg-[#FAF8F5] text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="py-3.5 px-4">Product ID &amp; Garment</th>
+                    <th className="py-3.5 px-4">SKU Code</th>
+                    <th className="py-3.5 px-4">Specs &amp; Category</th>
+                    <th className="py-3.5 px-4">Price &amp; Stock</th>
+                    <th className="py-3.5 px-4">Respective Seller / Vendor</th>
+                    <th className="py-3.5 px-4 text-right">Fulfillment Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-sans">
+                  {filteredRows.map((row) => (
+                    <tr key={row.rowId} className="hover:bg-slate-50/80 transition-colors">
+                      {/* Product ID & Thumbnail */}
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-11 w-9 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                            {row.imageUrl ? (
+                              <Image
+                                src={row.imageUrl}
+                                alt={row.productName}
+                                fill
+                                sizes="40px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <span className="h-full w-full flex items-center justify-center text-xs">👗</span>
+                            )}
+                          </div>
+                          <div className="space-y-0.5 max-w-[200px]">
+                            <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200 inline-block">
+                              {row.productMasterId}
+                            </span>
+                            <Link
+                              href={`/admin/products/${row.productId}`}
+                              className="block font-bold text-slate-900 hover:text-[#C59B27] truncate"
+                              title={row.productName}
+                            >
+                              {row.productName}
+                            </Link>
+                            <span className="text-[10px] text-slate-400 block">{row.brand}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* SKU Code */}
+                      <td className="py-3 px-4">
+                        <div className="space-y-0.5">
+                          <span className="font-mono text-[11px] font-bold text-[#0C3B2E] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 block max-w-fit">
+                            {row.sku}
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-medium block">
+                            {row.colour} • {row.size}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Category & Specs */}
+                      <td className="py-3 px-4">
+                        <div className="space-y-0.5 max-w-[180px]">
+                          <span className="text-[11px] font-medium text-slate-700 block truncate">
+                            {row.categoryPath}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Price & Stock */}
+                      <td className="py-3 px-4">
+                        <div className="space-y-0.5">
+                          <span className="font-bold text-slate-900">{formatINR(row.price)}</span>
+                          <span
+                            className={`text-[10px] font-bold block ${
+                              row.stockQuantity > 5
+                                ? "text-emerald-700"
+                                : row.stockQuantity > 0
+                                ? "text-amber-700"
+                                : "text-rose-600"
+                            }`}
+                          >
+                            {row.stockQuantity > 0 ? `${row.stockQuantity} in stock` : "Out of stock"}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Seller Details */}
+                      <td className="py-3 px-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-900">{row.sellerName}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-[10px] font-bold text-slate-600 px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200">
+                              {row.sellerId}
+                            </span>
+                            {row.sellerPhone && (
+                              <span className="font-mono text-[10px] text-slate-500">{row.sellerPhone}</span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* 1-Click Fulfillment Connections */}
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {row.sellerPhone && (
+                            <a
+                              href={`https://wa.me/91${row.sellerPhone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
+                                `Hello ${row.sellerName}, order inquiry from Fashion Cart for Product ID: ${row.productMasterId}, SKU: ${row.sku} (${row.productName}).`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1 shadow-2xs transition-colors"
+                              title="Message Supplier on WhatsApp"
+                            >
+                              <span>💬</span> WhatsApp
+                            </a>
+                          )}
+
+                          {row.sellerPhone && (
+                            <a
+                              href={`tel:${row.sellerPhone}`}
+                              className="p-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors text-xs"
+                              title={`Call ${row.sellerPhone}`}
+                            >
+                              📞
+                            </a>
+                          )}
+
+                          {row.sellerEmail && (
+                            <a
+                              href={`mailto:${row.sellerEmail}?subject=${encodeURIComponent(
+                                `Order Fulfillment Inquiry: ${row.sku}`
+                              )}`}
+                              className="p-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors text-xs"
+                              title={`Email ${row.sellerEmail}`}
+                            >
+                              ✉️
+                            </a>
+                          )}
+
+                          {row.sellerUrl && (
+                            <a
+                              href={row.sellerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[10px] flex items-center gap-1 transition-colors"
+                              title="Open Source Product / Supplier URL"
+                            >
+                              <span>🔗</span> Source
+                            </a>
+                          )}
+
+                          <Link
+                            href={`/admin/products/${row.productId}`}
+                            className="p-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors text-xs"
+                            title="Edit Product & Supplier Mapping"
+                          >
+                            ✏️
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       ) : (
+        /* REGISTERED SUPPLIERS CARDS */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((seller) => (
+          {sellers.map((seller) => (
             <div
               key={seller.id}
               className="p-5 rounded-2xl bg-white border border-[#E8E3D8] shadow-xs space-y-4 hover:border-[#C59B27] transition-colors flex flex-col justify-between"
             >
               <div className="space-y-2.5">
-                {/* Header */}
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className="font-bold text-sm text-[#0C3B2E]">{seller.name}</h3>
@@ -263,7 +688,7 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
                         {seller.sellerId}
                       </span>
                       <span className="text-[10px] text-slate-400">
-                        • {seller._count.products} products linked
+                        • {seller.productCount} products mapped
                       </span>
                     </div>
                   </div>
@@ -278,7 +703,6 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
                   </span>
                 </div>
 
-                {/* Contact Links */}
                 <div className="space-y-1.5 text-xs text-slate-600 pt-1 border-t border-slate-100">
                   {seller.phone ? (
                     <div className="flex items-center justify-between">
@@ -286,9 +710,7 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-medium">{seller.phone}</span>
                         <a
-                          href={`https://wa.me/91${seller.phone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
-                            `Hello ${seller.name}, contacting regarding order fulfillment from Fashion Cart.`
-                          )}`}
+                          href={`https://wa.me/91${seller.phone.replace(/[^0-9]/g, "").slice(-10)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-2 py-0.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1 shadow-2xs"
@@ -327,48 +749,15 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
                     </div>
                   )}
                 </div>
-
-                {/* Linked Products Preview */}
-                {seller.products.length > 0 && (
-                  <div className="pt-2 border-t border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                      Top Products:
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {seller.products.slice(0, 3).map((p) => (
-                        <Link
-                          key={p.id}
-                          href={`/admin/products/${p.id}`}
-                          className="text-[10px] px-2 py-0.5 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 truncate max-w-[180px]"
-                        >
-                          {p.name}
-                        </Link>
-                      ))}
-                      {seller.products.length > 3 && (
-                        <span className="text-[10px] text-slate-400 self-center">
-                          +{seller.products.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
 
-              {/* Action Buttons */}
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => openEditModal(seller)}
+                  onClick={() => openEditSellerModal(seller)}
                   className="px-3 py-1 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
                 >
-                  ✏️ Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(seller)}
-                  className="px-3 py-1 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                >
-                  🗑️ Delete
+                  ✏️ Edit Supplier
                 </button>
               </div>
             </div>
@@ -376,10 +765,10 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
         </div>
       )}
 
-      {/* Create / Edit Modal */}
-      {isModalOpen && (
+      {/* Supplier Modal */}
+      {isSellerModalOpen && (
         <div className="fixed inset-0 z-50 p-4 flex items-center justify-center animate-in fade-in duration-150">
-          <div onClick={() => setIsModalOpen(false)} className="fixed inset-0 bg-black/70 backdrop-blur-xs" />
+          <div onClick={() => setIsSellerModalOpen(false)} className="fixed inset-0 bg-black/70 backdrop-blur-xs" />
 
           <div className="relative w-full max-w-lg rounded-3xl p-6 sm:p-8 bg-white border border-[#E8E3D8] shadow-2xl space-y-5 z-10 animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -390,14 +779,14 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
                 </h3>
               </div>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setIsSellerModalOpen(false)}
                 className="h-8 w-8 rounded-full border border-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveSeller} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">
@@ -405,7 +794,7 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
                   </label>
                   <input
                     required
-                    placeholder="e.g. Varanasi Heritage Silks"
+                    placeholder="e.g. NavNidhiCreation"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:border-[#0C3B2E]"
@@ -418,7 +807,7 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
                   </label>
                   <input
                     required
-                    placeholder="e.g. SLR-VNS-101"
+                    placeholder="e.g. SLR-NAVNIDHI-101"
                     value={formSellerId}
                     onChange={(e) => setFormSellerId(e.target.value)}
                     className="w-full font-mono px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:border-[#0C3B2E]"
@@ -470,7 +859,7 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
                   Warehouse / Business Address
                 </label>
                 <input
-                  placeholder="e.g. Ring Road Textile Market, Surat, Gujarat"
+                  placeholder="e.g. Surat Textile Market, Gujarat"
                   value={formAddress}
                   onChange={(e) => setFormAddress(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden"
@@ -479,11 +868,11 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">
-                  Internal Notes (Lead time, MOQ, payment terms)
+                  Internal Notes
                 </label>
                 <textarea
                   rows={2}
-                  placeholder="e.g. Delivers in 2 days. 30 days credit."
+                  placeholder="e.g. Fast shipping, MOQ 10 pcs, reliable fabric quality."
                   value={formNotes}
                   onChange={(e) => setFormNotes(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden"
@@ -506,17 +895,17 @@ export default function SellersManager({ initialSellers }: { initialSellers: Sel
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => setIsSellerModalOpen(false)}
                   className="px-4 py-2 rounded-xl font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={savingSeller}
                   className="px-5 py-2 rounded-xl font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all cursor-pointer disabled:opacity-50"
                 >
-                  {saving ? "Saving…" : "Save Supplier"}
+                  {savingSeller ? "Saving…" : "Save Supplier"}
                 </button>
               </div>
             </form>
