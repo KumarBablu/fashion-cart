@@ -64,6 +64,15 @@ export default function ProductDetailClient({ product }: { product: Product }) {
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [cartVariantIds, setCartVariantIds] = useState<string[]>([]);
+  const [isHoverZooming, setIsHoverZooming] = useState(false);
+  const [zoomCoords, setZoomCoords] = useState({ x: 50, y: 50 });
+
+  function handleImageHoverMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomCoords({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
+  }
 
   function refreshCartState() {
     fetch("/api/cart")
@@ -261,28 +270,71 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
           <div
             onClick={() => setLightboxOpen(true)}
-            className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl border border-[#E7DFD5] bg-[#F4EFEA] group shadow-sm cursor-zoom-in transition-all duration-300 hover:shadow-xl"
-            title="Click or tap to view high definition preview"
+            onMouseEnter={() => setIsHoverZooming(true)}
+            onMouseLeave={() => setIsHoverZooming(false)}
+            onMouseMove={handleImageHoverMove}
+            className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl border border-[#E7DFD5] bg-[#F4EFEA] group shadow-sm cursor-zoom-in transition-all duration-300 hover:shadow-2xl"
+            title="Click or tap to open Fullscreen HD Studio View"
           >
             {displayImages[activeImage] ? (
-              <Image
-                src={displayImages[activeImage].imageUrl}
-                alt={displayImages[activeImage].altText ?? product.name}
-                fill
-                sizes="(min-width: 1024px) 42vw, 100vw"
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                priority
-              />
+              <div
+                key={activeImage}
+                className="relative h-full w-full animate-in fade-in zoom-in-98 duration-200"
+              >
+                <Image
+                  src={displayImages[activeImage].imageUrl}
+                  alt={displayImages[activeImage].altText ?? product.name}
+                  fill
+                  sizes="(min-width: 1024px) 42vw, 100vw"
+                  style={{
+                    transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
+                    transform: isHoverZooming ? "scale(2)" : "scale(1)",
+                    transition: isHoverZooming ? "transform 0.08s ease-out" : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                  className="object-cover"
+                  priority
+                />
+              </div>
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-slate-400">
                 No image available
               </div>
             )}
 
+            {/* In-Gallery Left Navigation Paddle */}
+            {displayImages.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveImage((prev) => (prev - 1 + displayImages.length) % displayImages.length);
+                }}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full bg-white/85 hover:bg-black hover:text-white text-slate-800 border border-slate-200 shadow-md flex items-center justify-center text-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110 cursor-pointer"
+                title="Previous look"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* In-Gallery Right Navigation Paddle */}
+            {displayImages.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveImage((prev) => (prev + 1) % displayImages.length);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full bg-white/85 hover:bg-black hover:text-white text-slate-800 border border-slate-200 shadow-md flex items-center justify-center text-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110 cursor-pointer"
+                title="Next look"
+              >
+                ›
+              </button>
+            )}
+
             {/* Floating High-Definition Zoom Indicator Badge */}
-            <div className="absolute bottom-3 right-3 z-10 opacity-90 group-hover:opacity-100 transition-opacity">
+            <div className="absolute bottom-3 right-3 z-10 opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#141416]/85 backdrop-blur-md text-white border border-white/20 shadow-md">
-                <span>🔍</span> Tap for HD Preview
+                <span>✨</span> Fullscreen HD Lookbook
               </span>
             </div>
 
@@ -308,16 +360,22 @@ export default function ProductDetailClient({ product }: { product: Product }) {
 
           {/* Thumbnails row */}
           {displayImages.length > 1 && (
-            <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
+            <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar pt-1">
               {displayImages.map((img, i) => (
                 <button
                   key={img.id || i}
                   onClick={() => setActiveImage(i)}
-                  className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
-                    i === activeImage ? "border-slate-900 scale-105 shadow-sm" : "border-slate-200 opacity-70 hover:opacity-100"
+                  className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
+                    i === activeImage
+                      ? "border-[#C59B27] ring-4 ring-[#C59B27]/30 scale-105 shadow-md opacity-100"
+                      : "border-slate-200 opacity-60 hover:opacity-100 hover:border-slate-400 hover:scale-102"
                   }`}
+                  aria-label={`View look ${i + 1}`}
                 >
                   <Image src={img.imageUrl} alt="" fill className="object-cover" />
+                  {i === activeImage && (
+                    <div className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-[#C59B27] ring-1 ring-white" />
+                  )}
                 </button>
               ))}
             </div>
