@@ -498,7 +498,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 3. Resolve Product
-        let product = null;
+        let product: any = null;
         if (rawCustomProductId) {
           product = await prisma.product.findFirst({
             where: { productId: rawCustomProductId },
@@ -547,47 +547,72 @@ export async function POST(req: NextRequest) {
           reviewCount: reviewCountNum,
         };
 
+        // 4. Atomic Single-Query Creation (Product + Variant + Lookbook Images)
+        const sizeCode = slugify(size || "FS").toUpperCase().slice(0, 4) || "FS";
+        const finalSku = rawSku ? `${rawSku}-${rowSkuEntropy.slice(0, 3)}` : `FC-SKU-${brandCode}-${sizeCode}-${rowSkuEntropy}`;
+
         if (!product) {
-          product = await prisma.product.create({ data: productData });
+          product = await prisma.product.create({
+            data: {
+              ...productData,
+              variants: {
+                create: {
+                  sku: finalSku,
+                  colour,
+                  size,
+                  price: priceNum,
+                  compareAtPrice: compareNum,
+                  discountPercent: discountNum,
+                  stockQuantity: stockNum,
+                  isActive: true,
+                },
+              },
+              images: imageUrls.length > 0 ? {
+                createMany: {
+                  data: imageUrls.map((url, imgIdx) => ({
+                    imageUrl: url,
+                    altText: `${title} - Look ${imgIdx + 1}`,
+                    sortOrder: imgIdx,
+                  })),
+                },
+              } : undefined,
+            },
+          });
           productsCreated++;
+          variantsCreatedOrUpdated++;
         } else {
           product = await prisma.product.update({
             where: { id: product.id },
             data: productData,
           });
           productsUpdated++;
-        }
 
-        // 4. Create or Update Variant with Collision-Proof SKU
-        const sizeCode = slugify(size || "FS").toUpperCase().slice(0, 4) || "FS";
-        const finalSku = rawSku ? `${rawSku}-${rowSkuEntropy.slice(0, 3)}` : `FC-SKU-${brandCode}-${sizeCode}-${rowSkuEntropy}`;
-
-        const variantData = {
-          productId: product.id,
-          sku: finalSku,
-          colour,
-          size,
-          price: priceNum,
-          compareAtPrice: compareNum,
-          discountPercent: discountNum,
-          stockQuantity: stockNum,
-          isActive: true,
-        };
-
-        await prisma.productVariant.create({ data: variantData });
-        variantsCreatedOrUpdated++;
-
-        // 5. Lookbook Images (Single batch insert)
-        if (imageUrls.length > 0) {
-          await prisma.productImage.createMany({
-            data: imageUrls.map((url, imgIdx) => ({
+          await prisma.productVariant.create({
+            data: {
               productId: product.id,
-              imageUrl: url,
-              altText: `${title} - Look ${imgIdx + 1}`,
-              sortOrder: imgIdx,
-            })),
-            skipDuplicates: true,
+              sku: finalSku,
+              colour,
+              size,
+              price: priceNum,
+              compareAtPrice: compareNum,
+              discountPercent: discountNum,
+              stockQuantity: stockNum,
+              isActive: true,
+            },
           });
+          variantsCreatedOrUpdated++;
+
+          if (imageUrls.length > 0) {
+            await prisma.productImage.createMany({
+              data: imageUrls.map((url, imgIdx) => ({
+                productId: product.id,
+                imageUrl: url,
+                altText: `${title} - Look ${imgIdx + 1}`,
+                sortOrder: imgIdx,
+              })),
+              skipDuplicates: true,
+            });
+          }
         }
 
         processedCount++;
