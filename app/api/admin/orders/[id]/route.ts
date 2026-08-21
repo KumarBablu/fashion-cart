@@ -58,11 +58,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     if (releasesStock) {
       for (const item of current.items) {
-        await restockVariant(tx, item.variantId, item.quantity, {
-          type: "CANCELLED_ORDER",
-          orderId: current.id,
-          notes: `Stock released: order ${current.orderNumber} set to ${parsed.data.status}`,
-        });
+        if (item.variantId) {
+          await restockVariant(tx, item.variantId, item.quantity, {
+            type: "CANCELLED_ORDER",
+            orderId: current.id,
+            notes: `Stock released: order ${current.orderNumber} set to ${parsed.data.status}`,
+          });
+        }
       }
     }
 

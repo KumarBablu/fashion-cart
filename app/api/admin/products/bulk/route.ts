@@ -53,38 +53,40 @@ export async function POST(req: NextRequest) {
       }
 
       case "DELETE": {
-        // Delete related variants, images, reviews, wishlists, and cart items safely
         let deletedCount = 0;
-        let archivedCount = 0;
 
-        for (const prodId of productIds) {
-          const hasOrders = await prisma.orderItem.count({
-            where: { productId: prodId },
-          });
-
-          if (hasOrders === 0) {
-            await prisma.cartItem.deleteMany({ where: { variant: { productId: prodId } } });
-            await prisma.wishlistItem.deleteMany({ where: { productId: prodId } });
-            await prisma.review.deleteMany({ where: { productId: prodId } });
-            await prisma.productImage.deleteMany({ where: { productId: prodId } });
-            await prisma.inventoryTransaction.deleteMany({ where: { variant: { productId: prodId } } });
-            await prisma.productVariant.deleteMany({ where: { productId: prodId } });
-            await prisma.product.delete({ where: { id: prodId } });
-            deletedCount++;
-          } else {
-            await prisma.product.update({
-              where: { id: prodId },
-              data: { status: "ARCHIVED" },
+        await prisma.$transaction(async (tx) => {
+          for (const prodId of productIds) {
+            // Unlink order items safely
+            await tx.orderItem.updateMany({
+              where: { productId: prodId },
+              data: { productId: null, variantId: null },
             });
-            archivedCount++;
+            await tx.orderItem.updateMany({
+              where: { variant: { productId: prodId } },
+              data: { productId: null, variantId: null },
+            });
+
+            // Delete child relations
+            await tx.inventoryTransaction.deleteMany({ where: { variant: { productId: prodId } } });
+            await tx.cartItem.deleteMany({ where: { productId: prodId } });
+            await tx.cartItem.deleteMany({ where: { variant: { productId: prodId } } });
+            await tx.wishlistItem.deleteMany({ where: { productId: prodId } });
+            await tx.review.deleteMany({ where: { productId: prodId } });
+            await tx.productImage.deleteMany({ where: { productId: prodId } });
+            await tx.productVariant.deleteMany({ where: { productId: prodId } });
+
+            // Delete product
+            await tx.product.delete({ where: { id: prodId } });
+            deletedCount++;
           }
-        }
+        });
 
         return NextResponse.json({
           success: true,
           deletedCount,
-          archivedCount,
-          message: `Processed deletion: ${deletedCount} deleted permanently, ${archivedCount} archived to preserve orders.`,
+          archivedCount: 0,
+          message: `Permanently removed ${deletedCount} products from database.`,
         });
       }
 

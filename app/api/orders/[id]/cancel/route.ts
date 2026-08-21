@@ -48,11 +48,13 @@ export async function POST(
 
       // 2. Restore stock for all items
       for (const item of order.items) {
-        await incrementStock(tx, item.variantId, item.quantity, {
-          type: "CANCELLED_ORDER",
-          orderId: order.id,
-          notes: `Stock restored from cancelled order ${order.orderNumber}`,
-        });
+        if (item.variantId) {
+          await incrementStock(tx, item.variantId, item.quantity, {
+            type: "CANCELLED_ORDER",
+            orderId: order.id,
+            notes: `Stock restored from cancelled order ${order.orderNumber}`,
+          });
+        }
       }
 
       // 3. Update Payment if under review
