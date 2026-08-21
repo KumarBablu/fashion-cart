@@ -11,6 +11,69 @@ function slugify(s: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+// Cleans third-party marketplace platform references and promotional noise
+function sanitizeDescription(desc: string, title: string, brand: string, fabric: string): string {
+  if (!desc) {
+    return `${title} crafted with premium ${fabric || "fabrics"} and luxury finishing, curated exclusively for Fashion Cart.`;
+  }
+
+  let cleaned = desc
+    .replace(/Buy\s+.*?\s+For\s+Only\s+Rs\.\s*[0-9.]+\s+Online\s+in\s+India\.?/gi, "")
+    .replace(/Shop\s+Online\s+For\s+Apparels\.?/gi, "")
+    .replace(/Huge\s+Collection\s+of\s+Branded\s+Clothes\s+Only\s+at\s+Flipkart\.com\.?/gi, "")
+    .replace(/\b(Flipkart|Amazon|Meesho|Myntra|Snapdeal|Ajio|Shopsy|TataCliq|Nykaa)\b(?:\.com)?/gi, "Fashion Cart")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // If the description became empty or too short after cleaning, provide an elegant description
+  if (cleaned.length < 15) {
+    cleaned = `${title} from ${brand || "Fashion Cart Atelier"} crafted with ${fabric || "fine textiles"} and tailored for premium comfort and style.`;
+  }
+
+  return cleaned;
+}
+
+// Infers department and subcategory if empty in CSV
+function inferTaxonomy(title: string, dept?: string, cat?: string, subcat?: string) {
+  const t = title.toLowerCase();
+
+  let department = dept?.trim() || "";
+  let subcategory = subcat?.trim() || cat?.trim() || "";
+
+  if (!department) {
+    if (t.includes("men") && !t.includes("women")) {
+      department = "Men";
+    } else if (t.includes("kid") || t.includes("boy") || t.includes("girl")) {
+      department = "Kids";
+    } else if (t.includes("footwear") || t.includes("mojari") || t.includes("shoe") || t.includes("sandal")) {
+      department = "Footwear";
+    } else {
+      department = "Women";
+    }
+  }
+
+  if (!subcategory) {
+    if (t.includes("saree") || t.includes("sari")) {
+      subcategory = "Sarees";
+    } else if (t.includes("kurta") || t.includes("kurti") || t.includes("ethnic set") || t.includes("dupatta set")) {
+      subcategory = "Kurtas & Sets";
+    } else if (t.includes("anarkali") || t.includes("dress") || t.includes("gown") || t.includes("lehenga")) {
+      subcategory = "Dresses & Gowns";
+    } else if (t.includes("shirt")) {
+      subcategory = "Shirts";
+    } else if (t.includes("pant") || t.includes("trouser") || t.includes("jeans") || t.includes("bottom")) {
+      subcategory = "Trousers & Bottoms";
+    } else if (t.includes("mojari") || t.includes("shoe") || t.includes("footwear")) {
+      subcategory = "Ethnic Footwear";
+    } else {
+      subcategory = "Ethnic Wear";
+    }
+  }
+
+  const category = cat?.trim() || subcategory;
+  return { department, category, subcategory };
+}
+
 // Robust CSV row parser handling quoted text with commas and escaped quotes
 function parseCsvRows(text: string): string[][] {
   const lines: string[][] = [];
@@ -42,6 +105,98 @@ function parseCsvRows(text: string): string[][] {
   }
 
   return lines;
+}
+
+// Bulletproof Category Hierarchy Resolver - Guaranteed to never throw unique constraint error
+async function resolveCategoryHierarchy(deptName: string, subcatName: string): Promise<string> {
+  const cleanDept = deptName.trim() || "Women";
+  const deptSlug = slugify(cleanDept);
+
+  // 1. Find or create Department (Parent Category)
+  let parentCat = await prisma.category.findFirst({
+    where: {
+      OR: [
+        { name: { equals: cleanDept, mode: "insensitive" } },
+        { slug: deptSlug },
+      ],
+      parentId: null,
+    },
+  });
+
+  if (!parentCat) {
+    try {
+      parentCat = await prisma.category.create({
+        data: {
+          name: cleanDept,
+          slug: deptSlug,
+          isActive: true,
+          parentId: null,
+        },
+      });
+    } catch {
+      // If slug collision or race condition, retrieve the existing category
+      parentCat = await prisma.category.findFirst({
+        where: { slug: deptSlug },
+      });
+    }
+  }
+
+  if (!cleanSubcatName(subcatName) || !parentCat) {
+    return parentCat?.id || (await getFallbackCategoryId());
+  }
+
+  // 2. Find or create Subcategory under Parent
+  const cleanSub = subcatName.trim();
+  const subSlug = `${deptSlug}-${slugify(cleanSub)}`;
+
+  let subCat = await prisma.category.findFirst({
+    where: {
+      OR: [
+        { name: { equals: cleanSub, mode: "insensitive" }, parentId: parentCat.id },
+        { slug: subSlug },
+        { slug: slugify(cleanSub) },
+      ],
+    },
+  });
+
+  if (!subCat) {
+    try {
+      subCat = await prisma.category.create({
+        data: {
+          name: cleanSub,
+          slug: subSlug,
+          isActive: true,
+          parentId: parentCat.id,
+        },
+      });
+    } catch {
+      subCat = await prisma.category.findFirst({
+        where: {
+          OR: [{ slug: subSlug }, { slug: slugify(cleanSub) }],
+        },
+      });
+    }
+  }
+
+  return subCat?.id || parentCat.id;
+}
+
+function cleanSubcatName(s: string) {
+  return s && s.trim().length > 0;
+}
+
+async function getFallbackCategoryId(): Promise<string> {
+  let fallback = await prisma.category.findFirst({ where: { isActive: true } });
+  if (!fallback) {
+    fallback = await prisma.category.create({
+      data: {
+        name: "Apparel & Couture",
+        slug: "apparel-couture",
+        isActive: true,
+      },
+    });
+  }
+  return fallback.id;
 }
 
 export async function POST(req: NextRequest) {
@@ -128,18 +283,6 @@ export async function POST(req: NextRequest) {
     let sellersCreatedOrLinked = 0;
     const errors: string[] = [];
 
-    // Fallback default category
-    let defaultCategory = await prisma.category.findFirst({ where: { isActive: true } });
-    if (!defaultCategory) {
-      defaultCategory = await prisma.category.create({
-        data: {
-          name: "Apparel & Couture",
-          slug: "apparel-couture",
-          isActive: true,
-        },
-      });
-    }
-
     for (let r = 1; r < rows.length; r++) {
       const row = rows[r];
       if (row.length === 0 || row.every((c) => !c)) continue;
@@ -147,15 +290,24 @@ export async function POST(req: NextRequest) {
       const getVal = (idx: number) => (idx >= 0 && idx < row.length ? row[idx].trim() : "");
 
       const customProductId = getVal(colIndex.productId);
-      const title = getVal(colIndex.title) || "Luxury Fashion Item";
-      let slug = getVal(colIndex.slug) || slugify(title);
-      if (!slug) slug = `garment-${Date.now()}-${r}`;
+      const rawTitle = getVal(colIndex.title);
+      const title = rawTitle || "Luxury Garment Listing";
+
+      // Calculate clean slug
+      let rawSlug = getVal(colIndex.slug);
+      let slug = rawSlug && rawSlug.length > 2 ? slugify(rawSlug) : slugify(title);
+      if (!slug || slug.length < 2) {
+        slug = `garment-${Date.now()}-${r}`;
+      }
 
       const productUrl = getVal(colIndex.productUrl);
-      const deptName = getVal(colIndex.department) || getVal(colIndex.category) || "Women";
-      const catName = getVal(colIndex.category) || deptName;
-      const subcatName = getVal(colIndex.subcategory) || "Sarees";
-      const categoryPath = [deptName, catName, subcatName]
+
+      // Infer Taxonomy if empty in CSV
+      const rawDept = getVal(colIndex.department);
+      const rawCat = getVal(colIndex.category);
+      const rawSubcat = getVal(colIndex.subcategory);
+      const { department, category, subcategory } = inferTaxonomy(title, rawDept, rawCat, rawSubcat);
+      const categoryPath = [department, category, subcategory]
         .filter(Boolean)
         .filter((v, i, a) => a.indexOf(v) === i)
         .join(" > ");
@@ -163,7 +315,11 @@ export async function POST(req: NextRequest) {
       const brand = getVal(colIndex.brand) || "Fashion Cart Atelier";
       const fabric = getVal(colIndex.fabric) || "Pure Fabric";
       const material = getVal(colIndex.material) || fabric;
-      const description = getVal(colIndex.description) || `${title} crafted with premium ${fabric}.`;
+
+      // Sanitize Description: Clean out Flipkart / third-party noise
+      const rawDescription = getVal(colIndex.description);
+      const description = sanitizeDescription(rawDescription, title, brand, fabric);
+
       const statusRaw = getVal(colIndex.status).toUpperCase();
       const status: ProductStatus =
         statusRaw === "DRAFT"
@@ -173,7 +329,8 @@ export async function POST(req: NextRequest) {
           : ProductStatus.ACTIVE;
       const availability = getVal(colIndex.availability) || "IN_STOCK";
 
-      const sku = getVal(colIndex.sku) || `FC-SKU-${slug.slice(0, 8).toUpperCase()}-${r}`;
+      // Variant Attributes
+      const sku = getVal(colIndex.sku) || `FC-SKU-${slug.slice(0, 10).toUpperCase()}-${r}`;
       const colour = getVal(colIndex.colour) || "Classic";
       const size = getVal(colIndex.size) || "Free Size";
       const pattern = getVal(colIndex.pattern) || "Solid";
@@ -181,7 +338,7 @@ export async function POST(req: NextRequest) {
       const occasion = getVal(colIndex.occasion) || "Festive & Casual";
       const currency = getVal(colIndex.currency) || "INR";
 
-      const priceNum = Number(getVal(colIndex.price).replace(/[^0-9.]/g, "")) || 1499;
+      const priceNum = Number(getVal(colIndex.price).replace(/[^0-9.]/g, "")) || 999;
       const compareNum = Number(getVal(colIndex.compareAtPrice).replace(/[^0-9.]/g, "")) || null;
       let discountNum = Number(getVal(colIndex.discountPercent).replace(/[^0-9.]/g, "")) || null;
       if (!discountNum && compareNum && compareNum > priceNum) {
@@ -190,7 +347,7 @@ export async function POST(req: NextRequest) {
 
       const stockNum = parseInt(getVal(colIndex.stockQuantity).replace(/[^0-9]/g, "") || "25", 10);
 
-      // Seller / Supplier details (Admin Only)
+      // Seller / Supplier details (Admin Confidential)
       const sellerName = getVal(colIndex.sellerName);
       const sellerIdStr = getVal(colIndex.sellerId);
 
@@ -209,54 +366,10 @@ export async function POST(req: NextRequest) {
       ].filter((u) => u && (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("/")));
 
       try {
-        // 1. Resolve or Create Category Hierarchy
-        let assignedCategoryId = defaultCategory.id;
+        // 1. Resolve Category Hierarchy safely
+        const assignedCategoryId = await resolveCategoryHierarchy(department, subcategory);
 
-        if (deptName) {
-          let parentCat = await prisma.category.findFirst({
-            where: {
-              OR: [{ name: { equals: deptName, mode: "insensitive" } }, { slug: slugify(deptName) }],
-              parentId: null,
-            },
-          });
-
-          if (!parentCat) {
-            parentCat = await prisma.category.create({
-              data: {
-                name: deptName,
-                slug: slugify(deptName),
-                isActive: true,
-                parentId: null,
-              },
-            });
-          }
-
-          assignedCategoryId = parentCat.id;
-
-          if (subcatName) {
-            let subCat = await prisma.category.findFirst({
-              where: {
-                OR: [{ name: { equals: subcatName, mode: "insensitive" } }, { slug: slugify(subcatName) }],
-                parentId: parentCat.id,
-              },
-            });
-
-            if (!subCat) {
-              subCat = await prisma.category.create({
-                data: {
-                  name: subcatName,
-                  slug: `${slugify(deptName)}-${slugify(subcatName)}`,
-                  isActive: true,
-                  parentId: parentCat.id,
-                },
-              });
-            }
-
-            assignedCategoryId = subCat.id;
-          }
-        }
-
-        // 2. Resolve or Create Seller / Supplier (Admin Confidential Entity)
+        // 2. Resolve or Create Seller / Supplier
         let linkedSellerId: string | null = null;
         if (sellerIdStr || sellerName) {
           const sellerLookupId = sellerIdStr || `SLR-${slugify(sellerName || "VENDOR").toUpperCase().slice(0, 10)}`;
@@ -265,30 +378,47 @@ export async function POST(req: NextRequest) {
           });
 
           if (!seller) {
-            seller = await prisma.seller.create({
-              data: {
-                sellerId: sellerLookupId,
-                name: sellerName || `Supplier ${sellerLookupId}`,
-                url: productUrl || null,
-                isActive: true,
-              },
-            });
-            sellersCreatedOrLinked++;
+            try {
+              seller = await prisma.seller.create({
+                data: {
+                  sellerId: sellerLookupId,
+                  name: sellerName || `Supplier ${sellerLookupId}`,
+                  url: productUrl || null,
+                  isActive: true,
+                },
+              });
+              sellersCreatedOrLinked++;
+            } catch {
+              seller = await prisma.seller.findFirst({
+                where: { sellerId: sellerLookupId },
+              });
+            }
           }
-          linkedSellerId = seller.id;
+          if (seller) {
+            linkedSellerId = seller.id;
+          }
         }
 
-        // 3. Upsert Product
-        let product = await prisma.product.findUnique({ where: { slug } });
+        // 3. Upsert Product by slug or name
+        let product = await prisma.product.findFirst({
+          where: {
+            OR: [
+              { slug },
+              { name: { equals: title, mode: "insensitive" } },
+              ...(customProductId ? [{ productId: customProductId }] : []),
+            ],
+          },
+        });
+
         const productData = {
           productId: customProductId || null,
           name: title,
-          slug,
+          slug: product ? product.slug : slug,
           productUrl: productUrl || null,
-          department: deptName,
-          subcategory: subcatName,
+          department,
+          subcategory,
           categoryPath,
-          productType: subcatName,
+          productType: subcategory,
           brand,
           fabric,
           material,
@@ -321,7 +451,7 @@ export async function POST(req: NextRequest) {
           productsUpdated++;
         }
 
-        // 4. Upsert ProductVariant
+        // 4. Upsert ProductVariant by SKU
         const existingVariant = await prisma.productVariant.findUnique({ where: { sku } });
         const variantData = {
           productId: product.id,
@@ -345,7 +475,7 @@ export async function POST(req: NextRequest) {
         }
         variantsCreatedOrUpdated++;
 
-        // 5. Upsert Images (Up to 5 images)
+        // 5. Upsert Images (Up to 5 lookbook photos)
         for (let imgIdx = 0; imgIdx < imageUrls.length; imgIdx++) {
           const imgUrl = imageUrls[imgIdx];
           const imgExists = await prisma.productImage.findFirst({
