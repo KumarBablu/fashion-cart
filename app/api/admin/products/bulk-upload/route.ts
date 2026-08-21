@@ -169,9 +169,22 @@ function parseCsvRows(text: string): string[][] {
   return lines;
 }
 
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
+// Fast in-memory Category Hierarchy Cache across batches
+const categoryCache = new Map<string, string>();
+
 // Bulletproof Category Hierarchy Resolver - Guaranteed to never throw unique constraint error
 async function resolveCategoryHierarchy(deptName: string, subcatName: string): Promise<string> {
   const cleanDept = deptName.trim() || "Women";
+  const cleanSub = subcatName.trim();
+  const cacheKey = `${cleanDept.toLowerCase()}:::${cleanSub.toLowerCase()}`;
+
+  if (categoryCache.has(cacheKey)) {
+    return categoryCache.get(cacheKey)!;
+  }
+
   const deptSlug = slugify(cleanDept);
 
   // 1. Find or create Department (Parent Category)
@@ -203,11 +216,12 @@ async function resolveCategoryHierarchy(deptName: string, subcatName: string): P
   }
 
   if (!cleanSubcatName(subcatName) || !parentCat) {
-    return parentCat?.id || (await getFallbackCategoryId());
+    const resultId = parentCat?.id || (await getFallbackCategoryId());
+    categoryCache.set(cacheKey, resultId);
+    return resultId;
   }
 
   // 2. Find or create Subcategory under Parent
-  const cleanSub = subcatName.trim();
   const subSlug = `${deptSlug}-${slugify(cleanSub)}`;
 
   let subCat = await prisma.category.findFirst({
@@ -239,7 +253,9 @@ async function resolveCategoryHierarchy(deptName: string, subcatName: string): P
     }
   }
 
-  return subCat?.id || parentCat.id;
+  const finalId = subCat?.id || parentCat.id;
+  categoryCache.set(cacheKey, finalId);
+  return finalId;
 }
 
 function cleanSubcatName(s: string) {
@@ -277,6 +293,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "No CSV file provided in upload" }, { status: 400 });
       }
       csvText = await file.text();
+    } else if (contentType.includes("application/json")) {
+      const jsonBody = await req.json().catch(() => ({}));
+      csvText = jsonBody.csvText || "";
     } else {
       csvText = await req.text();
     }
