@@ -236,12 +236,16 @@ export default function AdminCategoriesPage() {
     if (!confirm(message)) return;
 
     try {
-      const res = await fetch(`/api/categories/${cat.id}?hard=true`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
-      success("Category Removed", `"${cat.name}" removed successfully.`);
+      const res = await fetch(`/api/categories/${cat.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toastError("Delete Failed", data.error || "Could not remove category.");
+        return;
+      }
+      success("Category Removed 🎉", `"${cat.name}" was removed successfully.`);
       load();
     } catch {
-      toastError("Delete Failed", "Could not remove category.");
+      toastError("Delete Failed", "Network error while removing category.");
     }
   }
 
