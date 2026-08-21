@@ -170,12 +170,12 @@ export default function BulkProductUploadModal({
 
         {/* Supported Columns Guide */}
         <div className="p-3.5 rounded-xl border text-[11px] space-y-1.5" style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}>
-          <p className="font-bold text-dim uppercase text-[10px] tracking-wider">Supported CSV Column Headers:</p>
-          <p className="font-mono text-[10px] text-primary break-all">
-            Title, Slug, Department, Subcategory, Brand, Fabric, Description, Status, SKU, Colour, Size, Price, CompareAtPrice, StockQuantity, ImageURL
+          <p className="font-bold text-dim uppercase text-[10px] tracking-wider">Supported 34 CSV Column Headers:</p>
+          <p className="font-mono text-[9.5px] text-primary break-all leading-relaxed">
+            ProductID, SKU, Title, Slug, ProductURL, Department, Category, Subcategory, Brand, Fabric, Material, Description, Status, Availability, Colour, Size, Pattern, Fit, Occasion, Price, CompareAtPrice, DiscountPercent, Currency, StockQuantity, SellerName, SellerID, Rating, RatingCount, ReviewCount, ImageURL, ImageURL2, ImageURL3, ImageURL4, ImageURL5
           </p>
           <p className="text-[10px] text-dim">
-            ✦ Multiple rows with the same Title/Slug will automatically group as size/colour variants under that product.
+            ✦ Includes multi-image lookbook URLs (up to 5), fashion attributes (Fabric, Material, Pattern, Fit, Occasion), and confidential Seller connection details (SellerName, SellerID, ProductURL).
           </p>
         </div>
 

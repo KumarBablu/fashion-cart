@@ -12,7 +12,18 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
   const order = await prisma.order.findUnique({
     where: { id },
-    include: { user: true, items: true, payment: true, invoice: true },
+    include: {
+      user: true,
+      items: {
+        include: {
+          product: {
+            include: { seller: true },
+          },
+        },
+      },
+      payment: true,
+      invoice: true,
+    },
   });
 
   if (!order) notFound();
@@ -89,19 +100,90 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
       {/* Items Section */}
       <div className="p-6 rounded-2xl border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
-        <h2 className="font-display text-base font-bold mb-3">Purchased Items ({order.items.length})</h2>
+        <h2 className="font-display text-base font-bold mb-3">Purchased Items &amp; Supplier Fulfillment ({order.items.length})</h2>
         <div className="divide-y text-xs" style={{ borderColor: "var(--fc-border)" }}>
-          {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between items-center py-2.5">
-              <div>
-                <p className="font-bold text-sm">{item.productNameSnapshot}</p>
-                <p className="text-dim mt-0.5">
-                  SKU: {item.skuSnapshot} · {item.colourSnapshot} / {item.sizeSnapshot} · Qty: {item.quantity} × {formatINR(item.unitPrice)}
-                </p>
+          {order.items.map((item) => {
+            const seller = item.product?.seller;
+            const sellerName = seller?.name || item.product?.sellerName;
+            const sellerId = seller?.sellerId || item.product?.sellerIdentifier;
+            const sellerPhone = seller?.phone || item.product?.sellerPhone;
+            const sellerEmail = seller?.email || item.product?.sellerEmail;
+            const sellerUrl = seller?.url || item.product?.sellerUrl || item.product?.productUrl;
+
+            return (
+              <div key={item.id} className="py-3.5 space-y-2.5">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-bold text-sm">{item.productNameSnapshot}</p>
+                    <p className="text-dim mt-0.5 font-mono text-[11px]">
+                      SKU: {item.skuSnapshot} · {item.colourSnapshot} / {item.sizeSnapshot} · Qty: {item.quantity} × {formatINR(item.unitPrice)}
+                    </p>
+                    {item.product?.categoryPath && (
+                      <p className="text-[10px] text-slate-400 mt-0.5">📁 {item.product.categoryPath}</p>
+                    )}
+                  </div>
+                  <span className="font-bold text-sm text-primary">{formatINR(item.total)}</span>
+                </div>
+
+                {/* Confidential Seller Fulfillment Box (Admin Only) */}
+                {(sellerName || sellerId || sellerPhone || sellerUrl) && (
+                  <div className="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/20 text-xs space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm">🏭</span>
+                        <span className="font-bold text-amber-900 dark:text-amber-300">
+                          Supplier / Seller: <strong>{sellerName || "Direct Vendor"}</strong> {sellerId && `(${sellerId})`}
+                        </span>
+                      </div>
+                      {sellerUrl && (
+                        <a
+                          href={sellerUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1"
+                        >
+                          <span>🔗 Source Link</span> ↗
+                        </a>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {sellerPhone && (
+                        <>
+                          <a
+                            href={`https://wa.me/91${sellerPhone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
+                              `Hello ${sellerName || "Supplier"}, we have an order for ${item.productNameSnapshot} (SKU: ${item.skuSnapshot}, Size: ${item.sizeSnapshot}, Colour: ${item.colourSnapshot}, Qty: ${item.quantity}). Please confirm availability.`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-emerald-600 text-white flex items-center gap-1 hover:bg-emerald-700 shadow-2xs"
+                          >
+                            <span>💬 WhatsApp Seller ({sellerPhone})</span>
+                          </a>
+                          <a
+                            href={`tel:${sellerPhone}`}
+                            className="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-slate-800 text-white flex items-center gap-1 hover:bg-slate-900 shadow-2xs"
+                          >
+                            <span>📞 Call Seller</span>
+                          </a>
+                        </>
+                      )}
+                      {sellerEmail && (
+                        <a
+                          href={`mailto:${sellerEmail}?subject=${encodeURIComponent(
+                            `Order Fulfillment: ${item.productNameSnapshot} (${item.skuSnapshot})`
+                          )}`}
+                          className="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-blue-600 text-white flex items-center gap-1 hover:bg-blue-700 shadow-2xs"
+                        >
+                          <span>✉️ Email Seller</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-              <span className="font-bold text-sm">{formatINR(item.total)}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="mt-4 border-t pt-3 space-y-1.5 text-xs" style={{ borderColor: "var(--fc-border)" }}>

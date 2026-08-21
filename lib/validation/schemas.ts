@@ -66,6 +66,7 @@ export const utrSubmissionSchema = z.object({
 });
 
 export const productSchema = z.object({
+  productId: z.string().optional().nullable().or(z.literal("")),
   name: z.string().trim().min(2).max(200),
   slug: z
     .string()
@@ -73,13 +74,41 @@ export const productSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, hyphen-separated"),
   description: z.string().optional().or(z.literal("")),
   categoryId: z.string().min(1),
+  department: z.string().optional().nullable().or(z.literal("")),
+  subcategory: z.string().optional().nullable().or(z.literal("")),
+  categoryPath: z.string().optional().nullable().or(z.literal("")),
+  productType: z.string().optional().nullable().or(z.literal("")),
+  productUrl: z.string().optional().nullable().or(z.literal("")),
   brand: z.string().optional().or(z.literal("")),
   fabric: z.string().optional().or(z.literal("")),
+  material: z.string().optional().nullable().or(z.literal("")),
+  pattern: z.string().optional().nullable().or(z.literal("")),
+  fit: z.string().optional().nullable().or(z.literal("")),
+  occasion: z.string().optional().nullable().or(z.literal("")),
+  currency: z.string().default("INR").optional(),
+  availability: z.string().default("IN_STOCK").optional(),
+  sellerId: z.string().optional().nullable().or(z.literal("")),
+  sellerName: z.string().optional().nullable().or(z.literal("")),
+  sellerIdentifier: z.string().optional().nullable().or(z.literal("")),
+  sellerUrl: z.string().optional().nullable().or(z.literal("")),
+  sellerPhone: z.string().optional().nullable().or(z.literal("")),
+  sellerEmail: z.string().optional().nullable().or(z.literal("")),
   status: z.enum(["ACTIVE", "ARCHIVED", "DRAFT"]).default("ACTIVE"),
   isFeatured: z.boolean().optional(),
   isNewArrival: z.boolean().optional(),
   isBestSeller: z.boolean().optional(),
   tags: z.string().optional().or(z.literal("")),
+});
+
+export const sellerSchema = z.object({
+  sellerId: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(2).max(120),
+  phone: z.string().optional().nullable().or(z.literal("")),
+  email: z.string().email().optional().nullable().or(z.literal("")),
+  url: z.string().url().optional().nullable().or(z.literal("")),
+  address: z.string().optional().nullable().or(z.literal("")),
+  notes: z.string().optional().nullable().or(z.literal("")),
+  isActive: z.boolean().optional(),
 });
 
 export const variantSchema = z.object({
@@ -88,6 +117,7 @@ export const variantSchema = z.object({
   size: z.string().trim().min(1).max(30),
   price: z.number().positive(),
   compareAtPrice: z.number().positive().optional().nullable(),
+  discountPercent: z.number().min(0).max(100).optional().nullable(),
   stockQuantity: z.number().int().min(0),
   isActive: z.boolean().optional(),
 });

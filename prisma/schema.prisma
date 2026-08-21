@@ -131,24 +131,75 @@ model Category {
 }
 
 // ============================================================
+// SELLER / VENDOR (Admin Order Fulfillment & Supplier Links)
+// ============================================================
+
+model Seller {
+  id        String   @id @default(cuid())
+  sellerId  String   @unique // e.g. "SLR-1001", "SLR-MEESHO-42"
+  name      String
+  phone     String?
+  email     String?
+  url       String?
+  address   String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@index([sellerId])
+  @@index([name])
+}
+
+// ============================================================
 // PRODUCT
 // ============================================================
 
 model Product {
   id             String        @id @default(cuid())
+  productId      String?       // Custom / SKU master ID if provided in CSV
   name           String
   slug           String        @unique
   description    String?
   categoryId     String
   category       Category      @relation(fields: [categoryId], references: [id])
+  
+  // Categorization & Hierarchy
+  department     String?       // e.g. Women, Men, Kids, Boys, Girls, Unisex
+  subcategory    String?       // e.g. Sarees, Dresses, Shirts, Kurtas, Jeans, Footwear
+  categoryPath   String?       // e.g. "Women > Ethnic Wear > Sarees"
+  productType    String?       // e.g. "Banarasi Silk Saree", "Casual Oxford Shirt"
+  productUrl     String?       // External source / product link
+
+  // Specifications & Attributes
   brand          String?
   fabric         String?
+  material       String?
+  pattern        String?       // e.g. Zari Woven, Solid, Printed, Striped
+  fit            String?       // e.g. Regular, Slim, Relaxed, Tailored
+  occasion       String?       // e.g. Wedding, Festive, Casual, Party, Formal
+  currency       String?       @default("INR")
+  availability   String?       @default("IN_STOCK") // IN_STOCK, OUT_OF_STOCK, PRE_ORDER
+
+  // Admin Supplier / Seller Relationship (Confidential)
+  sellerId       String?
+  seller         Seller?       @relation(fields: [sellerId], references: [id])
+  sellerName     String?
+  sellerIdentifier String?     // e.g. SellerID from CSV
+  sellerUrl      String?
+  sellerPhone    String?
+  sellerEmail    String?
+
   status         ProductStatus @default(ACTIVE)
   isFeatured     Boolean       @default(false)
   isNewArrival   Boolean       @default(false)
   isBestSeller   Boolean       @default(false)
-  averageRating  Decimal       @default(0) @db.Decimal(3, 2)
+  averageRating  Decimal       @default(4.8) @db.Decimal(3, 2)
   totalReviews   Int           @default(0)
+  ratingCount    Int           @default(0)
+  reviewCount    Int           @default(0)
   tags           String?
   specifications Json?
   sizeChart      Json?
@@ -163,6 +214,7 @@ model Product {
   reviews       Review[]
 
   @@index([categoryId])
+  @@index([sellerId])
   @@index([status])
 }
 
@@ -175,6 +227,7 @@ model ProductVariant {
   size           String
   price          Decimal  @db.Decimal(10, 2)
   compareAtPrice Decimal? @db.Decimal(10, 2)
+  discountPercent Decimal? @db.Decimal(5, 2)
   stockQuantity  Int      @default(0)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
