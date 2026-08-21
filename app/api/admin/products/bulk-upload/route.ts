@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ProductStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
+import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
 function slugify(s: string) {
   return s
@@ -133,31 +134,6 @@ function inferTaxonomy(title: string, dept?: string, cat?: string, subcat?: stri
 
   const category = cat?.trim() || subcategory;
   return { department, category, subcategory };
-}
-
-// Cloaks third-party image URLs through our internal proxy so source domains are hidden from shoppers
-function cloakImageUrl(rawUrl: string): string {
-  if (!rawUrl || !rawUrl.trim()) return "";
-  const clean = rawUrl.trim();
-
-  // If already relative, data URL, or internal proxy URL, keep as is
-  if (clean.startsWith("/") || clean.startsWith("data:") || clean.includes("/api/proxy-image")) {
-    return clean;
-  }
-
-  // Cloak external marketplace domains (Flipkart, Amazon, etc.) through our internal proxy
-  if (
-    clean.includes("flixcart.com") ||
-    clean.includes("amazon.com") ||
-    clean.includes("media-amazon.com") ||
-    clean.includes("myntassets.com") ||
-    clean.includes("ajio.com") ||
-    clean.includes("meesho.com")
-  ) {
-    return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
-  }
-
-  return clean;
 }
 
 // Simple robust CSV row parser handling quoted text with commas and escaped quotes
@@ -439,9 +415,9 @@ export async function POST(req: NextRequest) {
         getVal(colIndex.imageUrl3),
         getVal(colIndex.imageUrl4),
         getVal(colIndex.imageUrl5),
-      ].filter((u) => u && (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("/")));
+      ].filter((u) => u && (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("/") || u.startsWith("data:")));
 
-      const imageUrls = rawImageUrls.map(cloakImageUrl);
+      const imageUrls = rawImageUrls.map(normalizeImageUrl);
 
       // 9. Variant Attributes: Auto-extract Size, Pattern, Fit
       const rawSize = getVal(colIndex.size);

@@ -8,6 +8,7 @@ import { formatINR } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
 import DownloadCsvButton from "./DownloadCsvButton";
 import BulkProductUploadModal from "./BulkProductUploadModal";
+import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
 type ProductItem = {
   id: string;
@@ -547,7 +548,7 @@ export default function ProductsManager({
         paginatedProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {paginatedProducts.map((product) => {
-              const primaryImage = product.images[0]?.imageUrl || "/placeholder-garment.jpg";
+              const primaryImage = normalizeImageUrl(product.images[0]?.imageUrl) || "/placeholder-garment.jpg";
               const isSelected = selectedIds.has(product.id);
               const prices = product.variants.map((v) => Number(v.price));
               const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
@@ -737,7 +738,7 @@ export default function ProductsManager({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {paginatedProducts.map((product) => {
-                  const primaryImage = product.images[0]?.imageUrl || "/placeholder-garment.jpg";
+                  const primaryImage = normalizeImageUrl(product.images[0]?.imageUrl) || "/placeholder-garment.jpg";
                   const isSelected = selectedIds.has(product.id);
                   const prices = product.variants.map((v) => Number(v.price));
                   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { formatINR, discountPercent } from "@/lib/format";
 import QuickViewModal from "./QuickViewModal";
 import { useToast } from "@/components/providers/ToastProvider";
+import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
 type CardProduct = {
   id?: string;
@@ -45,8 +46,8 @@ export default function ProductCard({ product }: { product: CardProduct }) {
 
   const isNew = Date.now() - new Date(product.createdAt).getTime() < 1000 * 60 * 60 * 24 * 30;
 
-  const rawPrimary = product.images[0]?.imageUrl;
-  const rawSecondary = product.images[1]?.imageUrl;
+  const rawPrimary = normalizeImageUrl(product.images[0]?.imageUrl);
+  const rawSecondary = normalizeImageUrl(product.images[1]?.imageUrl);
   const primaryImage = rawPrimary || DEFAULT_FALLBACK_IMAGE;
   const secondaryImage = rawSecondary || primaryImage;
 

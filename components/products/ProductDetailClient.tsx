@@ -10,6 +10,7 @@ import ProductReviews from "./ProductReviews";
 import RecentlyViewed from "./RecentlyViewed";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 import ProductImageLightbox from "./ProductImageLightbox";
+import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
 type Variant = {
   id: string;
@@ -120,10 +121,23 @@ export default function ProductDetailClient({ product }: { product: Product }) {
     }
   }, [product, selected]);
 
-  const displayImages =
-    product.images && product.images.length > 0
-      ? product.images
-      : [{ id: "0", imageUrl: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80", altText: product.name, variantId: null }];
+  const displayImages = useMemo(() => {
+    if (product.images && product.images.length > 0) {
+      return product.images.map((img) => ({
+        ...img,
+        imageUrl: normalizeImageUrl(img.imageUrl),
+      }));
+    }
+    return [
+      {
+        id: "0",
+        imageUrl: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80",
+        altText: product.name,
+        variantId: null,
+      },
+    ];
+  }, [product.images, product.name]);
+
   const pct = selected ? discountPercent(selected.price, selected.compareAtPrice) : null;
 
   // Dynamic Image Switching when customer selects a colour variant

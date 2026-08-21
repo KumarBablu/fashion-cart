@@ -8,6 +8,7 @@ import { formatINR, discountPercent } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useRouter } from "next/navigation";
 import ProductImageLightbox from "./ProductImageLightbox";
+import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
 type Variant = {
   id: string;
@@ -103,7 +104,10 @@ export default function QuickViewModal({
   const compareAt = selectedVariant?.compareAtPrice ? Number(selectedVariant.compareAtPrice) : null;
   const pct = discountPercent(price, compareAt);
 
-  const displayImages = product.images.length > 0 ? product.images : [{ imageUrl: "", altText: "" }];
+  const displayImages =
+    product.images.length > 0
+      ? product.images.map((img) => ({ ...img, imageUrl: normalizeImageUrl(img.imageUrl) }))
+      : [{ imageUrl: "", altText: "" }];
 
   // Dynamic Image Switching on Colour selection
   function handleColourChange(c: string) {
