@@ -247,306 +247,309 @@ export default function ProductsManager({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Top Header & Action Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2 text-slate-900">
-            <span>👗</span> Catalog &amp; Products Manager
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Full management of luxury catalog, wrapped card showcase, bulk actions, and stock ({products.length} garments total)
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <DownloadCsvButton type="template" label="Template" icon="📋" />
-          <DownloadCsvButton type="products" label="Export CSV" icon="📥" />
-          <button
-            type="button"
-            onClick={() => {
-              if (products.length === 0) {
-                toastError("Catalog Empty", "There are no products in the catalog.");
-                return;
-              }
-              const ids = products.map((p) => p.id);
-              setSelectedIds(new Set(ids));
-              setBulkDeleteModalOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors shadow-2xs cursor-pointer"
-            title="Delete all products in catalog to start fresh"
-          >
-            <span>🗑️</span> Purge / Delete All
-          </button>
-          <button
-            onClick={() => setBulkUploadModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#141416] hover:bg-[#25262B] text-white transition-all shadow-xs cursor-pointer"
-          >
-            <span>📤</span> Bulk Upload
-          </button>
-          <Link
-            href="/admin/products/new"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-xs transition-all hover:brightness-110 cursor-pointer bg-[#C59B27]"
-          >
-            <span>+</span> Add Garment
-          </Link>
-        </div>
-      </div>
-
-      {/* Filter & View Mode Command Bar */}
-      <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-          
-          {/* Search Input */}
-          <div className="sm:col-span-4 relative">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Search garments, SKU, fabric, brand…"
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#141416] transition-all font-medium"
-            />
-            <span className="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
-          </div>
-
-          {/* Department Filter */}
-          <div className="sm:col-span-3">
-            <select
-              value={selectedDepartment}
-              onChange={(e) => {
-                setSelectedDepartment(e.target.value);
-                setSelectedSubcategory("ALL");
-                setCurrentPage(1);
-              }}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#141416] transition-all font-semibold"
-            >
-              <option value="ALL">📁 All Departments ({departments.length})</option>
-              {departments.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  📁 {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Subcategory Filter */}
-          <div className="sm:col-span-3">
-            <select
-              value={selectedSubcategory}
-              onChange={(e) => {
-                setSelectedSubcategory(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#141416] transition-all font-semibold"
-            >
-              <option value="ALL">✨ All Subcategories ({subcategories.length})</option>
-              {subcategories.map((sub) => (
-                <option key={sub.id} value={sub.id}>
-                  ↳ {sub.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Stock Level Filter */}
-          <div className="sm:col-span-2">
-            <select
-              value={selectedStockFilter}
-              onChange={(e) => {
-                setSelectedStockFilter(e.target.value as "ALL" | "LOW" | "OUT" | "IN");
-                setCurrentPage(1);
-              }}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#141416] transition-all font-semibold"
-            >
-              <option value="ALL">📦 All Stock</option>
-              <option value="IN">In Stock (&gt;0)</option>
-              <option value="LOW">Low Stock (≤5)</option>
-              <option value="OUT">Out of Stock (0)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Status Pills & View Mode Switcher */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
-          
-          {/* Status Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-bold text-slate-400 mr-1 text-[10px] uppercase tracking-wider">Status:</span>
-            {(["ALL", "ACTIVE", "DRAFT", "ARCHIVED"] as const).map((st) => {
-              const count = st === "ALL" ? products.length : products.filter((p) => p.status === st).length;
-              const isSelected = selectedStatus === st;
-              return (
-                <button
-                  key={st}
-                  onClick={() => {
-                    setSelectedStatus(st);
-                    setCurrentPage(1);
-                  }}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                    isSelected
-                      ? "bg-[#141416] text-white shadow-2xs"
-                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  {st} ({count})
-                </button>
-              );
-            })}
-          </div>
-
-          {/* View Mode Toggle Switch (Grid vs Table) */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-medium">
-              Showing {filtered.length} garments
-            </span>
-
-            <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100 p-0.5">
-              <button
-                type="button"
-                onClick={() => setViewMode("GRID")}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  viewMode === "GRID"
-                    ? "bg-white text-[#141416] shadow-2xs"
-                    : "text-slate-500 hover:text-slate-900"
-                }`}
-                title="Wrapped Card Grid View"
-              >
-                <span>⊞</span>
-                <span>Wrapped Grid</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("TABLE")}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  viewMode === "TABLE"
-                    ? "bg-white text-[#141416] shadow-2xs"
-                    : "text-slate-500 hover:text-slate-900"
-                }`}
-                title="Dense Data Table View"
-              >
-                <span>☰</span>
-                <span>Dense Table</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Floating Sticky Bulk Action Bar */}
-      {selectedIds.size > 0 && (
-        <div className="sticky top-20 z-30 p-3.5 rounded-2xl bg-[#141416] text-white shadow-2xl flex flex-wrap items-center justify-between gap-3 border border-slate-700 animate-in slide-in-from-top-2 duration-150">
-          <div className="flex items-center gap-3">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#C59B27] font-mono text-xs font-bold text-black">
-              {selectedIds.size}
-            </span>
-            <span className="text-xs font-bold">
-              {selectedIds.size} {selectedIds.size === 1 ? "garment" : "garments"} selected
-            </span>
+    <div className="h-full flex flex-col min-h-0 space-y-3">
+      {/* 1. TOP HEADER & FILTER CONTROLS (Fixed at Top) */}
+      <div className="shrink-0 space-y-2.5 bg-[#FAF8F5]">
+        {/* Top Header & Action Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2 text-slate-900 leading-tight">
+              <span>👗</span> Catalog &amp; Products Manager
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Full management of luxury catalog, stock, and bulk actions ({products.length} garments total)
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <DownloadCsvButton type="template" label="Template" icon="📋" />
+            <DownloadCsvButton type="products" label="Export CSV" icon="📥" />
             <button
-              onClick={() => handleBulkAction("ACTIVATE")}
-              disabled={bulkActionLoading}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shadow-xs"
+              type="button"
+              onClick={() => {
+                if (products.length === 0) {
+                  toastError("Catalog Empty", "There are no products in the catalog.");
+                  return;
+                }
+                const ids = products.map((p) => p.id);
+                setSelectedIds(new Set(ids));
+                setBulkDeleteModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors shadow-2xs cursor-pointer"
+              title="Delete all products in catalog to start fresh"
             >
-              🟢 Activate
+              <span>🗑️</span> Purge All
             </button>
-
             <button
-              onClick={() => handleBulkAction("DRAFT")}
-              disabled={bulkActionLoading}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer shadow-xs"
+              onClick={() => setBulkUploadModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#141416] hover:bg-[#25262B] text-white transition-all shadow-xs cursor-pointer"
             >
-              👁️ Draft / Hide
+              <span>📤</span> Bulk Upload
             </button>
-
-            <button
-              onClick={() => handleBulkAction("ARCHIVE")}
-              disabled={bulkActionLoading}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-700 hover:bg-slate-600 text-white transition-colors cursor-pointer shadow-xs"
+            <Link
+              href="/admin/products/new"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-xs transition-all hover:brightness-110 cursor-pointer bg-[#C59B27]"
             >
-              📦 Archive
-            </button>
+              <span>+</span> Add Garment
+            </Link>
+          </div>
+        </div>
 
-            {/* Move to Category */}
-            <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700">
-              <select
-                value={targetMoveCategoryId}
+        {/* Filter & View Mode Command Bar */}
+        <div className="p-3 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+            {/* Search Input */}
+            <div className="sm:col-span-4 relative">
+              <input
+                type="text"
+                value={searchTerm}
                 onChange={(e) => {
-                  setTargetMoveCategoryId(e.target.value);
-                  if (e.target.value) {
-                    handleBulkAction("CHANGE_CATEGORY", e.target.value);
-                  }
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
                 }}
-                className="text-xs bg-transparent text-white px-2 py-0.5 focus:outline-hidden"
+                placeholder="Search garments, SKU, fabric, brand…"
+                className="w-full pl-9 pr-4 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#141416] transition-all font-medium"
+              />
+              <span className="absolute left-3 top-2 text-slate-400 text-xs">🔍</span>
+            </div>
+
+            {/* Department Filter */}
+            <div className="sm:col-span-3">
+              <select
+                value={selectedDepartment}
+                onChange={(e) => {
+                  setSelectedDepartment(e.target.value);
+                  setSelectedSubcategory("ALL");
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#141416] transition-all font-semibold"
               >
-                <option value="" className="bg-slate-900 text-white">📁 Move to Category…</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-slate-900 text-white">
-                    {c.parentId ? `↳ ${c.name}` : `📁 ${c.name}`}
+                <option value="ALL">📁 All Departments ({departments.length})</option>
+                {departments.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    📁 {cat.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            <button
-              onClick={() => setBulkDeleteModalOpen(true)}
-              disabled={bulkActionLoading}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer shadow-xs"
-            >
-              🗑️ Delete Selected
-            </button>
+            {/* Subcategory Filter */}
+            <div className="sm:col-span-3">
+              <select
+                value={selectedSubcategory}
+                onChange={(e) => {
+                  setSelectedSubcategory(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#141416] transition-all font-semibold"
+              >
+                <option value="ALL">✨ All Subcategories ({subcategories.length})</option>
+                {subcategories.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    ↳ {sub.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
-            >
-              ✕ Clear
-            </button>
+            {/* Stock Level Filter */}
+            <div className="sm:col-span-2">
+              <select
+                value={selectedStockFilter}
+                onChange={(e) => {
+                  setSelectedStockFilter(e.target.value as "ALL" | "LOW" | "OUT" | "IN");
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#141416] transition-all font-semibold"
+              >
+                <option value="ALL">📦 All Stock</option>
+                <option value="IN">In Stock (&gt;0)</option>
+                <option value="LOW">Low Stock (≤5)</option>
+                <option value="OUT">Out of Stock (0)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Status Pills & View Mode Switcher */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-slate-100 text-xs">
+            {/* Status Filter Pills */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-bold text-slate-400 mr-1 text-[10px] uppercase tracking-wider">Status:</span>
+              {(["ALL", "ACTIVE", "DRAFT", "ARCHIVED"] as const).map((st) => {
+                const count = st === "ALL" ? products.length : products.filter((p) => p.status === st).length;
+                const isSelected = selectedStatus === st;
+                return (
+                  <button
+                    key={st}
+                    onClick={() => {
+                      setSelectedStatus(st);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-[#141416] text-white shadow-2xs"
+                        : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {st} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* View Mode Toggle Switch */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 font-medium">
+                Showing {filtered.length} garments
+              </span>
+
+              <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("GRID")}
+                  className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === "GRID"
+                      ? "bg-white text-[#141416] shadow-2xs"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                  title="Wrapped Card Grid View"
+                >
+                  <span>⊞</span>
+                  <span>Grid</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("TABLE")}
+                  className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === "TABLE"
+                      ? "bg-white text-[#141416] shadow-2xs"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                  title="Dense Data Table View"
+                >
+                  <span>☰</span>
+                  <span>Table</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Select All Checkbox Control */}
-      {filtered.length > 0 && (
-        <div className="flex items-center justify-between px-2 text-xs text-slate-500 font-semibold">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={allFilteredSelected}
-              onChange={toggleSelectAll}
-              className="w-4 h-4 rounded border-slate-300 accent-[#141416] cursor-pointer"
-            />
-            <span>Select all {paginatedProducts.length} garments on this page</span>
-          </label>
+        {/* Selection & Page Limit Selector */}
+        {filtered.length > 0 && (
+          <div className="flex items-center justify-between px-1 text-xs text-slate-500 font-semibold">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={allFilteredSelected}
+                onChange={toggleSelectAll}
+                className="w-4 h-4 rounded border-slate-300 accent-[#141416] cursor-pointer"
+              />
+              <span>Select all {paginatedProducts.length} garments on this page</span>
+            </label>
 
-          <div className="flex items-center gap-2">
-            <span>Show:</span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="px-2 py-1 rounded-lg border border-slate-200 text-xs bg-white font-bold"
-            >
-              <option value={12}>12 per page</option>
-              <option value={24}>24 per page</option>
-              <option value={48}>48 per page</option>
-              <option value={100}>100 per page</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <span>Show:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-0.5 rounded-lg border border-slate-200 text-xs bg-white font-bold"
+              >
+                <option value={12}>12 / page</option>
+                <option value={24}>24 / page</option>
+                <option value={48}>48 / page</option>
+                <option value={100}>100 / page</option>
+              </select>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* WRAPPED CARD SHOWCASE GRID VIEW (Default) */}
-      {viewMode === "GRID" ? (
-        paginatedProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {/* Floating Bulk Action Bar */}
+        {selectedIds.size > 0 && (
+          <div className="p-2.5 rounded-2xl bg-[#141416] text-white shadow-2xl flex flex-wrap items-center justify-between gap-2 border border-slate-700 animate-in slide-in-from-top-2 duration-150">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#C59B27] font-mono text-xs font-bold text-black">
+                {selectedIds.size}
+              </span>
+              <span className="text-xs font-bold">
+                {selectedIds.size} {selectedIds.size === 1 ? "garment" : "garments"} selected
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                onClick={() => handleBulkAction("ACTIVATE")}
+                disabled={bulkActionLoading}
+                className="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shadow-xs"
+              >
+                🟢 Activate
+              </button>
+
+              <button
+                onClick={() => handleBulkAction("DRAFT")}
+                disabled={bulkActionLoading}
+                className="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer shadow-xs"
+              >
+                👁️ Draft / Hide
+              </button>
+
+              <button
+                onClick={() => handleBulkAction("ARCHIVE")}
+                disabled={bulkActionLoading}
+                className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-700 hover:bg-slate-600 text-white transition-colors cursor-pointer shadow-xs"
+              >
+                📦 Archive
+              </button>
+
+              {/* Move to Category */}
+              <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-xl border border-slate-700">
+                <select
+                  value={targetMoveCategoryId}
+                  onChange={(e) => {
+                    setTargetMoveCategoryId(e.target.value);
+                    if (e.target.value) {
+                      handleBulkAction("CHANGE_CATEGORY", e.target.value);
+                    }
+                  }}
+                  className="text-xs bg-transparent text-white px-2 py-0.5 focus:outline-hidden"
+                >
+                  <option value="" className="bg-slate-900 text-white">📁 Move to Category…</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id} className="bg-slate-900 text-white">
+                      {c.parentId ? `↳ ${c.name}` : `📁 ${c.name}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                onClick={() => setBulkDeleteModalOpen(true)}
+                disabled={bulkActionLoading}
+                className="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer shadow-xs"
+              >
+                🗑️ Delete Selected
+              </button>
+
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="px-2 py-1 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                ✕ Clear
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 2. DEDICATED PRODUCTS SCROLLABLE VIEWPORT (Only Products Scroll) */}
+      <div className="flex-1 overflow-y-auto min-h-0 pr-1.5 pb-2 no-scrollbar">
+        {/* WRAPPED CARD SHOWCASE GRID VIEW (Default) */}
+        {viewMode === "GRID" ? (
+          paginatedProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {paginatedProducts.map((product) => {
               const primaryImage = normalizeImageUrl(product.images[0]?.imageUrl) || "/placeholder-garment.jpg";
               const isSelected = selectedIds.has(product.id);
@@ -845,10 +848,11 @@ export default function ProductsManager({
           </div>
         </div>
       )}
+      </div>
 
-      {/* Pagination Footer */}
+      {/* 3. PINNED BOTTOM PAGINATION BAR (Fixed at Bottom) */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between p-4 rounded-2xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 shadow-2xs">
+        <div className="shrink-0 flex items-center justify-between px-4 py-2 rounded-2xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 shadow-2xs">
           <span>
             Page {currentPage} of {totalPages} ({filtered.length} garments total)
           </span>
@@ -857,9 +861,9 @@ export default function ProductsManager({
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
+              className="px-3 py-1 rounded-xl border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer text-xs"
             >
-              ← Previous
+              ← Prev
             </button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -868,7 +872,7 @@ export default function ProductsManager({
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 rounded-xl font-bold transition-all cursor-pointer ${
+                  className={`w-7 h-7 rounded-xl font-bold transition-all cursor-pointer text-xs ${
                     currentPage === page
                       ? "bg-[#141416] text-white shadow-2xs"
                       : "border border-slate-200 hover:bg-slate-50"
@@ -881,7 +885,7 @@ export default function ProductsManager({
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
+              className="px-3 py-1 rounded-xl border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer text-xs"
             >
               Next →
             </button>

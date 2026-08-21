@@ -94,9 +94,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 flex flex-col">
+      <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
         {/* Top Header Bar (Desktop & Mobile) */}
-        <header className="sticky top-0 z-30 border-b border-[#E8E3D8] bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3 flex items-center justify-between shadow-2xs">
+        <header className="sticky top-0 z-30 shrink-0 border-b border-[#E8E3D8] bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3 flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="md:hidden relative h-7 w-7 overflow-hidden">
               <Image
@@ -130,7 +130,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </header>
 
         {/* Mobile Navigation Horizontal Strip */}
-        <div className="md:hidden overflow-x-auto p-2 border-b border-[#E8E3D8] bg-white flex gap-1.5 text-xs whitespace-nowrap shadow-2xs">
+        <div className="md:hidden shrink-0 overflow-x-auto p-2 border-b border-[#E8E3D8] bg-white flex gap-1.5 text-xs whitespace-nowrap shadow-2xs">
           {NAV.map((item) => (
             <Link
               key={item.href}
@@ -143,7 +143,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
 
         {/* Page Content Container */}
-        <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">{children}</div>
+        <div className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto flex flex-col min-h-0 overflow-y-auto">{children}</div>
       </main>
     </div>
   );
