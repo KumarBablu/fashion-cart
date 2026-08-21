@@ -27,7 +27,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   if (!product) notFound();
 
   return (
-    <div className="max-w-4xl space-y-8">
+    <div className="h-full overflow-y-auto min-h-0 max-w-4xl space-y-8 pr-1 pb-16">
       <div className="flex items-center justify-between border-b border-slate-200 pb-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-slate-900 flex items-center gap-2">

@@ -40,7 +40,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="h-full overflow-y-auto min-h-0 max-w-4xl space-y-6 pr-1 pb-16">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-6 rounded-2xl border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
         <div>

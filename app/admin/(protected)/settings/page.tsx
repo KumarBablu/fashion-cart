@@ -16,7 +16,7 @@ export default async function AdminSettingsPage() {
   ]);
 
   return (
-    <div className="max-w-3xl space-y-10">
+    <div className="h-full overflow-y-auto min-h-0 max-w-3xl space-y-10 pr-1 pb-10">
       <div>
         <h1 className="font-display text-3xl font-bold">Store Settings &amp; Data Center</h1>
         <p className="text-xs text-dim mt-1">Manage payment options, delivery rates, transactional email notifications, and CSV exports.</p>

@@ -74,7 +74,7 @@ export default async function AdminDashboard() {
   const maxTrend = Math.max(...trendData.map((t) => t.value), 1000);
 
   return (
-    <div className="space-y-8">
+    <div className="h-full overflow-y-auto min-h-0 space-y-8 pr-1 pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

@@ -93,7 +93,7 @@ export default function ReviewsManager({ initialReviews }: { initialReviews: Adm
   const trueToSizePercent = total > 0 ? Math.round((trueToSizeCount / total) * 100) : 100;
 
   return (
-    <div className="space-y-6">
+    <div className="h-full overflow-y-auto min-h-0 space-y-6 pr-1 pb-10">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

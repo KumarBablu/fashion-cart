@@ -193,7 +193,7 @@ export default function CustomerDetailManager({ customer: initialCustomer }: Cus
   }
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="h-full overflow-y-auto min-h-0 space-y-6 max-w-5xl pr-1 pb-16">
       {/* Top Breadcrumb & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>

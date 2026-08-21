@@ -10,7 +10,7 @@ export default async function NewProductPage() {
   });
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="h-full overflow-y-auto min-h-0 max-w-4xl space-y-4 pr-1 pb-12">
       <div>
         <h1 className="font-display text-2xl sm:text-3xl font-bold text-slate-900 flex items-center gap-2">
           <span>✨</span> Add New Luxury Garment

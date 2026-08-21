@@ -341,7 +341,7 @@ export default function SellersManager({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="h-full overflow-y-auto min-h-0 space-y-6 pr-1 pb-10">
       {/* Top Banner & KPI Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl bg-white border border-[#E8E3D8] shadow-xs">
         <div>

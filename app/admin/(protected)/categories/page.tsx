@@ -270,7 +270,7 @@ export default function AdminCategoriesPage() {
   const totalSubcategories = categories.reduce((acc, c) => acc + (c.children?.length || 0), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="h-full overflow-y-auto min-h-0 space-y-6 pr-1 pb-10">
       {/* Top Header & Action Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

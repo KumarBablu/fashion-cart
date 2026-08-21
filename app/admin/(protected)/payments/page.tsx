@@ -17,7 +17,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
   const STATUSES = ["UNDER_REVIEW", "VERIFIED", "REJECTED", "PAYMENT_PENDING"];
 
   return (
-    <div className="space-y-6">
+    <div className="h-full overflow-y-auto min-h-0 space-y-6 pr-1 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2">

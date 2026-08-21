@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default function AdminPromotionsPage() {
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+    <div className="h-full overflow-y-auto min-h-0 p-2 sm:p-4 max-w-7xl mx-auto w-full pb-10">
       <PromotionsManager />
     </div>
   );

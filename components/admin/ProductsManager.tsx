@@ -247,7 +247,7 @@ export default function ProductsManager({
   }
 
   return (
-    <div className="h-full flex flex-col min-h-0 space-y-3">
+    <div className="h-full flex flex-col min-h-0 overflow-hidden space-y-2.5">
       {/* 1. TOP HEADER & FILTER CONTROLS (Fixed at Top) */}
       <div className="shrink-0 space-y-2.5 bg-[#FAF8F5]">
         {/* Top Header & Action Controls */}

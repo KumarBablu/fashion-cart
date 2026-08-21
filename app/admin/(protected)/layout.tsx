@@ -26,12 +26,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!admin) redirect("/admin/login");
 
   return (
-    <div className="min-h-screen flex bg-[#FAF8F5] text-[#0C3B2E]">
+    <div className="fixed inset-0 h-screen w-screen overflow-hidden flex bg-[#FAF8F5] text-[#0C3B2E]">
       <AdminWindowSessionGuard />
       {/* Sidebar Desktop */}
-      <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-[#E8E3D8] bg-white transition-colors">
+      <aside className="hidden md:flex w-64 shrink-0 flex-col h-full border-r border-[#E8E3D8] bg-white transition-colors">
         {/* Brand Header */}
-        <div className="p-5 border-b border-[#E8E3D8] flex items-center justify-between">
+        <div className="p-5 border-b border-[#E8E3D8] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="relative h-8 w-8 overflow-hidden">
               <Image
@@ -68,7 +68,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </nav>
 
         {/* Footer with Administrator Identity & Visible Logout */}
-        <div className="p-4 border-t border-[#E8E3D8] space-y-3 bg-[#FAF8F5]">
+        <div className="p-4 border-t border-[#E8E3D8] space-y-3 bg-[#FAF8F5] shrink-0">
           <div className="p-2.5 rounded-xl border border-[#E8E3D8] bg-white space-y-1 shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
@@ -94,9 +94,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
         {/* Top Header Bar (Desktop & Mobile) */}
-        <header className="sticky top-0 z-30 shrink-0 border-b border-[#E8E3D8] bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3 flex items-center justify-between shadow-2xs">
+        <header className="shrink-0 border-b border-[#E8E3D8] bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3 flex items-center justify-between shadow-2xs z-30">
           <div className="flex items-center gap-3">
             <div className="md:hidden relative h-7 w-7 overflow-hidden">
               <Image
@@ -143,7 +143,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
 
         {/* Page Content Container */}
-        <div className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto flex flex-col min-h-0 overflow-y-auto">{children}</div>
+        <div className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto flex flex-col min-h-0 overflow-hidden">{children}</div>
       </main>
     </div>
   );
