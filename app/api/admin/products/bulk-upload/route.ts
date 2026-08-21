@@ -4,6 +4,9 @@ import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 function slugify(s: string) {
   return s
     .toLowerCase()
@@ -26,7 +29,6 @@ function sanitizeDescription(desc: string, title: string, brand: string, fabric:
     .replace(/\s+/g, " ")
     .trim();
 
-  // If the description became empty or too short after cleaning, provide an elegant description
   if (cleaned.length < 15) {
     cleaned = `${title} from ${brand || "Fashion Cart Atelier"} crafted with ${fabric || "fine textiles"} and tailored for premium comfort and style.`;
   }
@@ -70,115 +72,69 @@ function extractSize(title: string, imageUrls: string[], rawSize?: string): stri
   if (/(?:^|[^a-z0-9])xs(?:$|[^a-z0-9])/i.test(combined)) return "XS";
   if (/(?:^|[^a-z0-9])s(?:$|[^a-z0-9])/i.test(combined)) return "S";
 
-  if (combined.includes("free size") || combined.includes("free-size") || combined.includes("saree") || combined.includes("sari")) {
-    return "Free Size";
-  }
-
   return "Free Size";
 }
 
-// Auto-extracts pattern from title or description
+// Auto-extracts Pattern
 function extractPattern(title: string, rawPattern?: string): string {
   if (rawPattern && rawPattern.trim()) return rawPattern.trim();
-  const t = title.toLowerCase();
-
-  if (t.includes("floral")) return "Floral Print";
-  if (t.includes("printed") || t.includes("print")) return "Artisan Print";
-  if (t.includes("solid") || t.includes("plain")) return "Solid / Plain";
-  if (t.includes("embroidered") || t.includes("mirror work") || t.includes("zari")) return "Embroidered Zari";
-  if (t.includes("striped") || t.includes("stripe")) return "Striped";
-  if (t.includes("checked") || t.includes("check")) return "Checks";
-  if (t.includes("bandhani") || t.includes("tie dye")) return "Bandhani Tie-Dye";
-
-  return "Contemporary";
+  const lower = title.toLowerCase();
+  if (lower.includes("printed") || lower.includes("floral print")) return "Artisan Print";
+  if (lower.includes("woven") || lower.includes("zari")) return "Zari Woven";
+  if (lower.includes("embroidered")) return "Handcrafted Embroidery";
+  if (lower.includes("solid") || lower.includes("plain")) return "Solid Minimalist";
+  if (lower.includes("striped") || lower.includes("stripes")) return "Striped";
+  if (lower.includes("checked") || lower.includes("checks")) return "Checked";
+  return "Artisan Handloom";
 }
 
-// Infers department and subcategory if empty in CSV
-function inferTaxonomy(title: string, dept?: string, cat?: string, subcat?: string) {
-  const t = title.toLowerCase();
+// Automatically infers Department, Category, and Subcategory
+function inferTaxonomy(title: string, rawDept?: string, rawCat?: string, rawSubcat?: string) {
+  const lower = title.toLowerCase();
 
-  let department = dept?.trim() || "";
-  let subcategory = subcat?.trim() || cat?.trim() || "";
+  let department = rawDept?.trim();
+  let category = rawCat?.trim();
+  let subcategory = rawSubcat?.trim();
 
+  // 1. Department fallback
   if (!department) {
-    if (t.includes("men") && !t.includes("women")) {
+    if (lower.includes("women") || lower.includes("women's") || lower.includes("lady") || lower.includes("girl") || lower.includes("saree") || lower.includes("kurti") || lower.includes("anarkali") || lower.includes("lehenga") || lower.includes("dupatta")) {
+      department = "Women";
+    } else if (lower.includes("men") || lower.includes("men's") || lower.includes("boy") || lower.includes("shirt") || lower.includes("t-shirt") || lower.includes("polo") || lower.includes("trouser") || lower.includes("blazer") || lower.includes("chino")) {
       department = "Men";
-    } else if (t.includes("kid") || t.includes("boy") || t.includes("girl")) {
+    } else if (lower.includes("kid") || lower.includes("baby") || lower.includes("infant") || lower.includes("child")) {
       department = "Kids";
-    } else if (t.includes("footwear") || t.includes("mojari") || t.includes("shoe") || t.includes("sandal")) {
-      department = "Footwear";
     } else {
       department = "Women";
     }
   }
 
-  if (!subcategory || subcategory.toLowerCase() === "kurta") {
-    if (t.includes("saree") || t.includes("sari")) {
-      subcategory = "Sarees";
-    } else if (t.includes("dupatta set") || t.includes("pant set") || t.includes("kurta set")) {
-      subcategory = "Kurta Sets";
-    } else if (t.includes("kurta") || t.includes("kurti")) {
-      subcategory = "Kurtas & Tunics";
-    } else if (t.includes("anarkali") || t.includes("dress") || t.includes("gown") || t.includes("lehenga")) {
-      subcategory = "Dresses & Gowns";
-    } else if (t.includes("shirt")) {
-      subcategory = "Shirts";
-    } else if (t.includes("pant") || t.includes("trouser") || t.includes("jeans") || t.includes("bottom")) {
-      subcategory = "Trousers & Bottoms";
-    } else if (t.includes("mojari") || t.includes("shoe") || t.includes("footwear")) {
-      subcategory = "Ethnic Footwear";
-    } else {
-      subcategory = "Ethnic Wear";
-    }
+  // 2. Subcategory / Category fallback
+  if (!subcategory) {
+    if (lower.includes("saree") || lower.includes("sari")) subcategory = "Mulberry Silk Sarees";
+    else if (lower.includes("kurta pant") || lower.includes("kurti set") || lower.includes("ethnic set")) subcategory = "Velvet & Silk Kurti Sets";
+    else if (lower.includes("kurti") || lower.includes("kurta")) subcategory = "Embroidered Silk Kurtis";
+    else if (lower.includes("polo") || lower.includes("t-shirt") || lower.includes("tshirt")) subcategory = "T-Shirts";
+    else if (lower.includes("shirt")) subcategory = "Pure French Linen Shirts";
+    else if (lower.includes("trouser") || lower.includes("pant") || lower.includes("chino")) subcategory = "Trousers & Chinos";
+    else if (lower.includes("dress") || lower.includes("gown") || lower.includes("maxi")) subcategory = "Evening Gowns & Dresses";
+    else if (lower.includes("lehenga") || lower.includes("choli")) subcategory = "Bridal & Festive Lehengas";
+    else subcategory = "Apparel & Couture";
   }
 
-  const category = cat?.trim() || subcategory;
+  if (!category) {
+    category = subcategory;
+  }
+
   return { department, category, subcategory };
 }
-
-// Simple robust CSV row parser handling quoted text with commas and escaped quotes
-function parseCsvRows(text: string): string[][] {
-  const lines: string[][] = [];
-  const rawLines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-
-  for (const rawLine of rawLines) {
-    const row: string[] = [];
-    let insideQuotes = false;
-    let current = "";
-
-    for (let i = 0; i < rawLine.length; i++) {
-      const char = rawLine[i];
-      if (char === '"') {
-        if (insideQuotes && rawLine[i + 1] === '"') {
-          current += '"';
-          i++; // skip escaped quote
-        } else {
-          insideQuotes = !insideQuotes;
-        }
-      } else if (char === "," && !insideQuotes) {
-        row.push(current.trim());
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-    row.push(current.trim());
-    lines.push(row);
-  }
-
-  return lines;
-}
-
-export const maxDuration = 60;
-export const dynamic = "force-dynamic";
 
 // Fast in-memory Category Hierarchy Cache across batches
 const categoryCache = new Map<string, string>();
 
-// Bulletproof Category Hierarchy Resolver - Guaranteed to never throw unique constraint error
 async function resolveCategoryHierarchy(deptName: string, subcatName: string): Promise<string> {
   const cleanDept = deptName.trim() || "Women";
-  const cleanSub = subcatName.trim();
+  const cleanSub = subcatName.trim() || "Apparel";
   const cacheKey = `${cleanDept.toLowerCase()}:::${cleanSub.toLowerCase()}`;
 
   if (categoryCache.has(cacheKey)) {
@@ -215,10 +171,10 @@ async function resolveCategoryHierarchy(deptName: string, subcatName: string): P
     }
   }
 
-  if (!cleanSubcatName(subcatName) || !parentCat) {
-    const resultId = parentCat?.id || (await getFallbackCategoryId());
-    categoryCache.set(cacheKey, resultId);
-    return resultId;
+  if (!parentCat) {
+    const fallbackId = await getFallbackCategoryId();
+    categoryCache.set(cacheKey, fallbackId);
+    return fallbackId;
   }
 
   // 2. Find or create Subcategory under Parent
@@ -258,22 +214,99 @@ async function resolveCategoryHierarchy(deptName: string, subcatName: string): P
   return finalId;
 }
 
-function cleanSubcatName(s: string) {
-  return s && s.trim().length > 0;
-}
-
 async function getFallbackCategoryId(): Promise<string> {
   let fallback = await prisma.category.findFirst({ where: { isActive: true } });
   if (!fallback) {
-    fallback = await prisma.category.create({
-      data: {
-        name: "Apparel & Couture",
-        slug: "apparel-couture",
-        isActive: true,
-      },
-    });
+    try {
+      fallback = await prisma.category.create({
+        data: {
+          name: "Apparel & Couture",
+          slug: "apparel-couture",
+          isActive: true,
+        },
+      });
+    } catch {
+      fallback = await prisma.category.findFirst();
+    }
   }
-  return fallback.id;
+  return fallback?.id || "";
+}
+
+// Guaranteed Collision-Proof Product Slug Generator
+async function getUniqueProductSlug(baseSlug: string, excludeProductId?: string): Promise<string> {
+  let slug = baseSlug;
+  let counter = 1;
+  while (true) {
+    const existing = await prisma.product.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+    if (!existing || (excludeProductId && existing.id === excludeProductId)) {
+      return slug;
+    }
+    counter++;
+    slug = `${baseSlug}-${counter}`;
+  }
+}
+
+// Guaranteed Collision-Proof Variant SKU Generator
+async function getUniqueVariantSku(baseSku: string, excludeVariantId?: string): Promise<string> {
+  let sku = baseSku;
+  let counter = 1;
+  while (true) {
+    const existing = await prisma.productVariant.findUnique({
+      where: { sku },
+      select: { id: true },
+    });
+    if (!existing || (excludeVariantId && existing.id === excludeVariantId)) {
+      return sku;
+    }
+    counter++;
+    sku = `${baseSku}-${counter}`;
+  }
+}
+
+function parseCsvRows(text: string): string[][] {
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentCell = "";
+  let insideQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char === '"') {
+      if (insideQuotes && nextChar === '"') {
+        currentCell += '"';
+        i++;
+      } else {
+        insideQuotes = !insideQuotes;
+      }
+    } else if (char === "," && !insideQuotes) {
+      currentRow.push(currentCell.trim());
+      currentCell = "";
+    } else if ((char === "\n" || (char === "\r" && nextChar === "\n")) && !insideQuotes) {
+      if (char === "\r") i++;
+      currentRow.push(currentCell.trim());
+      if (currentRow.some((c) => c.length > 0)) {
+        rows.push(currentRow);
+      }
+      currentRow = [];
+      currentCell = "";
+    } else {
+      currentCell += char;
+    }
+  }
+
+  if (currentCell || currentRow.length > 0) {
+    currentRow.push(currentCell.trim());
+    if (currentRow.some((c) => c.length > 0)) {
+      rows.push(currentRow);
+    }
+  }
+
+  return rows;
 }
 
 export async function POST(req: NextRequest) {
@@ -372,28 +405,15 @@ export async function POST(req: NextRequest) {
       const rawTitle = getVal(colIndex.title);
       const title = rawTitle || "Luxury Garment Listing";
       const brand = getVal(colIndex.brand) || "Fashion Cart Atelier";
+      const rawCustomProductId = getVal(colIndex.productId);
+      const rawSlug = getVal(colIndex.slug);
+      const rawSku = getVal(colIndex.sku);
 
-      // 1. Slug calculation: Auto-create if empty or starts with item code
-      let rawSlug = getVal(colIndex.slug);
-      let slug = rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm") ? slugify(rawSlug) : slugify(title);
-      if (!slug || slug.length < 2) {
-        slug = `garment-${Date.now()}-${r}`;
-      }
+      // Unique random entropy per row to eliminate batch collisions
+      const rowRandomEntropy = Math.random().toString(36).substring(2, 6).toLowerCase();
+      const rowSkuEntropy = Math.random().toString(36).substring(2, 6).toUpperCase();
 
-      // 2. ProductID: Auto-create if empty
-      let customProductId = getVal(colIndex.productId);
-      if (!customProductId) {
-        const brandCode = slugify(brand || "FC").toUpperCase().slice(0, 4) || "FC";
-        customProductId = `FC-PRD-${brandCode}-${r.toString().padStart(4, "0")}`;
-      }
-
-      // 3. ProductURL: Auto-create if empty
-      let productUrl = getVal(colIndex.productUrl);
-      if (!productUrl) {
-        productUrl = `/products/${slug}`;
-      }
-
-      // 4. Infer Taxonomy & Category Hierarchy
+      // 1. Taxonomy & Hierarchy
       const rawDept = getVal(colIndex.department);
       const rawCat = getVal(colIndex.category);
       const rawSubcat = getVal(colIndex.subcategory);
@@ -403,16 +423,16 @@ export async function POST(req: NextRequest) {
         .filter((v, i, a) => a.indexOf(v) === i)
         .join(" > ");
 
-      // 5. Fabric & Material: Auto-extract if empty
+      // 2. Fabric & Material
       const rawFabric = getVal(colIndex.fabric);
       const rawDesc = getVal(colIndex.description);
       const fabric = extractFabric(title, rawDesc, rawFabric);
       const material = getVal(colIndex.material) || fabric;
 
-      // 6. Sanitize Description: Clean out Flipkart / third-party noise
+      // 3. Clean Description
       const description = sanitizeDescription(rawDesc, title, brand, fabric);
 
-      // 7. Status & Availability: Normalize
+      // 4. Status & Availability
       const statusRaw = getVal(colIndex.status).toUpperCase();
       const status: ProductStatus =
         statusRaw === "DRAFT"
@@ -427,7 +447,7 @@ export async function POST(req: NextRequest) {
           ? "OUT_OF_STOCK"
           : "IN_STOCK";
 
-      // 8. Raw Images (up to 5 lookbook URLs) & Cloaking
+      // 5. Lookbook Images (Up to 5)
       const rawImageUrls = [
         getVal(colIndex.imageUrl),
         getVal(colIndex.imageUrl2),
@@ -438,7 +458,7 @@ export async function POST(req: NextRequest) {
 
       const imageUrls = rawImageUrls.map(normalizeImageUrl);
 
-      // 9. Variant Attributes: Auto-extract Size, Pattern, Fit
+      // 6. Variant Attributes
       const rawSize = getVal(colIndex.size);
       const size = extractSize(title, rawImageUrls, rawSize);
       const colour = getVal(colIndex.colour) || "Classic Multi";
@@ -447,14 +467,7 @@ export async function POST(req: NextRequest) {
       const occasion = getVal(colIndex.occasion) || "Festive & Daily Luxury";
       const currency = getVal(colIndex.currency) || "INR";
 
-      // 10. SKU: Auto-create if empty
-      let sku = getVal(colIndex.sku);
-      if (!sku) {
-        const brandCode = slugify(brand || "FC").toUpperCase().slice(0, 4) || "FC";
-        sku = `FC-SKU-${brandCode}-${slug.slice(0, 8).toUpperCase()}-${slugify(size).toUpperCase()}-${r}`;
-      }
-
-      // 11. Price & Discounts
+      // 7. Price & Discounts
       const priceNum = Number(getVal(colIndex.price).replace(/[^0-9.]/g, "")) || 999;
       const compareNum = Number(getVal(colIndex.compareAtPrice).replace(/[^0-9.]/g, "")) || null;
       let discountNum = Number(getVal(colIndex.discountPercent).replace(/[^0-9.]/g, "")) || null;
@@ -462,26 +475,26 @@ export async function POST(req: NextRequest) {
         discountNum = Math.round(((compareNum - priceNum) / compareNum) * 100);
       }
 
-      // 12. Stock Quantity: Default to 25 if empty
+      // 8. Stock Quantity
       const stockNum = parseInt(getVal(colIndex.stockQuantity).replace(/[^0-9]/g, "") || "25", 10) || 25;
 
-      // 13. Seller / Supplier details: Auto-generate SellerID if empty
+      // 9. Seller / Supplier
       const sellerName = getVal(colIndex.sellerName);
       let sellerIdStr = getVal(colIndex.sellerId);
       if (!sellerIdStr && sellerName) {
         sellerIdStr = `SLR-${slugify(sellerName).toUpperCase().slice(0, 8)}-101`;
       }
 
-      // 14. Ratings & reviews
+      // 10. Ratings
       const ratingNum = Number(getVal(colIndex.rating).replace(/[^0-9.]/g, "")) || 4.8;
       const ratingCountNum = parseInt(getVal(colIndex.ratingCount).replace(/[^0-9]/g, "") || "18", 10);
       const reviewCountNum = parseInt(getVal(colIndex.reviewCount).replace(/[^0-9]/g, "") || "12", 10);
 
       try {
-        // 1. Resolve Category Hierarchy safely
+        // 1. Resolve Category safely
         const assignedCategoryId = await resolveCategoryHierarchy(department, subcategory);
 
-        // 2. Resolve or Create Seller / Supplier (Admin Confidential Entity)
+        // 2. Resolve or Create Seller
         let linkedSellerId: string | null = null;
         if (sellerIdStr || sellerName) {
           const sellerLookupId = sellerIdStr || `SLR-${slugify(sellerName || "VENDOR").toUpperCase().slice(0, 10)}`;
@@ -495,7 +508,7 @@ export async function POST(req: NextRequest) {
                 data: {
                   sellerId: sellerLookupId,
                   name: sellerName || `Supplier ${sellerLookupId}`,
-                  url: productUrl || null,
+                  url: getVal(colIndex.productUrl) || null,
                   isActive: true,
                 },
               });
@@ -511,22 +524,31 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // 3. Upsert Product by slug or name
-        let product = await prisma.product.findFirst({
-          where: {
-            OR: [
-              { slug },
-              { name: { equals: title, mode: "insensitive" } },
-              ...(customProductId ? [{ productId: customProductId }] : []),
-            ],
-          },
-        });
+        // 3. Resolve Product Existence (Explicit match only so every distinct row gets listed!)
+        let product = null;
+        if (rawCustomProductId) {
+          product = await prisma.product.findFirst({
+            where: { productId: rawCustomProductId },
+          });
+        } else if (rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm")) {
+          product = await prisma.product.findUnique({
+            where: { slug: slugify(rawSlug) },
+          });
+        }
+
+        // Determine Base Slug & ProductID
+        const baseSlug = rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm") ? slugify(rawSlug) : slugify(title);
+        const finalSlug = await getUniqueProductSlug(baseSlug, product?.id);
+
+        const brandCode = slugify(brand || "FC").toUpperCase().slice(0, 4) || "FC";
+        const finalProductId = rawCustomProductId || product?.productId || `FC-PRD-${brandCode}-${rowSkuEntropy}`;
+        const finalProductUrl = getVal(colIndex.productUrl) || `/products/${finalSlug}`;
 
         const productData = {
-          productId: customProductId,
+          productId: finalProductId,
           name: title,
-          slug: product ? product.slug : slug,
-          productUrl,
+          slug: finalSlug,
+          productUrl: finalProductUrl,
           department,
           subcategory,
           categoryPath,
@@ -545,7 +567,7 @@ export async function POST(req: NextRequest) {
           sellerId: linkedSellerId,
           sellerName: sellerName || null,
           sellerIdentifier: sellerIdStr || null,
-          sellerUrl: productUrl || null,
+          sellerUrl: finalProductUrl || null,
           averageRating: ratingNum,
           ratingCount: ratingCountNum,
           totalReviews: reviewCountNum,
@@ -563,11 +585,28 @@ export async function POST(req: NextRequest) {
           productsUpdated++;
         }
 
-        // 4. Upsert ProductVariant by SKU
-        const existingVariant = await prisma.productVariant.findUnique({ where: { sku } });
+        // 4. Create or Update Variant with Collision-Proof SKU
+        let targetSku = rawSku;
+        if (!targetSku) {
+          const sizeCode = slugify(size || "FS").toUpperCase().slice(0, 4) || "FS";
+          targetSku = `FC-SKU-${brandCode}-${sizeCode}-${rowSkuEntropy}`;
+        }
+
+        // Find existing variant on this specific product by SKU or Size+Colour
+        let existingVariant = await prisma.productVariant.findFirst({
+          where: {
+            OR: [
+              { sku: targetSku },
+              { productId: product.id, size, colour },
+            ],
+          },
+        });
+
+        const finalSku = await getUniqueVariantSku(targetSku, existingVariant?.id);
+
         const variantData = {
           productId: product.id,
-          sku,
+          sku: finalSku,
           colour,
           size,
           price: priceNum,
@@ -587,7 +626,7 @@ export async function POST(req: NextRequest) {
         }
         variantsCreatedOrUpdated++;
 
-        // 5. Upsert Cloaked Lookbook Images (Up to 5 photos)
+        // 5. Lookbook Images (Up to 5 photos)
         for (let imgIdx = 0; imgIdx < imageUrls.length; imgIdx++) {
           const imgUrl = imageUrls[imgIdx];
           const imgExists = await prisma.productImage.findFirst({
