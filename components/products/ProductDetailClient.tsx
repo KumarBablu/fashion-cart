@@ -26,7 +26,17 @@ type Product = {
   slug: string;
   description: string | null;
   fabric: string | null;
+  material?: string | null;
+  pattern?: string | null;
+  fit?: string | null;
+  occasion?: string | null;
+  department?: string | null;
+  subcategory?: string | null;
+  categoryPath?: string | null;
+  productType?: string | null;
   brand: string | null;
+  availability?: string | null;
+  currency?: string | null;
   averageRating?: number | null;
   totalReviews?: number | null;
   specifications: unknown;
@@ -608,38 +618,68 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               <span className="text-[10px] text-slate-500 font-medium">100% Quality Checked</span>
             </div>
 
-            <div className="p-4 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+            <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3.5 text-xs">
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase">Fabric Composition</span>
-                <span className="font-semibold text-slate-800">{product.fabric || "100% Pure Fine Cotton / Silk"}</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Brand / Line</span>
+                <span className="font-semibold text-slate-800">{product.brand || "Fashion Cart Atelier"}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase">Weave &amp; Craft</span>
-                <span className="font-semibold text-slate-800">Master Tailored Handloom</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Category</span>
+                <span className="font-semibold text-slate-800">{product.categoryPath || product.department || "Women's Ethnic Wear"}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase">Fit Type</span>
-                <span className="font-semibold text-slate-800">Comfort Regular Fit</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Fabric</span>
+                <span className="font-semibold text-slate-800">{product.fabric || "Premium Handloom Fabric"}</span>
+              </div>
+              {product.material && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Material</span>
+                  <span className="font-semibold text-slate-800">{product.material}</span>
+                </div>
+              )}
+              {product.pattern && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Pattern / Print</span>
+                  <span className="font-semibold text-slate-800">{product.pattern}</span>
+                </div>
+              )}
+              {product.fit && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Fit Type</span>
+                  <span className="font-semibold text-slate-800">{product.fit}</span>
+                </div>
+              )}
+              {product.occasion && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Occasion</span>
+                  <span className="font-semibold text-slate-800">{product.occasion}</span>
+                </div>
+              )}
+              <div>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Colour Shade</span>
+                <span className="font-semibold text-slate-800">{colour || "Classic"}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase">Wash &amp; Care</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Wash &amp; Care</span>
                 <span className="font-semibold text-slate-800">Gentle Wash / Dry Clean</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase">Occasion</span>
-                <span className="font-semibold text-slate-800">Festive, Wedding &amp; Everyday</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Stock Status</span>
+                <span className="font-semibold text-emerald-700">
+                  {selected && selected.stockQuantity > 0 ? `In Stock (${selected.stockQuantity} Left)` : "Available in Stock"}
+                </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase">Country of Origin</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Country of Origin</span>
                 <span className="font-semibold text-slate-800">Crafted in India 🇮🇳</span>
               </div>
             </div>
 
             {/* Description Text */}
             {product.description && (
-              <div className="p-4 border-t border-slate-100 bg-slate-50/40 text-xs text-slate-600 leading-relaxed">
-                <p className="font-bold text-slate-800 mb-1">About the Garment:</p>
-                <p className="whitespace-pre-line">{product.description}</p>
+              <div className="p-4 border-t border-slate-100 bg-slate-50/40 text-xs text-slate-600 leading-relaxed space-y-1">
+                <p className="font-bold text-slate-800">About the Garment:</p>
+                <p className="whitespace-pre-line text-slate-700 leading-relaxed">{product.description}</p>
               </div>
             )}
           </div>
