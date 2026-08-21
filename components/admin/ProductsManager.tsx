@@ -262,6 +262,22 @@ export default function ProductsManager({
           <DownloadCsvButton type="template" label="Template" icon="📋" />
           <DownloadCsvButton type="products" label="Export CSV" icon="📥" />
           <button
+            type="button"
+            onClick={() => {
+              if (products.length === 0) {
+                toastError("Catalog Empty", "There are no products in the catalog.");
+                return;
+              }
+              const ids = products.map((p) => p.id);
+              setSelectedIds(new Set(ids));
+              setBulkDeleteModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors shadow-2xs cursor-pointer"
+            title="Delete all products in catalog to start fresh"
+          >
+            <span>🗑️</span> Purge / Delete All
+          </button>
+          <button
             onClick={() => setBulkUploadModalOpen(true)}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#141416] hover:bg-[#25262B] text-white transition-all shadow-xs cursor-pointer"
           >

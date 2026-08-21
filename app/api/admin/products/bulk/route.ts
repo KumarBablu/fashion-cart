@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "DELETE": {
-        // Delete related variants and images if not part of historical orders, otherwise soft-archive
+        // Delete related variants, images, reviews, wishlists, and cart items safely
         let deletedCount = 0;
         let archivedCount = 0;
 
@@ -63,6 +63,9 @@ export async function POST(req: NextRequest) {
           });
 
           if (hasOrders === 0) {
+            await prisma.cartItem.deleteMany({ where: { variant: { productId: prodId } } });
+            await prisma.wishlistItem.deleteMany({ where: { productId: prodId } });
+            await prisma.review.deleteMany({ where: { productId: prodId } });
             await prisma.productImage.deleteMany({ where: { productId: prodId } });
             await prisma.inventoryTransaction.deleteMany({ where: { variant: { productId: prodId } } });
             await prisma.productVariant.deleteMany({ where: { productId: prodId } });

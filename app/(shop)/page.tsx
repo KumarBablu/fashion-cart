@@ -63,7 +63,7 @@ const OCCASIONS = [
 ];
 
 export default async function HomePage() {
-  const [categories, allProducts, rootCategories] = await Promise.all([
+  const [categories, allProducts, rootCategories, promotions] = await Promise.all([
     prisma.category.findMany({
       where: { isActive: true, parentId: null },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -98,19 +98,62 @@ export default async function HomePage() {
         },
       },
     }),
+    prisma.promotion.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    }),
   ]);
 
-  // Fast in-memory rails
-  const featured = allProducts.filter((p) => p.isFeatured).slice(0, 8);
-  const newArrivals = allProducts.filter((p) => p.isNewArrival).slice(0, 8);
-  const bestSellers = allProducts.filter((p) => p.isBestSeller).slice(0, 8);
-  const onSale = allProducts.filter((p) => p.variants.some((v) => v.compareAtPrice !== null)).slice(0, 8);
+  // Find custom hero promotion if configured in Admin
+  const heroPromo = promotions.find(
+    (p) =>
+      p.placement === "HERO_SPOTLIGHT" ||
+      p.placement === "TOP_BANNER" ||
+      p.placement === "POPUP_MODAL"
+  );
 
-  const fallbackRail = allProducts.slice(0, 8);
-  const finalFeatured = featured.length > 0 ? featured : fallbackRail;
-  const finalNewArrivals = newArrivals.length > 0 ? newArrivals : fallbackRail;
-  const finalBestSellers = bestSellers.length > 0 ? bestSellers : fallbackRail;
-  const finalOnSale = onSale.length > 0 ? onSale : fallbackRail;
+  // Dynamic image resolution for occasions from real catalog
+  const kurtaProduct = allProducts.find((p) => p.name.toLowerCase().includes("kurta") || p.name.toLowerCase().includes("kurti"));
+  const sareeProduct = allProducts.find((p) => p.name.toLowerCase().includes("saree") || p.name.toLowerCase().includes("sari"));
+  const menProduct = allProducts.find((p) => p.name.toLowerCase().includes("shirt") || p.department?.toLowerCase() === "men");
+  const dressProduct = allProducts.find((p) => p.name.toLowerCase().includes("dress") || p.name.toLowerCase().includes("anarkali"));
+
+  const dynamicOccasions = [
+    {
+      title: "Festive & Gala Edit",
+      subtitle: kurtaProduct ? kurtaProduct.name : "Zari Velvet & Anarkalis",
+      href: kurtaProduct ? `/products/${kurtaProduct.slug}` : "/shop?category=women-kurtis",
+      image: kurtaProduct?.images[0]?.imageUrl || "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80",
+      tag: "Artisanal Craft",
+    },
+    {
+      title: "Wedding & Silk Soirée",
+      subtitle: sareeProduct ? sareeProduct.name : "Mulberry Silk & Gowns",
+      href: sareeProduct ? `/products/${sareeProduct.slug}` : "/shop?category=women-sarees",
+      image: sareeProduct?.images[0]?.imageUrl || "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=800&auto=format&fit=crop&q=80",
+      tag: "Pure Silk",
+    },
+    {
+      title: "Sartorial Menswear",
+      subtitle: menProduct ? menProduct.name : "French Linen & Mandarin Shirts",
+      href: menProduct ? `/products/${menProduct.slug}` : "/shop?category=men-shirts",
+      image: menProduct?.images[0]?.imageUrl || "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80",
+      tag: "Tailored Linen",
+    },
+    {
+      title: "Earth & Sand Co-ords",
+      subtitle: dressProduct ? dressProduct.name : "Chanderi Silks & Sets",
+      href: dressProduct ? `/products/${dressProduct.slug}` : "/shop?onSale=true",
+      image: dressProduct?.images[0]?.imageUrl || "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80",
+      tag: "Curated Look",
+    },
+  ];
+
+  // Dynamic Hero Image: use custom admin promo image, or newest uploaded product photo, or fallback
+  const heroImage =
+    heroPromo?.imageUrl ||
+    allProducts[0]?.images[0]?.imageUrl ||
+    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&auto=format&fit=crop&q=85";
 
   const categoryPillars = rootCategories.map((rc) => {
     const childIds = new Set(rc.children.map((c) => c.id));
@@ -261,7 +304,7 @@ export default async function HomePage() {
             <div className="relative aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-[#E7DFD5] group">
               {/* High-Fashion Traditional Indian Couture Model Image */}
               <Image
-                src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&auto=format&fit=crop&q=85"
+                src={heroImage}
                 alt="Traditional Indian Couture Model — Fashion Cart"
                 fill
                 priority
@@ -279,7 +322,7 @@ export default async function HomePage() {
                   Editorial Lookbook 2026
                 </span>
                 <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-[#C59B27] text-white shadow-sm">
-                  CODE: FIRST10
+                  {heroPromo?.discountCode ? `CODE: ${heroPromo.discountCode}` : "CODE: FIRST10"}
                 </span>
               </div>
 
@@ -289,14 +332,14 @@ export default async function HomePage() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-[#C59B27]">✨</span>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#C59B27]">
-                      VIP Welcome Privilege
+                      {heroPromo?.badgeText || "VIP Welcome Privilege"}
                     </span>
                   </div>
                   <h3 className="font-display text-base sm:text-lg font-bold text-white leading-snug">
-                    Flat 10% Off + Free Express Shipping
+                    {heroPromo?.title || "Flat 10% Off + Free Express Shipping"}
                   </h3>
                   <p className="text-[11px] text-white/75 leading-relaxed">
-                    Auto-applied on all handcrafted silk sarees, kurtis &amp; tailored menswear.
+                    {heroPromo?.subtitle || "Auto-applied on all handcrafted silk sarees, kurtis & tailored menswear."}
                   </p>
                 </div>
 
@@ -311,21 +354,20 @@ export default async function HomePage() {
                     <span className="font-semibold text-white">COD Eligible</span>
                   </div>
                   <div className="py-1">
-                    <span className="block text-sm">🧾</span>
+                    <span className="block text-sm">📄</span>
                     <span className="font-semibold text-white">GST Invoice</span>
                   </div>
                 </div>
 
                 <Link
-                  href="/shop?sort=discount"
-                  className="w-full py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-wider text-center block bg-[#C59B27] text-white hover:bg-[#B0881E] transition-all shadow-md hover:scale-102"
+                  href={heroPromo?.ctaUrl || "/shop"}
+                  className="block w-full text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] transition-colors shadow-md cursor-pointer"
                 >
-                  Shop Exclusive Edits →
+                  {heroPromo?.ctaText || "Shop Exclusive Edits →"}
                 </Link>
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -334,22 +376,27 @@ export default async function HomePage() {
         <HomeClient categoryCollections={categoryCollections} />
       </section>
 
-      {/* 👑 Shop by Occasion Grid */}
+      {/* 👑 Curated Occasions Gallery */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex items-baseline justify-between border-b border-[#E7DFD5] pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">Curated Looks</span>
-            <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#141416] mt-0.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">
+              Curated Looks
+            </span>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">
               Shop by Occasion
             </h2>
           </div>
-          <Link href="/shop" className="text-xs font-bold text-[#141416] hover:text-[#C59B27] hover:underline">
+          <Link
+            href="/shop"
+            className="text-xs font-bold uppercase tracking-wider text-[#141416] hover:text-[#C59B27] transition-colors"
+          >
             View All Collections →
           </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {OCCASIONS.map((occ) => (
+          {dynamicOccasions.map((occ) => (
             <Link
               key={occ.title}
               href={occ.href}
