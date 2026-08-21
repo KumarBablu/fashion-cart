@@ -153,8 +153,8 @@ export default function BulkProductUploadModal({
       const dataRows = allRows.slice(1);
       const totalRows = dataRows.length;
 
-      // Safe high-speed batch chunk size: 25 garments per batch
-      const BATCH_SIZE = 25;
+      // Ultrafast resilient batch size: 10 garments per batch
+      const BATCH_SIZE = 10;
       const totalBatches = Math.ceil(totalRows / BATCH_SIZE);
 
       let cumulativeProcessed = 0;
@@ -184,30 +184,40 @@ export default function BulkProductUploadModal({
           currentRange: `${batchStart + 1} - ${batchEnd}`,
         });
 
-        try {
-          const res = await fetch("/api/admin/products/bulk-upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ csvText: batchCsv }),
-          });
+        // Resilient fetch with automatic 1-retry fallback
+        let batchSuccess = false;
+        for (let attempt = 1; attempt <= 2 && !batchSuccess; attempt++) {
+          try {
+            const res = await fetch("/api/admin/products/bulk-upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ csvText: batchCsv }),
+            });
 
-          const data = await res.json();
+            const data = await res.json();
 
-          if (res.ok && data.success) {
-            cumulativeProcessed += data.processedRows || batchData.length;
-            cumulativeCreated += data.productsCreated || 0;
-            cumulativeUpdated += data.productsUpdated || 0;
-            cumulativeVariants += data.variantsCreatedOrUpdated || 0;
-            if (Array.isArray(data.errors) && data.errors.length > 0) {
-              accumulatedErrors.push(...data.errors);
+            if (res.ok && data.success) {
+              cumulativeProcessed += data.processedRows || batchData.length;
+              cumulativeCreated += data.productsCreated || 0;
+              cumulativeUpdated += data.productsUpdated || 0;
+              cumulativeVariants += data.variantsCreatedOrUpdated || 0;
+              if (Array.isArray(data.errors) && data.errors.length > 0) {
+                accumulatedErrors.push(...data.errors);
+              }
+              batchSuccess = true;
+            } else if (attempt === 2) {
+              console.warn(`Batch ${b + 1} issue:`, data.error);
+              accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): ${data.error || "Batch failed"}`);
             }
-          } else {
-            console.warn(`Batch ${b + 1} issue:`, data.error);
-            accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): ${data.error || "Batch failed"}`);
+          } catch (batchErr) {
+            if (attempt === 2) {
+              console.error(`Batch ${b + 1} network error:`, batchErr);
+              accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): Network timeout or connection drop`);
+            } else {
+              // Quick 500ms breather before retry
+              await new Promise((r) => setTimeout(r, 500));
+            }
           }
-        } catch (batchErr) {
-          console.error(`Batch ${b + 1} network error:`, batchErr);
-          accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): Network timeout or connection drop`);
         }
 
         // Update to reflect completed batch

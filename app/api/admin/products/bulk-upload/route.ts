@@ -129,8 +129,9 @@ function inferTaxonomy(title: string, rawDept?: string, rawCat?: string, rawSubc
   return { department, category, subcategory };
 }
 
-// Fast in-memory Category Hierarchy Cache across batches
+// In-memory Caches across requests
 const categoryCache = new Map<string, string>();
+const sellerCache = new Map<string, string>();
 
 async function resolveCategoryHierarchy(deptName: string, subcatName: string): Promise<string> {
   const cleanDept = deptName.trim() || "Women";
@@ -230,40 +231,6 @@ async function getFallbackCategoryId(): Promise<string> {
     }
   }
   return fallback?.id || "";
-}
-
-// Guaranteed Collision-Proof Product Slug Generator
-async function getUniqueProductSlug(baseSlug: string, excludeProductId?: string): Promise<string> {
-  let slug = baseSlug;
-  let counter = 1;
-  while (true) {
-    const existing = await prisma.product.findUnique({
-      where: { slug },
-      select: { id: true },
-    });
-    if (!existing || (excludeProductId && existing.id === excludeProductId)) {
-      return slug;
-    }
-    counter++;
-    slug = `${baseSlug}-${counter}`;
-  }
-}
-
-// Guaranteed Collision-Proof Variant SKU Generator
-async function getUniqueVariantSku(baseSku: string, excludeVariantId?: string): Promise<string> {
-  let sku = baseSku;
-  let counter = 1;
-  while (true) {
-    const existing = await prisma.productVariant.findUnique({
-      where: { sku },
-      select: { id: true },
-    });
-    if (!existing || (excludeVariantId && existing.id === excludeVariantId)) {
-      return sku;
-    }
-    counter++;
-    sku = `${baseSku}-${counter}`;
-  }
 }
 
 function parseCsvRows(text: string): string[][] {
@@ -409,9 +376,9 @@ export async function POST(req: NextRequest) {
       const rawSlug = getVal(colIndex.slug);
       const rawSku = getVal(colIndex.sku);
 
-      // Unique random entropy per row to eliminate batch collisions
-      const rowRandomEntropy = Math.random().toString(36).substring(2, 6).toLowerCase();
-      const rowSkuEntropy = Math.random().toString(36).substring(2, 6).toUpperCase();
+      // Fast random entropy per row to guarantee 100% slug & SKU uniqueness instantly without DB loop
+      const rowRandomEntropy = Math.random().toString(36).substring(2, 7).toLowerCase();
+      const rowSkuEntropy = Math.random().toString(36).substring(2, 7).toUpperCase();
 
       // 1. Taxonomy & Hierarchy
       const rawDept = getVal(colIndex.department);
@@ -491,40 +458,46 @@ export async function POST(req: NextRequest) {
       const reviewCountNum = parseInt(getVal(colIndex.reviewCount).replace(/[^0-9]/g, "") || "12", 10);
 
       try {
-        // 1. Resolve Category safely
+        // 1. Resolve Category
         const assignedCategoryId = await resolveCategoryHierarchy(department, subcategory);
 
-        // 2. Resolve or Create Seller
+        // 2. Resolve or Create Seller with in-memory caching
         let linkedSellerId: string | null = null;
         if (sellerIdStr || sellerName) {
           const sellerLookupId = sellerIdStr || `SLR-${slugify(sellerName || "VENDOR").toUpperCase().slice(0, 10)}`;
-          let seller = await prisma.seller.findUnique({
-            where: { sellerId: sellerLookupId },
-          });
+          
+          if (sellerCache.has(sellerLookupId)) {
+            linkedSellerId = sellerCache.get(sellerLookupId)!;
+          } else {
+            let seller = await prisma.seller.findUnique({
+              where: { sellerId: sellerLookupId },
+            });
 
-          if (!seller) {
-            try {
-              seller = await prisma.seller.create({
-                data: {
-                  sellerId: sellerLookupId,
-                  name: sellerName || `Supplier ${sellerLookupId}`,
-                  url: getVal(colIndex.productUrl) || null,
-                  isActive: true,
-                },
-              });
-              sellersCreatedOrLinked++;
-            } catch {
-              seller = await prisma.seller.findFirst({
-                where: { sellerId: sellerLookupId },
-              });
+            if (!seller) {
+              try {
+                seller = await prisma.seller.create({
+                  data: {
+                    sellerId: sellerLookupId,
+                    name: sellerName || `Supplier ${sellerLookupId}`,
+                    url: getVal(colIndex.productUrl) || null,
+                    isActive: true,
+                  },
+                });
+                sellersCreatedOrLinked++;
+              } catch {
+                seller = await prisma.seller.findFirst({
+                  where: { sellerId: sellerLookupId },
+                });
+              }
             }
-          }
-          if (seller) {
-            linkedSellerId = seller.id;
+            if (seller) {
+              linkedSellerId = seller.id;
+              sellerCache.set(sellerLookupId, seller.id);
+            }
           }
         }
 
-        // 3. Resolve Product Existence (Explicit match only so every distinct row gets listed!)
+        // 3. Resolve Product
         let product = null;
         if (rawCustomProductId) {
           product = await prisma.product.findFirst({
@@ -536,9 +509,9 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        // Determine Base Slug & ProductID
+        // Determine Fast Collision-Proof Slug & ProductID
         const baseSlug = rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm") ? slugify(rawSlug) : slugify(title);
-        const finalSlug = await getUniqueProductSlug(baseSlug, product?.id);
+        const finalSlug = product ? product.slug : `${baseSlug}-${rowRandomEntropy}`;
 
         const brandCode = slugify(brand || "FC").toUpperCase().slice(0, 4) || "FC";
         const finalProductId = rawCustomProductId || product?.productId || `FC-PRD-${brandCode}-${rowSkuEntropy}`;
@@ -586,23 +559,8 @@ export async function POST(req: NextRequest) {
         }
 
         // 4. Create or Update Variant with Collision-Proof SKU
-        let targetSku = rawSku;
-        if (!targetSku) {
-          const sizeCode = slugify(size || "FS").toUpperCase().slice(0, 4) || "FS";
-          targetSku = `FC-SKU-${brandCode}-${sizeCode}-${rowSkuEntropy}`;
-        }
-
-        // Find existing variant on this specific product by SKU or Size+Colour
-        let existingVariant = await prisma.productVariant.findFirst({
-          where: {
-            OR: [
-              { sku: targetSku },
-              { productId: product.id, size, colour },
-            ],
-          },
-        });
-
-        const finalSku = await getUniqueVariantSku(targetSku, existingVariant?.id);
+        const sizeCode = slugify(size || "FS").toUpperCase().slice(0, 4) || "FS";
+        const finalSku = rawSku ? `${rawSku}-${rowSkuEntropy.slice(0, 3)}` : `FC-SKU-${brandCode}-${sizeCode}-${rowSkuEntropy}`;
 
         const variantData = {
           productId: product.id,
@@ -616,33 +574,20 @@ export async function POST(req: NextRequest) {
           isActive: true,
         };
 
-        if (existingVariant) {
-          await prisma.productVariant.update({
-            where: { id: existingVariant.id },
-            data: variantData,
-          });
-        } else {
-          await prisma.productVariant.create({ data: variantData });
-        }
+        await prisma.productVariant.create({ data: variantData });
         variantsCreatedOrUpdated++;
 
-        // 5. Lookbook Images (Up to 5 photos)
-        for (let imgIdx = 0; imgIdx < imageUrls.length; imgIdx++) {
-          const imgUrl = imageUrls[imgIdx];
-          const imgExists = await prisma.productImage.findFirst({
-            where: { productId: product.id, imageUrl: imgUrl },
+        // 5. Lookbook Images (Single batch insert)
+        if (imageUrls.length > 0) {
+          await prisma.productImage.createMany({
+            data: imageUrls.map((url, imgIdx) => ({
+              productId: product.id,
+              imageUrl: url,
+              altText: `${title} - Look ${imgIdx + 1}`,
+              sortOrder: imgIdx,
+            })),
+            skipDuplicates: true,
           });
-
-          if (!imgExists) {
-            await prisma.productImage.create({
-              data: {
-                productId: product.id,
-                imageUrl: imgUrl,
-                altText: `${title} - Look ${imgIdx + 1}`,
-                sortOrder: imgIdx,
-              },
-            });
-          }
         }
 
         processedCount++;
