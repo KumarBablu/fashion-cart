@@ -161,8 +161,8 @@ export default function BulkProductUploadModal({
       const dataRows = allRows.slice(1);
       const totalRows = dataRows.length;
 
-      // Resilient batch size: 10 items per batch
-      const BATCH_SIZE = 10;
+      // Ultra-resilient batch size: 5 items per batch for instant response
+      const BATCH_SIZE = 5;
       const totalBatches = Math.ceil(totalRows / BATCH_SIZE);
 
       let cumulativeProcessed = 0;
@@ -199,12 +199,13 @@ export default function BulkProductUploadModal({
             const res = await fetch(`/api/admin/products/bulk-upload?store=${targetStore}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+              credentials: "include",
               body: JSON.stringify({ csvText: batchCsv }),
             });
 
-            const data = await res.json();
+            const data = await res.json().catch(() => null);
 
-            if (res.ok && data.success) {
+            if (res.ok && data?.success) {
               cumulativeProcessed += data.processedRows || batchData.length;
               cumulativeCreated += data.productsCreated || 0;
               cumulativeUpdated += data.productsUpdated || 0;
@@ -214,15 +215,16 @@ export default function BulkProductUploadModal({
               }
               batchSuccess = true;
             } else if (attempt === 2) {
-              console.warn(`Batch ${b + 1} issue:`, data.error);
-              accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): ${data.error || "Batch failed"}`);
-            }
-          } catch (batchErr) {
-            if (attempt === 2) {
-              console.error(`Batch ${b + 1} network error:`, batchErr);
-              accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): Network timeout or connection drop`);
+              const errMsg = data?.error || (res.status === 401 ? "Unauthorized session" : `HTTP ${res.status}`);
+              accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): ${errMsg}`);
             } else {
-              await new Promise((r) => setTimeout(r, 500));
+              await new Promise((r) => setTimeout(r, 600));
+            }
+          } catch (batchErr: any) {
+            if (attempt === 2) {
+              accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): ${batchErr?.message || "Connection timeout"}`);
+            } else {
+              await new Promise((r) => setTimeout(r, 600));
             }
           }
         }

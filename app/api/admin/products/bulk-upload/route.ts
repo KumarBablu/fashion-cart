@@ -160,10 +160,21 @@ function inferTaxonomy(title: string, rawDept?: string, rawCat?: string, rawSubc
   return { department, category, subcategory };
 }
 
-// In-memory Category Resolver
-async function resolveCategoryHierarchy(department: string, subcategory: string, db: any): Promise<string> {
+// In-memory Category Resolver with Request Cache
+async function resolveCategoryHierarchy(
+  department: string,
+  subcategory: string,
+  db: any,
+  cache?: Map<string, string>
+): Promise<string> {
   const cleanParent = department.trim();
   const cleanSub = subcategory.trim();
+  const cacheKey = `${cleanParent}:::${cleanSub}`;
+
+  if (cache && cache.has(cacheKey)) {
+    return cache.get(cacheKey)!;
+  }
+
   const parentSlug = slugify(cleanParent);
   const subSlug = slugify(`${cleanParent}-${cleanSub}`);
 
@@ -193,7 +204,9 @@ async function resolveCategoryHierarchy(department: string, subcategory: string,
 
   if (!parentCat) {
     const fallback = await db.category.findFirst({ where: { isActive: true } });
-    return fallback?.id || "";
+    const resolvedId = fallback?.id || "";
+    if (cache) cache.set(cacheKey, resolvedId);
+    return resolvedId;
   }
 
   let subCat = await db.category.findFirst({
@@ -225,7 +238,9 @@ async function resolveCategoryHierarchy(department: string, subcategory: string,
     }
   }
 
-  return subCat?.id || parentCat.id;
+  const finalId = subCat?.id || parentCat.id;
+  if (cache) cache.set(cacheKey, finalId);
+  return finalId;
 }
 
 function parseCsvRows(text: string): string[][] {
@@ -272,7 +287,7 @@ function parseCsvRows(text: string): string[][] {
 }
 
 export async function POST(req: NextRequest) {
-  const admin = await getCurrentAdmin();
+  const admin = await getCurrentAdmin(req);
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
   }
@@ -386,6 +401,7 @@ export async function POST(req: NextRequest) {
     const errors: string[] = [];
 
     const sellerCache = new Map<string, string>();
+    const categoryCache = new Map<string, string>();
 
     for (let r = 1; r < rows.length; r++) {
       const row = rows[r];
@@ -521,7 +537,7 @@ export async function POST(req: NextRequest) {
 
       try {
         // 1. Resolve Category in active store DB
-        const assignedCategoryId = await resolveCategoryHierarchy(department, subcategory, db);
+        const assignedCategoryId = await resolveCategoryHierarchy(department, subcategory, db, categoryCache);
 
         // 2. Resolve or Create Seller in active store DB
         let linkedSellerId: string | null = null;
