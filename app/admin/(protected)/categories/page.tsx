@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
 
 type SubCategory = {
@@ -35,6 +36,9 @@ function slugify(s: string) {
 }
 
 export default function AdminCategoriesPage() {
+  const searchParams = useSearchParams();
+  const store = searchParams.get("store") || (typeof window !== "undefined" && sessionStorage.getItem("fc_admin_active_store")) || "garments";
+
   const { success, error: toastError } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +68,7 @@ export default function AdminCategoriesPage() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/categories?includeInactive=true");
+      const res = await fetch(`/api/categories?includeInactive=true&store=${store}`);
       const data = await res.json();
       setCategories(data.categories || []);
     } catch (e) {
@@ -77,7 +81,7 @@ export default function AdminCategoriesPage() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [store]);
 
   function handleNameChange(val: string) {
     setName(val);
@@ -322,10 +326,10 @@ export default function AdminCategoriesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2 text-slate-900">
-            <span>🏷️</span> Categories &amp; Subcategories Manager
+            <span>{store === "jewellery" ? "💍" : "🏷️"}</span> {store === "jewellery" ? "Jewellery Collections & Categories" : "Categories & Subcategories Manager"}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Full control to create, modify, unhide, sort, and manage all {categories.length} departments and {totalSubcategories} subcategories
+            Full control to create, modify, unhide, sort, and manage all {categories.length} departments and {totalSubcategories} subcategories for {store === "jewellery" ? "Jewellery Maison" : "Garments Boutique"}
           </p>
         </div>
 
@@ -334,7 +338,7 @@ export default function AdminCategoriesPage() {
             onClick={openNewParentModal}
             className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] shadow-md transition-all cursor-pointer"
           >
-            <span>+</span> Add Department Category
+            <span>+</span> Add {store === "jewellery" ? "Jewellery Department" : "Department Category"}
           </button>
         </div>
       </div>

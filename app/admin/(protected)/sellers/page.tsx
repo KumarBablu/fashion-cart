@@ -1,11 +1,21 @@
-import { prisma } from "@/lib/db";
+import { cookies } from "next/headers";
+import { getDb } from "@/lib/db";
 import SellersManager, { MappedProductItem, SellerDirectoryItem } from "@/components/admin/SellersManager";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminSellersPage() {
+type SearchParams = Record<string, string | undefined>;
+
+export default async function AdminSellersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const sp = await searchParams;
+  const cookieStore = await cookies();
+  const cookieStoreVal = cookieStore.get("fc_admin_store")?.value;
+
+  const store = sp.store === "jewellery" || (!sp.store && cookieStoreVal === "jewellery") ? "jewellery" : "garments";
+  const db = getDb(store);
+
   const [products, sellers] = await Promise.all([
-    prisma.product.findMany({
+    db.product.findMany({
       orderBy: { createdAt: "desc" },
       include: {
         images: {
@@ -22,7 +32,7 @@ export default async function AdminSellersPage() {
         seller: true,
       },
     }),
-    prisma.seller.findMany({
+    db.seller.findMany({
       orderBy: { name: "asc" },
       include: {
         _count: {

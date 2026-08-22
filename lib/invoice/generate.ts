@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { generateInvoiceNumber } from "@/lib/order-number";
 import { generateQrPngBuffer } from "./qr";
 
@@ -12,19 +12,37 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   invoiceNumber: string;
   orderNumber: string;
 }> {
-  const existing = await prisma.invoice.findUnique({ where: { orderId } });
-  const invoiceNumber = existing?.invoiceNumber ?? (await generateInvoiceNumber());
+  let store: "garments" | "jewellery" = "garments";
+  let db = getDb("garments");
 
-  const order = await prisma.order.findUniqueOrThrow({
+  let order = await db.order.findUnique({
     where: { id: orderId },
     include: { items: true, user: true, payment: true },
   });
 
-  const business = await prisma.businessSettings.findFirst();
+  if (!order) {
+    const jwDb = getDb("jewellery");
+    order = await jwDb.order.findUnique({
+      where: { id: orderId },
+      include: { items: true, user: true, payment: true },
+    });
+    if (order) {
+      store = "jewellery";
+      db = jwDb;
+    }
+  }
+
+  if (!order) {
+    throw new Error(`Order ${orderId} not found`);
+  }
+
+  const existing = await db.invoice.findUnique({ where: { orderId } });
+  const invoiceNumber = existing?.invoiceNumber ?? (await generateInvoiceNumber());
+  const business = await db.businessSettings.findFirst();
 
   // Create invoice record in database if not yet present
   if (!existing) {
-    await prisma.invoice
+    await db.invoice
       .create({
         data: {
           orderId,

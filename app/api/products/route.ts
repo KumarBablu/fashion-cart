@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { productSchema } from "@/lib/validation/schemas";
 
@@ -8,6 +8,8 @@ const PAGE_SIZE = 20;
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
+  const store = sp.get("store") === "jewellery" ? "jewellery" : "garments";
+  const db = getDb(store);
 
   const q = sp.get("q")?.trim();
   const category = sp.get("category");
@@ -62,7 +64,7 @@ export async function GET(req: NextRequest) {
         ...(minPrice !== undefined ? { price: { gte: minPrice } } : {}),
         ...(maxPrice !== undefined ? { price: { lte: maxPrice } } : {}),
         ...(size ? { size: { equals: size, mode: "insensitive" } } : {}),
-        ...(colour ? { colour: { equals: colour, mode: "insensitive" } } : {}),
+        ...(colour ? { colour: { contains: colour, mode: "insensitive" } } : {}),
         ...(inStock ? { stockQuantity: { gt: 0 } } : {}),
         ...(onSale ? { compareAtPrice: { not: null } } : {}),
       },
@@ -70,31 +72,27 @@ export async function GET(req: NextRequest) {
   };
 
   const orderBy: Prisma.ProductOrderByWithRelationInput =
-    sort === "popular"
-      ? { createdAt: "desc" } // Placeholder until order-count based popularity is added
-      : sort === "newest"
+    sort === "newest"
       ? { createdAt: "desc" }
+      : sort === "rating"
+      ? { averageRating: "desc" }
       : { createdAt: "desc" };
 
-  const limit = sp.get("take") ? Math.min(50, Number(sp.get("take"))) : PAGE_SIZE;
-
   const [items, total] = await Promise.all([
-    prisma.product.findMany({
+    db.product.findMany({
       where,
       orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
       include: {
-        images: { orderBy: { sortOrder: "asc" }, take: 1 },
-        variants: { where: { isActive: true }, orderBy: { price: "asc" } },
-        category: true,
+        images: { take: 2, orderBy: { sortOrder: "asc" } },
+        variants: { where: { isActive: true } },
+        category: { select: { id: true, name: true, slug: true } },
       },
     }),
-    prisma.product.count({ where }),
+    db.product.count({ where }),
   ]);
 
-  // Price sort applied post-fetch on the cheapest active variant, since
-  // price lives on variants rather than the product itself.
   let sorted = items;
   if (sort === "price_asc" || sort === "price_desc") {
     sorted = [...items].sort((a, b) => {
@@ -131,17 +129,21 @@ export async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const sp = req.nextUrl.searchParams;
+  const store = sp.get("store") === "jewellery" ? "jewellery" : "garments";
+  const db = getDb(store);
+
   const body = await req.json().catch(() => null);
   const parsed = productSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 });
   }
 
-  const existing = await prisma.product.findUnique({ where: { slug: parsed.data.slug } });
+  const existing = await db.product.findUnique({ where: { slug: parsed.data.slug } });
   if (existing) {
     return NextResponse.json({ error: "A product with this slug already exists." }, { status: 409 });
   }
 
-  const product = await prisma.product.create({ data: parsed.data });
+  const product = await db.product.create({ data: parsed.data });
   return NextResponse.json({ product }, { status: 201 });
 }

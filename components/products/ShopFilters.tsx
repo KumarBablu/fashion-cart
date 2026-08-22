@@ -6,7 +6,7 @@ import { formatINR } from "@/lib/format";
 
 type Category = { id: string; name: string; slug: string; parentId: string | null };
 
-const COLOR_SWATCHES: { label: string; query: string; bg: string; border?: string }[] = [
+const GARMENT_COLOR_SWATCHES: { label: string; query: string; bg: string; border?: string }[] = [
   { label: "Black", query: "Black", bg: "#141416" },
   { label: "White / Ivory", query: "White", bg: "#FAF8F5", border: "#D1D5DB" },
   { label: "Navy / Blue", query: "Blue", bg: "#1E3A8A" },
@@ -21,11 +21,28 @@ const COLOR_SWATCHES: { label: string; query: string; bg: string; border?: strin
   { label: "Multicolour", query: "Multi", bg: "linear-gradient(135deg, #EF4444, #F59E0B, #10B981, #3B82F6)" },
 ];
 
-const STANDARD_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Free Size"];
+const JEWELLERY_COLOR_SWATCHES: { label: string; query: string; bg: string; border?: string }[] = [
+  { label: "24K Micro Gold", query: "Gold", bg: "#D4AF37" },
+  { label: "Antique Matte Gold", query: "Antique Gold", bg: "#B8860B" },
+  { label: "Silver / Rhodium", query: "Silver", bg: "#E5E7EB", border: "#9CA3AF" },
+  { label: "Rose Gold", query: "Rose Gold", bg: "#E0A899" },
+  { label: "Kundan / Pearl", query: "White", bg: "#FAF8F5", border: "#D1D5DB" },
+  { label: "Ruby Pink / Red", query: "Ruby", bg: "#9F1239" },
+  { label: "Emerald Green", query: "Emerald", bg: "#065F46" },
+  { label: "Multicolour Meena", query: "Multi", bg: "linear-gradient(135deg, #EF4444, #F59E0B, #10B981, #3B82F6)" },
+  { label: "Black Oxidised", query: "Black", bg: "#1F2937" },
+];
+
+const STANDARD_GARMENT_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Free Size"];
 const WAIST_SIZES = ["28", "30", "32", "34", "36", "38"];
 const KIDS_SIZES = ["2-3 Y", "3-4 Y", "4-5 Y", "5-6 Y", "6-7 Y", "7-8 Y", "8-9 Y", "9-10 Y"];
 
-const PRICE_TIERS = [
+// Jewellery Specific Sizes
+const BANGLE_SIZES = ["2.4 (Small)", "2.6 (Medium)", "2.8 (Large)", "Openable / Free Size"];
+const RING_SIZES = ["Adjustable Band", "Size 12", "Size 14", "Size 16", "Size 18", "Size 20"];
+const NECKLACE_SIZES = ["One Size", "Free Size (Adjustable Dori)"];
+
+const GARMENT_PRICE_TIERS = [
   { label: "Under ₹999", min: null, max: 999 },
   { label: "₹1,000 – ₹1,999", min: 1000, max: 1999 },
   { label: "₹2,000 – ₹2,999", min: 2000, max: 2999 },
@@ -33,11 +50,25 @@ const PRICE_TIERS = [
   { label: "₹5,000 & Above", min: 5000, max: null },
 ];
 
+const JEWELLERY_PRICE_TIERS = [
+  { label: "Under ₹499", min: null, max: 499 },
+  { label: "₹500 – ₹999", min: 500, max: 999 },
+  { label: "₹1,000 – ₹1,999", min: 1000, max: 1999 },
+  { label: "₹2,000 – ₹3,499", min: 2000, max: 3499 },
+  { label: "₹3,500 & Above", min: 3500, max: null },
+];
+
 const DEPARTMENT_ICONS: Record<string, string> = {
   women: "🥻",
   men: "👔",
   western: "✨",
   kids: "🧸",
+  "necklaces-sets": "👑",
+  "earrings-jhumkas": "✨",
+  "bangles-kadas": "💍",
+  rings: "💎",
+  "bridal-accents": "👰",
+  "mens-jewellery": "🤴",
 };
 
 export default function ShopFilters({
@@ -53,7 +84,12 @@ export default function ShopFilters({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [sizeTab, setSizeTab] = useState<"standard" | "waist" | "kids">("standard");
+
+  const isJewellery = pathname.startsWith("/jewellery") || searchParams?.get("store") === "jewellery";
+
+  // Sizing tabs
+  const [garmentSizeTab, setGarmentSizeTab] = useState<"standard" | "waist" | "kids">("standard");
+  const [jewellerySizeTab, setJewellerySizeTab] = useState<"bangles" | "rings" | "all">("bangles");
 
   const [customMin, setCustomMin] = useState(searchParams.get("minPrice") || "");
   const [customMax, setCustomMax] = useState(searchParams.get("maxPrice") || "");
@@ -64,6 +100,9 @@ export default function ShopFilters({
     men: true,
     western: true,
     kids: true,
+    "necklaces-sets": true,
+    "earrings-jhumkas": true,
+    "bangles-kadas": true,
   });
 
   function updateParam(key: string, value: string | null) {
@@ -100,7 +139,11 @@ export default function ShopFilters({
   }
 
   function clearAllFilters() {
-    router.push(pathname);
+    if (isJewellery) {
+      router.push(`${pathname}?store=jewellery`);
+    } else {
+      router.push(pathname);
+    }
   }
 
   const topLevel = categories.filter((c) => !c.parentId);
@@ -117,6 +160,8 @@ export default function ShopFilters({
   );
 
   const activeCategoryObj = categories.find((c) => c.slug === activeCategory);
+  const colorSwatches = isJewellery ? JEWELLERY_COLOR_SWATCHES : GARMENT_COLOR_SWATCHES;
+  const priceTiers = isJewellery ? JEWELLERY_PRICE_TIERS : GARMENT_PRICE_TIERS;
 
   return (
     <aside className="w-full">
@@ -200,7 +245,7 @@ export default function ShopFilters({
                       onClick={() => updateParam("colour", null)}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-white text-[#141416] border border-[#E7DFD5] shadow-xs"
                     >
-                      <span>Colour: {activeColour}</span>
+                      <span>Finish: {activeColour}</span>
                       <span className="text-[#787C87] hover:text-rose-600">✕</span>
                     </button>
                   )}
@@ -234,15 +279,24 @@ export default function ShopFilters({
                       <span className="hover:text-rose-600">✕</span>
                     </button>
                   )}
+                  {inStock && (
+                    <button
+                      onClick={() => updateParam("inStock", null)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs"
+                    >
+                      <span>In Stock</span>
+                      <span className="hover:text-rose-600">✕</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* 🥻 1. Category & Department Tree */}
+            {/* 🏷️ 1. Category Tree Filter */}
             <div className="rounded-2xl border border-[#E7DFD5] bg-white p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between pb-2 border-b border-[#E7DFD5]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#141416]">
-                  Department &amp; Category
+                  {isJewellery ? "Jewellery Collections" : "Department & Category"}
                 </h4>
                 {activeCategory && (
                   <button
@@ -263,13 +317,13 @@ export default function ShopFilters({
                       : "text-[#141416] hover:bg-[#F4EFEA]"
                   }`}
                 >
-                  <span>✦ All Categories &amp; Apparel</span>
+                  <span>{isJewellery ? "✦ All Jewellery Pieces" : "✦ All Categories & Apparel"}</span>
                   {!activeCategory && <span>✓</span>}
                 </button>
 
                 {topLevel.map((cat) => {
                   const isCatActive = activeCategory === cat.slug;
-                  const icon = DEPARTMENT_ICONS[cat.slug] || "👗";
+                  const icon = DEPARTMENT_ICONS[cat.slug] || (isJewellery ? "💍" : "👗");
                   const children = categories.filter((sub) => sub.parentId === cat.id);
                   const isExpanded = expandedCats[cat.slug] ?? true;
 
@@ -331,11 +385,11 @@ export default function ShopFilters({
               </div>
             </div>
 
-            {/* 🎨 2. Visual Colour Swatch Matrix */}
+            {/* 🎨 2. Visual Colour / Polish Swatch Matrix */}
             <div className="rounded-2xl border border-[#E7DFD5] bg-white p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between pb-2 border-b border-[#E7DFD5]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#141416]">
-                  Colour Shade
+                  {isJewellery ? "Plating & Gem Polish" : "Colour Shade"}
                 </h4>
                 {activeColour && (
                   <button
@@ -348,7 +402,7 @@ export default function ShopFilters({
               </div>
 
               <div className="grid grid-cols-2 gap-1.5">
-                {COLOR_SWATCHES.map((swatch) => {
+                {colorSwatches.map((swatch) => {
                   const isSelected = activeColour === swatch.query;
                   return (
                     <button
@@ -374,11 +428,11 @@ export default function ShopFilters({
               </div>
             </div>
 
-            {/* 📏 3. Structured Size Selection */}
+            {/* 📏 3. Structured Size Selection (Jewellery vs Garment) */}
             <div className="rounded-2xl border border-[#E7DFD5] bg-white p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between pb-2 border-b border-[#E7DFD5]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#141416]">
-                  Garment Size
+                  {isJewellery ? "Jewellery Size & Fit" : "Garment Size"}
                 </h4>
                 {activeSize && (
                   <button
@@ -390,60 +444,119 @@ export default function ShopFilters({
                 )}
               </div>
 
-              {/* Size Tab Switcher */}
-              <div className="flex items-center p-1 rounded-xl bg-[#F4EFEA] border border-[#E7DFD5] text-[10px] font-bold">
-                <button
-                  onClick={() => setSizeTab("standard")}
-                  className={`flex-1 py-1 text-center rounded-lg transition-colors ${
-                    sizeTab === "standard" ? "bg-white text-[#141416] shadow-xs" : "text-[#787C87]"
-                  }`}
-                >
-                  Standard
-                </button>
-                <button
-                  onClick={() => setSizeTab("waist")}
-                  className={`flex-1 py-1 text-center rounded-lg transition-colors ${
-                    sizeTab === "waist" ? "bg-white text-[#141416] shadow-xs" : "text-[#787C87]"
-                  }`}
-                >
-                  Waist / Jeans
-                </button>
-                <button
-                  onClick={() => setSizeTab("kids")}
-                  className={`flex-1 py-1 text-center rounded-lg transition-colors ${
-                    sizeTab === "kids" ? "bg-white text-[#141416] shadow-xs" : "text-[#787C87]"
-                  }`}
-                >
-                  Kids Age
-                </button>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {(sizeTab === "standard"
-                  ? STANDARD_SIZES
-                  : sizeTab === "waist"
-                  ? WAIST_SIZES
-                  : KIDS_SIZES
-                ).map((sz) => {
-                  const isSelected = activeSize === sz;
-                  return (
+              {isJewellery ? (
+                /* JEWELLERY SIZING TABS */
+                <div className="space-y-2">
+                  <div className="flex items-center p-1 rounded-xl bg-[#F4EFEA] border border-[#E7DFD5] text-[10px] font-bold">
                     <button
-                      key={sz}
-                      onClick={() => updateParam("size", isSelected ? null : sz)}
-                      className={`min-w-9 h-8 px-2.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center ${
-                        isSelected
-                          ? "bg-[#141416] text-white border-[#141416] shadow-xs scale-105"
-                          : "bg-white text-[#141416] border-[#E7DFD5] hover:bg-[#F4EFEA] hover:border-[#C59B27]/60"
+                      onClick={() => setJewellerySizeTab("bangles")}
+                      className={`flex-1 py-1 text-center rounded-lg transition-colors ${
+                        jewellerySizeTab === "bangles" ? "bg-white text-[#141416] shadow-xs" : "text-[#787C87]"
                       }`}
                     >
-                      {sz}
+                      Bangles
                     </button>
-                  );
-                })}
-              </div>
+                    <button
+                      onClick={() => setJewellerySizeTab("rings")}
+                      className={`flex-1 py-1 text-center rounded-lg transition-colors ${
+                        jewellerySizeTab === "rings" ? "bg-white text-[#141416] shadow-xs" : "text-[#787C87]"
+                      }`}
+                    >
+                      Rings
+                    </button>
+                    <button
+                      onClick={() => setJewellerySizeTab("all")}
+                      className={`flex-1 py-1 text-center rounded-lg transition-colors ${
+                        jewellerySizeTab === "all" ? "bg-white text-[#141416] shadow-xs" : "text-[#787C87]"
+                      }`}
+                    >
+                      All / Sets
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {(jewellerySizeTab === "bangles"
+                      ? BANGLE_SIZES
+                      : jewellerySizeTab === "rings"
+                      ? RING_SIZES
+                      : NECKLACE_SIZES
+                    ).map((sz) => {
+                      const queryVal = sz.split(" ")[0]; // e.g. "2.4" or "Adjustable" or "One"
+                      const isSelected = activeSize === queryVal || activeSize === sz;
+                      return (
+                        <button
+                          key={sz}
+                          onClick={() => updateParam("size", isSelected ? null : queryVal)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center ${
+                            isSelected
+                              ? "bg-[#C59B27] text-white border-[#C59B27] shadow-xs scale-105"
+                              : "bg-white text-[#141416] border-[#E7DFD5] hover:bg-[#F4EFEA] hover:border-[#C59B27]/60"
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                /* GARMENT SIZING TABS */
+                <div className="space-y-2">
+                  <div className="flex items-center p-1 rounded-xl bg-[#F4EFEA] border border-[#E7DFD5] text-[10px] font-bold">
+                    <button
+                      onClick={() => setGarmentSizeTab("standard")}
+                      className={`flex-1 py-1 text-center rounded-lg transition-colors ${
+                        garmentSizeTab === "standard" ? "bg-white text-[#141416] shadow-xs" : "text-[#787C87]"
+                      }`}
+                    >
+                      Standard
+                    </button>
+                    <button
+                      onClick={() => setGarmentSizeTab("waist")}
+                      className={`flex-1 py-1 text-center rounded-lg transition-colors ${
+                        garmentSizeTab === "waist" ? "bg-white text-[#141416] shadow-xs" : "text-[#787C87]"
+                      }`}
+                    >
+                      Waist / Jeans
+                    </button>
+                    <button
+                      onClick={() => setGarmentSizeTab("kids")}
+                      className={`flex-1 py-1 text-center rounded-lg transition-colors ${
+                        garmentSizeTab === "kids" ? "bg-white text-[#141416] shadow-xs" : "text-[#787C87]"
+                      }`}
+                    >
+                      Kids Age
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {(garmentSizeTab === "standard"
+                      ? STANDARD_GARMENT_SIZES
+                      : garmentSizeTab === "waist"
+                      ? WAIST_SIZES
+                      : KIDS_SIZES
+                    ).map((sz) => {
+                      const isSelected = activeSize === sz;
+                      return (
+                        <button
+                          key={sz}
+                          onClick={() => updateParam("size", isSelected ? null : sz)}
+                          className={`min-w-9 h-8 px-2.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center ${
+                            isSelected
+                              ? "bg-[#141416] text-white border-[#141416] shadow-xs scale-105"
+                              : "bg-white text-[#141416] border-[#E7DFD5] hover:bg-[#F4EFEA] hover:border-[#C59B27]/60"
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* 💰 4. Curated Price Tiers & Custom Range */}
+            {/* 💰 4. Price Tiers & Custom Range */}
             <div className="rounded-2xl border border-[#E7DFD5] bg-white p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between pb-2 border-b border-[#E7DFD5]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#141416]">
@@ -454,32 +567,33 @@ export default function ShopFilters({
                     onClick={() => updatePriceTier(null, null)}
                     className="text-[10px] text-[#787C87] hover:text-[#141416] underline font-semibold"
                   >
-                    Clear
+                    Reset
                   </button>
                 )}
               </div>
 
-              {/* Quick Tiers */}
               <div className="space-y-1.5">
-                {PRICE_TIERS.map((tier) => {
+                {priceTiers.map((tier) => {
                   const isSelected =
-                    (tier.min === null ? !activeMinPrice : activeMinPrice === tier.min.toString()) &&
-                    (tier.max === null ? !activeMaxPrice : activeMaxPrice === tier.max.toString());
+                    (tier.min === null
+                      ? !activeMinPrice
+                      : activeMinPrice === tier.min.toString()) &&
+                    (tier.max === null
+                      ? !activeMaxPrice
+                      : activeMaxPrice === tier.max.toString());
 
                   return (
                     <button
                       key={tier.label}
-                      onClick={() =>
-                        isSelected ? updatePriceTier(null, null) : updatePriceTier(tier.min, tier.max)
-                      }
-                      className={`w-full text-left px-3 py-1.5 rounded-xl text-xs transition-colors flex items-center justify-between ${
+                      onClick={() => updatePriceTier(isSelected ? null : tier.min, isSelected ? null : tier.max)}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors flex items-center justify-between ${
                         isSelected
-                          ? "bg-[#FBF4E2] text-[#8E6C0C] font-bold border border-[#C59B27]/40"
-                          : "text-[#4B4E56] hover:bg-[#F4EFEA] hover:text-[#141416]"
+                          ? "bg-[#141416] text-white font-bold shadow-xs"
+                          : "text-[#4B4E56] hover:text-[#141416] hover:bg-[#F4EFEA]"
                       }`}
                     >
                       <span>{tier.label}</span>
-                      {isSelected && <span className="text-[10px]">✓</span>}
+                      {isSelected && <span>✓</span>}
                     </button>
                   );
                 })}
@@ -487,78 +601,77 @@ export default function ShopFilters({
 
               {/* Custom Min / Max Input Form */}
               <form onSubmit={applyCustomPrice} className="pt-2 border-t border-[#E7DFD5] space-y-2">
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] text-[#787C87] uppercase font-bold block mb-1">
-                      Min (₹)
-                    </label>
+                    <label className="text-[10px] font-bold text-[#787C87] block mb-1">MIN (₹)</label>
                     <input
                       type="number"
                       placeholder="0"
                       value={customMin}
                       onChange={(e) => setCustomMin(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#E7DFD5] text-xs outline-none focus:border-[#C59B27]"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#E7DFD5] text-xs text-[#141416] focus:outline-none focus:border-[#C59B27]"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-[#787C87] uppercase font-bold block mb-1">
-                      Max (₹)
-                    </label>
+                    <label className="text-[10px] font-bold text-[#787C87] block mb-1">MAX (₹)</label>
                     <input
                       type="number"
                       placeholder="10000"
                       value={customMax}
                       onChange={(e) => setCustomMax(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#E7DFD5] text-xs outline-none focus:border-[#C59B27]"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#E7DFD5] text-xs text-[#141416] focus:outline-none focus:border-[#C59B27]"
                     />
                   </div>
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-colors"
+                  className="w-full py-2 rounded-xl bg-[#141416] hover:bg-[#25262B] text-white text-[11px] font-bold uppercase tracking-wider transition-colors shadow-xs"
                 >
                   Apply Price Range
                 </button>
               </form>
             </div>
 
-            {/* ✨ 5. Availability & Deals Toggle */}
+            {/* ✨ 5. Quality & Stock Status Toggles */}
             <div className="rounded-2xl border border-[#E7DFD5] bg-white p-4 space-y-2.5 shadow-xs">
-              <label className="flex items-center gap-2.5 text-xs font-semibold text-[#141416] cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={onSale}
-                  onChange={(e) => updateParam("onSale", e.target.checked ? "true" : null)}
-                  className="w-4 h-4 rounded border-[#E7DFD5] text-[#C59B27] accent-[#C59B27] cursor-pointer"
-                />
-                <span>✨ On Sale / Special Offers</span>
-              </label>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#141416] pb-2 border-b border-[#E7DFD5]">
+                Availability &amp; Offers
+              </h4>
 
-              <label className="flex items-center gap-2.5 text-xs font-semibold text-[#141416] cursor-pointer">
+              <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-[#141416]">
                 <input
                   type="checkbox"
                   checked={inStock}
                   onChange={(e) => updateParam("inStock", e.target.checked ? "true" : null)}
-                  className="w-4 h-4 rounded border-[#E7DFD5] text-[#C59B27] accent-[#C59B27] cursor-pointer"
+                  className="w-4 h-4 rounded text-[#C59B27] focus:ring-[#C59B27] border-[#E7DFD5]"
                 />
-                <span>📦 In Stock (Ready to Ship)</span>
+                <span>In Stock Only</span>
+              </label>
+
+              <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-[#141416]">
+                <input
+                  type="checkbox"
+                  checked={onSale}
+                  onChange={(e) => updateParam("onSale", e.target.checked ? "true" : null)}
+                  className="w-4 h-4 rounded text-[#C59B27] focus:ring-[#C59B27] border-[#E7DFD5]"
+                />
+                <span>✨ Special Festive Offers (% Off)</span>
               </label>
             </div>
 
           </div>
 
-          {/* Mobile Bottom Apply Button */}
+          {/* Mobile Apply Button */}
           {mobileOpen && (
             <div className="pt-4 border-t border-[#E7DFD5] shrink-0">
               <button
                 onClick={() => setMobileOpen(false)}
-                className="w-full py-3 rounded-full font-bold text-xs uppercase tracking-wider bg-[#141416] text-white shadow-md"
+                className="w-full py-3 rounded-xl bg-[#141416] text-white text-xs font-bold uppercase tracking-wider shadow-md"
               >
-                Apply Filters &amp; View Outfits →
+                View Catalog Results
               </button>
             </div>
           )}
-
         </div>
       </div>
     </aside>

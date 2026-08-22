@@ -1,10 +1,11 @@
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { generateOrderNumber } from "@/lib/order-number";
 import { decrementStock, InsufficientStockError } from "@/lib/inventory";
 import { generateInvoiceBufferForOrder } from "@/lib/invoice/generate";
 import { sendOrderPlacedEmail, sendPaymentVerifiedEmail } from "@/lib/email/service";
 import { sendMobileSms, formatOrderPlacedSms } from "@/lib/notifications/sms";
+import { getStoreUser } from "@/lib/auth/session";
 
 export class CheckoutError extends Error {
   code: string;
@@ -23,9 +24,10 @@ export const createOrderFromCart = (args: {
 }) => createOrder(args.userId, args.addressId, args);
 
 /**
- * Creates an order from the user's current cart and delivery address.
- * Supports coupons, multi-payment methods (MANUAL_UPI, COD, ONLINE_GATEWAY),
- * decrements stock atomically, generates PDF invoice, and sends email confirmation.
+ * Multi-Store Order Processor:
+ * Creates an order from the user's active cart in Garments or Jewellery database.
+ * Supports coupons, payment methods (MANUAL_UPI, COD, ONLINE_GATEWAY),
+ * decrements stock atomically in that store's DB, and sends notifications.
  */
 export async function createOrder(
   userId: string,
@@ -38,34 +40,86 @@ export async function createOrder(
 ) {
   const paymentMethod = options?.paymentMethod || "MANUAL_UPI";
 
-  // Load the user's active cart with product snapshots
-  const cart = await prisma.cart.findUnique({
-    where: { userId },
-    include: {
-      items: {
-        include: {
-          product: true,
-          variant: true,
-        },
-      },
-    },
-  });
+  // 1. Fetch user's cart from garments and jewellery databases
+  const [garmentsCart, jewelleryCart] = await Promise.all([
+    getDb("garments").cart.findUnique({
+      where: { userId },
+      include: { items: { include: { product: true, variant: true } } },
+    }),
+    getDb("jewellery").cart.findUnique({
+      where: { userId },
+      include: { items: { include: { product: true, variant: true } } },
+    }),
+  ]);
 
-  if (!cart || cart.items.length === 0) {
+  const garmentsItems = garmentsCart?.items || [];
+  const jewelleryItems = jewelleryCart?.items || [];
+
+  if (garmentsItems.length === 0 && jewelleryItems.length === 0) {
     throw new CheckoutError("CART_EMPTY", "Your cart is empty.");
   }
 
-  // Load the selected delivery address
-  const address = await prisma.address.findFirst({
+  // Determine active store for this order
+  const store: "garments" | "jewellery" = jewelleryItems.length > 0 ? "jewellery" : "garments";
+  const db = getDb(store);
+  const activeCart = store === "jewellery" ? jewelleryCart! : garmentsCart!;
+  const cartItems = activeCart.items;
+
+  if (cartItems.length === 0) {
+    throw new CheckoutError("CART_EMPTY", "Your cart is empty.");
+  }
+
+  // Ensure user exists in target store DB
+  await getStoreUser(store);
+
+  // Load selected delivery address
+  let address = await db.address.findFirst({
     where: { id: addressId, userId },
   });
+
+  if (!address) {
+    // If not found in target store DB, look in the other DB and sync it
+    const otherStore = store === "jewellery" ? "garments" : "jewellery";
+    const srcAddress = await getDb(otherStore).address.findFirst({
+      where: { id: addressId, userId },
+    });
+    if (srcAddress) {
+      address = await db.address.upsert({
+        where: { id: srcAddress.id },
+        update: {
+          fullName: srcAddress.fullName,
+          mobileNumber: srcAddress.mobileNumber,
+          addressLine1: srcAddress.addressLine1,
+          addressLine2: srcAddress.addressLine2,
+          city: srcAddress.city,
+          state: srcAddress.state,
+          pinCode: srcAddress.pinCode,
+          landmark: srcAddress.landmark,
+          isDefault: srcAddress.isDefault,
+        },
+        create: {
+          id: srcAddress.id,
+          userId,
+          fullName: srcAddress.fullName,
+          mobileNumber: srcAddress.mobileNumber,
+          addressLine1: srcAddress.addressLine1,
+          addressLine2: srcAddress.addressLine2,
+          city: srcAddress.city,
+          state: srcAddress.state,
+          pinCode: srcAddress.pinCode,
+          landmark: srcAddress.landmark,
+          isDefault: srcAddress.isDefault,
+        },
+      });
+    }
+  }
 
   if (!address) {
     throw new CheckoutError("ADDRESS_NOT_FOUND", "Delivery address not found.");
   }
 
   // Check stock availability upfront
-  for (const item of cart.items) {
+  for (const item of cartItems) {
     if (!item.variant.isActive || item.variant.stockQuantity < item.quantity) {
       throw new CheckoutError(
         "OUT_OF_STOCK",
@@ -75,7 +129,7 @@ export async function createOrder(
   }
 
   // Prepare line items
-  const lineItems = cart.items.map((item) => {
+  const lineItems = cartItems.map((item) => {
     const unitPrice = item.variant.price;
     const total = unitPrice.mul(item.quantity);
     return {
@@ -94,7 +148,7 @@ export async function createOrder(
   const subtotal = lineItems.reduce((sum, item) => sum.add(item.total), new Prisma.Decimal(0));
 
   // Compute delivery fee
-  const deliverySettings = await prisma.deliverySettings.findFirst();
+  const deliverySettings = await db.deliverySettings.findFirst().catch(() => null);
   let deliveryCharge = new Prisma.Decimal(49);
   if (deliverySettings) {
     if (deliverySettings.freeDeliveryAbove && subtotal.gte(deliverySettings.freeDeliveryAbove)) {
@@ -108,7 +162,7 @@ export async function createOrder(
 
   // Add COD fee if applicable
   if (paymentMethod === "COD") {
-    const paymentSettings = await prisma.paymentSettings.findFirst({ where: { isActive: true } });
+    const paymentSettings = await db.paymentSettings.findFirst({ where: { isActive: true } }).catch(() => null);
     if (paymentSettings?.codFee && Number(paymentSettings.codFee) > 0) {
       deliveryCharge = deliveryCharge.add(paymentSettings.codFee);
     }
@@ -120,9 +174,9 @@ export async function createOrder(
   let appliedCouponCode: string | undefined;
 
   if (options?.couponCode) {
-    const coupon = await prisma.coupon.findUnique({
+    const coupon = await db.coupon.findUnique({
       where: { code: options.couponCode.trim().toUpperCase() },
-    });
+    }).catch(() => null);
 
     if (coupon && coupon.isActive) {
       const isNotExpired = !coupon.endDate || new Date(coupon.endDate) >= new Date();
@@ -166,7 +220,7 @@ export async function createOrder(
       : "PAYMENT_PENDING";
 
   try {
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await db.$transaction(async (tx) => {
       const createdOrder = await tx.order.create({
         data: {
           orderNumber,
@@ -226,27 +280,25 @@ export async function createOrder(
         },
       });
 
-      // Clear the user's cart
-      await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+      // Clear the user's cart in this store
+      await tx.cartItem.deleteMany({ where: { cartId: activeCart.id } });
 
       return createdOrder;
     });
 
-    // Dispatch notifications asynchronously in the background so checkout returns instantly (<50ms)
+    // Dispatch background notifications asynchronously
     void (async () => {
       try {
-        const fullOrder = await prisma.order.findUnique({
+        const fullOrder = await db.order.findUnique({
           where: { id: order.id },
           include: { user: true, items: true, payment: true },
         });
 
         if (fullOrder) {
-          // 1. Send Order Placed Email to customer & Admin
           sendOrderPlacedEmail(fullOrder).catch((err) => {
             console.error("Order placed email failed to dispatch:", err);
           });
 
-          // 2. Dispatch Mobile SMS to customer
           const phone = fullOrder.user.phone || (fullOrder.shippingAddressSnapshot as any)?.mobileNumber;
           if (phone) {
             sendMobileSms({
@@ -258,7 +310,6 @@ export async function createOrder(
             });
           }
 
-          // 3. If verified immediately (e.g. online simulated / COD), generate in-memory PDF invoice and send confirmed email
           if (order.status === "CONFIRMED") {
             try {
               const { buffer, invoiceNumber } = await generateInvoiceBufferForOrder(order.id);

@@ -38,6 +38,8 @@ type Product = {
   brand: string | null;
   availability?: string | null;
   currency?: string | null;
+  sellerName?: string | null;
+  sellerEmail?: string | null;
   averageRating?: number | null;
   totalReviews?: number | null;
   specifications: unknown;
@@ -46,10 +48,18 @@ type Product = {
   variants: Variant[];
 };
 
-export default function ProductDetailClient({ product }: { product: Product }) {
+export default function ProductDetailClient({
+  product,
+  isJewellery = false,
+}: {
+  product: Product;
+  isJewellery?: boolean;
+}) {
   const router = useRouter();
   const { success, error } = useToast();
 
+  const specs = (product.specifications as Record<string, any>) || {};
+  const isJewelleryItem = isJewellery || Boolean(specs.gem_type || specs.plating || specs.closure_type || product.fabric?.toLowerCase().includes("alloy") || product.fabric?.toLowerCase().includes("brass"));
   const colours = useMemo(() => Array.from(new Set(product.variants.map((v) => v.colour))), [product]);
   const [colour, setColour] = useState(colours[0] || "");
   const sizesForColour = useMemo(
@@ -296,6 +306,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                   src={displayImages[activeImage].imageUrl}
                   alt={displayImages[activeImage].altText ?? product.name}
                   fill
+                  unoptimized
                   sizes="(min-width: 1024px) 42vw, 100vw"
                   className="object-cover"
                   priority
@@ -378,7 +389,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                   }`}
                   aria-label={`View look ${i + 1}`}
                 >
-                  <Image src={img.imageUrl} alt="" fill className="object-cover" />
+                  <Image src={img.imageUrl} alt="" fill unoptimized className="object-cover" />
                   {i === activeImage && (
                     <div className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-[#C59B27] ring-1 ring-white" />
                   )}
@@ -497,7 +508,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                 onClick={() => setSizeGuideOpen(true)}
                 className="text-amber-700 hover:underline font-bold flex items-center gap-1 normal-case text-xs"
               >
-                📏 Size Chart &amp; Fit Guide
+                {isJewelleryItem ? "💍 Jewellery Size Guide (Bangles, Rings, Chokers)" : "📏 Size Chart & Fit Guide"}
               </button>
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -676,10 +687,11 @@ export default function ProductDetailClient({ product }: { product: Product }) {
           {/* Rich Product Specifications & Details Table */}
           <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
             <div className="p-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                📋 Product Specifications &amp; Details
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <span>{specs.gem_type || specs.plating || specs.metal_type ? "💎" : "📋"}</span>
+                <span>{specs.gem_type || specs.plating || specs.metal_type ? "Jewellery Specifications & Quality" : "Product Specifications & Details"}</span>
               </h3>
-              <span className="text-[10px] text-slate-500 font-medium">100% Quality Checked</span>
+              <span className="text-[10px] text-slate-500 font-medium">100% Quality Inspected</span>
             </div>
 
             <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3.5 text-xs">
@@ -688,44 +700,91 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                 <span className="font-semibold text-slate-800">{product.brand || "Fashion Cart Atelier"}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Category</span>
-                <span className="font-semibold text-slate-800">{product.categoryPath || product.department || "Women's Ethnic Wear"}</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Product Type</span>
+                <span className="font-semibold text-slate-800">{specs.product_type || product.productType || product.subcategory || "Jewellery Piece"}</span>
               </div>
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Fabric</span>
-                <span className="font-semibold text-slate-800">{product.fabric || "Premium Handloom Fabric"}</span>
-              </div>
-              {product.material && (
+
+              {/* Jewellery Specific Properties */}
+              {specs.gem_type && (
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Material</span>
-                  <span className="font-semibold text-slate-800">{product.material}</span>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Gem &amp; Stones</span>
+                  <span className="font-semibold text-slate-800">{specs.gem_type}</span>
                 </div>
               )}
-              {product.pattern && (
+              {specs.plating && (
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Pattern / Print</span>
-                  <span className="font-semibold text-slate-800">{product.pattern}</span>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Plating / Finish</span>
+                  <span className="font-semibold text-slate-800">{specs.plating}</span>
                 </div>
               )}
-              {product.fit && (
+              {(specs.metal_type || specs.material_type || product.material || product.fabric) && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                    {isJewelleryItem ? "Base Metal & Material" : "Material / Fabric"}
+                  </span>
+                  <span className="font-semibold text-slate-800">{specs.material_type || specs.metal_type || product.material || product.fabric}</span>
+                </div>
+              )}
+              {specs.closure_type && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Closure Type</span>
+                  <span className="font-semibold text-slate-800">{specs.closure_type}</span>
+                </div>
+              )}
+              {specs.shape && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Shape / Motif</span>
+                  <span className="font-semibold text-slate-800">{specs.shape}</span>
+                </div>
+              )}
+              {specs.net_qty && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Net Quantity</span>
+                  <span className="font-semibold text-slate-800">{specs.net_qty}</span>
+                </div>
+              )}
+              {specs.design_type && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Design Style</span>
+                  <span className="font-semibold text-slate-800">{specs.design_type}</span>
+                </div>
+              )}
+              {specs.gift && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Gift Ready</span>
+                  <span className="font-semibold text-emerald-700">🎁 {specs.gift}</span>
+                </div>
+              )}
+
+              {/* Garment Specific Properties */}
+              {!isJewelleryItem && product.fabric && (
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Fabric</span>
+                  <span className="font-semibold text-slate-800">{product.fabric}</span>
+                </div>
+              )}
+              {!isJewelleryItem && product.fit && (
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Fit Type</span>
                   <span className="font-semibold text-slate-800">{product.fit}</span>
                 </div>
               )}
-              {product.occasion && (
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Occasion</span>
-                  <span className="font-semibold text-slate-800">{product.occasion}</span>
-                </div>
-              )}
+
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Colour Shade</span>
-                <span className="font-semibold text-slate-800">{colour || "Classic"}</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Occasion</span>
+                <span className="font-semibold text-slate-800">{specs.occasion || product.occasion || "Party & Festive"}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Wash &amp; Care</span>
-                <span className="font-semibold text-slate-800">Gentle Wash / Dry Clean</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Colour Shade</span>
+                <span className="font-semibold text-slate-800">{specs.colour_name || colour || "Classic"}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                  {isJewelleryItem ? "Jewellery Care" : "Wash & Care"}
+                </span>
+                <span className="font-semibold text-slate-800">
+                  {isJewelleryItem ? "Keep away from water & perfumes" : "Gentle Wash / Dry Clean"}
+                </span>
               </div>
               <div>
                 <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Stock Status</span>
@@ -735,15 +794,42 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               </div>
               <div>
                 <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Country of Origin</span>
-                <span className="font-semibold text-slate-800">Crafted in India 🇮🇳</span>
+                <span className="font-semibold text-slate-800">{specs.country_of_origin || "India 🇮🇳"}</span>
               </div>
             </div>
+
+            {/* Key Features Bullet Highlight if present */}
+            {specs.key_features && (
+              <div className="px-4 py-3 border-t border-slate-100 bg-[#FDFBF7] text-xs space-y-1">
+                <span className="font-bold text-[#8C6B08] uppercase text-[10px] tracking-wider block">✨ Key Highlights:</span>
+                <p className="text-slate-700 leading-relaxed">{specs.key_features}</p>
+              </div>
+            )}
 
             {/* Description Text */}
             {product.description && (
               <div className="p-4 border-t border-slate-100 bg-slate-50/40 text-xs text-slate-600 leading-relaxed space-y-1">
-                <p className="font-bold text-slate-800">About the Garment:</p>
+                <p className="font-bold text-slate-800">
+                  {isJewelleryItem ? "About this Jewellery Masterpiece:" : "About the Garment:"}
+                </p>
                 <p className="whitespace-pre-line text-slate-700 leading-relaxed">{product.description}</p>
+              </div>
+            )}
+
+            {/* Statutory Seller & Compliance Info */}
+            {(specs.seller_name || product.sellerName || specs.manufacturer_name) && (
+              <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/80 text-[11px] text-slate-500 space-y-1">
+                <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider">Marketed &amp; Supplied By:</p>
+                <p className="text-slate-600">
+                  <span className="font-semibold text-slate-800">{specs.seller_name || product.sellerName}</span>
+                  {specs.seller_license_no && <span> • FSSAI/Lic: {specs.seller_license_no}</span>}
+                </p>
+                {specs.seller_address && <p className="text-[10px] text-slate-500 leading-tight">{specs.seller_address}</p>}
+                {specs.manufacturer_name && (
+                  <p className="text-[10px] text-slate-500 pt-0.5">
+                    Manufacturer: <span className="text-slate-700">{specs.manufacturer_name}</span>
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -774,7 +860,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
             </button>
             {openAccordion === "returns" && (
               <div className="p-4 bg-slate-50/50 text-xs text-slate-600 space-y-1 leading-relaxed">
-                <p>• Unopened or undamaged garments are eligible for a 1-click doorstep exchange.</p>
+                <p>• Unopened or undamaged {isJewelleryItem ? "jewellery pieces in original box" : "garments with tags"} are eligible for a 1-click doorstep exchange.</p>
                 <p>• No questions asked refund to your original payment method or instant UPI.</p>
               </div>
             )}
@@ -798,7 +884,8 @@ export default function ProductDetailClient({ product }: { product: Product }) {
       <SizeGuideModal
         isOpen={sizeGuideOpen}
         onClose={() => setSizeGuideOpen(false)}
-        category={product.brand || "Apparel"}
+        category={product.brand || (isJewelleryItem ? "Fine Jewellery" : "Apparel")}
+        isJewellery={isJewelleryItem}
       />
 
       {/* High-Definition Image Lightbox Preview Modal */}

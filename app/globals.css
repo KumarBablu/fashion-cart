@@ -298,3 +298,92 @@ button:active, .interactive-click:active {
   }
 }
 
+/* ==========================================================================
+   IMPERIAL FINE JEWELLERY THEME (Royal Emerald, 24K Gold & Velvet Obsidian)
+   ========================================================================== */
+
+.theme-jewellery {
+  --fc-bg: #FCFAF6;
+  --fc-bg-subtle: #F6EFE6;
+  --fc-surface: #FFFFFF;
+  --fc-border: #E8DECE;
+  --fc-border-hover: #D4AF37;
+  
+  --fc-primary: #061A14;
+  --fc-primary-hover: #0B2B21;
+  --fc-primary-fg: #FFFFFF;
+  
+  --fc-accent: #D4AF37;
+  --fc-accent-hover: #B8860B;
+  --fc-accent-fg: #061A14;
+  
+  --fc-gold: #D4AF37;
+  --fc-gold-light: #F3E5AB;
+  --fc-emerald: #061A14;
+  --fc-ruby: #7E192D;
+  
+  --fc-badge-bg: #FDF4D8;
+  --fc-badge-fg: #8C6B08;
+}
+
+/* 24K Gold Sparkle Gradient Action Buttons */
+.gold-jewellery-btn, .theme-jewellery .gold-btn, .theme-jewellery .btn-primary {
+  background: linear-gradient(135deg, #E6CA65 0%, #D4AF37 50%, #B3860F 100%) !important;
+  color: #061A14 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.38) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.gold-jewellery-btn:hover, .theme-jewellery .gold-btn:hover, .theme-jewellery .btn-primary:hover {
+  background: linear-gradient(135deg, #F5E08C 0%, #DFBD4E 50%, #C49514 100%) !important;
+  box-shadow: 0 8px 28px rgba(212, 175, 55, 0.52) !important;
+  transform: translateY(-2px) scale(1.02);
+  color: #061A14 !important;
+}
+
+/* Emerald Luxury Button */
+.emerald-btn {
+  background: #061A14;
+  color: #F3E5AB !important;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(6, 26, 20, 0.25);
+  transition: all 0.25s ease;
+}
+
+.emerald-btn:hover {
+  background: #0D2C22;
+  border-color: #D4AF37;
+  box-shadow: 0 8px 24px rgba(6, 26, 20, 0.35);
+  transform: translateY(-1.5px);
+  color: #FFFFFF !important;
+}
+
+/* Sparkle Card Glow */
+.jewellery-card {
+  background: #FFFFFF;
+  border: 1px solid #E8DECE;
+  border-radius: 1.5rem;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.jewellery-card:hover {
+  border-color: #D4AF37;
+  box-shadow: 0 16px 36px -6px rgba(6, 26, 20, 0.12), 0 0 0 1px rgba(212, 175, 55, 0.35);
+  transform: translateY(-4px);
+}
+
+/* Shimmer Gold Text */
+.gold-text-shimmer {
+  background: linear-gradient(90deg, #D4AF37 0%, #F5E08C 50%, #B8860B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+

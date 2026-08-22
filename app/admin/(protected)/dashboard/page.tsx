@@ -1,12 +1,22 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { formatINR } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 const LOW_STOCK_THRESHOLD = 5;
 
-export default async function AdminDashboard() {
+type SearchParams = { store?: string };
+
+export default async function AdminDashboard({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const sp = await searchParams;
+  const cookieStore = await cookies();
+  const cookieStoreVal = cookieStore.get("fc_admin_store")?.value;
+
+  const store = sp.store === "jewellery" || (!sp.store && cookieStoreVal === "jewellery") ? "jewellery" : "garments";
+  const db = getDb(store);
+
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -22,30 +32,30 @@ export default async function AdminDashboard() {
     pendingPaymentsList,
     topItems,
   ] = await Promise.all([
-    prisma.order.findMany({
+    db.order.findMany({
       where: { status: { notIn: ["CANCELLED"] } },
       select: { total: true, createdAt: true },
     }),
-    prisma.order.findMany({
+    db.order.findMany({
       where: { createdAt: { gte: startOfToday }, status: { notIn: ["CANCELLED"] } },
       select: { total: true },
     }),
-    prisma.order.count(),
-    prisma.user.count({ where: { role: "CUSTOMER" } }),
-    prisma.payment.count({ where: { status: "UNDER_REVIEW" } }),
-    prisma.productVariant.count({ where: { isActive: true, stockQuantity: { lte: LOW_STOCK_THRESHOLD } } }),
-    prisma.order.findMany({
+    db.order.count(),
+    db.user.count({ where: { role: "CUSTOMER" } }),
+    db.payment.count({ where: { status: "UNDER_REVIEW" } }),
+    db.productVariant.count({ where: { isActive: true, stockQuantity: { lte: LOW_STOCK_THRESHOLD } } }),
+    db.order.findMany({
       orderBy: { createdAt: "desc" },
       take: 6,
       include: { user: true, payment: true },
     }),
-    prisma.payment.findMany({
+    db.payment.findMany({
       where: { status: "UNDER_REVIEW" },
       orderBy: { submittedAt: "asc" },
       take: 6,
       include: { order: { include: { user: true } } },
     }),
-    prisma.orderItem.groupBy({
+    db.orderItem.groupBy({
       by: ["productNameSnapshot"],
       _sum: { quantity: true, total: true },
       orderBy: { _sum: { quantity: "desc" } },

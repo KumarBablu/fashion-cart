@@ -1,11 +1,21 @@
-import { prisma } from "@/lib/db";
+import { cookies } from "next/headers";
+import { getDb } from "@/lib/db";
 import ProductsManager from "@/components/admin/ProductsManager";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminProductsPage() {
+type SearchParams = Record<string, string | undefined>;
+
+export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const sp = await searchParams;
+  const cookieStore = await cookies();
+  const cookieStoreVal = cookieStore.get("fc_admin_store")?.value;
+
+  const store = sp.store === "jewellery" || (!sp.store && cookieStoreVal === "jewellery") ? "jewellery" : "garments";
+  const db = getDb(store);
+
   const [products, categories] = await Promise.all([
-    prisma.product.findMany({
+    db.product.findMany({
       orderBy: { createdAt: "desc" },
       include: {
         category: {
@@ -35,7 +45,7 @@ export default async function AdminProductsPage() {
         },
       },
     }),
-    prisma.category.findMany({
+    db.category.findMany({
       select: {
         id: true,
         name: true,
@@ -63,5 +73,5 @@ export default async function AdminProductsPage() {
     createdAt: p.createdAt.toISOString(),
   }));
 
-  return <ProductsManager initialProducts={serializedProducts as any} categories={categories} />;
+  return <ProductsManager initialProducts={serializedProducts as any} categories={categories} store={store} />;
 }

@@ -48,9 +48,11 @@ type CategoryOption = {
 export default function ProductsManager({
   initialProducts,
   categories,
+  store = "garments",
 }: {
   initialProducts: ProductItem[];
   categories: CategoryOption[];
+  store?: "garments" | "jewellery";
 }) {
   const router = useRouter();
   const { success, error: toastError } = useToast();
@@ -273,10 +275,10 @@ export default function ProductsManager({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2 text-slate-900 leading-tight">
-              <span>👗</span> Catalog &amp; Products Manager
+              <span>{store === "jewellery" ? "💍" : "👗"}</span> {store === "jewellery" ? "Jewellery Catalog & Products Manager" : "Catalog & Products Manager"}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Full management of luxury catalog, stock, and bulk actions ({products.length} garments total)
+              Full management of {store === "jewellery" ? "handcrafted artificial fine jewellery" : "luxury garments"}, stock, and bulk actions ({products.length} {store === "jewellery" ? "pieces" : "garments"} total)
             </p>
           </div>
 
@@ -306,10 +308,10 @@ export default function ProductsManager({
               <span>📤</span> Bulk Upload
             </button>
             <Link
-              href="/admin/products/new"
+              href={store === "jewellery" ? "/admin/products/new?store=jewellery" : "/admin/products/new"}
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-xs transition-all hover:brightness-110 cursor-pointer bg-[#C59B27]"
             >
-              <span>+</span> Add Garment
+              <span>+</span> Add {store === "jewellery" ? "Jewellery Piece" : "Garment"}
             </Link>
           </div>
         </div>
@@ -326,7 +328,7 @@ export default function ProductsManager({
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                placeholder="Search garments, SKU, fabric, brand…"
+                placeholder={store === "jewellery" ? "Search jewellery, SKU, gemstones, plating…" : "Search garments, SKU, fabric, brand…"}
                 className="w-full pl-9 pr-4 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#141416] transition-all font-medium"
               />
               <span className="absolute left-3 top-2 text-slate-400 text-xs">🔍</span>

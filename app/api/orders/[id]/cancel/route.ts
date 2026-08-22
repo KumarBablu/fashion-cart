@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { incrementStock } from "@/lib/inventory";
 import { sendOrderCancelledEmail } from "@/lib/email/service";
@@ -16,10 +16,24 @@ export async function POST(
     const body = await req.json().catch(() => ({}));
     const reason = body?.reason || "Cancelled by customer";
 
-    const order = await prisma.order.findFirst({
+    let store: "garments" | "jewellery" = "garments";
+    let db = getDb("garments");
+    let order = await db.order.findFirst({
       where: { id, userId: user.id },
       include: { items: true, payment: true, user: true },
     });
+
+    if (!order) {
+      const jwDb = getDb("jewellery");
+      order = await jwDb.order.findFirst({
+        where: { id, userId: user.id },
+        include: { items: true, payment: true, user: true },
+      });
+      if (order) {
+        store = "jewellery";
+        db = jwDb;
+      }
+    }
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
@@ -34,7 +48,7 @@ export async function POST(
       );
     }
 
-    const updatedOrder = await prisma.$transaction(async (tx) => {
+    const updatedOrder = await db.$transaction(async (tx) => {
       // 1. Update Order status
       const updated = await tx.order.update({
         where: { id: order.id },

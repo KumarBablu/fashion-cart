@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
+import StoreSwitcherPill from "@/components/navigation/StoreSwitcherPill";
 
 type SubCat = {
   id: string;
@@ -142,6 +143,14 @@ export default function MenuDrawer({
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
+          </div>
+
+          {/* Store Switcher Tab inside Mobile Menu */}
+          <div className="px-4 py-2.5 bg-[#FAF8F5] border-b border-[#E7DFD5] flex items-center justify-between shrink-0">
+            <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#787C87]">
+              Current House
+            </span>
+            <StoreSwitcherPill />
           </div>
 
           {/* 2. User Account Card / Sign In Section */}

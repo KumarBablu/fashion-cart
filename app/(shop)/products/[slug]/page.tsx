@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import ProductCard from "@/components/products/ProductCard";
 import ProductDetailClient from "@/components/products/ProductDetailClient";
@@ -11,13 +11,25 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await prisma.product.findFirst({
+  
+  // Try garments DB first, then jewellery DB
+  let product = await getDb("garments").product.findFirst({
     where: { slug },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       category: true,
     },
   });
+
+  if (!product) {
+    product = await getDb("jewellery").product.findFirst({
+      where: { slug },
+      include: {
+        images: { orderBy: { sortOrder: "asc" } },
+        category: true,
+      },
+    });
+  }
 
   if (!product) {
     return {
@@ -29,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   return {
     title: `${product.name} | Fashion Cart Luxury Atelier`,
-    description: product.description || `Discover ${product.name} mastercrafted with certified fabrics at Fashion Cart.`,
+    description: product.description || `Discover ${product.name} mastercrafted with certified quality at Fashion Cart.`,
     openGraph: {
       title: `${product.name} | Fashion Cart Luxury Atelier`,
       description: product.description || `Discover ${product.name} at Fashion Cart.`,
@@ -53,8 +65,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const { slug } = await params;
   const admin = await getCurrentAdmin();
 
-  // Find product by slug
-  const product = await prisma.product.findFirst({
+  // Try finding in garments, fallback to jewellery
+  let activeStore: "garments" | "jewellery" = "garments";
+  let db = getDb(activeStore);
+
+  let product = await db.product.findFirst({
     where: { slug },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
@@ -62,6 +77,19 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       category: { include: { parent: true } },
     },
   });
+
+  if (!product) {
+    activeStore = "jewellery";
+    db = getDb(activeStore);
+    product = await db.product.findFirst({
+      where: { slug },
+      include: {
+        images: { orderBy: { sortOrder: "asc" } },
+        variants: { where: { isActive: true }, orderBy: [{ colour: "asc" }, { size: "asc" }] },
+        category: { include: { parent: true } },
+      },
+    });
+  }
 
   if (!product) notFound();
 
@@ -74,7 +102,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
-  const related = await prisma.product.findMany({
+  const related = await db.product.findMany({
     where: {
       categoryId: product.categoryId,
       status: "ACTIVE",
@@ -94,96 +122,85 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const serialized = {
     ...product,
     averageRating: Number(product.averageRating || 4.8),
-    totalReviews: product.totalReviews || 12,
+    totalReviews: Number(product.totalReviews || 12),
     variants: product.variants.map((v) => ({
       ...v,
       price: Number(v.price),
       compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
+      discountPercent: v.discountPercent ? Number(v.discountPercent) : null,
+      stockQuantity: Number(v.stockQuantity),
     })),
   };
 
   const relatedSerialized = related.map((p) => ({
-    ...p,
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    brand: p.brand,
+    fabric: p.fabric,
+    status: p.status,
+    createdAt: p.createdAt.toISOString(),
     averageRating: Number(p.averageRating || 4.8),
-    totalReviews: p.totalReviews || 12,
+    totalReviews: Number(p.totalReviews || 12),
+    images: p.images.map((img) => ({
+      imageUrl: img.imageUrl,
+      altText: img.altText,
+    })),
     variants: p.variants.map((v) => ({
-      ...v,
+      id: v.id,
+      colour: v.colour,
+      size: v.size,
       price: Number(v.price),
       compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
+      discountPercent: v.discountPercent ? Number(v.discountPercent) : null,
+      stockQuantity: Number(v.stockQuantity),
     })),
   }));
 
+  const isJewellery = activeStore === "jewellery";
+  const parentCategory = product.category?.parent;
+  const directCategory = product.category;
+
   return (
-    <div>
-      {/* Admin Preview Floating Header */}
-      {isProductHidden && admin && (
-        <div className="sticky top-16 z-30 bg-amber-500 text-slate-950 px-4 py-2.5 shadow-md flex flex-wrap items-center justify-between gap-3 text-xs font-bold border-b border-amber-600">
-          <div className="flex items-center gap-2">
-            <span className="text-base">🛡️</span>
-            <span>
-              <strong>ADMIN PREVIEW MODE:</strong> This item is currently hidden from public customers (
-              {isCategoryHidden
-                ? `Department "${product.category?.parent?.name || product.category?.name}" is set to Hidden`
-                : `Product status is ${product.status}`}
-              ).
-            </span>
+    <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-10 ${isJewellery ? "theme-jewellery" : "theme-garments"}`}>
+      {/* Luxury Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: isJewellery ? "Jewellery" : "Garments", href: isJewellery ? "/jewellery" : "/garments" },
+          { label: "Shop", href: isJewellery ? "/shop?store=jewellery" : "/shop" },
+          ...(parentCategory ? [{ label: parentCategory.name, href: `/shop?store=${activeStore}&category=${parentCategory.slug}` }] : []),
+          ...(directCategory ? [{ label: directCategory.name, href: `/shop?store=${activeStore}&category=${directCategory.slug}` }] : []),
+          { label: product.name },
+        ]}
+      />
+
+      {/* Product Detail Main Client View */}
+      <ProductDetailClient product={serialized as any} isJewellery={isJewellery} />
+
+      {/* Related Products Carousel / Grid */}
+      {relatedSerialized.length > 0 && (
+        <section className="pt-10 border-t" style={{ borderColor: "var(--fc-border)" }}>
+          <div className="flex items-baseline justify-between mb-6">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-accent">✦ Complete the Look</span>
+              <h2 className="font-display text-2xl font-bold mt-1">You May Also Admire</h2>
+            </div>
+            <Link
+              href={directCategory ? `/shop?store=${activeStore}&category=${directCategory.slug}` : `/shop?store=${activeStore}`}
+              className="text-xs font-bold hover:underline"
+              style={{ color: "var(--fc-accent)" }}
+            >
+              Explore Collection →
+            </Link>
           </div>
-          <Link
-            href={`/admin/products/${product.id}`}
-            className="px-3 py-1 bg-black text-white rounded-lg hover:bg-neutral-800 transition-colors shadow-xs"
-          >
-            Edit in Admin Console →
-          </Link>
-        </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
+            {relatedSerialized.map((p) => (
+              <ProductCard key={p.id} product={p as any} />
+            ))}
+          </div>
+        </section>
       )}
-
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-12 sm:space-y-16">
-        {/* Luxury Breadcrumb Navigation Trail */}
-        <Breadcrumbs
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Shop", href: "/shop" },
-            ...(product.category?.parent
-              ? [{ label: product.category.parent.name, href: `/shop?category=${product.category.parent.slug}` }]
-              : []),
-            ...(product.category
-              ? [{ label: product.category.name, href: `/shop?category=${product.category.slug}` }]
-              : []),
-            { label: product.name },
-          ]}
-        />
-
-        {/* Client Product Interactive Container */}
-        <ProductDetailClient product={serialized as any} />
-
-        {/* Related Products Rail */}
-        {relatedSerialized.length > 0 && (
-          <section className="space-y-6 pt-12 border-t border-[#E7DFD5]">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-display text-2xl font-bold tracking-tight text-[#141416]">
-                  Complete The Ensemble
-                </h2>
-                <p className="text-xs text-[#787C87] mt-0.5">
-                  Hand-selected pieces that complement this couture garment
-                </p>
-              </div>
-              <Link
-                href="/shop"
-                className="text-xs font-bold text-[#141416] hover:text-[#C59B27] hover:underline"
-              >
-                View Full Collection →
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-              {relatedSerialized.map((p) => (
-                <ProductCard key={p.id} product={p as any} />
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
     </div>
   );
 }

@@ -1,17 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { z } from "zod";
 
 const updateSchema = z.object({ quantity: z.number().int().positive().max(20) });
 
 async function assertOwnership(userId: string, itemId: string) {
-  const item = await prisma.cartItem.findUnique({
+  // Check garments database
+  const garmentsDb = getDb("garments");
+  const garmentsItem = await garmentsDb.cartItem.findUnique({
     where: { id: itemId },
     include: { cart: true, variant: true },
   });
-  if (!item || item.cart.userId !== userId) return null;
-  return item;
+
+  if (garmentsItem && garmentsItem.cart.userId === userId) {
+    return { item: garmentsItem, store: "garments" as const };
+  }
+
+  // Check jewellery database
+  const jewelleryDb = getDb("jewellery");
+  const jewelleryItem = await jewelleryDb.cartItem.findUnique({
+    where: { id: itemId },
+    include: { cart: true, variant: true },
+  });
+
+  if (jewelleryItem && jewelleryItem.cart.userId === userId) {
+    return { item: jewelleryItem, store: "jewellery" as const };
+  }
+
+  return null;
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -25,8 +42,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 });
   }
 
-  const item = await assertOwnership(user.id, id);
-  if (!item) return NextResponse.json({ error: "Cart item not found" }, { status: 404 });
+  const result = await assertOwnership(user.id, id);
+  if (!result) return NextResponse.json({ error: "Cart item not found" }, { status: 404 });
+
+  const { item, store } = result;
 
   if (parsed.data.quantity > item.variant.stockQuantity) {
     return NextResponse.json(
@@ -35,7 +54,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     );
   }
 
-  const updated = await prisma.cartItem.update({
+  const db = getDb(store);
+  const updated = await db.cartItem.update({
     where: { id },
     data: { quantity: parsed.data.quantity },
   });
@@ -48,9 +68,11 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const item = await assertOwnership(user.id, id);
-  if (!item) return NextResponse.json({ error: "Cart item not found" }, { status: 404 });
+  const result = await assertOwnership(user.id, id);
+  if (!result) return NextResponse.json({ error: "Cart item not found" }, { status: 404 });
 
-  await prisma.cartItem.delete({ where: { id } });
+  const db = getDb(result.store);
+  await db.cartItem.delete({ where: { id } });
+
   return NextResponse.json({ success: true });
 }

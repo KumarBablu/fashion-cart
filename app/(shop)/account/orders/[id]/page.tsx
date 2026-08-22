@@ -16,7 +16,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     redirect(`/login?next=${encodeURIComponent(`/account/orders/${id}`)}`);
   }
 
-  const order = await prisma.order.findFirst({
+  let order = await prisma.order.findFirst({
     where: {
       id,
       OR: [
@@ -26,6 +26,20 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     },
     include: { items: true, payment: true, invoice: true },
   });
+
+  if (!order) {
+    const { getDb } = await import("@/lib/db");
+    order = await getDb("jewellery").order.findFirst({
+      where: {
+        id,
+        OR: [
+          { userId: user.id },
+          { user: { email: user.email } },
+        ],
+      },
+      include: { items: true, payment: true, invoice: true },
+    });
+  }
 
   if (!order) notFound();
 

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { generateInvoiceBufferForOrder } from "@/lib/invoice/generate";
 import { sendPaymentVerifiedEmail } from "@/lib/email/service";
 import { sendMobileSms, formatPaymentVerifiedSms } from "@/lib/notifications/sms";
 
 /**
- * Endpoint moving payment to VERIFIED and order to CONFIRMED.
+ * Multi-Store Admin Endpoint: Moving payment to VERIFIED and order to CONFIRMED.
  * Generates PDF Tax Invoice and sends email & SMS notifications to customer.
  */
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -14,7 +14,20 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const payment = await prisma.payment.findUnique({ where: { id }, include: { order: true } });
+
+  let store: "garments" | "jewellery" = "garments";
+  let db = getDb("garments");
+  let payment = await db.payment.findUnique({ where: { id }, include: { order: true } });
+
+  if (!payment) {
+    const jwDb = getDb("jewellery");
+    payment = await jwDb.payment.findUnique({ where: { id }, include: { order: true } });
+    if (payment) {
+      store = "jewellery";
+      db = jwDb;
+    }
+  }
+
   if (!payment) return NextResponse.json({ error: "Payment not found" }, { status: 404 });
 
   if (payment.status === "VERIFIED") {
@@ -27,7 +40,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     );
   }
 
-  const updated = await prisma.$transaction(async (tx) => {
+  const updated = await db.$transaction(async (tx) => {
     const verifiedPayment = await tx.payment.update({
       where: { id },
       data: {
@@ -46,7 +59,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     return verifiedPayment;
   });
 
-  // Background invoice generation and notifications so Admin UI response is instantaneous (<50ms)
+  // Background invoice generation and notifications
   void (async () => {
     try {
       let invoiceBuffer: Buffer | undefined;
@@ -60,8 +73,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         console.error("Invoice generation failed for order", payment.orderId, err);
       }
 
-      // Fetch full order to dispatch customer notifications
-      const fullOrder = await prisma.order.findUnique({
+      const fullOrder = await db.order.findUnique({
         where: { id: payment.orderId },
         include: { user: true, items: true, payment: true },
       });

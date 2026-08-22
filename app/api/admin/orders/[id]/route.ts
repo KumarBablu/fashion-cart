@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { restockVariant } from "@/lib/inventory";
 import { sendOrderDeliveredEmail, sendOrderShippedEmail, sendOrderCancelledEmail } from "@/lib/email/service";
@@ -25,10 +25,23 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const order = await prisma.order.findUnique({
+
+  let db = getDb("garments");
+  let order = await db.order.findUnique({
     where: { id },
     include: { user: true, items: true, payment: true, address: true, invoice: true },
   });
+
+  if (!order) {
+    const jwDb = getDb("jewellery");
+    order = await jwDb.order.findUnique({
+      where: { id },
+      include: { user: true, items: true, payment: true, address: true, invoice: true },
+    });
+    if (order) {
+      db = jwDb;
+    }
+  }
 
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
   return NextResponse.json({ order });
@@ -45,13 +58,26 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 });
   }
 
-  const current = await prisma.order.findUnique({
+  let db = getDb("garments");
+  let current = await db.order.findUnique({
     where: { id },
     include: { items: true, user: true },
   });
+
+  if (!current) {
+    const jwDb = getDb("jewellery");
+    current = await jwDb.order.findUnique({
+      where: { id },
+      include: { items: true, user: true },
+    });
+    if (current) {
+      db = jwDb;
+    }
+  }
+
   if (!current) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
-  const updatedOrder = await prisma.$transaction(async (tx) => {
+  const updatedOrder = await db.$transaction(async (tx) => {
     const releasesStock =
       ["CANCELLED", "REFUNDED"].includes(parsed.data.status) &&
       !["CANCELLED", "REFUNDED"].includes(current.status);

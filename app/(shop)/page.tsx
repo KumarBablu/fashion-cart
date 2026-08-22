@@ -1,521 +1,283 @@
 import Link from "next/link";
 import Image from "next/image";
-import { prisma } from "@/lib/db";
-import SubcategoriesGrid from "@/components/home/SubcategoriesGrid";
-import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
-  const [allProducts, rootCategories, promotions, banners] = await Promise.all([
-    prisma.product.findMany({
-      where: {
-        status: "ACTIVE",
-        category: {
-          isActive: true,
-          OR: [
-            { parentId: null },
-            { parent: { isActive: true } },
-          ],
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      include: {
-        images: { orderBy: { sortOrder: "asc" } },
-        variants: { where: { isActive: true } },
-        category: true,
-      },
-    }),
-    prisma.category.findMany({
-      where: {
-        isActive: true,
-        parentId: null,
-        OR: [
-          { products: { some: { status: "ACTIVE" } } },
-          { children: { some: { isActive: true, products: { some: { status: "ACTIVE" } } } } },
-        ],
-      },
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      include: {
-        children: {
-          where: {
-            isActive: true,
-            products: { some: { status: "ACTIVE" } },
-          },
-          select: { id: true, name: true, slug: true, imageUrl: true },
-        },
-      },
-    }),
-    prisma.promotion.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-    }),
-    prisma.banner.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-    }),
-  ]);
+export const metadata = {
+  title: "Fashion Cart — The Private Luxury Portals | Couture Garments & Imperial Jewels",
+  description: "Curators of Indian Luxury & Modern Style. Step into our dedicated maisons of artisanal garments or handcrafted 24K micro-plated artificial fine jewellery.",
+};
 
-  // Find custom hero promotion or admin configured hero banner
-  const heroBanner = banners.find((b) => b.position === "HERO");
-  const heroPromo = promotions.find(
-    (p) =>
-      p.placement === "HERO_SPOTLIGHT" ||
-      p.placement === "TOP_BANNER" ||
-      p.placement === "POPUP_MODAL"
-  );
-
-  // Dedicated Admin Configured Occasions
-  const adminOccasions = banners.filter((b) => b.position === "OCCASION");
-
-  const dynamicOccasions =
-    adminOccasions.length > 0
-      ? adminOccasions.map((occ) => ({
-          title: occ.title,
-          subtitle: occ.subtitle || "Curated Haute Couture Look",
-          href: occ.linkUrl || "/shop",
-          image: occ.imageUrl || "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80",
-          tag: occ.badge || "Artisanal Craft",
-          buttonText: occ.buttonText || "Explore Outfits",
-        }))
-      : [
-          {
-            title: "Festive & Gala Edit",
-            subtitle: "Zari Velvet & Anarkalis",
-            href: "/shop?category=women-kurtis",
-            image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80",
-            tag: "Artisanal Craft",
-            buttonText: "Explore Outfits",
-          },
-          {
-            title: "Wedding & Silk Soirée",
-            subtitle: "Mulberry Silk & Gowns",
-            href: "/shop?category=women-dresses",
-            image: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=800&auto=format&fit=crop&q=80",
-            tag: "Pure Silk",
-            buttonText: "Explore Outfits",
-          },
-          {
-            title: "Sartorial Menswear",
-            subtitle: "French Linen & Mandarin Shirts",
-            href: "/shop?category=men-shirts",
-            image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80",
-            tag: "Tailored Linen",
-            buttonText: "Explore Outfits",
-          },
-          {
-            title: "Earth & Sand Co-ords",
-            subtitle: "Chanderi Silks & Sets",
-            href: "/shop?onSale=true",
-            image: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80",
-            tag: "Curated Look",
-            buttonText: "Explore Outfits",
-          },
-        ];
-
-  // Dynamic Hero Image
-  const heroImage =
-    heroBanner?.imageUrl ||
-    heroPromo?.imageUrl ||
-    allProducts[0]?.images[0]?.imageUrl ||
-    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&auto=format&fit=crop&q=85";
-
-  const heroHeadline = heroBanner?.title || "Timeless Elegance. Effortless Style.";
-  const heroSubtitle =
-    heroBanner?.subtitle ||
-    "Discover masterfully tailored garments crafted from certified pure Mulberry silks, breathable French linens, and rich hand-embroidered velvets. Designed for modern poise, uncompromising comfort, and true distinction.";
-  const heroBadge = heroBanner?.badge || "✦ The 2026 Signature Luxury Edit · Live Drops";
-  const heroCtaText = heroBanner?.buttonText || "Explore New Season →";
-  const heroCtaLink = heroBanner?.linkUrl || "/shop";
-
-  const META: Record<string, { icon: string; tagline: string; bannerImage: string; badge: string }> = {
-    women: {
-      icon: "🥻",
-      tagline: "Pure Varanasi Mulberry Silks, Micro-Velvets & Zardozi Anarkalis",
-      bannerImage: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&auto=format&fit=crop&q=85",
-      badge: "Royal Heritage Atelier",
-    },
-    men: {
-      icon: "👔",
-      tagline: "100% Certified French Linen, Mandarin Collars & Italian Chinos",
-      bannerImage: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=1200&auto=format&fit=crop&q=85",
-      badge: "Master Tailored Sartorial Cuts",
-    },
-    western: {
-      icon: "✨",
-      tagline: "Liquid Satin Cocktail Gowns, Structured Linen Blazers & Co-ords",
-      bannerImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&auto=format&fit=crop&q=85",
-      badge: "Haute Contemporary Chic",
-    },
-    kids: {
-      icon: "🧸",
-      tagline: "Junior Festive Brocades, Fairy Tulle Frocks & Organic Cotton",
-      bannerImage: "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=1200&auto=format&fit=crop&q=85",
-      badge: "Gentle Pure Comfort Edits",
-    },
-  };
-
-  const departments = rootCategories.map((cat) => {
-    const slugKey = cat.slug.toLowerCase();
-    const meta = META[slugKey] || {
-      icon: slugKey.includes("men") ? "👔" : slugKey.includes("kid") ? "🧸" : "👗",
-      tagline: `Curated luxury apparel, tailored cuts & artisanal craft for ${cat.name}`,
-      bannerImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&auto=format&fit=crop&q=85",
-      badge: "Signature Collection",
-    };
-
-    return {
-      id: cat.id,
-      name: cat.name,
-      slug: cat.slug,
-      imageUrl: cat.imageUrl,
-      icon: meta.icon,
-      tagline: meta.tagline,
-      bannerImage: meta.bannerImage,
-      badge: meta.badge,
-      subcategories: cat.children.map((child) => ({
-        id: child.id,
-        name: child.name,
-        slug: child.slug,
-        imageUrl: child.imageUrl,
-      })),
-    };
-  });
-
-  // Flat list of all subcategories with parent details for the Subcategories Row
-  const allSubcategories = rootCategories.flatMap((cat) => {
-    const slugKey = cat.slug.toLowerCase();
-    const meta = META[slugKey] || { icon: "👗" };
-    return cat.children.map((child) => ({
-      id: child.id,
-      name: child.name,
-      slug: child.slug,
-      imageUrl: child.imageUrl,
-      parentName: cat.name,
-      parentSlug: cat.slug,
-      parentIcon: meta.icon,
-    }));
-  });
-
+export default function StoreGatewayLandingPage() {
   return (
-    <div className="space-y-20 pb-24 overflow-hidden">
+    <div className="relative min-h-[92vh] flex flex-col justify-between bg-[#FAF8F5] overflow-hidden selection:bg-[#C59B27] selection:text-white">
       
-      {/* 👑 ROW 1: Hero Banner Row */}
-      <section className="relative bg-[#FAF8F5] border-b border-[#E7DFD5]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
+      {/* ====================================================================
+          👑 FULL CINEMATIC LUXURY HERO BANNER BEHIND HEADLINE
+          ==================================================================== */}
+      <section className="relative w-full overflow-hidden bg-[#0C0F0E] text-white pt-12 pb-24 sm:pt-16 sm:pb-32 lg:pt-20 lg:pb-36 border-b border-[#C59B27]/20">
+        
+        {/* Cinematic Background Atmosphere Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=1920&auto=format&fit=crop&q=90"
+            alt="Luxury Atelier Background"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center opacity-30 scale-105"
+          />
+          {/* Multi-layered Vignette & Dark Velvet Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0C0F0E]/80 via-[#0C0F0E]/60 to-[#0C0F0E] opacity-95" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,175,55,0.18),transparent_70%)]" />
+        </div>
+
+        {/* Content Over Banner */}
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4 sm:space-y-6">
           
-          {/* Left Hero Column */}
-          <div className="lg:col-span-7 space-y-8">
-            {/* Live Drop Atelier Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#C59B27]/40 bg-white text-[11px] font-extrabold uppercase tracking-widest text-[#8E6C0C] shadow-2xs">
-              <span className="w-2 h-2 rounded-full bg-[#C59B27] pulse-dot" />
-              <span>{heroBadge}</span>
-            </div>
-
-            {/* Main Headline */}
-            <div className="space-y-2">
-              <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.25rem] font-bold tracking-tight text-[#141416] leading-[1.06]">
-                Timeless Elegance. <br />
-                <span className="italic font-serif font-normal text-[#C59B27]">Effortless Style.</span>
-              </h1>
-              <p className="text-sm sm:text-base text-[#4B4E56] max-w-xl leading-relaxed pt-2">
-                {heroSubtitle}
-              </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3.5 pt-1">
-              <Link
-                href={heroCtaLink}
-                className="px-8 py-4 rounded-full font-extrabold text-xs uppercase tracking-widest bg-[#141416] text-white hover:bg-[#C59B27] hover:text-[#141416] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
-              >
-                {heroCtaText}
-              </Link>
-              <Link
-                href="/categories"
-                className="px-7 py-4 rounded-full border border-[#141416] bg-white font-bold text-xs uppercase tracking-wider text-[#141416] hover:bg-[#141416] hover:text-white transition-all duration-300 shadow-2xs cursor-pointer"
-              >
-                Browse Categories
-              </Link>
-              <WhatsAppConciergeButton
-                className="px-5 py-4 rounded-full text-xs font-bold text-[#141416] border border-[#C59B27]/40 bg-white hover:bg-[#FAF8F5] transition-all duration-300 shadow-2xs flex items-center gap-2 cursor-pointer"
-                customMessage="Hi Fashion Cart Stylist, I am exploring the 2026 luxury collection and would like personal outfit recommendations!"
-              >
-                <span>💬</span> WhatsApp Stylist
-              </WhatsAppConciergeButton>
-            </div>
-
-            {/* 3 Luxury Trust Metric Cards */}
-            <div className="pt-6 border-t border-[#E7DFD5] grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="p-4 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
-                <p className="text-xl font-bold text-[#141416]">100%</p>
-                <p className="font-semibold text-[#141416] text-xs">Certified Pure Fabrics</p>
-                <p className="text-[#787C87] text-[10px]">Mulberry Silk &amp; French Linen</p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
-                <p className="text-xl font-bold text-[#141416]">₹0</p>
-                <p className="font-semibold text-[#141416] text-xs">Express Doorstep Delivery</p>
-                <p className="text-[#787C87] text-[10px]">Dispatches in 24 Hours</p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
-                <p className="text-xl font-bold text-[#C59B27]">4.9 ★</p>
-                <p className="font-semibold text-[#141416] text-xs">Over 3,500 Reviews</p>
-                <p className="text-[#787C87] text-[10px]">Exceptional Client Rating</p>
-              </div>
-            </div>
+          {/* Luxury Monogram Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#141416]/80 backdrop-blur-md text-[#F3E5AB] text-[11px] font-extrabold uppercase tracking-[0.28em] border border-[#D4AF37]/50 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+            <span className="text-[#D4AF37] text-xs">✦</span>
+            <span>Private Luxury Portals • Est. 2026</span>
+            <span className="text-[#D4AF37] text-xs">✦</span>
           </div>
 
-          {/* Right Hero Column: Editorial Model Card with VIP Glassmorphism Overlay */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl border border-[#E7DFD5] group">
+          {/* Majestic Main Headline */}
+          <div className="space-y-1 sm:space-y-2">
+            <h1 className="font-display text-3xl sm:text-5xl lg:text-[4rem] font-bold text-white tracking-tight leading-[1.08] drop-shadow-md">
+              Two Iconic Maisons.
+            </h1>
+            <p className="font-display italic font-serif text-3xl sm:text-5xl lg:text-[4rem] font-normal gold-text-shimmer leading-[1.08] drop-shadow-md">
+              One Singular Destination.
+            </p>
+          </div>
+
+          {/* Subtitle */}
+          <p className="text-xs sm:text-sm lg:text-base text-[#FAF8F5]/85 max-w-2xl mx-auto leading-relaxed pt-1 drop-shadow-sm font-normal">
+            An invitation to bespoke craftsmanship. Select an exclusive maison below to immerse yourself in artisanal haute couture or handcrafted 24K micro-plated fine artificial jewellery.
+          </p>
+
+        </div>
+      </section>
+
+      {/* ====================================================================
+          👑 2 FULLY-CLICKABLE LUXURY BOUTIQUE DOORS (LAYERED OVER BANNER)
+          ==================================================================== */}
+      <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full -mt-16 sm:-mt-20 lg:-mt-24 pb-12 sm:pb-16 space-y-12">
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-stretch">
+          
+          {/* ====================================================================
+              MAISON 1: L'ATELIER HAUTE COUTURE (GARMENTS) — 100% CLICKABLE CARD
+              ==================================================================== */}
+          <Link
+            href="/garments"
+            className="group relative rounded-3xl overflow-hidden border-2 border-[#E7DFD5] hover:border-[#C59B27] bg-white shadow-xl hover:shadow-[0_25px_60px_rgba(20,20,22,0.18)] transition-all duration-500 flex flex-col justify-between cursor-pointer transform hover:-translate-y-2 focus:outline-none focus:ring-2 focus:ring-[#C59B27]"
+            aria-label="Enter Haute Couture Garments Boutique"
+          >
+            {/* Visual Header with Micro-Zoom */}
+            <div className="relative h-80 sm:h-[26rem] w-full overflow-hidden bg-[#141416]">
               <Image
-                src={heroImage}
-                alt="Traditional Indian Couture Model — Fashion Cart"
+                src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&auto=format&fit=crop&q=85"
+                alt="Haute Couture Garments & Ethnic Apparel"
                 fill
                 priority
-                sizes="(min-width: 1024px) 40vw, 100vw"
-                unoptimized
-                className="object-cover object-top transition-transform duration-700 group-hover:scale-103"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover object-top opacity-90 group-hover:scale-106 transition-transform duration-700 ease-out"
               />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/40 to-transparent" />
-
-              {/* Top Pill Tags */}
-              <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-                <span className="px-3.5 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-[#141416]/80 backdrop-blur-md text-[#C59B27] border border-[#C59B27]/40 shadow-sm flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] pulse-dot" />
-                  Editorial Lookbook 2026
-                </span>
-                <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-[#C59B27] text-white shadow-sm">
-                  {heroPromo?.discountCode ? `CODE: ${heroPromo.discountCode}` : "CODE: FIRST10"}
+              
+              {/* Luxury Gradient Framing */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/45 to-black/20" />
+              
+              {/* Floating Top Badge */}
+              <div className="absolute top-5 left-5">
+                <span className="px-4 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[#141416] text-[10px] font-black uppercase tracking-[0.2em] border border-white/60 shadow-md flex items-center gap-2">
+                  <span className="text-xs">👗</span>
+                  <span>Maison I • Atelier Couture</span>
                 </span>
               </div>
 
-              {/* Bottom Glassmorphic Privilege Card */}
-              <div className="absolute bottom-4 left-4 right-4 p-5 rounded-2xl bg-[#141416]/85 backdrop-blur-xl border border-white/20 text-white space-y-3 shadow-2xl">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-[#C59B27]">✨</span>
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#C59B27]">
-                      {heroPromo?.badgeText || "VIP Welcome Privilege"}
-                    </span>
-                  </div>
-                  <h3 className="font-display text-base sm:text-lg font-bold text-white leading-snug">
-                    {heroPromo?.title || "Flat 10% Off + Free Express Shipping"}
-                  </h3>
-                  <p className="text-[11px] text-white/75 leading-relaxed">
-                    {heroPromo?.subtitle || "Auto-applied on all handcrafted silk sarees, kurtis & tailored menswear."}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 text-center text-[10px] pt-1 border-t border-white/15">
-                  <div className="py-1">
-                    <span className="block text-sm">👑</span>
-                    <span className="font-semibold text-white">Tailored Fit</span>
-                  </div>
-                  <div className="py-1">
-                    <span className="block text-sm">💵</span>
-                    <span className="font-semibold text-white">COD Eligible</span>
-                  </div>
-                  <div className="py-1">
-                    <span className="block text-sm">📄</span>
-                    <span className="font-semibold text-white">GST Invoice</span>
-                  </div>
-                </div>
-
-                <Link
-                  href={heroPromo?.ctaUrl || "/shop"}
-                  className="block w-full text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] transition-colors shadow-md cursor-pointer"
-                >
-                  {heroPromo?.ctaText || "Shop Exclusive Edits →"}
-                </Link>
+              {/* Bottom Intro Text */}
+              <div className="absolute bottom-5 left-6 right-6 space-y-1.5">
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#C59B27]">
+                  Apparel &amp; Sartorial Tailoring
+                </span>
+                <h2 className="font-display text-2xl sm:text-4xl font-bold text-white tracking-tight leading-tight">
+                  The Garments Collection
+                </h2>
+                <p className="text-xs text-[#FAF8F5]/85 leading-relaxed line-clamp-2">
+                  Pure Varanasi Mulberry Silks, Handcrafted Zardozi Velvet Anarkalis, Structured French Linen &amp; Sartorial Menswear.
+                </p>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* 👑 ROW 2: Categories Row ("Top Categories" - Styled like Shop by Occasion) */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E7DFD5] pb-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">
-              ✦ Curated Departments
-            </span>
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">
-              Top Categories
-            </h2>
-          </div>
-          <Link
-            href="/categories"
-            className="text-xs font-bold uppercase tracking-wider text-[#141416] hover:text-[#C59B27] transition-colors"
-          >
-            View All Categories →
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {departments.map((dept) => {
-            const catImage = dept.imageUrl || dept.bannerImage;
-            return (
-              <Link
-                key={dept.id}
-                href={`/shop?category=${dept.slug}`}
-                className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[4/5] flex flex-col justify-end p-6 bg-[#141416] shadow-md transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
-              >
-                <Image
-                  src={catImage}
-                  alt={dept.name}
-                  fill
-                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                  unoptimized
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/95 via-[#141416]/40 to-transparent" />
-
-                <div className="relative z-10 space-y-1">
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white text-[#141416] backdrop-blur-md shadow-xs">
-                    {dept.icon} {dept.badge}
+            {/* Bottom Content Area */}
+            <div className="p-6 sm:p-8 bg-white space-y-6 flex-1 flex flex-col justify-between">
+              
+              {/* Curated Highlights */}
+              <div className="space-y-3">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#787C87]">
+                  Curated In This Maison:
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs font-semibold text-[#141416]">
+                  <span className="bg-[#FAF8F5] px-3.5 py-1.5 rounded-xl border border-[#E7DFD5] group-hover:border-[#C59B27]/40 transition-colors">
+                    🥻 Pure Silk Sarees
                   </span>
-                  <h3 className="font-display text-xl font-bold text-white leading-tight group-hover:text-[#C59B27] transition-colors">
-                    {dept.name}
-                  </h3>
-                  <p className="text-xs text-white/80 line-clamp-1">{dept.tagline}</p>
-                  <div className="pt-2 flex items-center gap-1 text-xs font-bold text-[#C59B27] group-hover:translate-x-1 transition-transform">
-                    <span>Explore Department</span>
-                    <span>→</span>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 👗 ROW 3: Sub Categories Rows ("Explore Subcategories" - Styled like Shop by Occasion) */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SubcategoriesGrid
-          subcategories={allSubcategories}
-          departments={departments.map((d) => ({
-            id: d.id,
-            name: d.name,
-            slug: d.slug,
-            icon: d.icon,
-          }))}
-        />
-      </section>
-
-      {/* 👑 ROW 4: Shop by Occasion Row */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E7DFD5] pb-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">
-              ✦ Curated Looks
-            </span>
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">
-              Shop by Occasion
-            </h2>
-          </div>
-          <Link
-            href="/shop"
-            className="text-xs font-bold uppercase tracking-wider text-[#141416] hover:text-[#C59B27] transition-colors"
-          >
-            View All Collections →
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {dynamicOccasions.map((occ) => (
-            <Link
-              key={occ.title}
-              href={occ.href}
-              className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[4/5] flex flex-col justify-end p-6 bg-[#141416] shadow-md transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
-            >
-              <Image
-                src={occ.image}
-                alt={occ.title}
-                fill
-                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                unoptimized
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/90 via-[#141416]/30 to-transparent" />
-
-              <div className="relative z-10 space-y-1">
-                <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white text-[#141416] backdrop-blur-md shadow-xs">
-                  {occ.tag}
-                </span>
-                <h3 className="font-display text-lg sm:text-xl font-bold text-white leading-tight group-hover:text-[#C59B27] transition-colors">
-                  {occ.title}
-                </h3>
-                <p className="text-xs text-white/80">{occ.subtitle}</p>
-                <div className="pt-2 flex items-center gap-1 text-xs font-bold text-[#C59B27] group-hover:translate-x-1 transition-transform">
-                  <span>{occ.buttonText || "Explore Outfits"}</span>
-                  <span>→</span>
+                  <span className="bg-[#FAF8F5] px-3.5 py-1.5 rounded-xl border border-[#E7DFD5] group-hover:border-[#C59B27]/40 transition-colors">
+                    👗 Velvet Anarkalis
+                  </span>
+                  <span className="bg-[#FAF8F5] px-3.5 py-1.5 rounded-xl border border-[#E7DFD5] group-hover:border-[#C59B27]/40 transition-colors">
+                    👔 French Linen Shirts
+                  </span>
+                  <span className="bg-[#FAF8F5] px-3.5 py-1.5 rounded-xl border border-[#E7DFD5] group-hover:border-[#C59B27]/40 transition-colors">
+                    ✨ Gala Silk Gowns
+                  </span>
                 </div>
               </div>
-            </Link>
-          ))}
-        </div>
-      </section>
 
-      {/* 🛡️ ROW 5: Clean Assurance & Privilege Banner */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="p-8 sm:p-12 rounded-3xl border border-[#E7DFD5] bg-white shadow-lg grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-8 space-y-3">
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FBF4E2] text-[#8E6C0C] border border-[#C59B27]/40">
-              ✦ Fashion Cart Privilege
-            </span>
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">
-              Experience Everyday Luxury with Complete Peace of Mind
-            </h2>
-            <p className="text-xs sm:text-sm text-[#4B4E56] leading-relaxed max-w-xl">
-              Every garment undergoes a 6-point tailoring inspection. Enjoy free express doorstep delivery, hassle-free size exchanges, Cash on Delivery, and official GST tax invoices on all orders.
-            </p>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link
-                href="/shop"
-                className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-colors shadow-sm"
-              >
-                Join the Royal Edit →
-              </Link>
-              <Link
-                href="/contact"
-                className="px-6 py-3 rounded-full border border-[#C59B27] text-xs font-bold uppercase tracking-wider text-[#141416] hover:bg-[#F4EFEA] transition-colors"
-              >
-                Visit Indiranagar Boutique
-              </Link>
+              {/* Action Bar */}
+              <div className="pt-4 border-t border-[#E7DFD5] flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                  <span className="text-xs font-extrabold text-[#141416]">
+                    Over 120+ Curated Outfits
+                  </span>
+                  <span className="text-[10px] text-[#787C87]">
+                    Hand-finished artisan tailoring
+                  </span>
+                </div>
+
+                <div className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#141416] group-hover:bg-[#C59B27] text-white group-hover:text-[#141416] text-xs font-extrabold uppercase tracking-wider transition-all duration-300 shadow-md group-hover:shadow-xl shrink-0">
+                  <span>Enter Garments Atelier</span>
+                  <span className="transform group-hover:translate-x-1.5 transition-transform duration-300 text-sm">
+                    →
+                  </span>
+                </div>
+              </div>
+
             </div>
+          </Link>
+
+          {/* ====================================================================
+              MAISON 2: L'IMPERIAL FINE JEWELS (JEWELLERY) — 100% CLICKABLE CARD
+              ==================================================================== */}
+          <Link
+            href="/jewellery"
+            className="group relative rounded-3xl overflow-hidden border-2 border-[#D4AF37]/50 hover:border-[#D4AF37] bg-[#FCFAF6] shadow-xl hover:shadow-[0_25px_60px_rgba(6,26,20,0.22)] transition-all duration-500 flex flex-col justify-between cursor-pointer transform hover:-translate-y-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+            aria-label="Enter Imperial Fine Jewellery Atelier"
+          >
+            {/* Visual Header with Micro-Zoom */}
+            <div className="relative h-80 sm:h-[26rem] w-full overflow-hidden bg-[#061A14]">
+              <Image
+                src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&auto=format&fit=crop&q=85"
+                alt="Imperial Handcrafted 24K Fine Artificial Jewellery"
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover object-center opacity-90 group-hover:scale-106 transition-transform duration-700 ease-out"
+              />
+              
+              {/* Luxury Gradient Framing */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#061A14] via-[#061A14]/55 to-black/30" />
+              
+              {/* Floating Top Badge */}
+              <div className="absolute top-5 left-5">
+                <span className="px-4 py-1.5 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#061A14] text-[10px] font-black uppercase tracking-[0.2em] border border-[#F3E5AB]/50 shadow-md flex items-center gap-2">
+                  <span className="text-xs">💍</span>
+                  <span>Maison II • Imperial Jewels</span>
+                </span>
+              </div>
+
+              {/* Bottom Intro Text */}
+              <div className="absolute bottom-5 left-6 right-6 space-y-1.5">
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#D4AF37]">
+                  24K Micro-Plated Splendour
+                </span>
+                <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#F3E5AB] tracking-tight leading-tight">
+                  The Jewellery Atelier
+                </h2>
+                <p className="text-xs text-[#FAF8F5]/85 leading-relaxed line-clamp-2">
+                  Uncut Kundan Chokers, Polki Bridal Sets, Antique Temple Haar, Bahubali Jhumkas &amp; Brilliant CZ Solitaires.
+                </p>
+              </div>
+            </div>
+
+            {/* Bottom Content Area */}
+            <div className="p-6 sm:p-8 bg-[#FCFAF6] space-y-6 flex-1 flex flex-col justify-between">
+              
+              {/* Curated Highlights */}
+              <div className="space-y-3">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#8C6B08]">
+                  Curated In This Maison:
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs font-semibold text-[#061A14]">
+                  <span className="bg-[#FDF4D8] px-3.5 py-1.5 rounded-xl border border-[#D4AF37]/35 group-hover:border-[#D4AF37] transition-colors">
+                    👑 Bridal Kundan Sets
+                  </span>
+                  <span className="bg-[#FDF4D8] px-3.5 py-1.5 rounded-xl border border-[#D4AF37]/35 group-hover:border-[#D4AF37] transition-colors">
+                    ✨ Royal Jhumkas
+                  </span>
+                  <span className="bg-[#FDF4D8] px-3.5 py-1.5 rounded-xl border border-[#D4AF37]/35 group-hover:border-[#D4AF37] transition-colors">
+                    💍 Openable Kadas
+                  </span>
+                  <span className="bg-[#FDF4D8] px-3.5 py-1.5 rounded-xl border border-[#D4AF37]/35 group-hover:border-[#D4AF37] transition-colors">
+                    💎 CZ Solitaire Rings
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Bar */}
+              <div className="pt-4 border-t border-[#E8DECE] flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                  <span className="text-xs font-extrabold text-[#061A14]">
+                    24K Gold Micron Plating
+                  </span>
+                  <span className="text-[10px] text-[#8C6B08]">
+                    Anti-tarnish &amp; skin-friendly alloy
+                  </span>
+                </div>
+
+                <div className="gold-jewellery-btn inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 shadow-md group-hover:shadow-xl shrink-0">
+                  <span>Enter Jewels Atelier</span>
+                  <span className="transform group-hover:translate-x-1.5 transition-transform duration-300 text-sm">
+                    →
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </Link>
+
+        </div>
+
+        {/* 👑 Four Luxury Trust Pillars */}
+        <div className="pt-4 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-center">
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
+            <span className="text-xl">🚚</span>
+            <p className="text-xs font-bold text-[#141416]">Express Pan-India Shipping</p>
+            <p className="text-[10px] text-[#787C87]">Complimentary on all orders</p>
           </div>
 
-          <div className="lg:col-span-4 grid grid-cols-2 gap-3 text-xs">
-            <div className="p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] space-y-1">
-              <span className="text-xl">✨</span>
-              <p className="font-bold text-[#141416]">100% Genuine</p>
-              <p className="text-[10px] text-[#787C87]">Certified fabrics</p>
-            </div>
-            <div className="p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] space-y-1">
-              <span className="text-xl">🔄</span>
-              <p className="font-bold text-[#141416]">7-Day Return</p>
-              <p className="text-[10px] text-[#787C87]">Doorstep pickup</p>
-            </div>
-            <div className="p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] space-y-1">
-              <span className="text-xl">🚚</span>
-              <p className="font-bold text-[#141416]">Live Tracking</p>
-              <p className="text-[10px] text-[#787C87]">Realtime AWB status</p>
-            </div>
-            <div className="p-3.5 rounded-2xl border border-[#E7DFD5] bg-[#FAF8F5] space-y-1">
-              <span className="text-xl">🧾</span>
-              <p className="font-bold text-[#141416]">Tax Invoices</p>
-              <p className="text-[10px] text-[#787C87]">Downloadable PDF</p>
-            </div>
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
+            <span className="text-xl">💎</span>
+            <p className="text-xs font-bold text-[#141416]">24K Micro-Plated Quality</p>
+            <p className="text-[10px] text-[#787C87]">Anti-Tarnish &amp; Hypoallergenic</p>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
+            <span className="text-xl">🔒</span>
+            <p className="text-xs font-bold text-[#141416]">Single Unified Account</p>
+            <p className="text-[10px] text-[#787C87]">1 Seamless login across all houses</p>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
+            <span className="text-xl">💬</span>
+            <p className="text-xs font-bold text-[#141416]">Bespoke WhatsApp Concierge</p>
+            <p className="text-[10px] text-[#787C87]">Personal Bridal &amp; Festive Styling</p>
           </div>
         </div>
+
       </section>
+
     </div>
   );
 }
-

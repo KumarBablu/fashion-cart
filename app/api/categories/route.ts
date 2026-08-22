@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { categorySchema } from "@/lib/validation/schemas";
 
@@ -14,6 +14,11 @@ function slugify(s: string) {
 // Public & Admin: list categories (with subcategories and product counts).
 export async function GET(req: NextRequest) {
   const admin = await getCurrentAdmin();
+  const storeParam = req.nextUrl.searchParams.get("store");
+  const cookieStore = req.cookies.get("fc_admin_store")?.value;
+  const store = storeParam === "jewellery" || (!storeParam && cookieStore === "jewellery") ? "jewellery" : "garments";
+  const db = getDb(store);
+
   const includeInactive = req.nextUrl.searchParams.get("includeInactive") === "true" || !!admin;
   const whereClause = includeInactive
     ? {}
@@ -33,7 +38,7 @@ export async function GET(req: NextRequest) {
       };
 
   try {
-    const categories = await prisma.category.findMany({
+    const categories = await db.category.findMany({
       where: whereClause,
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: {
@@ -65,6 +70,11 @@ export async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
 
+  const storeParam = req.nextUrl.searchParams.get("store");
+  const cookieStore = req.cookies.get("fc_admin_store")?.value;
+  const store = storeParam === "jewellery" || (!storeParam && cookieStore === "jewellery") ? "jewellery" : "garments";
+  const db = getDb(store);
+
   try {
     const body = await req.json().catch(() => null);
     const parsed = categorySchema.safeParse(body);
@@ -79,9 +89,9 @@ export async function POST(req: NextRequest) {
 
     // If subcategory, prefix parent slug if collision occurs
     if (parsed.data.parentId) {
-      const parent = await prisma.category.findUnique({ where: { id: parsed.data.parentId } });
+      const parent = await db.category.findUnique({ where: { id: parsed.data.parentId } });
       if (parent && !targetSlug.startsWith(parent.slug)) {
-        const directMatch = await prisma.category.findUnique({ where: { slug: targetSlug } });
+        const directMatch = await db.category.findUnique({ where: { slug: targetSlug } });
         if (directMatch) {
           targetSlug = `${parent.slug}-${targetSlug}`;
         }
@@ -91,12 +101,12 @@ export async function POST(req: NextRequest) {
     // Deduplicate slug if already taken
     let finalSlug = targetSlug;
     let counter = 1;
-    while (await prisma.category.findUnique({ where: { slug: finalSlug } })) {
+    while (await db.category.findUnique({ where: { slug: finalSlug } })) {
       counter++;
       finalSlug = `${targetSlug}-${counter}`;
     }
 
-    const category = await prisma.category.create({
+    const category = await db.category.create({
       data: {
         name: parsed.data.name.trim(),
         slug: finalSlug,

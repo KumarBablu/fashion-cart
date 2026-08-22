@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { checkoutSchema } from "@/lib/validation/schemas";
 import { createOrderFromCart, CheckoutError } from "@/lib/orders/create-order";
@@ -8,13 +8,24 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const orders = await prisma.order.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    include: { items: true, payment: true, invoice: true },
-  });
+  const [garmentsOrders, jewelleryOrders] = await Promise.all([
+    getDb("garments").order.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      include: { items: true, payment: true, invoice: true },
+    }).catch(() => []),
+    getDb("jewellery").order.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      include: { items: true, payment: true, invoice: true },
+    }).catch(() => []),
+  ]);
 
-  return NextResponse.json({ orders });
+  const allOrders = [...garmentsOrders, ...jewelleryOrders].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  return NextResponse.json({ orders: allOrders });
 }
 
 export async function POST(req: NextRequest) {
@@ -36,7 +47,7 @@ export async function POST(req: NextRequest) {
       customerNotes: parsed.data.customerNotes,
     });
 
-    const settings = await prisma.paymentSettings.findFirst({ where: { isActive: true } });
+    const settings = await getDb("garments").paymentSettings.findFirst({ where: { isActive: true } });
 
     return NextResponse.json(
       {

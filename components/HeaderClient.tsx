@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname, useSearchParams } from "next/navigation";
 import MenuDrawer from "@/components/navigation/MenuDrawer";
 import CartDrawer from "@/components/cart/CartDrawer";
 import SearchModal from "@/components/search/SearchModal";
+import StoreSwitcherPill from "@/components/navigation/StoreSwitcherPill";
 
 interface HeaderCategory {
   id: string;
@@ -24,6 +26,10 @@ export default function HeaderClient({
   userName?: string | null;
   categories?: HeaderCategory[];
 }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isJewellery = pathname.startsWith("/jewellery") || searchParams?.get("store") === "jewellery";
+
   const [menuDrawerOpen, setMenuDrawerOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -140,6 +146,11 @@ export default function HeaderClient({
         </Link>
       </div>
 
+      {/* Center Group: Store Switcher Pill (Garments vs Jewellery) */}
+      <div className="hidden sm:flex items-center justify-center">
+        <StoreSwitcherPill />
+      </div>
+
       {/* 2. Right Group: Search, Wishlist, and Shopping Bag */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         
@@ -152,7 +163,7 @@ export default function HeaderClient({
         >
           <SearchIcon />
           <span className="hidden md:inline font-medium text-xs text-[#787C87] group-hover:text-[#141416] transition-colors">
-            Search apparel…
+            {isJewellery ? "Search jewellery, chokers…" : "Search apparel & styles…"}
           </span>
           <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded-md bg-white text-[#141416] font-bold border border-[#E7DFD5] shadow-2xs">
             ⌘K

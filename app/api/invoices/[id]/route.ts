@@ -9,8 +9,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const user = await getCurrentUser();
     const admin = await getCurrentAdmin();
 
-    // Look up order by id, orderNumber, or invoiceNumber
-    const order = await prisma.order.findFirst({
+    // Look up order by id, orderNumber, or invoiceNumber in garments or jewellery DB
+    const { getDb } = await import("@/lib/db");
+    let order = await getDb("garments").order.findFirst({
       where: {
         OR: [
           { id },
@@ -20,6 +21,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       },
       include: { payment: true, user: true, invoice: true },
     });
+
+    if (!order) {
+      order = await getDb("jewellery").order.findFirst({
+        where: {
+          OR: [
+            { id },
+            { orderNumber: id },
+            { invoice: { invoiceNumber: id } },
+          ],
+        },
+        include: { payment: true, user: true, invoice: true },
+      });
+    }
 
     if (!order) {
       return new NextResponse("Order or Invoice not found", {

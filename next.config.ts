@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   serverExternalPackages: ["pdfkit"],
   experimental: {
-    cpus: 2,
+    cpus: 4,
   },
   images: {
     remotePatterns: [

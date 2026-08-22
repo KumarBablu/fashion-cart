@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/db";
+import { prisma, getDb } from "@/lib/db";
 import type { User } from "@prisma/client";
 
 const SESSION_COOKIE = "fc_session";
@@ -53,7 +53,7 @@ export async function getRawSessionToken(): Promise<string | undefined> {
   return cookieStore.get(SESSION_COOKIE)?.value;
 }
 
-/** Resolves the current request's session to a User, or null if unauthenticated/expired. */
+/** Resolves the current request's session to a User from the Primary Auth DB. */
 export async function getCurrentUser(): Promise<User | null> {
   const rawToken = await getRawSessionToken();
   if (!rawToken) return null;
@@ -68,6 +68,47 @@ export async function getCurrentUser(): Promise<User | null> {
   }
 
   return session.user;
+}
+
+/**
+ * Unified SSO helper: Resolves the authenticated user and automatically synchronizes
+ * their profile into the target store's database (e.g. fashion-cart-jwellery) so
+ * foreign keys on Cart, Orders, Reviews, and Addresses work with zero friction.
+ */
+export async function getStoreUser(store: string = "garments"): Promise<User | null> {
+  const masterUser = await getCurrentUser();
+  if (!masterUser) return null;
+
+  if (store === "garments" || store === "default") {
+    return masterUser;
+  }
+
+  try {
+    const storeDb = getDb(store);
+    const syncedUser = await storeDb.user.upsert({
+      where: { id: masterUser.id },
+      update: {
+        name: masterUser.name,
+        email: masterUser.email,
+        phone: masterUser.phone,
+        role: masterUser.role,
+        isActive: masterUser.isActive,
+      },
+      create: {
+        id: masterUser.id,
+        name: masterUser.name,
+        email: masterUser.email,
+        phone: masterUser.phone,
+        passwordHash: masterUser.passwordHash,
+        role: masterUser.role,
+        isActive: masterUser.isActive,
+      },
+    });
+    return syncedUser;
+  } catch (err) {
+    console.error(`[getStoreUser] Error syncing user to store '${store}':`, err);
+    return masterUser;
+  }
 }
 
 export async function destroyCurrentSession() {

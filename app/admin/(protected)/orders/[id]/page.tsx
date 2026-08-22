@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const order = await prisma.order.findUnique({
+  const { getDb } = await import("@/lib/db");
+  let order = await getDb("garments").order.findUnique({
     where: { id },
     include: {
       user: true,
@@ -25,6 +26,24 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       invoice: true,
     },
   });
+
+  if (!order) {
+    order = await getDb("jewellery").order.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        items: {
+          include: {
+            product: {
+              include: { seller: true },
+            },
+          },
+        },
+        payment: true,
+        invoice: true,
+      },
+    });
+  }
 
   if (!order) notFound();
 

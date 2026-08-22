@@ -1,27 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { saveImageUpload, UploadError } from "@/lib/upload";
-import { utrSubmissionSchema } from "@/lib/validation/schemas";
 import { sendPaymentProofSubmittedAdminAlert } from "@/lib/email/service";
 
 /**
- * Customer submits a payment screenshot + UTR number.
- *
- * SECURITY: This action NEVER marks the order/payment as paid. It only
- * moves the payment into UNDER_REVIEW. Only an admin approving the
- * payment (see /api/admin/payments/[id]/approve) can mark it VERIFIED
- * and confirm the order. See requirement "IMPORTANT PAYMENT SECURITY RULE".
+ * Customer submits a payment screenshot + UTR number across Garments or Jewellery database.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const payment = await prisma.payment.findFirst({
+
+  let store: "garments" | "jewellery" = "garments";
+  let payment = await getDb("garments").payment.findFirst({
     where: { id, order: { userId: user.id } },
     include: { order: true },
   });
+
+  if (!payment) {
+    payment = await getDb("jewellery").payment.findFirst({
+      where: { id, order: { userId: user.id } },
+      include: { order: true },
+    });
+    if (payment) {
+      store = "jewellery";
+    }
+  }
 
   if (!payment) return NextResponse.json({ error: "Payment not found" }, { status: 404 });
 
@@ -38,10 +44,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const rawUtr = typeof utrNumber === "string" && utrNumber.trim().length > 0 ? utrNumber.trim() : null;
+  const db = getDb(store);
 
   // Prevent duplicate UTR numbers being used across different payments if provided.
   if (rawUtr) {
-    const duplicateUtr = await prisma.payment.findFirst({
+    const duplicateUtr = await db.payment.findFirst({
       where: { utrNumber: rawUtr, id: { not: payment.id } },
     });
     if (duplicateUtr) {
@@ -56,7 +63,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { relativePath } = await saveImageUpload(file, "payments");
     const screenshotPath = relativePath.startsWith("data:") ? relativePath : `/uploads/${relativePath}`;
 
-    const updated = await prisma.payment.update({
+    const updated = await db.payment.update({
       where: { id: payment.id },
       data: {
         screenshotPath,
@@ -67,7 +74,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       },
     });
 
-    await prisma.order.update({
+    await db.order.update({
       where: { id: payment.orderId },
       data: { status: "PAYMENT_REVIEW" },
     });

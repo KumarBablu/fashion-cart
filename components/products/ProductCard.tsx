@@ -117,6 +117,7 @@ export default function ProductCard({ product }: { product: CardProduct }) {
             src={isHovered && secondaryImage ? secondaryImage : primaryImage}
             alt={product.name}
             fill
+            unoptimized
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
             className="object-cover"
           />

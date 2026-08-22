@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import ProductCard from "@/components/products/ProductCard";
 import ShopFilters from "@/components/products/ShopFilters";
@@ -13,6 +13,9 @@ type SearchParams = Record<string, string | undefined>;
 
 export default async function ShopPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
+  const store = sp.store === "jewellery" ? "jewellery" : "garments";
+  const db = getDb(store);
+
   const q = sp.q?.trim();
   const categorySlug = sp.subcategory ?? sp.category;
   const minPrice = sp.minPrice ? Number(sp.minPrice) : undefined;
@@ -66,7 +69,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   };
 
   const [items, total, categories, allSizes, allColours] = await Promise.all([
-    prisma.product.findMany({
+    db.product.findMany({
       where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
@@ -76,8 +79,8 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         variants: { where: { isActive: true } },
       },
     }),
-    prisma.product.count({ where }),
-    prisma.category.findMany({
+    db.product.count({ where }),
+    db.category.findMany({
       where: {
         isActive: true,
         OR: [
@@ -88,13 +91,13 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       select: { id: true, name: true, slug: true, parentId: true },
       orderBy: { sortOrder: "asc" },
     }),
-    prisma.productVariant.findMany({
+    db.productVariant.findMany({
       where: { isActive: true },
       distinct: ["size"],
       select: { size: true },
       take: 20,
     }),
-    prisma.productVariant.findMany({
+    db.productVariant.findMany({
       where: { isActive: true },
       distinct: ["colour"],
       select: { colour: true },
@@ -103,13 +106,27 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   ]);
 
   let products = items.map((p) => ({
-    ...p,
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    brand: p.brand,
+    fabric: p.fabric,
+    status: p.status,
+    createdAt: p.createdAt.toISOString(),
     averageRating: Number(p.averageRating || 4.8),
     totalReviews: Number(p.totalReviews || 12),
+    images: p.images.map((img) => ({
+      imageUrl: img.imageUrl,
+      altText: img.altText,
+    })),
     variants: p.variants.map((v) => ({
-      ...v,
+      id: v.id,
+      colour: v.colour,
+      size: v.size,
       price: Number(v.price),
       compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
+      discountPercent: v.discountPercent ? Number(v.discountPercent) : null,
+      stockQuantity: Number(v.stockQuantity),
     })),
   }));
 
@@ -128,21 +145,23 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const isJewellery = store === "jewellery";
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+    <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 ${isJewellery ? "theme-jewellery" : "theme-garments"}`}>
       {/* Luxury Breadcrumbs Navigation Trail */}
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },
-          { label: "Shop", href: "/shop" },
+          { label: isJewellery ? "Jewellery" : "Garments", href: isJewellery ? "/jewellery" : "/garments" },
+          { label: "Shop", href: isJewellery ? "/shop?store=jewellery" : "/shop" },
           ...(categorySlug
             ? [{ label: categories.find((c) => c.slug === categorySlug)?.name ?? "Category" }]
             : q
             ? [{ label: `Search: "${q}"` }]
             : onSale
             ? [{ label: "Special Offers" }]
-            : [{ label: "All Collections" }]),
+            : [{ label: isJewellery ? "Jewellery Collection" : "All Collections" }]),
         ]}
       />
 
@@ -150,10 +169,18 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-6 border-b" style={{ borderColor: "var(--fc-border)" }}>
         <div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold">
-            {categorySlug ? categories.find((c) => c.slug === categorySlug)?.name ?? "Catalog" : q ? `Results for "${q}"` : "All Apparel & Fashion"}
+            {categorySlug
+              ? categories.find((c) => c.slug === categorySlug)?.name ?? "Catalog"
+              : q
+              ? `Results for "${q}"`
+              : isJewellery
+              ? "All Fine & Artificial Jewellery"
+              : "All Apparel & Fashion"}
           </h1>
           <p className="text-xs text-dim mt-1">
-            Curated luxury apparel, certified pure fabrics &amp; new season drops
+            {isJewellery
+              ? "Handcrafted 24K micron gold plated Kundan, Temple jhumkas, Bridal chokers & CZ Solitaires"
+              : "Curated luxury apparel, certified pure fabrics & new season drops"}
           </p>
         </div>
 
@@ -192,46 +219,54 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
               className="rounded-3xl border p-16 text-center space-y-3"
               style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}
             >
-              <div className="text-4xl">🔍</div>
+              <div className="text-4xl">{isJewellery ? "💎" : "🔍"}</div>
               <h3 className="font-display text-lg font-bold">No Products Found</h3>
               <p className="text-xs text-dim max-w-xs mx-auto">
                 We couldn&apos;t find any items matching your selected criteria. Try clearing some filters.
               </p>
               <Link
-                href="/shop"
-                className="inline-block px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-white"
+                href={isJewellery ? "/shop?store=jewellery" : "/shop"}
+                className="inline-block px-5 py-2.5 rounded-full text-xs font-bold text-white transition-opacity hover:opacity-90 mt-2"
                 style={{ backgroundColor: "var(--fc-primary)" }}
               >
                 Clear All Filters
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-              {products.map((p) => (
-                <ProductCard key={p.id} product={p} />
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
 
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-12 flex justify-center gap-2 text-xs">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <Link
-                  key={p}
-                  href={`/shop?${new URLSearchParams({ ...sp, page: String(p) } as Record<string, string>).toString()}`}
-                  className={`h-9 w-9 flex items-center justify-center rounded-xl font-bold border transition-all ${
-                    p === page
-                      ? "text-white shadow-md"
-                      : "hover:border-primary"
-                  }`}
-                  style={{
-                    backgroundColor: p === page ? "var(--fc-primary)" : "var(--fc-surface)",
-                    borderColor: p === page ? "var(--fc-primary)" : "var(--fc-border)",
-                  }}
-                >
-                  {p}
-                </Link>
-              ))}
+            <div className="flex items-center justify-center gap-2 pt-10">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                const queryObj = { ...sp, page: String(p) };
+                const qs = new URLSearchParams(queryObj as any).toString();
+                const isActive = p === page;
+
+                return (
+                  <Link
+                    key={p}
+                    href={`/shop?${qs}`}
+                    className={`w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all ${
+                      isActive
+                        ? "text-white shadow-sm"
+                        : "border text-dim hover:border-black"
+                    }`}
+                    style={
+                      isActive
+                        ? { backgroundColor: "var(--fc-primary)" }
+                        : { backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }
+                    }
+                  >
+                    {p}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>

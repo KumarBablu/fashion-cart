@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { sendOrderShippedEmail } from "@/lib/email/service";
 import { sendMobileSms, formatOrderShippedSms } from "@/lib/notifications/sms";
@@ -15,7 +15,22 @@ export async function POST(
   const body = await req.json().catch(() => ({}));
   const { carrierName, trackingNumber } = body;
 
-  const order = await prisma.order.update({
+  let db = getDb("garments");
+  let existing = await db.order.findUnique({ where: { id } });
+
+  if (!existing) {
+    const jwDb = getDb("jewellery");
+    existing = await jwDb.order.findUnique({ where: { id } });
+    if (existing) {
+      db = jwDb;
+    }
+  }
+
+  if (!existing) {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+
+  const order = await db.order.update({
     where: { id },
     data: {
       carrierName: carrierName || null,

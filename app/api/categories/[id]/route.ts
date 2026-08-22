@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { categorySchema } from "@/lib/validation/schemas";
 
@@ -11,8 +11,18 @@ function slugify(s: string) {
     .replace(/(^-|-$)/g, "");
 }
 
-async function getFallbackCategory(excludeId: string): Promise<string> {
-  let fallback = await prisma.category.findFirst({
+async function findStoreForCategory(categoryId: string): Promise<"garments" | "jewellery"> {
+  const inGarments = await getDb("garments").category.findUnique({
+    where: { id: categoryId },
+    select: { id: true },
+  });
+  if (inGarments) return "garments";
+  return "jewellery";
+}
+
+async function getFallbackCategory(store: "garments" | "jewellery", excludeId: string): Promise<string> {
+  const db = getDb(store);
+  let fallback = await db.category.findFirst({
     where: {
       id: { not: excludeId },
       parentId: null,
@@ -21,10 +31,10 @@ async function getFallbackCategory(excludeId: string): Promise<string> {
   });
 
   if (!fallback) {
-    fallback = await prisma.category.create({
+    fallback = await db.category.create({
       data: {
-        name: "Apparel & Couture",
-        slug: `apparel-couture-${Date.now().toString().slice(-4)}`,
+        name: store === "jewellery" ? "Fine Jewellery" : "Apparel & Couture",
+        slug: `${store === "jewellery" ? "fine-jewellery" : "apparel-couture"}-${Date.now().toString().slice(-4)}`,
         isActive: true,
       },
     });
@@ -38,6 +48,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!admin) return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
 
   const { id } = await params;
+  const store = await findStoreForCategory(id);
+  const db = getDb(store);
 
   try {
     const body = await req.json().catch(() => null);
@@ -50,7 +62,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (finalSlug) {
       finalSlug = slugify(finalSlug);
       // Check duplicate slug on another category
-      const duplicate = await prisma.category.findFirst({
+      const duplicate = await db.category.findFirst({
         where: {
           slug: finalSlug,
           id: { not: id },
@@ -60,7 +72,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       if (duplicate) {
         let counter = 1;
         while (
-          await prisma.category.findFirst({
+          await db.category.findFirst({
             where: { slug: `${finalSlug}-${counter}`, id: { not: id } },
           })
         ) {
@@ -70,7 +82,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }
     }
 
-    const category = await prisma.category.update({
+    const category = await db.category.update({
       where: { id },
       data: {
         ...parsed.data,
@@ -91,9 +103,11 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!admin) return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
 
   const { id } = await params;
+  const store = await findStoreForCategory(id);
+  const db = getDb(store);
 
   try {
-    const target = await prisma.category.findUnique({
+    const target = await db.category.findUnique({
       where: { id },
       include: {
         children: true,
@@ -109,14 +123,14 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     if (isSubcategory) {
       // Reassign all products from this subcategory to the parent category (or fallback)
-      const targetParentId = target.parentId || (await getFallbackCategory(id));
-      await prisma.product.updateMany({
+      const targetParentId = target.parentId || (await getFallbackCategory(store, id));
+      await db.product.updateMany({
         where: { categoryId: id },
         data: { categoryId: targetParentId },
       });
 
       // Now safely delete the subcategory
-      await prisma.category.delete({ where: { id } });
+      await db.category.delete({ where: { id } });
 
       return NextResponse.json({
         success: true,
@@ -125,30 +139,30 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     }
 
     // It's a parent department category:
-    const fallbackId = await getFallbackCategory(id);
+    const fallbackId = await getFallbackCategory(store, id);
     const childIds = target.children.map((c) => c.id);
 
     // 1. Reassign products in child subcategories and parent category to fallback
     if (childIds.length > 0) {
-      await prisma.product.updateMany({
+      await db.product.updateMany({
         where: { categoryId: { in: childIds } },
         data: { categoryId: fallbackId },
       });
 
       // Delete all child subcategories
-      await prisma.category.deleteMany({
+      await db.category.deleteMany({
         where: { id: { in: childIds } },
       });
     }
 
     // Reassign products attached directly to parent category
-    await prisma.product.updateMany({
+    await db.product.updateMany({
       where: { categoryId: id },
       data: { categoryId: fallbackId },
     });
 
     // Delete the parent category
-    await prisma.category.delete({ where: { id } });
+    await db.category.delete({ where: { id } });
 
     return NextResponse.json({
       success: true,

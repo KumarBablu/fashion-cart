@@ -1,5 +1,6 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { formatINR } from "@/lib/format";
 import { Prisma } from "@prisma/client";
 import DownloadCsvButton from "@/components/admin/DownloadCsvButton";
@@ -14,9 +15,15 @@ const ORDER_STATUSES = [
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; page?: string; store?: string }>;
 }) {
   const sp = await searchParams;
+  const cookieStore = await cookies();
+  const cookieStoreVal = cookieStore.get("fc_admin_store")?.value;
+
+  const store = sp.store === "jewellery" || (!sp.store && cookieStoreVal === "jewellery") ? "jewellery" : "garments";
+  const db = getDb(store);
+
   const page = Math.max(1, Number(sp.page ?? 1));
   const pageSize = 25;
 
@@ -34,14 +41,14 @@ export default async function AdminOrdersPage({
   };
 
   const [orders, total] = await Promise.all([
-    prisma.order.findMany({
+    db.order.findMany({
       where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: { user: true, payment: true },
     }),
-    prisma.order.count({ where }),
+    db.order.count({ where }),
   ]);
 
   const totalPages = Math.ceil(total / pageSize);
