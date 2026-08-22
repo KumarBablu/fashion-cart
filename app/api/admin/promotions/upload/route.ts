@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/auth/session";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import crypto from "crypto";
+import { saveImageUpload } from "@/lib/upload";
 
 export const dynamic = "force-dynamic";
 
@@ -20,22 +18,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No image file provided" }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const uploadsDir = path.join(process.cwd(), "uploads", "promotions");
-    await mkdir(uploadsDir, { recursive: true });
-
-    const ext = path.extname(file.name) || ".jpg";
-    const filename = `promo-${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
-    const filePath = path.join(uploadsDir, filename);
-
-    await writeFile(filePath, buffer);
-
-    const publicUrl = `/uploads/promotions/${filename}`;
-    return NextResponse.json({ url: publicUrl });
-  } catch (error) {
-    console.error("Error uploading promotion image:", error);
-    return NextResponse.json({ error: "Failed to upload promotional image" }, { status: 500 });
+    try {
+      const { relativePath } = await saveImageUpload(file, "products");
+      const isDataUri = relativePath.startsWith("data:");
+      const publicUrl = isDataUri ? relativePath : `/uploads/${relativePath}`;
+      return NextResponse.json({ url: publicUrl });
+    } catch (saveErr) {
+      console.warn("Falling back to direct Base64 Data URL for promotional image:", saveErr);
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const mime = file.type || "image/jpeg";
+      const base64 = buffer.toString("base64");
+      return NextResponse.json({ url: `data:${mime};base64,${base64}` });
+    }
+  } catch (error: any) {
+    console.error("Error in promotional upload route:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to process image file" },
+      { status: 500 }
+    );
   }
 }

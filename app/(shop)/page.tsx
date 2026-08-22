@@ -331,6 +331,7 @@ export default async function HomePage() {
                 fill
                 priority
                 sizes="(min-width: 1024px) 40vw, 100vw"
+                unoptimized
                 className="object-cover object-top"
               />
 
@@ -429,6 +430,7 @@ export default async function HomePage() {
                 alt={occ.title}
                 fill
                 sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                unoptimized
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/90 via-[#141416]/30 to-transparent" />
