@@ -8,6 +8,7 @@ export type DepartmentCategory = {
   id: string;
   name: string;
   slug: string;
+  imageUrl?: string | null;
   icon: string;
   tagline: string;
   bannerImage: string;
@@ -16,8 +17,43 @@ export type DepartmentCategory = {
     id: string;
     name: string;
     slug: string;
+    imageUrl?: string | null;
   }[];
 };
+
+const SUB_EDITORIAL_PRESETS: Record<string, string> = {
+  // Women
+  "women-sarees": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80",
+  "women-kurtis": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80",
+  "women-kurti": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80",
+  "women-embroidered-silk-kurtis": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80",
+  "women-dresses": "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=800&auto=format&fit=crop&q=80",
+  "women-kurta-sets": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80",
+  "women-kurtas-tunics": "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=800&auto=format&fit=crop&q=80",
+
+  // Men
+  "men-shirts": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80",
+  "men-mandarin": "https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?w=800&auto=format&fit=crop&q=80",
+  "men-t-shirts": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80",
+  "men-jeans": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800&auto=format&fit=crop&q=80",
+
+  // Western
+  "western-cocktail": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=80",
+  "western-tops": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80",
+
+  // Kids
+  "kids-wear": "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=800&auto=format&fit=crop&q=80",
+  "kids-cotton": "https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=800&auto=format&fit=crop&q=80",
+};
+
+function getSubcategoryImage(slug: string, customUrl?: string | null, parentImage?: string) {
+  if (customUrl && customUrl.trim()) return customUrl.trim();
+  const lower = slug.toLowerCase();
+  for (const [key, url] of Object.entries(SUB_EDITORIAL_PRESETS)) {
+    if (lower.includes(key) || key.includes(lower)) return url;
+  }
+  return parentImage || "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80";
+}
 
 export default function CategoryShowcase({
   departments,
@@ -40,6 +76,7 @@ export default function CategoryShowcase({
       departmentName: dept.name,
       departmentSlug: dept.slug,
       departmentIcon: dept.icon,
+      resolvedImage: getSubcategoryImage(sub.slug, sub.imageUrl, dept.bannerImage),
     }))
   );
 
@@ -61,7 +98,7 @@ export default function CategoryShowcase({
 
       {/* 👑 2. Interactive Department Hero Showcase */}
       <div className="space-y-6">
-        {/* Department Switcher Tabs */}
+        {/* Department Switcher Tabs (Zero Counts Displayed) */}
         <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
           {departments.map((dept) => {
             const isActive = activeSlug === dept.slug;
@@ -69,7 +106,7 @@ export default function CategoryShowcase({
               <button
                 key={dept.id}
                 onClick={() => setActiveSlug(dept.slug)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-300 shadow-xs cursor-pointer ${
+                className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-300 shadow-xs cursor-pointer ${
                   isActive
                     ? "bg-[#141416] text-[#C59B27] border-2 border-[#C59B27] shadow-lg scale-105"
                     : "bg-white text-[#141416] border border-[#E7DFD5] hover:bg-[#FAF8F5] hover:border-[#C59B27]"
@@ -77,25 +114,18 @@ export default function CategoryShowcase({
               >
                 <span className="text-lg">{dept.icon}</span>
                 <span className="font-display tracking-wide">{dept.name}</span>
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                    isActive ? "bg-[#C59B27] text-[#141416]" : "bg-[#F4EFEA] text-[#787C87]"
-                  }`}
-                >
-                  {dept.subcategories.length} Silhouettes
-                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Active Department Spotlight Banner & Interactive Subcategory Grid */}
+        {/* Active Department Spotlight Banner & Visual Subcategory Hero Cards */}
         {activeDepartment && (
           <div className="relative rounded-3xl overflow-hidden border-2 border-[#C59B27]/40 bg-[#141416] text-white shadow-2xl p-6 sm:p-10 lg:p-12 transition-all">
             {/* Background Editorial Lookbook Image with Vignette */}
-            <div className="absolute inset-0 opacity-30 mix-blend-luminosity pointer-events-none">
+            <div className="absolute inset-0 opacity-25 mix-blend-luminosity pointer-events-none">
               <Image
-                src={activeDepartment.bannerImage}
+                src={activeDepartment.imageUrl || activeDepartment.bannerImage}
                 alt={activeDepartment.name}
                 fill
                 unoptimized
@@ -103,7 +133,7 @@ export default function CategoryShowcase({
                 className="object-cover object-center"
               />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-[#141416] via-[#141416]/95 to-[#141416]/70 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-[#141416] via-[#141416]/95 to-[#141416]/75 pointer-events-none" />
 
             <div className="relative z-10 space-y-8">
               {/* Department Header Details */}
@@ -124,7 +154,7 @@ export default function CategoryShowcase({
                 </p>
               </div>
 
-              {/* Subcategories Visual Grid */}
+              {/* Subcategories Visual Hero Cards Grid */}
               <div className="space-y-4 pt-2">
                 <div className="flex items-center justify-between border-b border-white/15 pb-2">
                   <h4 className="text-xs font-extrabold uppercase tracking-widest text-[#C59B27]">
@@ -139,41 +169,76 @@ export default function CategoryShowcase({
                   {/* Primary Department Entry Card */}
                   <Link
                     href={`/shop?category=${activeDepartment.slug}`}
-                    className="group p-5 rounded-2xl border-2 border-[#C59B27] bg-[#C59B27] text-[#141416] hover:bg-white hover:text-[#141416] hover:border-white transition-all duration-300 shadow-xl flex items-center justify-between"
+                    className="group relative aspect-[4/3] rounded-2xl overflow-hidden border-2 border-[#C59B27] bg-[#141416] p-5 flex flex-col justify-between shadow-xl transition-all duration-300 hover:scale-102 hover:shadow-2xl"
                   >
-                    <div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider block opacity-75">
-                        Complete Department
-                      </span>
-                      <p className="text-base font-extrabold leading-tight mt-1">
-                        All {activeDepartment.name} Outfits
-                      </p>
-                    </div>
-                    <span className="text-xl font-bold group-hover:translate-x-1.5 transition-transform">
-                      →
-                    </span>
-                  </Link>
+                    <Image
+                      src={activeDepartment.imageUrl || activeDepartment.bannerImage}
+                      alt={activeDepartment.name}
+                      fill
+                      unoptimized
+                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/95 via-[#141416]/60 to-[#141416]/30 pointer-events-none" />
 
-                  {/* Individual Subcategory Cards */}
-                  {activeDepartment.subcategories.map((sub) => (
-                    <Link
-                      key={sub.id}
-                      href={`/shop?category=${sub.slug}`}
-                      className="group p-5 rounded-2xl border border-white/20 bg-white/10 hover:bg-white hover:text-[#141416] hover:border-white transition-all duration-300 shadow-md flex items-center justify-between backdrop-blur-md"
-                    >
-                      <div className="min-w-0 pr-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#C59B27] group-hover:text-[#8E6C0C] block">
-                          Silhouette
-                        </span>
-                        <p className="text-sm font-bold leading-snug truncate mt-1 text-white group-hover:text-[#141416]">
-                          {sub.name}
-                        </p>
-                      </div>
-                      <span className="text-sm font-bold text-[#C59B27] group-hover:text-[#141416] group-hover:translate-x-1.5 transition-transform shrink-0">
+                    <div className="relative z-10 flex items-center justify-between">
+                      <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-[#C59B27] text-[#141416] shadow-sm">
+                        Full Atelier
+                      </span>
+                      <span className="w-7 h-7 rounded-full bg-[#C59B27] text-[#141416] flex items-center justify-center text-xs font-black shadow-md group-hover:scale-110 transition-transform">
                         →
                       </span>
-                    </Link>
-                  ))}
+                    </div>
+
+                    <div className="relative z-10 space-y-0.5">
+                      <h5 className="font-display text-base sm:text-lg font-bold text-white leading-tight group-hover:text-[#C59B27] transition-colors">
+                        All {activeDepartment.name} Outfits
+                      </h5>
+                      <p className="text-[11px] text-[#C59B27] font-semibold">
+                        Browse Entire Department
+                      </p>
+                    </div>
+                  </Link>
+
+                  {/* Individual Subcategory Visual Hero Cards */}
+                  {activeDepartment.subcategories.map((sub) => {
+                    const subImg = getSubcategoryImage(sub.slug, sub.imageUrl, activeDepartment.bannerImage);
+                    return (
+                      <Link
+                        key={sub.id}
+                        href={`/shop?category=${sub.slug}`}
+                        className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-white/20 bg-[#141416] p-5 flex flex-col justify-between shadow-lg transition-all duration-300 hover:border-[#C59B27] hover:scale-102 hover:shadow-2xl"
+                      >
+                        <Image
+                          src={subImg}
+                          alt={sub.name}
+                          fill
+                          unoptimized
+                          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/95 via-[#141416]/50 to-[#141416]/20 pointer-events-none" />
+
+                        <div className="relative z-10 flex items-center justify-between">
+                          <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-black/60 text-[#C59B27] border border-[#C59B27]/40 backdrop-blur-md">
+                            Silhouette
+                          </span>
+                          <span className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-xs font-bold text-white group-hover:bg-[#C59B27] group-hover:text-[#141416] transition-colors">
+                            →
+                          </span>
+                        </div>
+
+                        <div className="relative z-10 space-y-0.5">
+                          <h5 className="font-display text-sm sm:text-base font-bold text-white leading-tight group-hover:text-[#C59B27] transition-colors">
+                            {sub.name}
+                          </h5>
+                          <p className="text-[10px] text-white/80 font-medium">
+                            Curated Haute Couture Look
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -200,7 +265,7 @@ export default function CategoryShowcase({
         )}
       </div>
 
-      {/* 🥻 3. Full Visual Grid of All 4 Core Departments */}
+      {/* 🥻 3. Full Visual Grid of All Core Departments */}
       <div className="space-y-6">
         <div className="flex items-center justify-between border-b border-[#E7DFD5] pb-4">
           <div>
@@ -225,10 +290,10 @@ export default function CategoryShowcase({
               key={dept.id}
               className="rounded-3xl border border-[#E7DFD5] bg-white overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group"
             >
-              {/* Department Image & Badge */}
+              {/* Department Image */}
               <div className="relative aspect-[4/3] w-full bg-[#141416] overflow-hidden">
                 <Image
-                  src={dept.bannerImage}
+                  src={dept.imageUrl || dept.bannerImage}
                   alt={dept.name}
                   fill
                   unoptimized
@@ -237,12 +302,9 @@ export default function CategoryShowcase({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/90 via-[#141416]/30 to-transparent" />
                 
-                <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+                <div className="absolute top-3 left-3">
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/90 text-[#141416] backdrop-blur-md shadow-xs">
                     {dept.icon} {dept.name}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#C59B27] text-white">
-                    {dept.subcategories.length} Edits
                   </span>
                 </div>
 

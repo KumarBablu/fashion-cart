@@ -7,6 +7,7 @@ type SubCategory = {
   id: string;
   name: string;
   slug: string;
+  imageUrl?: string | null;
   parentId: string | null;
   isActive: boolean;
   sortOrder: number;
@@ -17,6 +18,7 @@ type Category = {
   id: string;
   name: string;
   slug: string;
+  imageUrl?: string | null;
   parentId: string | null;
   isActive: boolean;
   sortOrder: number;
@@ -47,6 +49,8 @@ export default function AdminCategoriesPage() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugAuto, setSlugAuto] = useState(true);
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [parentId, setParentId] = useState<string>("");
   const [sortOrder, setSortOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
@@ -82,12 +86,52 @@ export default function AdminCategoriesPage() {
     }
   }
 
+  // Upload handler for category image
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toastError("File Too Large", "Image must be under 5MB.");
+      return;
+    }
+
+    setUploadingImage(true);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      if (dataUrl) setImageUrl(dataUrl);
+    };
+    reader.readAsDataURL(file);
+
+    const fd = new FormData();
+    fd.append("file", file);
+
+    try {
+      const res = await fetch("/api/admin/promotions/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setImageUrl(data.url);
+        success("Image Uploaded", "Hero lookbook photo ready!");
+      }
+    } catch {
+      // FileReader dataUrl retained
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
   function openNewParentModal() {
     setModalMode("NEW_PARENT");
     setEditingId(null);
     setName("");
     setSlug("");
     setSlugAuto(true);
+    setImageUrl("");
     setParentId("");
     setSortOrder(0);
     setIsActive(true);
@@ -101,6 +145,7 @@ export default function AdminCategoriesPage() {
     setName("");
     setSlug("");
     setSlugAuto(true);
+    setImageUrl("");
     setParentId(parentCatId);
     setSortOrder(0);
     setIsActive(true);
@@ -114,6 +159,7 @@ export default function AdminCategoriesPage() {
     setName(cat.name);
     setSlug(cat.slug);
     setSlugAuto(false);
+    setImageUrl(cat.imageUrl || "");
     setParentId(cat.parentId || "");
     setSortOrder(cat.sortOrder || 0);
     setIsActive(cat.isActive);
@@ -135,6 +181,7 @@ export default function AdminCategoriesPage() {
     const payload = {
       name: name.trim(),
       slug: cleanSlug,
+      imageUrl: imageUrl.trim() || null,
       parentId: parentId || null,
       sortOrder: Number(sortOrder) || 0,
       isActive,
@@ -617,6 +664,78 @@ export default function AdminCategoriesPage() {
                 <p className="text-[10px] text-slate-400 mt-1">
                   Select a parent to make this a subcategory, or choose &quot;None&quot; for a root department.
                 </p>
+              </div>
+
+              {/* Category / Subcategory Lookbook Photo */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Card / Silhouette Hero Image
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value.trim())}
+                    placeholder="https://images.unsplash.com/... or upload below"
+                    className="flex-1 text-xs font-mono px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:border-[#141416]"
+                  />
+                  <label className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer shrink-0 flex items-center gap-1.5">
+                    <span>📷</span>
+                    <span>{uploadingImage ? "Uploading…" : "Upload"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploadingImage}
+                    />
+                  </label>
+                </div>
+
+                {/* Presets */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[10px] text-slate-500 font-bold">Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl("https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80")}
+                    className="px-2 py-0.5 rounded text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
+                  >
+                    Mulberry Silk
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl("https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80")}
+                    className="px-2 py-0.5 rounded text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
+                  >
+                    Linen Shirt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl("https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=80")}
+                    className="px-2 py-0.5 rounded text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
+                  >
+                    Cocktail Gown
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl("https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=800&auto=format&fit=crop&q=80")}
+                    className="px-2 py-0.5 rounded text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
+                  >
+                    Junior Cotton
+                  </button>
+                </div>
+
+                {/* Live Preview */}
+                {imageUrl && (
+                  <div className="relative h-36 w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 mt-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imageUrl}
+                      alt="Category Preview"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Active Toggle & Sort Order */}

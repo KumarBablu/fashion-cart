@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: parsed.data.name.trim(),
         slug: finalSlug,
+        imageUrl: parsed.data.imageUrl || null,
         parentId: parsed.data.parentId || null,
         sortOrder: parsed.data.sortOrder ?? 0,
         isActive: parsed.data.isActive ?? true,

@@ -33,7 +33,7 @@ export default async function HomePage() {
       include: {
         children: {
           where: { isActive: true },
-          select: { id: true, name: true, slug: true },
+          select: { id: true, name: true, slug: true, imageUrl: true },
         },
       },
     }),
@@ -159,6 +159,7 @@ export default async function HomePage() {
       id: cat.id,
       name: cat.name,
       slug: cat.slug,
+      imageUrl: cat.imageUrl,
       icon: meta.icon,
       tagline: meta.tagline,
       bannerImage: meta.bannerImage,
@@ -167,6 +168,7 @@ export default async function HomePage() {
         id: child.id,
         name: child.name,
         slug: child.slug,
+        imageUrl: child.imageUrl,
       })),
     };
   });

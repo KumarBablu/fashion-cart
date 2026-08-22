@@ -128,6 +128,7 @@ export const categorySchema = z.object({
     .string()
     .trim()
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, hyphen-separated"),
+  imageUrl: z.string().optional().nullable().or(z.literal("")),
   parentId: z.string().optional().nullable(),
   sortOrder: z.number().int().optional(),
   isActive: z.boolean().optional(),
