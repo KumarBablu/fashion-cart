@@ -204,7 +204,7 @@ export async function createOrder(
 
   const tax = new Prisma.Decimal(0);
   const total = subtotal.sub(discount).add(deliveryCharge).add(tax);
-  const orderNumber = await generateOrderNumber();
+  const orderNumber = await generateOrderNumber(store);
 
   // Status mapping based on payment method
   const initialOrderStatus =

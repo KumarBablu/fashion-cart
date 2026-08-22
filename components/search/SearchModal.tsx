@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { formatINR } from "@/lib/format";
 
 type SearchResult = {
@@ -17,13 +17,22 @@ type SearchResult = {
   variants: { price: number | string; stockQuantity: number; colour?: string; size?: string }[];
 };
 
-const POPULAR_SEARCH_CHIPS = [
+const GARMENTS_CHIPS = [
   { label: "Silk Sarees", query: "Silk" },
   { label: "Ethnic Kurtis", query: "Kurti" },
   { label: "French Linen", query: "Linen" },
   { label: "Anarkali Gowns", query: "Anarkali" },
   { label: "Men's Denim", query: "Denim" },
   { label: "Under ₹1,999", query: "Cotton" },
+];
+
+const JEWELLERY_CHIPS = [
+  { label: "Bridal Chokers", query: "Choker" },
+  { label: "Kundan Sets", query: "Kundan" },
+  { label: "24K Gold Plated", query: "Gold" },
+  { label: "Bangles", query: "Bangle" },
+  { label: "Stud Earrings", query: "Earring" },
+  { label: "Rings", query: "Ring" },
 ];
 
 export default function SearchModal({
@@ -33,12 +42,17 @@ export default function SearchModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const isJewellery = pathname?.startsWith("/jewellery") || (typeof document !== "undefined" && document.cookie.includes("fc_store=jewellery"));
+  const activeStore = isJewellery ? "jewellery" : "garments";
+  const chips = isJewellery ? JEWELLERY_CHIPS : GARMENTS_CHIPS;
 
   useEffect(() => {
     setMounted(true);
@@ -81,7 +95,7 @@ export default function SearchModal({
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/products?q=${encodeURIComponent(query.trim())}&take=6`);
+        const res = await fetch(`/api/products?q=${encodeURIComponent(query.trim())}&take=6&store=${activeStore}`);
         if (res.ok) {
           const data = await res.json();
           setResults(data.products || []);
@@ -94,12 +108,13 @@ export default function SearchModal({
     }, 180);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, activeStore]);
 
   function handleFullSearch(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (query.trim()) {
-      router.push(`/shop?q=${encodeURIComponent(query.trim())}`);
+      const targetPath = isJewellery ? `/jewellery?q=${encodeURIComponent(query.trim())}` : `/shop?q=${encodeURIComponent(query.trim())}`;
+      router.push(targetPath);
       onClose();
     }
   }
@@ -127,7 +142,7 @@ export default function SearchModal({
         className="fixed inset-0 bg-[#141416]/75 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
       />
 
-      {/* Main Luxury Search Command Card (Comfortably positioned in upper center) */}
+      {/* Main Luxury Search Command Card */}
       <div
         className="relative w-full max-w-2xl rounded-3xl bg-white border border-[#E7DFD5] shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-200 mt-12 sm:mt-16 card-theme"
       >
@@ -155,7 +170,11 @@ export default function SearchModal({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search silk sarees, kurtis, linen shirts, fabrics, colors, sizes..."
+            placeholder={
+              isJewellery
+                ? "Search jewellery, bridal chokers, bangles, rings, earrings..."
+                : "Search silk sarees, kurtis, linen shirts, fabrics, colors, sizes..."
+            }
             className="flex-1 bg-transparent text-sm sm:text-base font-semibold text-[#141416] placeholder:text-[#787C87] outline-none border-none ring-0 shadow-none focus:outline-none focus:ring-0"
             autoComplete="off"
             spellCheck={false}
@@ -199,7 +218,7 @@ export default function SearchModal({
             <span>🔥</span> Trending:
           </span>
           <div className="flex items-center gap-1.5">
-            {POPULAR_SEARCH_CHIPS.map((chip) => (
+            {chips.map((chip) => (
               <button
                 key={chip.label}
                 type="button"
@@ -222,14 +241,18 @@ export default function SearchModal({
             /* Initial Discovery State */
             <div className="py-8 text-center space-y-2.5">
               <div className="w-12 h-12 rounded-full bg-[#FAF8F5] border border-[#E7DFD5] flex items-center justify-center text-xl mx-auto text-[#C59B27]">
-                ✨
+                {isJewellery ? "💍" : "✨"}
               </div>
               <div className="space-y-1">
                 <h4 className="font-display font-bold text-sm text-[#141416]">
-                  Search anything in our Luxury Atelier Catalog
+                  {isJewellery
+                    ? "Search our Fine Jewellery & Artisanal Masterpieces"
+                    : "Search anything in our Luxury Atelier Catalog"}
                 </h4>
                 <p className="text-xs text-[#787C87] max-w-sm mx-auto leading-relaxed">
-                  Type any garment style, pure mulberry silk sarees, breathable French linen shirts, colors, or fabrics.
+                  {isJewellery
+                    ? "Type any necklace style, Kundan choker, 24K micro-plated bangles, or gemstones."
+                    : "Type any garment style, pure mulberry silk sarees, breathable French linen shirts, colors, or fabrics."}
                 </p>
               </div>
             </div>
@@ -237,7 +260,9 @@ export default function SearchModal({
             /* Loading State */
             <div className="py-14 text-center space-y-2.5">
               <span className="w-8 h-8 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin inline-block" />
-              <p className="text-xs text-[#787C87] font-medium">Searching fine apparel catalog…</p>
+              <p className="text-xs text-[#787C87] font-medium">
+                {isJewellery ? "Searching jewellery catalogue…" : "Searching fine apparel catalog…"}
+              </p>
             </div>
           ) : results.length === 0 ? (
             /* Empty Search Results */
@@ -245,25 +270,31 @@ export default function SearchModal({
               <div className="text-3xl">🔍</div>
               <div className="space-y-1">
                 <h4 className="font-display font-bold text-sm text-[#141416]">
-                  No matching garments found for &ldquo;{query}&rdquo;
+                  {isJewellery
+                    ? `No matching jewellery found for "${query}"`
+                    : `No matching garments found for "${query}"`}
                 </h4>
                 <p className="text-xs text-[#787C87] max-w-xs mx-auto leading-relaxed">
-                  Try searching by broader terms like <span className="font-bold text-[#141416]">Saree</span>, <span className="font-bold text-[#141416]">Kurti</span>, or <span className="font-bold text-[#141416]">Linen</span>.
+                  {isJewellery
+                    ? "Try searching by Choker, Bangle, Kundan, or Ring."
+                    : "Try searching by Saree, Kurti, Linen, or Cotton."}
                 </p>
               </div>
               <Link
-                href="/shop"
+                href={isJewellery ? "/jewellery" : "/shop"}
                 onClick={onClose}
                 className="inline-block mt-2 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-colors"
               >
-                Browse Full Catalog →
+                Browse Full Collection →
               </Link>
             </div>
           ) : (
             /* Populated Search Results Grid */
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-xs text-[#787C87] px-1">
-                <span>Matching Apparel ({results.length} items found)</span>
+                <span>
+                  {isJewellery ? "Matching Jewellery" : "Matching Apparel"} ({results.length} items found)
+                </span>
                 <button
                   onClick={() => handleFullSearch()}
                   className="font-bold text-[#C59B27] hover:underline cursor-pointer flex items-center gap-1"
@@ -297,7 +328,7 @@ export default function SearchModal({
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-[10px] text-[#787C87]">
-                            Garment
+                            {isJewellery ? "Jewellery" : "Garment"}
                           </div>
                         )}
                       </div>
@@ -306,7 +337,7 @@ export default function SearchModal({
                       <div className="flex-1 min-w-0 flex flex-col justify-between">
                         <div className="space-y-0.5">
                           <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#C59B27] block truncate">
-                            {product.category?.name || "Apparel"}
+                            {product.category?.name || (isJewellery ? "Fine Jewellery" : "Apparel")}
                           </span>
                           <h5 className="text-xs font-bold text-[#141416] group-hover:text-[#C59B27] transition-colors line-clamp-1 leading-snug">
                             {product.name}
@@ -353,7 +384,7 @@ export default function SearchModal({
             onClick={() => handleFullSearch()}
             className="font-bold text-[#141416] hover:text-[#C59B27] transition-colors cursor-pointer"
           >
-            Search Full Catalog →
+            {isJewellery ? "Search Full Jewellery Maison →" : "Search Full Catalog →"}
           </button>
         </div>
       </div>

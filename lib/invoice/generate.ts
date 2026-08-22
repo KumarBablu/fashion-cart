@@ -37,7 +37,7 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   }
 
   const existing = await db.invoice.findUnique({ where: { orderId } });
-  const invoiceNumber = existing?.invoiceNumber ?? (await generateInvoiceNumber());
+  const invoiceNumber = existing?.invoiceNumber ?? (await generateInvoiceNumber(store));
   const business = await db.businessSettings.findFirst();
 
   // Create invoice record in database if not yet present

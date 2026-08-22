@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { formatINR } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -25,11 +25,40 @@ export default async function OrdersPage() {
     redirect("/login?next=/account");
   }
 
-  const orders = await prisma.order.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    include: { payment: true, items: true },
-  });
+  const [garmentsOrders, jewelleryOrders] = await Promise.all([
+    getDb("garments").order.findMany({
+      where: {
+        OR: [{ userId: user.id }, { user: { email: user.email } }],
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        payment: true,
+        items: {
+          include: {
+            product: { select: { slug: true, name: true, images: { take: 1, orderBy: { sortOrder: "asc" } } } },
+          },
+        },
+      },
+    }).catch(() => []),
+    getDb("jewellery").order.findMany({
+      where: {
+        OR: [{ userId: user.id }, { user: { email: user.email } }],
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        payment: true,
+        items: {
+          include: {
+            product: { select: { slug: true, name: true, images: { take: 1, orderBy: { sortOrder: "asc" } } } },
+          },
+        },
+      },
+    }).catch(() => []),
+  ]);
+
+  const orders = [...garmentsOrders, ...jewelleryOrders].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   if (orders.length === 0) {
     return (
@@ -39,13 +68,20 @@ export default async function OrdersPage() {
         <p className="text-xs text-dim max-w-sm mx-auto">
           You haven&apos;t placed any orders yet. Discover our latest collections and start shopping today.
         </p>
-        <Link
-          href="/shop"
-          className="inline-block px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-md"
-          style={{ backgroundColor: "var(--fc-primary)" }}
-        >
-          Start Shopping →
-        </Link>
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <Link
+            href="/garments"
+            className="inline-block px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-md bg-[#141416] hover:bg-[#25262B] transition-colors"
+          >
+            Explore Garments →
+          </Link>
+          <Link
+            href="/jewellery"
+            className="inline-block px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-md bg-[#C59B27] hover:bg-[#D4AF37] transition-colors"
+          >
+            Explore Jewellery →
+          </Link>
+        </div>
       </div>
     );
   }
@@ -61,6 +97,7 @@ export default async function OrdersPage() {
         {orders.map((order) => {
           const statusInfo = STATUS_LABEL[order.status] || { label: order.status, color: "var(--fc-text)", bg: "transparent" };
           const isPaid = order.payment?.status === "VERIFIED" || order.status === "CONFIRMED" || order.status === "DELIVERED";
+          const isJewelleryOrder = order.orderNumber.startsWith("FC-JW");
 
           return (
             <div
@@ -78,6 +115,15 @@ export default async function OrdersPage() {
                     style={{ backgroundColor: statusInfo.bg, color: statusInfo.color }}
                   >
                     {statusInfo.label}
+                  </span>
+                  <span
+                    className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider"
+                    style={{
+                      backgroundColor: isJewelleryOrder ? "rgba(197, 155, 39, 0.15)" : "rgba(20, 20, 22, 0.08)",
+                      color: isJewelleryOrder ? "#C59B27" : "var(--fc-text)",
+                    }}
+                  >
+                    {isJewelleryOrder ? "💍 Jewellery" : "👗 Garments"}
                   </span>
                 </div>
                 <p className="text-xs text-dim">
@@ -99,21 +145,20 @@ export default async function OrdersPage() {
                   {isPaid && (
                     <a
                       href={`/api/invoices/${order.id}`}
-                      download
-                      title="Download Tax Invoice"
-                      className="p-2 rounded-lg border text-xs text-dim hover:text-primary transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-full border text-xs font-semibold hover:border-primary hover:text-primary transition-colors"
                       style={{ borderColor: "var(--fc-border)" }}
                     >
-                      📥 PDF
+                      Invoice
                     </a>
                   )}
-
                   <Link
                     href={`/account/orders/${order.id}`}
-                    className="px-4 py-2 rounded-xl text-xs font-bold border hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                    style={{ borderColor: "var(--fc-border)" }}
+                    className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-white"
+                    style={{ backgroundColor: "var(--fc-primary)" }}
                   >
-                    View Details →
+                    Details →
                   </Link>
                 </div>
               </div>

@@ -815,23 +815,6 @@ export default function ProductDetailClient({
                 <p className="whitespace-pre-line text-slate-700 leading-relaxed">{product.description}</p>
               </div>
             )}
-
-            {/* Statutory Seller & Compliance Info */}
-            {(specs.seller_name || product.sellerName || specs.manufacturer_name) && (
-              <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/80 text-[11px] text-slate-500 space-y-1">
-                <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider">Marketed &amp; Supplied By:</p>
-                <p className="text-slate-600">
-                  <span className="font-semibold text-slate-800">{specs.seller_name || product.sellerName}</span>
-                  {specs.seller_license_no && <span> • FSSAI/Lic: {specs.seller_license_no}</span>}
-                </p>
-                {specs.seller_address && <p className="text-[10px] text-slate-500 leading-tight">{specs.seller_address}</p>}
-                {specs.manufacturer_name && (
-                  <p className="text-[10px] text-slate-500 pt-0.5">
-                    Manufacturer: <span className="text-slate-700">{specs.manufacturer_name}</span>
-                  </p>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Collapsible Accordions for Policies */}

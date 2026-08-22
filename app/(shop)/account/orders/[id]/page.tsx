@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { formatINR } from "@/lib/format";
@@ -24,7 +25,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         { user: { email: user.email } },
       ],
     },
-    include: { items: true, payment: true, invoice: true },
+    include: {
+      items: {
+        include: {
+          product: {
+            include: {
+              images: { take: 1, orderBy: { sortOrder: "asc" } },
+            },
+          },
+        },
+      },
+      payment: true,
+      invoice: true,
+    },
   });
 
   if (!order) {
@@ -37,7 +50,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           { user: { email: user.email } },
         ],
       },
-      include: { items: true, payment: true, invoice: true },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                images: { take: 1, orderBy: { sortOrder: "asc" } },
+              },
+            },
+          },
+        },
+        payment: true,
+        invoice: true,
+      },
     });
   }
 
@@ -55,6 +80,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   };
 
   const isPaid = order.payment?.status === "VERIFIED" || order.status === "CONFIRMED" || order.status === "DELIVERED";
+  const isJewelleryOrder = order.orderNumber.startsWith("FC-JW");
 
   return (
     <div className="space-y-6">
@@ -79,6 +105,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               }}
             >
               {order.status.replace(/_/g, " ")}
+            </span>
+            <span
+              className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider"
+              style={{
+                backgroundColor: isJewelleryOrder ? "rgba(197, 155, 39, 0.15)" : "rgba(20, 20, 22, 0.08)",
+                color: isJewelleryOrder ? "#C59B27" : "var(--fc-text)",
+              }}
+            >
+              {isJewelleryOrder ? "💍 Jewellery" : "👗 Garments"}
             </span>
           </div>
           <p className="text-xs text-dim mt-1">
@@ -115,31 +150,61 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         />
       </div>
 
-      {/* Ordered Items Table */}
+      {/* Ordered Items Table with Re-direct link to product */}
       <div className="p-6 rounded-2xl border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
         <h3 className="font-display text-base font-bold mb-3">Order Items</h3>
         <div className="divide-y" style={{ borderColor: "var(--fc-border)" }}>
-          {order.items.map((item) => (
-            <div key={item.id} className="flex flex-wrap justify-between items-center py-3 text-sm gap-2">
-              <div>
-                <p className="font-semibold">{item.productNameSnapshot}</p>
-                <p className="text-xs text-dim mt-0.5">
-                  SKU: {item.skuSnapshot} · {item.colourSnapshot} / {item.sizeSnapshot} · Qty: {item.quantity}
-                </p>
+          {order.items.map((item) => {
+            const productSlug = item.product?.slug;
+            const productImage = item.product?.images?.[0]?.imageUrl;
+
+            return (
+              <div key={item.id} className="flex flex-wrap justify-between items-center py-4 text-sm gap-3">
+                <div className="flex items-center gap-3">
+                  {productImage && (
+                    <div className="relative h-14 w-12 rounded-lg overflow-hidden border shrink-0" style={{ borderColor: "var(--fc-border)" }}>
+                      <Image
+                        src={productImage}
+                        alt={item.productNameSnapshot}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-bold text-sm" style={{ color: "var(--fc-text)" }}>
+                      {item.productNameSnapshot}
+                    </p>
+                    <p className="text-xs text-dim mt-0.5">
+                      SKU: <span className="font-mono">{item.skuSnapshot}</span> · {item.colourSnapshot} / {item.sizeSnapshot} · Qty: {item.quantity}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {productSlug && (
+                    <Link
+                      href={`/products/${productSlug}`}
+                      className="px-3 py-1.5 rounded-full border text-xs font-bold transition-all hover:bg-[#141416] hover:text-white"
+                      style={{ borderColor: "var(--fc-border)", color: "var(--fc-text)" }}
+                    >
+                      View Product →
+                    </Link>
+                  )}
+                  {order.status === "DELIVERED" && (
+                    <Link
+                      href={`/shop`}
+                      className="px-3 py-1 rounded-full border border-[#FFBA00] text-[11px] font-bold text-[#0C3B2E] bg-[#FFF7E0] hover:bg-[#FFBA00] transition-colors"
+                    >
+                      ⭐ Write Review
+                    </Link>
+                  )}
+                  <span className="font-bold text-base text-primary">{formatINR(item.total)}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                {order.status === "DELIVERED" && (
-                  <Link
-                    href={`/shop`}
-                    className="px-3 py-1 rounded-full border border-[#FFBA00] text-[11px] font-bold text-[#0C3B2E] bg-[#FFF7E0] hover:bg-[#FFBA00] transition-colors"
-                  >
-                    ⭐ Write Review
-                  </Link>
-                )}
-                <span className="font-bold">{formatINR(item.total)}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Pricing Summary */}
@@ -178,45 +243,35 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               {addr.fullName}
             </strong>
             {addr.addressLine1}
-            {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}<br />
-            {addr.city}, {addr.state} - {addr.pinCode}<br />
-            {addr.landmark ? `Landmark: ${addr.landmark}` : ""}<br />
-            Phone: {addr.mobileNumber}
+            {addr.addressLine2 && `, ${addr.addressLine2}`}
+            <br />
+            {addr.city}, {addr.state} - {addr.pinCode}
+            {addr.landmark && <span className="block mt-1">Landmark: {addr.landmark}</span>}
+            <span className="block mt-1">📞 {addr.mobileNumber}</span>
           </p>
         </div>
 
         <div className="p-6 rounded-2xl border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
-          <h3 className="font-display text-base font-bold mb-3">Payment Details</h3>
-          <div className="space-y-1.5 text-xs text-dim">
-            <p>
-              <strong className="font-semibold" style={{ color: "var(--fc-text)" }}>Method: </strong>
-              {order.paymentMethod.replace(/_/g, " ")}
-            </p>
-            <p>
-              <strong className="font-semibold" style={{ color: "var(--fc-text)" }}>Payment Status: </strong>
-              <span className="font-bold text-primary">{order.payment?.status.replace(/_/g, " ")}</span>
-            </p>
+          <h3 className="font-display text-base font-bold mb-3">Payment Information</h3>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-dim">Payment Method</span>
+              <span className="font-semibold">{order.paymentMethod.replace(/_/g, " ")}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dim">Payment Status</span>
+              <span className="font-semibold">{order.payment?.status?.replace(/_/g, " ") ?? "PENDING"}</span>
+            </div>
             {order.payment?.utrNumber && (
-              <p>
-                <strong className="font-semibold" style={{ color: "var(--fc-text)" }}>UTR / Ref No: </strong>
-                <span className="font-mono">{order.payment.utrNumber}</span>
-              </p>
+              <div className="flex justify-between">
+                <span className="text-dim">UTR / Ref Number</span>
+                <span className="font-mono font-semibold">{order.payment.utrNumber}</span>
+              </div>
             )}
-            {order.payment?.rejectionReason && (
-              <p className="text-rose-500 font-semibold">
-                Reason: {order.payment.rejectionReason}
-              </p>
-            )}
-
-            {(order.payment?.status === "PAYMENT_PENDING" || order.payment?.status === "REJECTED") && order.paymentMethod === "MANUAL_UPI" && (
-              <div className="pt-3">
-                <Link
-                  href={`/checkout/${order.id}/payment`}
-                  className="inline-block px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider text-white"
-                  style={{ backgroundColor: "var(--fc-primary)" }}
-                >
-                  {order.payment?.status === "REJECTED" ? "Resubmit Payment Proof →" : "Complete UPI Payment →"}
-                </Link>
+            {order.payment?.verifiedAt && (
+              <div className="flex justify-between">
+                <span className="text-dim">Verified At</span>
+                <span>{new Date(order.payment.verifiedAt).toLocaleDateString("en-IN")}</span>
               </div>
             )}
           </div>
