@@ -202,7 +202,6 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("utrNumber", utr.trim());
 
     try {
       const res = await fetch(`/api/payments/${data.order.payment.id}/screenshot`, {
@@ -213,11 +212,11 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
       setSubmitting(false);
 
       if (!res.ok) {
-        setError(result?.error ?? "Could not submit payment. Please verify your file and 12-digit UTR.");
+        setError(result?.error ?? "Could not upload payment screenshot. Please try again.");
         return;
       }
       setSubmitted(true);
-      success("Payment Proof Submitted! 🎉", "Admin will verify your payment shortly.");
+      success("Payment Screenshot Submitted! 🎉", "Admin will verify your payment shortly.");
       
       // Refresh order data
       if (orderId) {
@@ -640,71 +639,19 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
             )}
           </div>
 
-          {/* 12-Digit UTR / Transaction Reference Number */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label htmlFor="utr-input" className="block text-xs font-extrabold text-[#141416] dark:text-white uppercase tracking-wider">
-                2. 12-Digit UPI Ref / UTR Number <span className="text-rose-500">*</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowUtrHelper(!showUtrHelper)}
-                className="text-[10px] font-bold text-[#C59B27] hover:underline cursor-pointer flex items-center gap-1"
-              >
-                <span>ℹ️</span> Where to find UTR?
-              </button>
-            </div>
-
-            <div className="relative">
-              <input
-                id="utr-input"
-                type="text"
-                required
-                value={utr}
-                onChange={(e) => setUtr(e.target.value.replace(/[^0-9a-zA-Z]/g, ""))}
-                placeholder="e.g. 423918274910"
-                maxLength={22}
-                className="w-full px-4 py-3.5 rounded-2xl border border-[#D9D0C5] dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs sm:text-sm font-mono font-bold text-[#141416] dark:text-white outline-none focus:border-[#C59B27] focus:ring-2 focus:ring-[#C59B27]/20 shadow-2xs transition-all tracking-wider"
-              />
-              {isUtrValid && (
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                  ✓ Valid Ref
-                </div>
-              )}
-            </div>
-
-            {/* Collapsible UTR Helper */}
-            {showUtrHelper && (
-              <div className="p-3.5 rounded-2xl bg-[#FAF6EE] border border-[#E7D6A8] text-xs text-[#5A5E69] space-y-1 animate-in fade-in duration-200">
-                <p className="font-bold text-[#141416]">💡 Where is my 12-digit UTR?</p>
-                <ul className="list-disc list-inside space-y-0.5 text-[11px]">
-                  <li><strong>Google Pay</strong>: Tap transaction ➔ Look for <strong>&quot;UPI transaction ID&quot;</strong> (12 digits).</li>
-                  <li><strong>PhonePe</strong>: Tap transaction ➔ Look for <strong>&quot;UTR&quot;</strong>.</li>
-                  <li><strong>Paytm</strong>: Tap transaction ➔ Look for <strong>&quot;UPI Ref No&quot;</strong>.</li>
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {error && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 animate-in fade-in">
-              ⚠️ {error}
-            </div>
-          )}
-
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={submitting || !file || !isUtrValid}
+            disabled={submitting || !file}
             className="w-full py-4 px-6 rounded-full font-black text-xs uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-[#141416] to-[#25262B] text-[#C59B27] hover:brightness-110 active:scale-[0.99]"
           >
             {submitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />
-                <span>Logging Payment Proof…</span>
+                <span>Uploading Screenshot…</span>
               </>
             ) : (
-              <span>Submit Payment Proof for Verification →</span>
+              <span>Submit Payment Screenshot for Verification →</span>
             )}
           </button>
 

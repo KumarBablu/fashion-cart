@@ -33,24 +33,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const file = formData.get("file");
   const utrNumber = formData.get("utrNumber");
 
-  const parsedUtr = utrSubmissionSchema.safeParse({ utrNumber });
-  if (!parsedUtr.success) {
-    return NextResponse.json({ error: parsedUtr.error.issues[0]?.message }, { status: 400 });
-  }
-
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Please upload a payment screenshot." }, { status: 400 });
   }
 
-  // Prevent duplicate UTR numbers being used across different payments.
-  const duplicateUtr = await prisma.payment.findFirst({
-    where: { utrNumber: parsedUtr.data.utrNumber, id: { not: payment.id } },
-  });
-  if (duplicateUtr) {
-    return NextResponse.json(
-      { error: "This UTR / transaction number has already been submitted for another order." },
-      { status: 409 }
-    );
+  const rawUtr = typeof utrNumber === "string" && utrNumber.trim().length > 0 ? utrNumber.trim() : null;
+
+  // Prevent duplicate UTR numbers being used across different payments if provided.
+  if (rawUtr) {
+    const duplicateUtr = await prisma.payment.findFirst({
+      where: { utrNumber: rawUtr, id: { not: payment.id } },
+    });
+    if (duplicateUtr) {
+      return NextResponse.json(
+        { error: "This UTR / transaction number has already been submitted for another order." },
+        { status: 409 }
+      );
+    }
   }
 
   try {
@@ -61,7 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       where: { id: payment.id },
       data: {
         screenshotPath,
-        utrNumber: parsedUtr.data.utrNumber,
+        utrNumber: rawUtr,
         status: "UNDER_REVIEW",
         submittedAt: new Date(),
         rejectionReason: null,
@@ -74,7 +73,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
 
     // Alert admin of newly submitted payment proof
-    sendPaymentProofSubmittedAdminAlert(payment.order, parsedUtr.data.utrNumber).catch(() => null);
+    sendPaymentProofSubmittedAdminAlert(payment.order, rawUtr || "Screenshot Verification").catch(() => null);
 
     return NextResponse.json({ payment: updated });
   } catch (err) {

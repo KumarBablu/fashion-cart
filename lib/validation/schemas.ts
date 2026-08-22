@@ -61,8 +61,9 @@ export const utrSubmissionSchema = z.object({
   utrNumber: z
     .string()
     .trim()
-    .min(4, "Enter a valid UTR / transaction number")
-    .max(60),
+    .optional()
+    .nullable()
+    .or(z.literal("")),
 });
 
 export const productSchema = z.object({

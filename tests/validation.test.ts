@@ -127,9 +127,9 @@ describe("addressSchema", () => {
 });
 
 describe("utrSubmissionSchema", () => {
-  it("rejects a UTR that is too short", () => {
-    const result = utrSubmissionSchema.safeParse({ utrNumber: "12" });
-    expect(result.success).toBe(false);
+  it("accepts an empty/optional UTR", () => {
+    const result = utrSubmissionSchema.safeParse({});
+    expect(result.success).toBe(true);
   });
 
   it("accepts a plausible UTR", () => {
