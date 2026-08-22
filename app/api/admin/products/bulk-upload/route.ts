@@ -509,7 +509,7 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // 3. Resolve Product
+        // 3. Resolve Existing Product (by Product ID, Slug, SKU, or Title)
         let product: any = null;
         if (rawCustomProductId) {
           product = await prisma.product.findFirst({
@@ -518,6 +518,24 @@ export async function POST(req: NextRequest) {
         } else if (rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm")) {
           product = await prisma.product.findUnique({
             where: { slug: slugify(rawSlug) },
+          });
+        }
+
+        if (!product && rawSku) {
+          const matchedVariant = await prisma.productVariant.findFirst({
+            where: { sku: rawSku },
+            select: { productId: true },
+          });
+          if (matchedVariant) {
+            product = await prisma.product.findUnique({
+              where: { id: matchedVariant.productId },
+            });
+          }
+        }
+
+        if (!product && title) {
+          product = await prisma.product.findFirst({
+            where: { name: { equals: title, mode: "insensitive" } },
           });
         }
 
@@ -559,7 +577,7 @@ export async function POST(req: NextRequest) {
           reviewCount: reviewCountNum,
         };
 
-        // 4. Atomic Single-Query Creation (Product + Variant + Lookbook Images)
+        // 4. Atomic Single-Query Creation or In-Place Update
         const sizeCode = slugify(size || "FS").toUpperCase().slice(0, 4) || "FS";
         const finalSku = rawSku ? `${rawSku}-${rowSkuEntropy.slice(0, 3)}` : `FC-SKU-${brandCode}-${sizeCode}-${rowSkuEntropy}`;
 
@@ -599,19 +617,42 @@ export async function POST(req: NextRequest) {
           });
           productsUpdated++;
 
-          await prisma.productVariant.create({
-            data: {
+          const existingVariant = await prisma.productVariant.findFirst({
+            where: {
               productId: product.id,
-              sku: finalSku,
-              colour,
-              size,
-              price: priceNum,
-              compareAtPrice: compareNum,
-              discountPercent: discountNum,
-              stockQuantity: stockNum,
-              isActive: true,
+              OR: [
+                ...(rawSku ? [{ sku: rawSku }] : []),
+                { size: size, colour: colour },
+              ],
             },
           });
+
+          if (existingVariant) {
+            await prisma.productVariant.update({
+              where: { id: existingVariant.id },
+              data: {
+                price: priceNum,
+                compareAtPrice: compareNum,
+                discountPercent: discountNum,
+                stockQuantity: stockNum,
+                isActive: true,
+              },
+            });
+          } else {
+            await prisma.productVariant.create({
+              data: {
+                productId: product.id,
+                sku: finalSku,
+                colour,
+                size,
+                price: priceNum,
+                compareAtPrice: compareNum,
+                discountPercent: discountNum,
+                stockQuantity: stockNum,
+                isActive: true,
+              },
+            });
+          }
           variantsCreatedOrUpdated++;
 
           if (imageUrls.length > 0) {
