@@ -247,11 +247,18 @@ export default function BulkProductUploadModal({
       };
 
       setResult(finalResult);
-      success(
-        "Bulk Upload Completed 🎉",
-        `Successfully processed all ${cumulativeProcessed} rows (${cumulativeCreated} created, ${cumulativeUpdated} updated, ${cumulativeVariants} SKUs synced)!`
-      );
-      onSuccess();
+      if (cumulativeProcessed > 0) {
+        success(
+          "Bulk Upload Completed 🎉",
+          `Successfully processed ${cumulativeProcessed} rows (${cumulativeCreated} created, ${cumulativeUpdated} updated, ${cumulativeVariants} SKUs synced)!`
+        );
+        onSuccess();
+      } else {
+        toastError(
+          "Upload Incomplete",
+          "No rows were processed. Please check the error warnings below."
+        );
+      }
     } catch (err: any) {
       setUploading(false);
       console.error(err);

@@ -217,7 +217,7 @@ export default function QuickViewModal({
                     alt={displayImages[activeImage].altText || product.name}
                     fill
                     sizes="400px"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="object-cover"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs text-[#787C87]">
@@ -227,7 +227,7 @@ export default function QuickViewModal({
                 {/* HD Zoom Badge Indicator */}
                 <div className="absolute bottom-2.5 right-2.5 z-10">
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#141416]/85 backdrop-blur-md text-white border border-white/20 shadow-md">
-                    <span>🔍</span> HD Zoom
+                    <span>✨</span> Lookbook View
                   </span>
                 </div>
               </div>
@@ -263,7 +263,7 @@ export default function QuickViewModal({
                 {/* Price Row */}
                 <div className="mt-2.5 flex items-baseline gap-2.5">
                   <span className="text-2xl font-black text-[#141416]">{formatINR(price)}</span>
-                  {compareAt && (
+                  {compareAt && compareAt > price && (
                     <>
                       <span className="text-xs text-[#787C87] line-through">{formatINR(compareAt)}</span>
                       {pct && (

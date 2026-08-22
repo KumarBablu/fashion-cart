@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) {
@@ -22,15 +25,24 @@ export async function POST(req: NextRequest) {
           where: { id: { in: productIds } },
           data: { status: "ACTIVE" },
         });
-        return NextResponse.json({ success: true, count: result.count, message: `Activated ${result.count} products` });
+        return NextResponse.json({
+          success: true,
+          count: result.count,
+          message: `Activated ${result.count} products successfully.`,
+        });
       }
 
-      case "DRAFT": {
+      case "DRAFT":
+      case "INACTIVE": {
         const result = await prisma.product.updateMany({
           where: { id: { in: productIds } },
           data: { status: "DRAFT" },
         });
-        return NextResponse.json({ success: true, count: result.count, message: `Set ${result.count} products to Draft / Hidden` });
+        return NextResponse.json({
+          success: true,
+          count: result.count,
+          message: `Set ${result.count} products to Draft / Inactive.`,
+        });
       }
 
       case "ARCHIVE": {
@@ -38,7 +50,11 @@ export async function POST(req: NextRequest) {
           where: { id: { in: productIds } },
           data: { status: "ARCHIVED" },
         });
-        return NextResponse.json({ success: true, count: result.count, message: `Archived ${result.count} products` });
+        return NextResponse.json({
+          success: true,
+          count: result.count,
+          message: `Archived ${result.count} products successfully.`,
+        });
       }
 
       case "CHANGE_CATEGORY": {
@@ -49,44 +65,60 @@ export async function POST(req: NextRequest) {
           where: { id: { in: productIds } },
           data: { categoryId },
         });
-        return NextResponse.json({ success: true, count: result.count, message: `Moved ${result.count} products to category` });
+        return NextResponse.json({
+          success: true,
+          count: result.count,
+          message: `Moved ${result.count} products to new category.`,
+        });
       }
 
       case "DELETE": {
-        let deletedCount = 0;
+        // Fast, non-blocking batch set deletion across all selected product IDs
+        
+        // 1. Unlink historical order items safely
+        await prisma.orderItem.updateMany({
+          where: { productId: { in: productIds } },
+          data: { productId: null, variantId: null },
+        });
+        await prisma.orderItem.updateMany({
+          where: { variant: { productId: { in: productIds } } },
+          data: { productId: null, variantId: null },
+        });
 
-        await prisma.$transaction(async (tx) => {
-          for (const prodId of productIds) {
-            // Unlink order items safely
-            await tx.orderItem.updateMany({
-              where: { productId: prodId },
-              data: { productId: null, variantId: null },
-            });
-            await tx.orderItem.updateMany({
-              where: { variant: { productId: prodId } },
-              data: { productId: null, variantId: null },
-            });
+        // 2. Batch delete dependent child entities
+        await prisma.inventoryTransaction.deleteMany({
+          where: { variant: { productId: { in: productIds } } },
+        });
+        await prisma.cartItem.deleteMany({
+          where: {
+            OR: [
+              { productId: { in: productIds } },
+              { variant: { productId: { in: productIds } } },
+            ],
+          },
+        });
+        await prisma.wishlistItem.deleteMany({
+          where: { productId: { in: productIds } },
+        });
+        await prisma.review.deleteMany({
+          where: { productId: { in: productIds } },
+        });
+        await prisma.productImage.deleteMany({
+          where: { productId: { in: productIds } },
+        });
+        await prisma.productVariant.deleteMany({
+          where: { productId: { in: productIds } },
+        });
 
-            // Delete child relations
-            await tx.inventoryTransaction.deleteMany({ where: { variant: { productId: prodId } } });
-            await tx.cartItem.deleteMany({ where: { productId: prodId } });
-            await tx.cartItem.deleteMany({ where: { variant: { productId: prodId } } });
-            await tx.wishlistItem.deleteMany({ where: { productId: prodId } });
-            await tx.review.deleteMany({ where: { productId: prodId } });
-            await tx.productImage.deleteMany({ where: { productId: prodId } });
-            await tx.productVariant.deleteMany({ where: { productId: prodId } });
-
-            // Delete product
-            await tx.product.delete({ where: { id: prodId } });
-            deletedCount++;
-          }
+        // 3. Batch delete all selected products in 1 single query
+        const result = await prisma.product.deleteMany({
+          where: { id: { in: productIds } },
         });
 
         return NextResponse.json({
           success: true,
-          deletedCount,
-          archivedCount: 0,
-          message: `Permanently removed ${deletedCount} products from database.`,
+          deletedCount: result.count,
+          message: `Permanently removed ${result.count} products from catalog.`,
         });
       }
 

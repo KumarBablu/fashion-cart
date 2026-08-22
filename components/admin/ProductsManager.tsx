@@ -198,6 +198,25 @@ export default function ProductsManager({
     }
   }
 
+  async function updateSingleStatus(prodId: string, newStatus: "ACTIVE" | "DRAFT" | "ARCHIVED") {
+    setActionLoading(`status-${prodId}`);
+    try {
+      const res = await fetch(`/api/admin/products/${prodId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update status");
+      setProducts((prev) => prev.map((p) => (p.id === prodId ? { ...p, status: newStatus } : p)));
+      success("Status Updated 🎉", `Garment listing set to ${newStatus}`);
+    } catch (err: any) {
+      toastError("Error", err.message || "Could not update status");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   async function duplicateProduct(prodId: string) {
     setActionLoading(`dup-${prodId}`);
     try {
@@ -567,13 +586,13 @@ export default function ProductsManager({
                 >
                   {/* Top Image Container with Badges */}
                   <div>
-                    <div className="relative h-56 w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-100 group/img">
+                    <div className="relative h-56 w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-100">
                       <Image
                         src={primaryImage}
                         alt={product.name}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                        className="object-cover transition-transform duration-300 group-hover/img:scale-105"
+                        className="object-cover"
                       />
 
                       {/* Top Selection Checkbox */}
@@ -586,19 +605,24 @@ export default function ProductsManager({
                         />
                       </div>
 
-                      {/* Top Status Badge */}
+                      {/* Top Status Interactive Dropdown */}
                       <div className="absolute top-2 right-2 z-10">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-xs ${
+                        <select
+                          value={product.status}
+                          disabled={actionLoading === `status-${product.id}`}
+                          onChange={(e) => updateSingleStatus(product.id, e.target.value as "ACTIVE" | "DRAFT" | "ARCHIVED")}
+                          className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border-none shadow-md cursor-pointer focus:outline-hidden ${
                             product.status === "ACTIVE"
-                              ? "bg-emerald-600 text-white"
+                              ? "bg-emerald-600 text-white hover:bg-emerald-700"
                               : product.status === "DRAFT"
-                              ? "bg-amber-500 text-white"
-                              : "bg-slate-700 text-white"
+                              ? "bg-amber-500 text-white hover:bg-amber-600"
+                              : "bg-slate-700 text-white hover:bg-slate-800"
                           }`}
                         >
-                          {product.status}
-                        </span>
+                          <option value="ACTIVE" className="bg-slate-900 text-white">ACTIVE</option>
+                          <option value="DRAFT" className="bg-slate-900 text-white">DRAFT / INACTIVE</option>
+                          <option value="ARCHIVED" className="bg-slate-900 text-white">ARCHIVED</option>
+                        </select>
                       </div>
 
                       {/* Quick Storefront Preview Overlay Button */}
@@ -810,9 +834,22 @@ export default function ProductsManager({
                       </td>
 
                       <td className="px-3 py-3">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200">
-                          {product.status}
-                        </span>
+                        <select
+                          value={product.status}
+                          disabled={actionLoading === `status-${product.id}`}
+                          onChange={(e) => updateSingleStatus(product.id, e.target.value as "ACTIVE" | "DRAFT" | "ARCHIVED")}
+                          className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border-none shadow-xs cursor-pointer focus:outline-hidden ${
+                            product.status === "ACTIVE"
+                              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                              : product.status === "DRAFT"
+                              ? "bg-amber-500 text-white hover:bg-amber-600"
+                              : "bg-slate-700 text-white hover:bg-slate-800"
+                          }`}
+                        >
+                          <option value="ACTIVE" className="bg-slate-900 text-white">ACTIVE</option>
+                          <option value="DRAFT" className="bg-slate-900 text-white">DRAFT / INACTIVE</option>
+                          <option value="ARCHIVED" className="bg-slate-900 text-white">ARCHIVED</option>
+                        </select>
                       </td>
 
                       <td className="px-4 py-3 text-right">

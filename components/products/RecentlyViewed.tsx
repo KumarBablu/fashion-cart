@@ -55,7 +55,7 @@ export default function RecentlyViewed({ currentSlug }: { currentSlug?: string }
                   alt={item.name}
                   fill
                   sizes="60px"
-                  className="object-cover group-hover:scale-105 transition-transform"
+                  className="object-cover"
                 />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-[8px] text-slate-400">

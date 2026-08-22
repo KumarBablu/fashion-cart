@@ -118,7 +118,7 @@ export default function ProductCard({ product }: { product: CardProduct }) {
             alt={product.name}
             fill
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-cover"
           />
 
           {/* Top Badges */}
@@ -131,11 +131,6 @@ export default function ProductCard({ product }: { product: CardProduct }) {
             {isNew && !pct && (
               <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase bg-[#141416] text-white shadow-sm">
                 New
-              </span>
-            )}
-            {isLowStock && (
-              <span className="rounded-lg bg-[#873E4C] px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
-                Only {totalStock} Left
               </span>
             )}
             {!inStock && (
@@ -224,7 +219,7 @@ export default function ProductCard({ product }: { product: CardProduct }) {
                 <span className="text-sm sm:text-base font-extrabold text-[#141416]">
                   {formatINR(price)}
                 </span>
-                {compareAt && (
+                {compareAt && compareAt > price && (
                   <span className="text-xs text-[#787C87] line-through">{formatINR(compareAt)}</span>
                 )}
               </div>

@@ -436,8 +436,20 @@ export async function POST(req: NextRequest) {
 
       // 7. Price & Discounts
       const priceNum = Number(getVal(colIndex.price).replace(/[^0-9.]/g, "")) || 999;
-      const compareNum = Number(getVal(colIndex.compareAtPrice).replace(/[^0-9.]/g, "")) || null;
+      let compareNum = Number(getVal(colIndex.compareAtPrice).replace(/[^0-9.]/g, "")) || null;
       let discountNum = Number(getVal(colIndex.discountPercent).replace(/[^0-9.]/g, "")) || null;
+
+      // If discount percentage was provided in CSV, calculate original MRP
+      if (discountNum && discountNum > 0 && discountNum < 90 && (!compareNum || compareNum <= priceNum)) {
+        compareNum = Math.round(priceNum / (1 - discountNum / 100));
+      }
+
+      // If compareAtPrice is missing or equal to/less than selling price, generate a realistic luxury retail MRP (~45% markup)
+      if (!compareNum || compareNum <= priceNum) {
+        compareNum = Math.round((priceNum * 1.5) / 50) * 50 - 1;
+        if (compareNum <= priceNum) compareNum = priceNum + 499;
+      }
+
       if (!discountNum && compareNum && compareNum > priceNum) {
         discountNum = Math.round(((compareNum - priceNum) / compareNum) * 100);
       }

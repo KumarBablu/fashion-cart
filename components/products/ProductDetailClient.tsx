@@ -284,27 +284,19 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
           <div
             onClick={() => setLightboxOpen(true)}
-            onMouseEnter={() => setIsHoverZooming(true)}
-            onMouseLeave={() => setIsHoverZooming(false)}
-            onMouseMove={handleImageHoverMove}
-            className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl border border-[#E7DFD5] bg-[#F4EFEA] group shadow-sm cursor-zoom-in transition-all duration-300 hover:shadow-2xl"
-            title="Click or tap to open Fullscreen HD Studio View"
+            className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl border border-[#E7DFD5] bg-[#F4EFEA] group shadow-sm cursor-pointer transition-all duration-300 hover:shadow-xl"
+            title="Click or tap to open Fullscreen HD Studio Lookbook"
           >
             {displayImages[activeImage] ? (
               <div
                 key={activeImage}
-                className="relative h-full w-full animate-in fade-in zoom-in-98 duration-200"
+                className="relative h-full w-full animate-in fade-in duration-200"
               >
                 <Image
                   src={displayImages[activeImage].imageUrl}
                   alt={displayImages[activeImage].altText ?? product.name}
                   fill
                   sizes="(min-width: 1024px) 42vw, 100vw"
-                  style={{
-                    transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
-                    transform: isHoverZooming ? "scale(2)" : "scale(1)",
-                    transition: isHoverZooming ? "transform 0.08s ease-out" : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                  }}
                   className="object-cover"
                   priority
                 />
@@ -449,7 +441,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
               <span className="text-3xl font-extrabold text-slate-900">
                 {formatINR(selected?.price ?? 0)}
               </span>
-              {selected?.compareAtPrice && (
+              {selected?.compareAtPrice && Number(selected.compareAtPrice) > Number(selected.price) && (
                 <>
                   <span className="text-base text-slate-400 line-through">
                     {formatINR(selected.compareAtPrice)}
@@ -531,7 +523,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
             {selected ? (
               selected.stockQuantity > 0 ? (
                 <span className="text-emerald-700 flex items-center gap-1.5 font-bold">
-                  <span>✓</span> In Stock {selected.stockQuantity <= 5 ? `— Only ${selected.stockQuantity} pieces left!` : "(Ready to dispatch)"}
+                  <span>✓</span> In Stock (Ready to dispatch)
                 </span>
               ) : (
                 <span className="text-rose-600 font-bold">✕ Sold Out in this combination</span>
