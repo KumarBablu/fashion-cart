@@ -4,11 +4,35 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+type StoreStatusMap = {
+  garments: { isActive: boolean; closedMessage?: string };
+  jewellery: { isActive: boolean; closedMessage?: string };
+};
+
 export default function StoreSwitcherPill({ className = "" }: { className?: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [activeStore, setActiveStore] = useState<"garments" | "jewellery">("garments");
+  const [storeStatuses, setStoreStatuses] = useState<StoreStatusMap>({
+    garments: { isActive: true },
+    jewellery: { isActive: true },
+  });
+
+  useEffect(() => {
+    // Check public store availability
+    fetch("/api/stores/status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.stores) {
+          setStoreStatuses({
+            garments: { isActive: data.stores.garments?.isActive ?? true },
+            jewellery: { isActive: data.stores.jewellery?.isActive ?? true },
+          });
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
 
   useEffect(() => {
     if (pathname.startsWith("/jewellery") || searchParams?.get("store") === "jewellery") {
@@ -18,7 +42,6 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
       setActiveStore("garments");
       sessionStorage.setItem("fc_active_store", "garments");
     } else if (pathname.startsWith("/products")) {
-      // Check if product page container has theme-jewellery or check session
       const isThemeJewellery = document.querySelector(".theme-jewellery") !== null;
       if (isThemeJewellery) {
         setActiveStore("jewellery");
@@ -36,6 +59,8 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
   }, [pathname, searchParams]);
 
   const isJewellery = activeStore === "jewellery";
+  const isGarmentsActive = storeStatuses.garments.isActive;
+  const isJewelleryActive = storeStatuses.jewellery.isActive;
 
   return (
     <div
@@ -57,10 +82,15 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
           !isJewellery
             ? "bg-[#141416] text-[#FFFFFF] shadow-sm font-bold"
             : "text-[#D4AF37] hover:text-[#FFFFFF] hover:bg-[#0D2C22]"
-        }`}
+        } ${!isGarmentsActive ? "opacity-75" : ""}`}
       >
         <span>👗</span>
         <span className="tracking-wide">Garments</span>
+        {!isGarmentsActive && (
+          <span className="px-1.5 py-0.2 rounded-full text-[8px] bg-rose-500/20 text-rose-300 border border-rose-500/30">
+            Closed
+          </span>
+        )}
       </Link>
 
       <Link
@@ -73,10 +103,15 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
           isJewellery
             ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#061A14] shadow-sm font-extrabold"
             : "text-[#4B4E56] hover:text-[#141416] hover:bg-[#F4EFEA]"
-        }`}
+        } ${!isJewelleryActive ? "opacity-75" : ""}`}
       >
         <span>💍</span>
         <span className="tracking-wide">Jewellery</span>
+        {!isJewelleryActive && (
+          <span className="px-1.5 py-0.2 rounded-full text-[8px] bg-rose-500/20 text-rose-300 border border-rose-500/30">
+            Closed
+          </span>
+        )}
       </Link>
     </div>
   );

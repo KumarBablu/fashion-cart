@@ -1,12 +1,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/db";
+import { getStoresControl } from "@/lib/stores";
+import StoreClosedNotice from "@/components/ui/StoreClosedNotice";
 import SubcategoriesGrid from "@/components/home/SubcategoriesGrid";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const storesControl = await getStoresControl();
+  if (!storesControl.garments.isActive) {
+    return (
+      <StoreClosedNotice
+        store="garments"
+        closedMessage={storesControl.garments.closedMessage}
+      />
+    );
+  }
   const [allProducts, rootCategories, promotions, banners] = await Promise.all([
     prisma.product.findMany({
       where: {

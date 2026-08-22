@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { getStoresControl } from "@/lib/stores";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,11 @@ export const metadata = {
   description: "Curators of Indian Luxury & Modern Style. Step into our dedicated maisons of artisanal garments or handcrafted 24K micro-plated artificial fine jewellery.",
 };
 
-export default function StoreGatewayLandingPage() {
+export default async function StoreGatewayLandingPage() {
+  const storesControl = await getStoresControl();
+  const isGarmentsActive = storesControl.garments.isActive;
+  const isJewelleryActive = storesControl.jewellery.isActive;
+
   return (
     <div className="relative min-h-[92vh] flex flex-col justify-between bg-[#FAF8F5] overflow-hidden selection:bg-[#C59B27] selection:text-white">
       
@@ -90,11 +95,16 @@ export default function StoreGatewayLandingPage() {
               <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/45 to-black/20" />
               
               {/* Floating Top Badge */}
-              <div className="absolute top-5 left-5">
+              <div className="absolute top-5 left-5 flex items-center gap-2">
                 <span className="px-4 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[#141416] text-[10px] font-black uppercase tracking-[0.2em] border border-white/60 shadow-md flex items-center gap-2">
                   <span className="text-xs">👗</span>
-                  <span>Maison I • Atelier Couture</span>
+                  <span>Maison I • Haute Couture</span>
                 </span>
+                {!isGarmentsActive && (
+                  <span className="px-3 py-1 rounded-full bg-rose-600/90 text-white text-[10px] font-extrabold uppercase tracking-widest border border-rose-400/50 shadow-md">
+                    🔴 Closed
+                  </span>
+                )}
               </div>
 
               {/* Bottom Intro Text */}
@@ -142,12 +152,12 @@ export default function StoreGatewayLandingPage() {
                     Over 120+ Curated Outfits
                   </span>
                   <span className="text-[10px] text-[#787C87]">
-                    Hand-finished artisan tailoring
+                    {isGarmentsActive ? "Hand-finished artisan tailoring" : "Temporarily undergoing curation"}
                   </span>
                 </div>
 
                 <div className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#141416] group-hover:bg-[#C59B27] text-white group-hover:text-[#141416] text-xs font-extrabold uppercase tracking-wider transition-all duration-300 shadow-md group-hover:shadow-xl shrink-0">
-                  <span>Enter Garments Atelier</span>
+                  <span>{isGarmentsActive ? "Enter Garments Atelier" : "View Notice"}</span>
                   <span className="transform group-hover:translate-x-1.5 transition-transform duration-300 text-sm">
                     →
                   </span>
@@ -180,11 +190,16 @@ export default function StoreGatewayLandingPage() {
               <div className="absolute inset-0 bg-gradient-to-t from-[#061A14] via-[#061A14]/55 to-black/30" />
               
               {/* Floating Top Badge */}
-              <div className="absolute top-5 left-5">
+              <div className="absolute top-5 left-5 flex items-center gap-2">
                 <span className="px-4 py-1.5 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#061A14] text-[10px] font-black uppercase tracking-[0.2em] border border-[#F3E5AB]/50 shadow-md flex items-center gap-2">
                   <span className="text-xs">💍</span>
                   <span>Maison II • Imperial Jewels</span>
                 </span>
+                {!isJewelleryActive && (
+                  <span className="px-3 py-1 rounded-full bg-rose-600/90 text-white text-[10px] font-extrabold uppercase tracking-widest border border-rose-400/50 shadow-md">
+                    🔴 Closed
+                  </span>
+                )}
               </div>
 
               {/* Bottom Intro Text */}
@@ -232,12 +247,12 @@ export default function StoreGatewayLandingPage() {
                     24K Gold Micron Plating
                   </span>
                   <span className="text-[10px] text-[#8C6B08]">
-                    Anti-tarnish &amp; skin-friendly alloy
+                    {isJewelleryActive ? "Anti-tarnish & skin-friendly alloy" : "Temporarily undergoing curation"}
                   </span>
                 </div>
 
                 <div className="gold-jewellery-btn inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 shadow-md group-hover:shadow-xl shrink-0">
-                  <span>Enter Jewels Atelier</span>
+                  <span>{isJewelleryActive ? "Enter Jewels Atelier" : "View Notice"}</span>
                   <span className="transform group-hover:translate-x-1.5 transition-transform duration-300 text-sm">
                     →
                   </span>
@@ -248,35 +263,25 @@ export default function StoreGatewayLandingPage() {
           </Link>
 
         </div>
+      </section>
 
-        {/* 👑 Four Luxury Trust Pillars */}
-        <div className="pt-4 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-center">
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
-            <span className="text-xl">🚚</span>
-            <p className="text-xs font-bold text-[#141416]">Express Pan-India Shipping</p>
-            <p className="text-[10px] text-[#787C87]">Complimentary on all orders</p>
-          </div>
-
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
-            <span className="text-xl">💎</span>
-            <p className="text-xs font-bold text-[#141416]">24K Micro-Plated Quality</p>
-            <p className="text-[10px] text-[#787C87]">Anti-Tarnish &amp; Hypoallergenic</p>
-          </div>
-
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
-            <span className="text-xl">🔒</span>
-            <p className="text-xs font-bold text-[#141416]">Single Unified Account</p>
-            <p className="text-[10px] text-[#787C87]">1 Seamless login across all houses</p>
-          </div>
-
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
-            <span className="text-xl">💬</span>
-            <p className="text-xs font-bold text-[#141416]">Bespoke WhatsApp Concierge</p>
-            <p className="text-[10px] text-[#787C87]">Personal Bridal &amp; Festive Styling</p>
+      {/* Trust Badges Footer Bar */}
+      <footer className="border-t border-[#E7DFD5] bg-white py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#787C87]">
+          <p>© {new Date().getFullYear()} Fashion Cart. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link href="/terms" className="hover:text-[#141416] transition-colors">
+              Terms &amp; Conditions
+            </Link>
+            <Link href="/privacy-policy" className="hover:text-[#141416] transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/contact" className="hover:text-[#141416] transition-colors">
+              Concierge Contact
+            </Link>
           </div>
         </div>
-
-      </section>
+      </footer>
 
     </div>
   );

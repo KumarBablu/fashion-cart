@@ -1,4 +1,6 @@
 import { getDb } from "@/lib/db";
+import { getStoresControl } from "@/lib/stores";
+import StoreClosedNotice from "@/components/ui/StoreClosedNotice";
 import { Prisma } from "@prisma/client";
 import ProductCard from "@/components/products/ProductCard";
 import ShopFilters from "@/components/products/ShopFilters";
@@ -14,6 +16,15 @@ type SearchParams = Record<string, string | undefined>;
 export default async function ShopPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
   const store = sp.store === "jewellery" ? "jewellery" : "garments";
+  
+  const storesControl = await getStoresControl();
+  if (store === "jewellery" && !storesControl.jewellery.isActive) {
+    return <StoreClosedNotice store="jewellery" closedMessage={storesControl.jewellery.closedMessage} />;
+  }
+  if (store === "garments" && !storesControl.garments.isActive) {
+    return <StoreClosedNotice store="garments" closedMessage={storesControl.garments.closedMessage} />;
+  }
+
   const db = getDb(store);
 
   const q = sp.q?.trim();

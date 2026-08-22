@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getDb } from "@/lib/db";
+import { getStoresControl } from "@/lib/stores";
+import StoreClosedNotice from "@/components/ui/StoreClosedNotice";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import ProductCard from "@/components/products/ProductCard";
 import ProductDetailClient from "@/components/products/ProductDetailClient";
@@ -92,6 +94,20 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   if (!product) notFound();
+
+  const storesControl = await getStoresControl();
+  const isStoreActive = storesControl[activeStore].isActive;
+  if (!isStoreActive && !admin) {
+    return (
+      <div className="py-8">
+        <StoreClosedNotice
+          store={activeStore}
+          closedMessage={storesControl[activeStore].closedMessage}
+          customTitle={`Product Unavailable — ${activeStore === "jewellery" ? "Jewellery Maison" : "Garments Boutique"} is Temporarily Closed`}
+        />
+      </div>
+    );
+  }
 
   // Check if product or its category/department is hidden
   const isCategoryHidden = !product.category?.isActive || (product.category?.parent && !product.category.parent.isActive);
