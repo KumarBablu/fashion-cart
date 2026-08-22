@@ -403,259 +403,300 @@ export async function POST(req: NextRequest) {
     const sellerCache = new Map<string, string>();
     const categoryCache = new Map<string, string>();
 
-    for (let r = 1; r < rows.length; r++) {
-      const row = rows[r];
-      if (row.length === 0 || row.every((c) => !c)) continue;
+    const dataRows = rows.slice(1);
 
-      const getVal = (idx: number) => (idx >= 0 && idx < row.length ? row[idx].trim() : "");
+    await Promise.all(
+      dataRows.map(async (row, idx) => {
+        if (row.length === 0 || row.every((c) => !c)) return;
+        const r = idx + 1;
 
-      const rawTitle = getVal(colIndex.title);
-      const title = rawTitle || (isJewellery ? "Imperial Jewellery Masterpiece" : "Luxury Garment Listing");
-      const brand = getVal(colIndex.brand) || (isJewellery ? "Imperial Fine Jewels" : "Fashion Cart Atelier");
-      const rawCustomProductId = getVal(colIndex.productId);
-      const rawSlug = getVal(colIndex.slug);
-      const rawSku = getVal(colIndex.sku);
+        const getVal = (col: number) => (col >= 0 && col < row.length ? row[col].trim() : "");
 
-      const rowRandomEntropy = Math.random().toString(36).substring(2, 7).toLowerCase();
-      const rowSkuEntropy = Math.random().toString(36).substring(2, 7).toUpperCase();
+        const rawTitle = getVal(colIndex.title);
+        const title = rawTitle || (isJewellery ? "Imperial Jewellery Masterpiece" : "Luxury Garment Listing");
+        const brand = getVal(colIndex.brand) || (isJewellery ? "Imperial Fine Jewels" : "Fashion Cart Atelier");
+        const rawCustomProductId = getVal(colIndex.productId);
+        const rawSlug = getVal(colIndex.slug);
+        const rawSku = getVal(colIndex.sku);
 
-      // 1. Taxonomy & Hierarchy
-      const rawDept = getVal(colIndex.department);
-      const rawCat = getVal(colIndex.category);
-      const rawSubcat = getVal(colIndex.subcategory);
-      const { department, category, subcategory } = inferTaxonomy(title, rawDept, rawCat, rawSubcat, isJewellery);
-      const rawCategoryPath = getVal(colIndex.categoryPath);
-      const categoryPath = rawCategoryPath || [department, category, subcategory]
-        .filter(Boolean)
-        .filter((v, i, a) => a.indexOf(v) === i)
-        .join(" > ");
+        const rowRandomEntropy = Math.random().toString(36).substring(2, 7).toLowerCase();
+        const rowSkuEntropy = Math.random().toString(36).substring(2, 7).toUpperCase();
 
-      // 2. Specifications & Materials
-      const rawMaterial = getVal(colIndex.materialType);
-      const rawDesc = getVal(colIndex.description);
-      const material = extractMaterial(title, rawDesc, rawMaterial);
-      const description = sanitizeDescription(rawDesc, title, brand, material);
+        // 1. Taxonomy & Hierarchy
+        const rawDept = getVal(colIndex.department);
+        const rawCat = getVal(colIndex.category);
+        const rawSubcat = getVal(colIndex.subcategory);
+        const { department, category, subcategory } = inferTaxonomy(title, rawDept, rawCat, rawSubcat, isJewellery);
+        const rawCategoryPath = getVal(colIndex.categoryPath);
+        const categoryPath = rawCategoryPath || [department, category, subcategory]
+          .filter(Boolean)
+          .filter((v, i, a) => a.indexOf(v) === i)
+          .join(" > ");
 
-      // Cleaned Specification Attributes Object without "Attribute" prefix
-      const specifications: Record<string, string> = {};
-      const addSpec = (key: string, val: string) => {
-        if (val && val.trim()) specifications[key] = val.trim();
-      };
+        // 2. Specifications & Materials
+        const rawMaterial = getVal(colIndex.materialType);
+        const rawDesc = getVal(colIndex.description);
+        const material = extractMaterial(title, rawDesc, rawMaterial);
+        const description = sanitizeDescription(rawDesc, title, brand, material);
 
-      addSpec("product_type", getVal(colIndex.productType) || subcategory);
-      addSpec("net_qty", getVal(colIndex.netQty) || "1 Unit");
-      addSpec("material_type", material);
-      addSpec("closure_type", getVal(colIndex.closureType));
-      addSpec("colour_name", getVal(colIndex.colourName));
-      addSpec("shape", getVal(colIndex.shape));
-      addSpec("key_features", getVal(colIndex.keyFeatures));
-      addSpec("gender", getVal(colIndex.gender) || (isJewellery ? "Women" : department));
-      addSpec("occasion", getVal(colIndex.occasion) || (isJewellery ? "Bridal & Festive" : "Party & Casual"));
-      addSpec("design_type", getVal(colIndex.designType));
-      addSpec("gem_type", getVal(colIndex.gemType));
-      addSpec("plating", getVal(colIndex.plating) || (isJewellery ? "24K Micro-Plated Gold" : ""));
-      addSpec("metal_type", getVal(colIndex.metalType) || (isJewellery ? "Brass Alloy" : ""));
-      addSpec("gift", getVal(colIndex.gift) || "Velvet Gift Box Ready");
-      addSpec("country_of_origin", getVal(colIndex.countryOfOrigin) || "India 🇮🇳");
-      addSpec("search_keywords", getVal(colIndex.searchKeywords));
-      addSpec("source_url", getVal(colIndex.sourceUrl) || getVal(colIndex.productUrl));
-      addSpec("collected_at", getVal(colIndex.collectedAt) || new Date().toISOString());
-      
-      // Confidential Supplier attributes (Admin view only)
-      addSpec("seller_name", getVal(colIndex.sellerName));
-      addSpec("seller_email", getVal(colIndex.sellerEmail));
-      addSpec("seller_address", getVal(colIndex.sellerAddress));
-      addSpec("seller_license_no", getVal(colIndex.sellerLicenseNo));
-      addSpec("manufacturer_or_marketer_name", getVal(colIndex.manufacturerOrMarketerName));
-      addSpec("manufacturer_or_marketer_address", getVal(colIndex.manufacturerOrMarketerAddress));
-
-      // 3. Status & Availability
-      const statusRaw = getVal(colIndex.status).toUpperCase();
-      const status: ProductStatus =
-        statusRaw === "DRAFT"
-          ? ProductStatus.DRAFT
-          : statusRaw === "ARCHIVED"
-          ? ProductStatus.ARCHIVED
-          : ProductStatus.ACTIVE;
-
-      const availRaw = getVal(colIndex.availability).toUpperCase();
-      const availability =
-        availRaw === "OUT_OF_STOCK" || availRaw === "OUTOFSTOCK"
-          ? "OUT_OF_STOCK"
-          : "IN_STOCK";
-
-      // 4. Images (Up to 5)
-      const rawImageUrls = [
-        getVal(colIndex.imageUrl),
-        getVal(colIndex.imageUrl2),
-        getVal(colIndex.imageUrl3),
-        getVal(colIndex.imageUrl4),
-        getVal(colIndex.imageUrl5),
-      ].filter((u) => u && (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("/") || u.startsWith("data:")));
-
-      const imageUrls = rawImageUrls.map(normalizeImageUrl);
-
-      // 5. Variant Attributes
-      const rawSize = getVal(colIndex.size);
-      const size = extractSize(title, rawImageUrls, rawSize, isJewellery);
-      const colour = getVal(colIndex.colourName) || "Classic Gold";
-      const pattern = getVal(colIndex.pattern) || (isJewellery ? "Handcrafted Kundan" : "Artisan Weave");
-      const fit = getVal(colIndex.fit) || (isJewellery ? "Comfort Fit" : "Regular Fit");
-      const occasion = getVal(colIndex.occasion) || (isJewellery ? "Bridal & Festive" : "Festive & Daily Luxury");
-      const currency = getVal(colIndex.currency) || "INR";
-
-      // 6. Price & Discounts
-      const priceNum = Number(getVal(colIndex.price).replace(/[^0-9.]/g, "")) || (isJewellery ? 188 : 999);
-      let compareNum = Number(getVal(colIndex.compareAtPrice).replace(/[^0-9.]/g, "")) || null;
-      let discountNum = Number(getVal(colIndex.discountPercent).replace(/[^0-9.]/g, "")) || null;
-
-      if (discountNum && discountNum > 0 && discountNum < 90 && (!compareNum || compareNum <= priceNum)) {
-        compareNum = Math.round(priceNum / (1 - discountNum / 100));
-      }
-
-      if (!compareNum || compareNum <= priceNum) {
-        compareNum = Math.round((priceNum * 1.5) / 50) * 50 - 1;
-        if (compareNum <= priceNum) compareNum = priceNum + (isJewellery ? 299 : 499);
-      }
-
-      if (!discountNum && compareNum && compareNum > priceNum) {
-        discountNum = Math.round(((compareNum - priceNum) / compareNum) * 100);
-      }
-
-      // 7. Stock Quantity
-      const stockNum = parseInt(getVal(colIndex.stockQuantity).replace(/[^0-9]/g, "") || "50", 10) || 50;
-
-      // 8. Seller / Supplier
-      const sellerName = getVal(colIndex.sellerName);
-      const sellerEmail = getVal(colIndex.sellerEmail);
-      let sellerIdStr = `SLR-${slugify(sellerName || "VENDOR").toUpperCase().slice(0, 8)}-101`;
-
-      // 9. Ratings
-      const ratingNum = Number(getVal(colIndex.rating).replace(/[^0-9.]/g, "")) || 4.9;
-      const ratingCountNum = parseInt(getVal(colIndex.ratingCount).replace(/[^0-9]/g, "") || "24", 10);
-      const reviewCountNum = parseInt(getVal(colIndex.reviewCount).replace(/[^0-9]/g, "") || "18", 10);
-
-      try {
-        // 1. Resolve Category in active store DB
-        const assignedCategoryId = await resolveCategoryHierarchy(department, subcategory, db, categoryCache);
-
-        // 2. Resolve or Create Seller in active store DB
-        let linkedSellerId: string | null = null;
-        if (sellerName) {
-          if (sellerCache.has(sellerIdStr)) {
-            linkedSellerId = sellerCache.get(sellerIdStr)!;
-          } else {
-            let seller = await db.seller.findUnique({
-              where: { sellerId: sellerIdStr },
-            });
-
-            if (!seller) {
-              try {
-                seller = await db.seller.create({
-                  data: {
-                    sellerId: sellerIdStr,
-                    name: sellerName,
-                    email: sellerEmail || null,
-                    address: getVal(colIndex.sellerAddress) || null,
-                    url: getVal(colIndex.productUrl) || null,
-                    isActive: true,
-                  },
-                });
-                sellersCreatedOrLinked++;
-              } catch {
-                seller = await db.seller.findFirst({
-                  where: { sellerId: sellerIdStr },
-                });
-              }
-            }
-            if (seller) {
-              linkedSellerId = seller.id;
-              sellerCache.set(sellerIdStr, seller.id);
-            }
-          }
-        }
-
-        // 3. Resolve Existing Product
-        let product: any = null;
-        if (rawCustomProductId) {
-          product = await db.product.findFirst({
-            where: { productId: rawCustomProductId },
-          });
-        } else if (rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm")) {
-          product = await db.product.findUnique({
-            where: { slug: slugify(rawSlug) },
-          });
-        }
-
-        if (!product && rawSku) {
-          const matchedVariant = await db.productVariant.findFirst({
-            where: { sku: rawSku },
-            select: { productId: true },
-          });
-          if (matchedVariant) {
-            product = await db.product.findUnique({
-              where: { id: matchedVariant.productId },
-            });
-          }
-        }
-
-        if (!product && title) {
-          product = await db.product.findFirst({
-            where: { name: { equals: title, mode: "insensitive" } },
-          });
-        }
-
-        // Collision-proof Slug & ProductID
-        const baseSlug = rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm") ? slugify(rawSlug) : slugify(title);
-        const finalSlug = product ? product.slug : `${baseSlug}-${rowRandomEntropy}`;
-
-        const brandPrefix = isJewellery ? "JW" : "GAR";
-        const brandCode = slugify(brand || "FC").toUpperCase().slice(0, 4) || "FC";
-        const finalProductId = rawCustomProductId || product?.productId || `FC-${brandPrefix}-${brandCode}-${rowSkuEntropy}`;
-        const finalProductUrl = getVal(colIndex.productUrl) || `/products/${finalSlug}`;
-
-        const productData = {
-          productId: finalProductId,
-          name: title,
-          slug: finalSlug,
-          productUrl: finalProductUrl,
-          department,
-          subcategory,
-          categoryPath,
-          productType: getVal(colIndex.productType) || subcategory,
-          brand,
-          fabric: !isJewellery ? material : null,
-          material,
-          pattern,
-          fit,
-          occasion,
-          currency,
-          availability,
-          description,
-          status,
-          categoryId: assignedCategoryId,
-          sellerId: linkedSellerId,
-          sellerName: sellerName || null,
-          sellerIdentifier: sellerIdStr || null,
-          sellerUrl: finalProductUrl || null,
-          sellerEmail: sellerEmail || null,
-          averageRating: ratingNum,
-          ratingCount: ratingCountNum,
-          totalReviews: reviewCountNum,
-          reviewCount: reviewCountNum,
-          tags: getVal(colIndex.searchKeywords) || null,
-          specifications: specifications,
+        // Cleaned Specification Attributes Object without "Attribute" prefix
+        const specifications: Record<string, string> = {};
+        const addSpec = (key: string, val: string) => {
+          if (val && val.trim()) specifications[key] = val.trim();
         };
 
-        const sizeCode = slugify(size || "FS").toUpperCase().slice(0, 4) || "FS";
-        const finalSku = rawSku ? `${rawSku}-${rowSkuEntropy.slice(0, 3)}` : `FC-${brandPrefix}-${brandCode}-${sizeCode}-${rowSkuEntropy}`;
+        addSpec("product_type", getVal(colIndex.productType) || subcategory);
+        addSpec("net_qty", getVal(colIndex.netQty) || "1 Unit");
+        addSpec("material_type", material);
+        addSpec("closure_type", getVal(colIndex.closureType));
+        addSpec("colour_name", getVal(colIndex.colourName));
+        addSpec("shape", getVal(colIndex.shape));
+        addSpec("key_features", getVal(colIndex.keyFeatures));
+        addSpec("gender", getVal(colIndex.gender) || (isJewellery ? "Women" : department));
+        addSpec("occasion", getVal(colIndex.occasion) || (isJewellery ? "Bridal & Festive" : "Party & Casual"));
+        addSpec("design_type", getVal(colIndex.designType));
+        addSpec("gem_type", getVal(colIndex.gemType));
+        addSpec("plating", getVal(colIndex.plating) || (isJewellery ? "24K Micro-Plated Gold" : ""));
+        addSpec("metal_type", getVal(colIndex.metalType) || (isJewellery ? "Brass Alloy" : ""));
+        addSpec("gift", getVal(colIndex.gift) || "Velvet Gift Box Ready");
+        addSpec("country_of_origin", getVal(colIndex.countryOfOrigin) || "India 🇮🇳");
+        addSpec("search_keywords", getVal(colIndex.searchKeywords));
+        addSpec("source_url", getVal(colIndex.sourceUrl) || getVal(colIndex.productUrl));
+        addSpec("collected_at", getVal(colIndex.collectedAt) || new Date().toISOString());
+        
+        // Confidential Supplier attributes (Admin view only)
+        addSpec("seller_name", getVal(colIndex.sellerName));
+        addSpec("seller_email", getVal(colIndex.sellerEmail));
+        addSpec("seller_address", getVal(colIndex.sellerAddress));
+        addSpec("seller_license_no", getVal(colIndex.sellerLicenseNo));
+        addSpec("manufacturer_or_marketer_name", getVal(colIndex.manufacturerOrMarketerName));
+        addSpec("manufacturer_or_marketer_address", getVal(colIndex.manufacturerOrMarketerAddress));
 
-        if (!product) {
-          product = await db.product.create({
-            data: {
-              ...productData,
-              variants: {
-                create: {
+        // 3. Status & Availability
+        const statusRaw = getVal(colIndex.status).toUpperCase();
+        const status: ProductStatus =
+          statusRaw === "DRAFT"
+            ? ProductStatus.DRAFT
+            : statusRaw === "ARCHIVED"
+            ? ProductStatus.ARCHIVED
+            : ProductStatus.ACTIVE;
+
+        const availRaw = getVal(colIndex.availability).toUpperCase();
+        const availability =
+          availRaw === "OUT_OF_STOCK" || availRaw === "OUTOFSTOCK"
+            ? "OUT_OF_STOCK"
+            : "IN_STOCK";
+
+        // 4. Images (Up to 5)
+        const rawImageUrls = [
+          getVal(colIndex.imageUrl),
+          getVal(colIndex.imageUrl2),
+          getVal(colIndex.imageUrl3),
+          getVal(colIndex.imageUrl4),
+          getVal(colIndex.imageUrl5),
+        ].filter((u) => u && (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("/") || u.startsWith("data:")));
+
+        const imageUrls = rawImageUrls.map(normalizeImageUrl);
+
+        // 5. Variant Attributes
+        const rawSize = getVal(colIndex.size);
+        const size = extractSize(title, rawImageUrls, rawSize, isJewellery);
+        const colour = getVal(colIndex.colourName) || "Classic Gold";
+        const pattern = getVal(colIndex.pattern) || (isJewellery ? "Handcrafted Kundan" : "Artisan Weave");
+        const fit = getVal(colIndex.fit) || (isJewellery ? "Comfort Fit" : "Regular Fit");
+        const occasion = getVal(colIndex.occasion) || (isJewellery ? "Bridal & Festive" : "Festive & Daily Luxury");
+        const currency = getVal(colIndex.currency) || "INR";
+
+        // 6. Price & Discounts
+        const priceNum = Number(getVal(colIndex.price).replace(/[^0-9.]/g, "")) || (isJewellery ? 188 : 999);
+        let compareNum = Number(getVal(colIndex.compareAtPrice).replace(/[^0-9.]/g, "")) || null;
+        let discountNum = Number(getVal(colIndex.discountPercent).replace(/[^0-9.]/g, "")) || null;
+
+        if (discountNum && discountNum > 0 && discountNum < 90 && (!compareNum || compareNum <= priceNum)) {
+          compareNum = Math.round(priceNum / (1 - discountNum / 100));
+        }
+
+        if (!compareNum || compareNum <= priceNum) {
+          compareNum = Math.round((priceNum * 1.5) / 50) * 50 - 1;
+          if (compareNum <= priceNum) compareNum = priceNum + (isJewellery ? 299 : 499);
+        }
+
+        if (!discountNum && compareNum && compareNum > priceNum) {
+          discountNum = Math.round(((compareNum - priceNum) / compareNum) * 100);
+        }
+
+        // 7. Stock Quantity
+        const stockNum = parseInt(getVal(colIndex.stockQuantity).replace(/[^0-9]/g, "") || "50", 10) || 50;
+
+        // 8. Seller / Supplier
+        const sellerName = getVal(colIndex.sellerName);
+        const sellerEmail = getVal(colIndex.sellerEmail);
+        let sellerIdStr = `SLR-${slugify(sellerName || "VENDOR").toUpperCase().slice(0, 8)}-101`;
+
+        // 9. Ratings
+        const ratingNum = Number(getVal(colIndex.rating).replace(/[^0-9.]/g, "")) || 4.9;
+        const ratingCountNum = parseInt(getVal(colIndex.ratingCount).replace(/[^0-9]/g, "") || "24", 10);
+        const reviewCountNum = parseInt(getVal(colIndex.reviewCount).replace(/[^0-9]/g, "") || "18", 10);
+
+        try {
+          // 1. Resolve Category in active store DB (cached)
+          const assignedCategoryId = await resolveCategoryHierarchy(department, subcategory, db, categoryCache);
+
+          // 2. Resolve or Create Seller in active store DB
+          let linkedSellerId: string | null = null;
+          if (sellerName) {
+            if (sellerCache.has(sellerIdStr)) {
+              linkedSellerId = sellerCache.get(sellerIdStr)!;
+            } else {
+              let seller = await db.seller.findUnique({
+                where: { sellerId: sellerIdStr },
+              });
+
+              if (!seller) {
+                try {
+                  seller = await db.seller.create({
+                    data: {
+                      sellerId: sellerIdStr,
+                      name: sellerName,
+                      email: sellerEmail || null,
+                      address: getVal(colIndex.sellerAddress) || null,
+                      url: getVal(colIndex.productUrl) || null,
+                      isActive: true,
+                    },
+                  });
+                  sellersCreatedOrLinked++;
+                } catch {
+                  seller = await db.seller.findFirst({
+                    where: { sellerId: sellerIdStr },
+                  });
+                }
+              }
+              if (seller) {
+                linkedSellerId = seller.id;
+                sellerCache.set(sellerIdStr, seller.id);
+              }
+            }
+          }
+
+          // 3. Resolve Existing Product with Single Consolidated Query
+          const searchConditions: any[] = [];
+          if (rawCustomProductId) searchConditions.push({ productId: rawCustomProductId });
+          if (rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm")) searchConditions.push({ slug: slugify(rawSlug) });
+          if (title) searchConditions.push({ name: { equals: title, mode: "insensitive" as const } });
+
+          let product: any = null;
+          if (searchConditions.length > 0) {
+            product = await db.product.findFirst({
+              where: { OR: searchConditions },
+            });
+          }
+
+          // Collision-proof Slug & ProductID
+          const baseSlug = rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm") ? slugify(rawSlug) : slugify(title);
+          const finalSlug = product ? product.slug : `${baseSlug}-${rowRandomEntropy}`;
+
+          const brandPrefix = isJewellery ? "JW" : "GAR";
+          const brandCode = slugify(brand || "FC").toUpperCase().slice(0, 4) || "FC";
+          const finalProductId = rawCustomProductId || product?.productId || `FC-${brandPrefix}-${brandCode}-${rowSkuEntropy}`;
+          const finalProductUrl = getVal(colIndex.productUrl) || `/products/${finalSlug}`;
+
+          const productData = {
+            productId: finalProductId,
+            name: title,
+            slug: finalSlug,
+            productUrl: finalProductUrl,
+            department,
+            subcategory,
+            categoryPath,
+            productType: getVal(colIndex.productType) || subcategory,
+            brand,
+            fabric: !isJewellery ? material : null,
+            material,
+            pattern,
+            fit,
+            occasion,
+            currency,
+            availability,
+            description,
+            status,
+            categoryId: assignedCategoryId,
+            sellerId: linkedSellerId,
+            sellerName: sellerName || null,
+            sellerIdentifier: sellerIdStr || null,
+            sellerUrl: finalProductUrl || null,
+            sellerEmail: sellerEmail || null,
+            averageRating: ratingNum,
+            ratingCount: ratingCountNum,
+            totalReviews: reviewCountNum,
+            reviewCount: reviewCountNum,
+            tags: getVal(colIndex.searchKeywords) || null,
+            specifications: specifications,
+          };
+
+          const sizeCode = slugify(size || "FS").toUpperCase().slice(0, 4) || "FS";
+          const finalSku = rawSku ? `${rawSku}-${rowSkuEntropy.slice(0, 3)}` : `FC-${brandPrefix}-${brandCode}-${sizeCode}-${rowSkuEntropy}`;
+
+          if (!product) {
+            product = await db.product.create({
+              data: {
+                ...productData,
+                variants: {
+                  create: {
+                    sku: finalSku,
+                    colour,
+                    size,
+                    price: priceNum,
+                    compareAtPrice: compareNum,
+                    discountPercent: discountNum,
+                    stockQuantity: stockNum,
+                    isActive: true,
+                  },
+                },
+                images: imageUrls.length > 0 ? {
+                  createMany: {
+                    data: imageUrls.map((url, imgIdx) => ({
+                      imageUrl: url,
+                      altText: `${title} - View ${imgIdx + 1}`,
+                      sortOrder: imgIdx,
+                    })),
+                  },
+                } : undefined,
+              },
+            });
+            productsCreated++;
+            variantsCreatedOrUpdated++;
+          } else {
+            product = await db.product.update({
+              where: { id: product.id },
+              data: productData,
+            });
+            productsUpdated++;
+
+            const existingVariant = await db.productVariant.findFirst({
+              where: {
+                productId: product.id,
+                OR: [
+                  ...(rawSku ? [{ sku: rawSku }] : []),
+                  { size: size, colour: colour },
+                ],
+              },
+            });
+
+            if (existingVariant) {
+              await db.productVariant.update({
+                where: { id: existingVariant.id },
+                data: {
+                  price: priceNum,
+                  compareAtPrice: compareNum,
+                  discountPercent: discountNum,
+                  stockQuantity: stockNum,
+                  isActive: true,
+                },
+              });
+            } else {
+              await db.productVariant.create({
+                data: {
+                  productId: product.id,
                   sku: finalSku,
                   colour,
                   size,
@@ -665,84 +706,30 @@ export async function POST(req: NextRequest) {
                   stockQuantity: stockNum,
                   isActive: true,
                 },
-              },
-              images: imageUrls.length > 0 ? {
-                createMany: {
-                  data: imageUrls.map((url, imgIdx) => ({
-                    imageUrl: url,
-                    altText: `${title} - View ${imgIdx + 1}`,
-                    sortOrder: imgIdx,
-                  })),
-                },
-              } : undefined,
-            },
-          });
-          productsCreated++;
-          variantsCreatedOrUpdated++;
-        } else {
-          product = await db.product.update({
-            where: { id: product.id },
-            data: productData,
-          });
-          productsUpdated++;
+              });
+            }
+            variantsCreatedOrUpdated++;
 
-          const existingVariant = await db.productVariant.findFirst({
-            where: {
-              productId: product.id,
-              OR: [
-                ...(rawSku ? [{ sku: rawSku }] : []),
-                { size: size, colour: colour },
-              ],
-            },
-          });
-
-          if (existingVariant) {
-            await db.productVariant.update({
-              where: { id: existingVariant.id },
-              data: {
-                price: priceNum,
-                compareAtPrice: compareNum,
-                discountPercent: discountNum,
-                stockQuantity: stockNum,
-                isActive: true,
-              },
-            });
-          } else {
-            await db.productVariant.create({
-              data: {
-                productId: product.id,
-                sku: finalSku,
-                colour,
-                size,
-                price: priceNum,
-                compareAtPrice: compareNum,
-                discountPercent: discountNum,
-                stockQuantity: stockNum,
-                isActive: true,
-              },
-            });
+            if (imageUrls.length > 0) {
+              await db.productImage.createMany({
+                data: imageUrls.map((url, imgIdx) => ({
+                  productId: product.id,
+                  imageUrl: url,
+                  altText: `${title} - View ${imgIdx + 1}`,
+                  sortOrder: imgIdx,
+                })),
+                skipDuplicates: true,
+              });
+            }
           }
-          variantsCreatedOrUpdated++;
 
-          if (imageUrls.length > 0) {
-            await db.productImage.createMany({
-              data: imageUrls.map((url, imgIdx) => ({
-                productId: product.id,
-                imageUrl: url,
-                altText: `${title} - View ${imgIdx + 1}`,
-                sortOrder: imgIdx,
-              })),
-              skipDuplicates: true,
-            });
-          }
+          processedCount++;
+        } catch (err: any) {
+          console.error(`Error processing row ${r + 1} (${title}):`, err);
+          errors.push(`Row ${r + 1} (${title}): ${err.message || "Unknown error"}`);
         }
-
-        processedCount++;
-      } catch (err: any) {
-        console.error(`Error processing row ${r + 1} (${title}):`, err);
-        errors.push(`Row ${r + 1} (${title}): ${err.message || "Unknown error"}`);
-      }
-    }
+      })
+    );
 
     return NextResponse.json({
       success: true,

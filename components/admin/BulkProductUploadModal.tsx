@@ -161,8 +161,8 @@ export default function BulkProductUploadModal({
       const dataRows = allRows.slice(1);
       const totalRows = dataRows.length;
 
-      // Ultra-resilient batch size: 5 items per batch for instant response
-      const BATCH_SIZE = 5;
+      // High-performance batch size: 10 items per batch (parallelized on server)
+      const BATCH_SIZE = 10;
       const totalBatches = Math.ceil(totalRows / BATCH_SIZE);
 
       let cumulativeProcessed = 0;
@@ -171,6 +171,19 @@ export default function BulkProductUploadModal({
       let cumulativeVariants = 0;
       const accumulatedErrors: string[] = [];
 
+      // Initial progress state
+      setProgressState({
+        currentBatch: 1,
+        totalBatches,
+        percent: 0,
+        processedRows: 0,
+        totalRows,
+        productsCreated: 0,
+        productsUpdated: 0,
+        variantsCreatedOrUpdated: 0,
+        currentRange: `1 - ${Math.min(BATCH_SIZE, totalRows)}`,
+      });
+
       for (let b = 0; b < totalBatches; b++) {
         const batchStart = b * BATCH_SIZE;
         const batchEnd = Math.min((b + 1) * BATCH_SIZE, totalRows);
@@ -178,12 +191,12 @@ export default function BulkProductUploadModal({
         const batchRows = [headerRow, ...batchData];
         const batchCsv = serializeCsvRows(batchRows);
 
-        // Update live progress indicator
-        const currentPercent = Math.round(((b) / totalBatches) * 100);
+        // Update progress state before fetch
+        const startPercent = Math.round((b / totalBatches) * 100);
         setProgressState({
           currentBatch: b + 1,
           totalBatches,
-          percent: currentPercent,
+          percent: startPercent,
           processedRows: cumulativeProcessed,
           totalRows,
           productsCreated: cumulativeCreated,
@@ -214,24 +227,37 @@ export default function BulkProductUploadModal({
                 accumulatedErrors.push(...data.errors);
               }
               batchSuccess = true;
+
+              // Immediately update progress state with actual returned counts
+              const donePercent = Math.round(((b + 1) / totalBatches) * 100);
+              setProgressState({
+                currentBatch: b + 1,
+                totalBatches,
+                percent: donePercent,
+                processedRows: cumulativeProcessed,
+                totalRows,
+                productsCreated: cumulativeCreated,
+                productsUpdated: cumulativeUpdated,
+                variantsCreatedOrUpdated: cumulativeVariants,
+                currentRange: `${batchStart + 1} - ${batchEnd}`,
+              });
             } else if (attempt === 2) {
               const errMsg = data?.error || (res.status === 401 ? "Unauthorized session" : `HTTP ${res.status}`);
               accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): ${errMsg}`);
             } else {
-              await new Promise((r) => setTimeout(r, 600));
+              await new Promise((r) => setTimeout(r, 400));
             }
           } catch (batchErr: any) {
             if (attempt === 2) {
               accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): ${batchErr?.message || "Connection timeout"}`);
             } else {
-              await new Promise((r) => setTimeout(r, 600));
+              await new Promise((r) => setTimeout(r, 400));
             }
           }
         }
       }
 
       setUploading(false);
-      setProgressState(null);
 
       const finalResult = {
         success: true,
@@ -427,19 +453,23 @@ export default function BulkProductUploadModal({
               <span className="font-mono text-slate-400">Do not close window</span>
             </p>
 
-            {/* Live KPI Counters */}
-            <div className="grid grid-cols-3 gap-2 text-center pt-1 border-t border-slate-800">
+            {/* Live 4-Column KPI Counters */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center pt-2 border-t border-slate-800">
               <div className="p-2 rounded-xl bg-white/5 border border-white/10">
-                <p className="text-[9.5px] text-slate-400">Processed</p>
-                <p className="font-bold font-mono text-xs text-white">{progressState.processedRows} / {progressState.totalRows}</p>
+                <p className="text-[9.5px] text-slate-400">Total Processed</p>
+                <p className="font-bold font-mono text-sm text-white">{progressState.processedRows} <span className="text-[10px] text-slate-400">/ {progressState.totalRows}</span></p>
               </div>
               <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                <p className="text-[9.5px] text-emerald-400">Created</p>
-                <p className="font-bold font-mono text-xs text-emerald-400">{progressState.productsCreated}</p>
+                <p className="text-[9.5px] text-emerald-400">New Created</p>
+                <p className="font-bold font-mono text-sm text-emerald-400">+{progressState.productsCreated}</p>
+              </div>
+              <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                <p className="text-[9.5px] text-blue-400">Updated</p>
+                <p className="font-bold font-mono text-sm text-blue-400">{progressState.productsUpdated}</p>
               </div>
               <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <p className="text-[9.5px] text-amber-400">Variants Synced</p>
-                <p className="font-bold font-mono text-xs text-amber-400">{progressState.variantsCreatedOrUpdated}</p>
+                <p className="text-[9.5px] text-amber-400">SKUs Synced</p>
+                <p className="font-bold font-mono text-sm text-amber-400">{progressState.variantsCreatedOrUpdated}</p>
               </div>
             </div>
           </div>
