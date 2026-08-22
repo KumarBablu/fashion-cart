@@ -191,27 +191,8 @@ export default async function HomePage() {
   return (
     <div className="space-y-20 pb-24 overflow-hidden">
       
-      {/* 👑 ROW 1: Haute Couture Luxury Announcement Strip & Hero Row */}
+      {/* 👑 ROW 1: Hero Banner Row */}
       <div>
-        <div className="bg-[#141416] text-[#FAF8F5] py-2.5 px-4 text-center border-b border-[#C59B27]/40 shadow-xs">
-          <div className="mx-auto max-w-7xl flex items-center justify-center gap-4 sm:gap-8 text-[11px] sm:text-xs font-semibold tracking-wider uppercase overflow-x-auto no-scrollbar whitespace-nowrap">
-            <span className="flex items-center gap-1.5 text-[#C59B27]">
-              <span>✦</span> 100% Certified Pure Silk &amp; French Linen
-            </span>
-            <span className="hidden sm:inline text-white/30">•</span>
-            <span className="flex items-center gap-1.5 text-white/90">
-              <span>📦</span> Complimentary Express Doorstep Shipping
-            </span>
-            <span className="hidden sm:inline text-white/30">•</span>
-            <span className="flex items-center gap-1.5 text-[#C59B27]">
-              <span>⚡</span> Dispatches in 24 Hours
-            </span>
-            <span className="hidden sm:inline text-white/30">•</span>
-            <span className="flex items-center gap-1.5 text-white/90">
-              <span>💵</span> Cash on Delivery &amp; Official GST Tax Invoice
-            </span>
-          </div>
-        </div>
 
         {/* Hero Section Container */}
         <section className="relative bg-gradient-to-b from-[#FAF8F5] via-[#F4EFEA] to-[#FAF8F5] border-b border-[#E7DFD5]">
