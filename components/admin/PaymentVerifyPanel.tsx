@@ -20,6 +20,8 @@ type Payment = {
 
 export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
   const router = useRouter();
+  const [currentStatus, setCurrentStatus] = useState(payment.status);
+  const [rejectionReason, setRejectionReason] = useState(payment.rejectionReason);
   const [reason, setReason] = useState("");
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -31,34 +33,62 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
   const [rotation, setRotation] = useState(0);
 
   async function approve() {
-    setBusy(true);
+    // 1. Instant Optimistic UI Update (<10ms)
+    setCurrentStatus("VERIFIED");
     setError(null);
-    const res = await fetch(`/api/admin/payments/${payment.id}/approve`, { method: "POST" });
-    const data = await res.json();
-    setBusy(false);
-    if (!res.ok) {
-      setError(data.error);
-      return;
+    setBusy(true);
+
+    try {
+      const res = await fetch(`/api/admin/payments/${payment.id}/approve`, { method: "POST" });
+      const data = await res.json();
+      setBusy(false);
+      if (!res.ok) {
+        // Revert on error
+        setCurrentStatus(payment.status);
+        setError(data.error || "Failed to verify payment.");
+        return;
+      }
+      router.refresh();
+    } catch (err: any) {
+      setCurrentStatus(payment.status);
+      setBusy(false);
+      setError(err.message || "Network error while approving.");
     }
-    router.refresh();
   }
 
   async function reject() {
-    setBusy(true);
-    setError(null);
-    const res = await fetch(`/api/admin/payments/${payment.id}/reject`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason }),
-    });
-    const data = await res.json();
-    setBusy(false);
-    if (!res.ok) {
-      setError(data.error);
+    if (!reason.trim()) {
+      setError("Please provide a reason for rejection.");
       return;
     }
+
+    const previousStatus = currentStatus;
+    // Instant Optimistic Update
+    setCurrentStatus("REJECTED");
+    setRejectionReason(reason);
     setShowRejectForm(false);
-    router.refresh();
+    setError(null);
+    setBusy(true);
+
+    try {
+      const res = await fetch(`/api/admin/payments/${payment.id}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      setBusy(false);
+      if (!res.ok) {
+        setCurrentStatus(previousStatus);
+        setError(data.error || "Failed to reject payment.");
+        return;
+      }
+      router.refresh();
+    } catch (err: any) {
+      setCurrentStatus(previousStatus);
+      setBusy(false);
+      setError(err.message || "Network error while rejecting.");
+    }
   }
 
   function handleDownloadScreenshot() {
@@ -76,12 +106,25 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
   return (
     <div className="mt-3">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="text-xs space-y-1.5">
+        <div className="text-xs space-y-2">
           <Row label="Amount Payable" value={formatINR(payment.amount)} />
-          <Row label="UTR / Ref No" value={payment.utrNumber ?? "—"} />
-          <Row label="Payment Status" value={payment.status.replace(/_/g, " ")} />
+          <Row label="UTR / Ref No" value={payment.utrNumber ?? "—"} isMono />
+          <div className="flex justify-between items-center py-1">
+            <span className="text-dim">Payment Status</span>
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider transition-all duration-200 ${
+                currentStatus === "VERIFIED"
+                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                  : currentStatus === "REJECTED"
+                  ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                  : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+              }`}
+            >
+              {currentStatus.replace(/_/g, " ")}
+            </span>
+          </div>
           <Row label="Submitted" value={payment.submittedAt ? new Date(payment.submittedAt).toLocaleString("en-IN") : "—"} />
-          {payment.rejectionReason && <Row label="Rejection reason" value={payment.rejectionReason} />}
+          {rejectionReason && <Row label="Rejection reason" value={rejectionReason} isDanger />}
 
           {/* Quick Invoice & Label Action Links */}
           {orderIdentifier && (
@@ -104,71 +147,74 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
           )}
         </div>
 
-        {/* Payment Screenshot Preview Box */}
+        {/* Screenshot View Area with Lightbox Triggers */}
         <div>
           {payment.screenshotPath ? (
             <div className="space-y-2">
               <div
                 onClick={() => setIsZoomOpen(true)}
-                className="group relative aspect-[3/4] max-h-72 w-full overflow-hidden rounded-2xl border border-line bg-slate-100 cursor-zoom-in shadow-xs transition-all hover:border-primary hover:shadow-md"
+                className="group relative h-48 w-full cursor-zoom-in overflow-hidden rounded-2xl border border-line bg-surface/50 shadow-inner"
               >
                 <Image
                   src={payment.screenshotPath}
-                  alt="Payment screenshot proof"
+                  alt="Customer submitted payment screenshot"
                   fill
-                  unoptimized
-                  className="object-contain p-1 transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 640px) 100vw, 300px"
+                  className="object-contain transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs gap-1">
-                  <span>🔍</span> Click to Zoom &amp; Inspect
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
+                  <span className="rounded-full bg-black/75 px-3 py-1.5 text-[11px] font-bold text-white opacity-0 backdrop-blur-xs transition-opacity group-hover:opacity-100 flex items-center gap-1">
+                    🔍 Click to Inspect Full Zoom
+                  </span>
                 </div>
               </div>
 
-              {/* Action Buttons for Screenshot */}
-              <div className="flex items-center gap-2">
+              <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setIsZoomOpen(true)}
-                  className="flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center gap-1"
+                  className="flex-1 rounded-xl border border-line py-1.5 text-[11px] font-semibold hover:bg-surface flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer"
                 >
-                  <span>🔍</span> Full Zoom
+                  🔍 Full Zoom
                 </button>
                 <button
                   type="button"
                   onClick={handleDownloadScreenshot}
-                  className="flex-1 py-1.5 px-3 rounded-lg border text-[11px] font-bold text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center gap-1"
+                  className="flex-1 rounded-xl border border-line py-1.5 text-[11px] font-semibold hover:bg-surface flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer"
                 >
-                  <span>📥</span> Download
+                  📥 Download
                 </button>
               </div>
             </div>
           ) : (
-            <p className="text-xs text-dim italic">No screenshot submitted yet.</p>
+            <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-line text-xs text-dim">
+              No screenshot uploaded yet
+            </div>
           )}
         </div>
       </div>
 
       {error && <p className="mt-3 text-xs text-rose-500 font-semibold">{error}</p>}
 
-      {payment.status === "UNDER_REVIEW" && (
+      {currentStatus === "UNDER_REVIEW" && (
         <div className="mt-4 flex flex-wrap gap-2.5">
           <button
             disabled={busy}
             onClick={approve}
-            className="rounded-full bg-emerald-600 px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 transition-all"
+            className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50"
           >
-            {busy ? "Processing…" : "✓ Approve Payment"}
+            {busy ? "✓ Verifying…" : "✓ Approve Payment"}
           </button>
           {!showRejectForm ? (
             <button
               disabled={busy}
               onClick={() => setShowRejectForm(true)}
-              className="rounded-full border border-rose-500 px-4 py-2 text-xs font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-500/10 transition-colors"
+              className="rounded-full border border-rose-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-500/10 active:scale-95 transition-all cursor-pointer"
             >
               ✕ Reject Payment
             </button>
           ) : (
-            <div className="flex w-full gap-2 mt-2">
+            <div className="flex w-full gap-2 mt-2 animate-in fade-in">
               <input
                 placeholder="Reason for rejection (e.g. Invalid UTR, wrong amount)"
                 value={reason}
@@ -178,19 +224,34 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
               <button
                 disabled={busy}
                 onClick={reject}
-                className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700 disabled:opacity-50"
+                className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
               >
                 Confirm Reject
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowRejectForm(false)}
+                className="rounded-xl border border-line px-3 py-2 text-xs font-bold text-dim hover:text-text"
+              >
+                Cancel
               </button>
             </div>
           )}
         </div>
       )}
 
-      {payment.status === "VERIFIED" && (
-        <p className="mt-4 text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-          <span>✓</span> Payment verified — order confirmed and ready for dispatch.
-        </p>
+      {currentStatus === "VERIFIED" && (
+        <div className="mt-4 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 animate-in fade-in">
+          <span className="text-base">✨</span>
+          <span>Payment Verified &amp; Confirmed — order is ready for dispatch with Tax Invoice.</span>
+        </div>
+      )}
+
+      {currentStatus === "REJECTED" && (
+        <div className="mt-4 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs font-bold text-rose-800 dark:text-rose-300 flex items-center gap-2 animate-in fade-in">
+          <span className="text-base">⚠️</span>
+          <span>Payment Rejected — customer notified to resubmit corrected UTR / payment proof.</span>
+        </div>
       )}
 
       {/* Full-Screen Zoom Lightbox Modal */}
@@ -199,28 +260,28 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
           <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
             <button
               onClick={() => setZoomScale((s) => Math.min(s + 0.3, 3))}
-              className="p-2.5 rounded-full bg-white/20 text-white hover:bg-white/30 text-sm font-bold backdrop-blur-xs"
+              className="p-2.5 rounded-full bg-white/20 text-white hover:bg-white/30 text-sm font-bold backdrop-blur-xs cursor-pointer active:scale-90"
               title="Zoom In"
             >
               ➕
             </button>
             <button
               onClick={() => setZoomScale((s) => Math.max(s - 0.3, 0.5))}
-              className="p-2.5 rounded-full bg-white/20 text-white hover:bg-white/30 text-sm font-bold backdrop-blur-xs"
+              className="p-2.5 rounded-full bg-white/20 text-white hover:bg-white/30 text-sm font-bold backdrop-blur-xs cursor-pointer active:scale-90"
               title="Zoom Out"
             >
               ➖
             </button>
             <button
               onClick={() => setRotation((r) => (r + 90) % 360)}
-              className="p-2.5 rounded-full bg-white/20 text-white hover:bg-white/30 text-sm font-bold backdrop-blur-xs"
+              className="p-2.5 rounded-full bg-white/20 text-white hover:bg-white/30 text-sm font-bold backdrop-blur-xs cursor-pointer active:scale-90"
               title="Rotate 90°"
             >
               ⟳
             </button>
             <button
               onClick={handleDownloadScreenshot}
-              className="px-3.5 py-2 rounded-full bg-[#FFBA00] text-[#0C3B2E] text-xs font-bold shadow-md hover:bg-[#EAA800]"
+              className="px-3.5 py-2 rounded-full bg-[#FFBA00] text-[#0C3B2E] text-xs font-bold shadow-md hover:bg-[#EAA800] cursor-pointer active:scale-95"
               title="Download Screenshot"
             >
               📥 Download
@@ -231,7 +292,7 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
                 setZoomScale(1);
                 setRotation(0);
               }}
-              className="p-2.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 text-sm font-bold"
+              className="p-2.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 text-sm font-bold cursor-pointer active:scale-90"
               title="Close"
             >
               ✕
@@ -239,20 +300,17 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
           </div>
 
           <div
-            className="relative max-h-[88vh] max-w-[88vw] overflow-auto flex items-center justify-center"
-            onClick={(e) => e.stopPropagation()}
+            className="relative max-h-[85vh] max-w-[85vw] overflow-hidden rounded-2xl transition-transform duration-200"
+            style={{
+              transform: `scale(${zoomScale}) rotate(${rotation}deg)`,
+            }}
           >
-            <img
+            <Image
               src={payment.screenshotPath}
-              alt="Full resolution payment screenshot"
-              style={{
-                transform: `scale(${zoomScale}) rotate(${rotation}deg)`,
-                transition: "transform 0.2s ease-out",
-                maxHeight: "85vh",
-                maxWidth: "85vw",
-                objectFit: "contain",
-              }}
-              className="rounded-lg shadow-2xl"
+              alt="Zoomed payment screenshot preview"
+              width={800}
+              height={1000}
+              className="max-h-[85vh] w-auto rounded-2xl object-contain"
             />
           </div>
         </div>
@@ -261,11 +319,11 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, isMono = false, isDanger = false }: { label: string; value: string; isMono?: boolean; isDanger?: boolean }) {
   return (
-    <div className="flex justify-between border-b border-line pb-1.5 last:border-0">
+    <div className="flex justify-between py-0.5">
       <span className="text-dim">{label}</span>
-      <span className="font-semibold text-right">{value}</span>
+      <span className={`font-semibold ${isMono ? "font-mono" : ""} ${isDanger ? "text-rose-600" : ""}`}>{value}</span>
     </div>
   );
 }

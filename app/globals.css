@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 /*
-  Fashion Cart — Atelier Noir & Champagne Royal Gold Luxury Garment Theme
+  Fashion Cart — Atelier Noir & Champagne Royal Gold Luxury Theme
   Palette:
-  - #141416 : Obsidian Noir / Caviar Black (Brand Primary, Headings, Deep Panels & Luxury Framing)
+  - #141416 : Obsidian Noir / Caviar Black (Brand Primary, Deep Panels & Luxury Framing)
   - #C59B27 : Imperial Champagne Gold (Regal Action Buttons, Accents, Rating Stars & Badges)
-  - #873E4C : Parisian Rose Plum / Velvet Cashmere (Fashion Badges, Seasonal Highlights & Warmth)
-  - #557A68 : Sage Laurel (Organic Fabric & Natural Cotton Badges)
+  - #873E4C : Parisian Rose Plum / Velvet Cashmere (Fashion Badges, Highlights & Warmth)
+  - #557A68 : Sage Laurel (Organic Fabric Badges)
   - #FAF8F5 : Silk Alabaster (Clean Gallery Canvas Background)
   - #FFFFFF : Crisp Pure White (Card Surfaces & Floating Modules)
 */
@@ -89,14 +89,23 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Fast Fluid Interactive Feedback on all clickable elements */
+button, a, [role="button"], input[type="submit"], input[type="button"] {
+  transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.14s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+button:active:not(:disabled), [role="button"]:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
 /* Smooth Page Load Animation */
 main {
-  animation: pageFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pageFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes pageFadeIn {
   from {
-    opacity: 0.85;
+    opacity: 0.92;
     transform: translateY(2px);
   }
   to {
@@ -126,15 +135,15 @@ main {
   border: 1px solid var(--fc-border);
   border-radius: 1.5rem;
   box-shadow: 0 4px 16px -2px rgba(20, 20, 22, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
 }
 
 .glass-card:hover, .card-theme:hover {
   border-color: #C59B27;
-  box-shadow: 0 14px 34px -4px rgba(20, 20, 22, 0.12);
-  transform: translateY(-3px);
+  box-shadow: 0 12px 30px -4px rgba(20, 20, 22, 0.1);
+  transform: translateY(-2.5px);
 }
 
 /* Champagne Royal Gold Action Button */
@@ -143,7 +152,7 @@ main {
   color: #FFFFFF !important;
   font-weight: 800;
   box-shadow: 0 4px 16px rgba(197, 155, 39, 0.35);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glossy-btn:hover, .gold-btn:hover, .btn-primary:hover {
@@ -159,7 +168,7 @@ main {
   color: #FFFFFF !important;
   font-weight: 700;
   box-shadow: 0 4px 16px rgba(20, 20, 22, 0.2);
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .forest-btn:hover, .noir-btn:hover {
@@ -178,7 +187,7 @@ main {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
@@ -188,7 +197,7 @@ main {
 
 @keyframes floatSlow {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-5px); }
 }
 
 @keyframes shimmer {
@@ -196,125 +205,62 @@ main {
   100% { background-position: 200% 0; }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+@keyframes bounceSubtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
-.animate-slide-up {
-  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-float {
   animation: floatSlow 4s ease-in-out infinite;
 }
 
-/* Card Hover Lift */
-.card-lift {
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+.animate-bounce-subtle {
+  animation: bounceSubtle 2.5s ease-in-out infinite;
 }
 
-.card-lift:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 36px -6px rgba(12, 59, 46, 0.12), 0 0 0 1px rgba(187, 138, 82, 0.3);
-}
-
-/* Image Zoom on Container Hover */
-.img-zoom {
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.group:hover .img-zoom {
-  transform: scale(1.06);
-}
-
-/* Interactive Click Feedback */
-button:active, .interactive-click:active {
-  transform: scale(0.97) !important;
-}
-
-/* Pulse Beacon */
-@keyframes pulse-dot-sunshine {
-  0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 4px #FFBA00); }
-  50% { opacity: 0.4; transform: scale(1.25); filter: drop-shadow(0 0 12px #FFBA00); }
-}
-
+/* Pulse Dot */
 .pulse-dot {
-  animation: pulse-dot-sunshine 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulseGold 2s infinite;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-}
-::-webkit-scrollbar-track {
-  background: #FAF8F5;
-}
-::-webkit-scrollbar-thumb {
-  background: #D8D2C5;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #BB8A52;
+@keyframes pulseGold {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
 }
 
-/* Focus outline */
-*:focus-visible {
-  outline: 2px solid #FFBA00;
-  outline-offset: 2px;
-}
-
-/* Strict Clean Print Media Styles - Print ONLY the Receipt Document */
-@media print {
-  @page {
-    margin: 8mm;
-    size: A4 portrait;
-  }
-
-  html, body {
-    background: #FFFFFF !important;
-    color: #000000 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    min-height: auto !important;
-  }
-
-  /* Hide entire page elements by default */
-  header, footer, nav, aside, .print-hidden, [class*="print:hidden"], #announcement-bar, #brand-intro-splash, [role="banner"], [role="navigation"] {
-    display: none !important;
-  }
-
-  /* Isolate only the receipt card */
-  #invoice-receipt-card {
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    background: #FFFFFF !important;
-  }
+/* Luxury Gold Text Gradient */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #F3E5AB 0%, #C59B27 50%, #8E6C0C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
 }
 
 /* ==========================================================================
-   IMPERIAL FINE JEWELLERY THEME (Royal Emerald, 24K Gold & Velvet Obsidian)
+   THEME: IMPERIAL FINE JEWELLERY (EMERALD & 24K POLKI GOLD)
    ========================================================================== */
 
 .theme-jewellery {
   --fc-bg: #FCFAF6;
-  --fc-bg-subtle: #F6EFE6;
+  --fc-bg-subtle: #F4EFE6;
   --fc-surface: #FFFFFF;
   --fc-border: #E8DECE;
   --fc-border-hover: #D4AF37;
   
   --fc-primary: #061A14;
-  --fc-primary-hover: #0B2B21;
-  --fc-primary-fg: #FFFFFF;
+  --fc-primary-hover: #0D2C22;
+  --fc-primary-fg: #F3E5AB;
   
   --fc-accent: #D4AF37;
-  --fc-accent-hover: #B8860B;
+  --fc-accent-hover: #B3860F;
   --fc-accent-fg: #061A14;
   
   --fc-gold: #D4AF37;
@@ -334,7 +280,7 @@ button:active, .interactive-click:active {
   letter-spacing: 0.03em;
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 4px 18px rgba(212, 175, 55, 0.38) !important;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .gold-jewellery-btn:hover, .theme-jewellery .gold-btn:hover, .theme-jewellery .btn-primary:hover {
@@ -351,7 +297,7 @@ button:active, .interactive-click:active {
   border: 1px solid rgba(212, 175, 55, 0.3);
   font-weight: 700;
   box-shadow: 0 4px 16px rgba(6, 26, 20, 0.25);
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .emerald-btn:hover {
@@ -367,15 +313,15 @@ button:active, .interactive-click:active {
   background: #FFFFFF;
   border: 1px solid #E8DECE;
   border-radius: 1.5rem;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
 }
 
 .jewellery-card:hover {
   border-color: #D4AF37;
-  box-shadow: 0 16px 36px -6px rgba(6, 26, 20, 0.12), 0 0 0 1px rgba(212, 175, 55, 0.35);
-  transform: translateY(-4px);
+  box-shadow: 0 14px 32px -6px rgba(6, 26, 20, 0.12), 0 0 0 1px rgba(212, 175, 55, 0.35);
+  transform: translateY(-3px);
 }
 
 /* Shimmer Gold Text */
@@ -385,5 +331,3 @@ button:active, .interactive-click:active {
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
-
-
