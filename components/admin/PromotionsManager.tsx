@@ -2,11 +2,25 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useToast } from "@/components/providers/ToastProvider";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
-import ProductImageLightbox from "@/components/products/ProductImageLightbox";
 
-type Promotion = {
+export type BannerItem = {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  badge?: string | null;
+  linkUrl?: string | null;
+  imageUrl?: string | null;
+  buttonText?: string | null;
+  position: string; // "HERO", "OCCASION", "PROMO_BAR"
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+};
+
+export type PromotionItem = {
   id: string;
   title: string;
   subtitle?: string | null;
@@ -22,8 +36,6 @@ type Promotion = {
   showOnGuest: boolean;
   delayMinutes: number;
   sortOrder: number;
-  startDate?: string | null;
-  endDate?: string | null;
   createdAt: string;
 };
 
@@ -43,938 +55,874 @@ const PLACEMENT_LABELS: Record<string, { label: string; icon: string }> = {
 };
 
 export default function PromotionsManager() {
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [activeTab, setActiveTab] = useState<"OCCASIONS" | "HERO" | "PROMOTIONS">("OCCASIONS");
+  const [banners, setBanners] = useState<BannerItem[]>([]);
+  const [promotions, setPromotions] = useState<PromotionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [filterPlacement, setFilterPlacement] = useState<string>("ALL");
-  const [filterStatus, setFilterStatus] = useState<string>("ALL");
 
-  // Create / Edit Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [previewLightbox, setPreviewLightbox] = useState<{
-    isOpen: boolean;
-    images: { imageUrl: string; altText?: string | null }[];
-    productName: string;
-  }>({
-    isOpen: false,
-    images: [],
-    productName: "",
+  // Banner Modal State (Hero / Occasion)
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<BannerItem | null>(null);
+  const [bannerForm, setBannerForm] = useState({
+    title: "",
+    subtitle: "",
+    badge: "",
+    linkUrl: "/shop",
+    imageUrl: "",
+    buttonText: "Explore Outfits",
+    position: "OCCASION",
+    isActive: true,
+    sortOrder: 0,
   });
 
-  // Form State
-  const [formTitle, setFormTitle] = useState("");
-  const [formSubtitle, setFormSubtitle] = useState("");
-  const [formBadgeText, setFormBadgeText] = useState("");
-  const [formImageUrl, setFormImageUrl] = useState("");
-  const [formCtaText, setFormCtaText] = useState("Shop Now");
-  const [formCtaUrl, setFormCtaUrl] = useState("/shop");
-  const [formDiscountCode, setFormDiscountCode] = useState("");
-  const [formPlacement, setFormPlacement] = useState<Promotion["placement"]>("TOP_BANNER");
-  const [formTheme, setFormTheme] = useState<Promotion["theme"]>("FESTIVE_GOLD");
-  const [formIsActive, setFormIsActive] = useState(true);
-  const [formShowOnLogin, setFormShowOnLogin] = useState(false);
-  const [formShowOnGuest, setFormShowOnGuest] = useState(true);
-  const [formDelayMinutes, setFormDelayMinutes] = useState(0);
-  const [formSortOrder, setFormSortOrder] = useState(0);
+  // Promo Modal State
+  const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+  const [editingPromo, setEditingPromo] = useState<PromotionItem | null>(null);
+  const [promoForm, setPromoForm] = useState({
+    title: "",
+    subtitle: "",
+    badgeText: "FESTIVE OFFER",
+    imageUrl: "",
+    ctaText: "Shop Collection",
+    ctaUrl: "/shop",
+    discountCode: "",
+    placement: "TOP_BANNER" as PromotionItem["placement"],
+    theme: "FESTIVE_GOLD" as PromotionItem["theme"],
+    isActive: true,
+    showOnLogin: false,
+    showOnGuest: true,
+    delayMinutes: 0,
+    sortOrder: 0,
+  });
+
+  const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const { success, error } = useToast();
 
   useEffect(() => {
-    loadPromotions();
+    loadAllData();
   }, []);
 
-  useEffect(() => {
-    if (isModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isModalOpen]);
-
-  async function loadPromotions() {
+  async function loadAllData() {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/promotions");
-      if (res.ok) {
-        const data = await res.json();
-        setPromotions(data.promotions || []);
-      } else {
-        error("Failed to load promotions");
+      const [bRes, pRes] = await Promise.all([
+        fetch("/api/admin/banners"),
+        fetch("/api/admin/promotions"),
+      ]);
+
+      if (bRes.ok) {
+        const bData = await bRes.json();
+        setBanners(bData.banners || []);
+      }
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        setPromotions(pData.promotions || []);
       }
     } catch {
-      error("Network error while loading promotions");
+      error("Network error while loading marketing settings");
     } finally {
       setLoading(false);
     }
   }
 
-  function openCreateModal() {
-    setEditingPromo(null);
-    setFormTitle("");
-    setFormSubtitle("");
-    setFormBadgeText("FESTIVE OFFER");
-    setFormImageUrl("");
-    setFormCtaText("Shop Collection");
-    setFormCtaUrl("/shop");
-    setFormDiscountCode("");
-    setFormPlacement("TOP_BANNER");
-    setFormTheme("FESTIVE_GOLD");
-    setFormIsActive(true);
-    setFormShowOnLogin(false);
-    setFormShowOnGuest(true);
-    setFormDelayMinutes(0);
-    setFormSortOrder(0);
-    setIsModalOpen(true);
+  const occasions = banners.filter((b) => b.position === "OCCASION");
+  const heroes = banners.filter((b) => b.position === "HERO");
+
+  // ===================== BANNER ACTIONS (Occasion & Hero) =====================
+
+  function openCreateBannerModal(position: "OCCASION" | "HERO") {
+    setEditingBanner(null);
+    setBannerForm({
+      title: position === "OCCASION" ? "Festive Royal Silk Edit" : "Timeless Elegance. Effortless Style.",
+      subtitle: position === "OCCASION" ? "Handwoven Varanasi Sarees & Kurtis" : "Discover masterfully tailored garments...",
+      badge: position === "OCCASION" ? "Artisanal Craft" : "The 2026 Signature Luxury Edit",
+      linkUrl: "/shop",
+      imageUrl: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80",
+      buttonText: position === "OCCASION" ? "Explore Outfits" : "Explore New Season →",
+      position,
+      isActive: true,
+      sortOrder: (position === "OCCASION" ? occasions.length : heroes.length) + 1,
+    });
+    setIsBannerModalOpen(true);
   }
 
-  function openEditModal(promo: Promotion) {
-    setEditingPromo(promo);
-    setFormTitle(promo.title);
-    setFormSubtitle(promo.subtitle || "");
-    setFormBadgeText(promo.badgeText || "");
-    setFormImageUrl(promo.imageUrl || "");
-    setFormCtaText(promo.ctaText || "Shop Now");
-    setFormCtaUrl(promo.ctaUrl || "/shop");
-    setFormDiscountCode(promo.discountCode || "");
-    setFormPlacement(promo.placement);
-    setFormTheme(promo.theme);
-    setFormIsActive(promo.isActive);
-    setFormShowOnLogin(promo.showOnLogin);
-    setFormShowOnGuest(promo.showOnGuest);
-    setFormDelayMinutes(promo.delayMinutes || 0);
-    setFormSortOrder(promo.sortOrder);
-    setIsModalOpen(true);
+  function openEditBannerModal(banner: BannerItem) {
+    setEditingBanner(banner);
+    setBannerForm({
+      title: banner.title,
+      subtitle: banner.subtitle || "",
+      badge: banner.badge || "",
+      linkUrl: banner.linkUrl || "/shop",
+      imageUrl: banner.imageUrl || "",
+      buttonText: banner.buttonText || "Shop Now",
+      position: banner.position,
+      isActive: banner.isActive,
+      sortOrder: banner.sortOrder,
+    });
+    setIsBannerModalOpen(true);
   }
 
-  async function handleToggleStatus(promo: Promotion) {
-    const newStatus = !promo.isActive;
-    try {
-      const res = await fetch(`/api/admin/promotions/${promo.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: newStatus }),
-      });
-      if (res.ok) {
-        setPromotions((prev) =>
-          prev.map((p) => (p.id === promo.id ? { ...p, isActive: newStatus } : p))
-        );
-        success(`Promotion ${newStatus ? "activated" : "deactivated"} successfully!`);
-      } else {
-        error("Failed to toggle status");
-      }
-    } catch {
-      error("Network error updating promotion");
-    }
-  }
-
-  async function handleDelete(id: string, title: string) {
-    if (!confirm(`Are you sure you want to permanently delete the promotion "${title}"?`)) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/admin/promotions/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setPromotions((prev) => prev.filter((p) => p.id !== id));
-        success("Promotion deleted successfully!");
-      } else {
-        error("Failed to delete promotion");
-      }
-    } catch {
-      error("Error deleting promotion");
-    }
-  }
-
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingImage(true);
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      const src = event.target?.result as string;
-      if (!src) {
-        setUploadingImage(false);
-        error("Failed to read image file");
-        return;
-      }
-
-      // Automatically compress image if needed using HTML5 canvas
-      const img = new (window as any).Image();
-      img.src = src;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const maxDim = 1200;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height && width > maxDim) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        } else if (height > maxDim) {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
-          setFormImageUrl(compressedDataUrl);
-        } else {
-          setFormImageUrl(src);
-        }
-        setUploadingImage(false);
-        success("Poster Image Ready! 🖼️");
-      };
-
-      img.onerror = () => {
-        setFormImageUrl(src);
-        setUploadingImage(false);
-        success("Poster Image Ready! 🖼️");
-      };
-    };
-
-    reader.onerror = () => {
-      setUploadingImage(false);
-      error("Failed to read image file");
-    };
-
-    reader.readAsDataURL(file);
-  }
-
-  async function resolveImageUrl(rawUrl: string) {
-    const trimmed = rawUrl.trim();
-    if (!trimmed) return;
-
-    const normalized = normalizeImageUrl(trimmed);
-    if (normalized !== trimmed) {
-      setFormImageUrl(normalized);
-      return;
-    }
-
-    if (trimmed.includes("share.google") || trimmed.includes("google.com/imgres") || trimmed.includes("drive.google.com")) {
-      try {
-        const res = await fetch(`/api/admin/promotions/resolve-image?url=${encodeURIComponent(trimmed)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.resolvedUrl && data.resolvedUrl !== trimmed) {
-            setFormImageUrl(data.resolvedUrl);
-          }
-        }
-      } catch {}
-    }
-  }
-
-  async function handleSave(e: React.FormEvent) {
+  async function handleSaveBanner(e: React.FormEvent) {
     e.preventDefault();
-    if (!formTitle.trim()) {
-      error("Promotion title is required");
+    if (!bannerForm.title.trim()) {
+      error("Please enter a title");
       return;
     }
 
     setSaving(true);
-    let finalImageUrl = formImageUrl.trim();
-
-    // Auto-resolve Google Image / Share links before saving
-    if (finalImageUrl.includes("share.google") || finalImageUrl.includes("google.com/imgres")) {
-      try {
-        const res = await fetch(`/api/admin/promotions/resolve-image?url=${encodeURIComponent(finalImageUrl)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.resolvedUrl) {
-            finalImageUrl = data.resolvedUrl;
-          }
-        }
-      } catch {}
-    }
-
-    const payload = {
-      title: formTitle,
-      subtitle: formSubtitle,
-      badgeText: formBadgeText,
-      imageUrl: finalImageUrl,
-      ctaText: formCtaText,
-      ctaUrl: formCtaUrl,
-      discountCode: formDiscountCode,
-      placement: formPlacement,
-      theme: formTheme,
-      isActive: formIsActive,
-      showOnLogin: formShowOnLogin,
-      showOnGuest: formShowOnGuest,
-      delayMinutes: formDelayMinutes,
-      sortOrder: formSortOrder,
-    };
-
     try {
-      if (editingPromo) {
-        const res = await fetch(`/api/admin/promotions/${editingPromo.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) {
-          success("Promotion updated successfully!");
-          setIsModalOpen(false);
-          loadPromotions();
-        } else {
-          error("Failed to update promotion");
-        }
-      } else {
-        const res = await fetch("/api/admin/promotions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) {
-          success("New promotion created successfully!");
-          setIsModalOpen(false);
-          loadPromotions();
-        } else {
-          error("Failed to create promotion");
-        }
-      }
-    } catch {
-      error("Network error while saving promotion");
+      const url = editingBanner ? `/api/admin/banners/${editingBanner.id}` : "/api/admin/banners";
+      const method = editingBanner ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bannerForm),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save banner");
+
+      success("Saved Successfully 🎉", data.message || "Updated banner settings");
+      setIsBannerModalOpen(false);
+      loadAllData();
+    } catch (err: any) {
+      error(err.message || "Error saving banner");
     } finally {
       setSaving(false);
     }
   }
 
-  const filtered = promotions.filter((p) => {
-    const matchSearch =
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      (p.subtitle && p.subtitle.toLowerCase().includes(search.toLowerCase())) ||
-      (p.discountCode && p.discountCode.toLowerCase().includes(search.toLowerCase())) ||
-      (p.badgeText && p.badgeText.toLowerCase().includes(search.toLowerCase()));
+  async function handleToggleBannerStatus(banner: BannerItem) {
+    try {
+      const res = await fetch(`/api/admin/banners/${banner.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !banner.isActive }),
+      });
+      if (res.ok) {
+        setBanners((prev) =>
+          prev.map((b) => (b.id === banner.id ? { ...b, isActive: !banner.isActive } : b))
+        );
+        success("Status Updated", `Item is now ${!banner.isActive ? "Active" : "Hidden"}`);
+      }
+    } catch {
+      error("Failed to update status");
+    }
+  }
 
-    const matchPlacement = filterPlacement === "ALL" || p.placement === filterPlacement;
-    const matchStatus =
-      filterStatus === "ALL" ||
-      (filterStatus === "ACTIVE" && p.isActive) ||
-      (filterStatus === "INACTIVE" && !p.isActive);
+  async function handleDeleteBanner(id: string, title: string) {
+    if (!confirm(`Permanently delete "${title}"?`)) return;
+    try {
+      const res = await fetch(`/api/admin/banners/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setBanners((prev) => prev.filter((b) => b.id !== id));
+        success("Deleted", `Removed "${title}"`);
+      }
+    } catch {
+      error("Failed to delete banner");
+    }
+  }
 
-    return matchSearch && matchPlacement && matchStatus;
-  });
+  // ===================== PROMOTION ACTIONS =====================
+
+  function openCreatePromoModal() {
+    setEditingPromo(null);
+    setPromoForm({
+      title: "",
+      subtitle: "",
+      badgeText: "FESTIVE OFFER",
+      imageUrl: "",
+      ctaText: "Shop Collection",
+      ctaUrl: "/shop",
+      discountCode: "",
+      placement: "TOP_BANNER",
+      theme: "FESTIVE_GOLD",
+      isActive: true,
+      showOnLogin: false,
+      showOnGuest: true,
+      delayMinutes: 0,
+      sortOrder: promotions.length + 1,
+    });
+    setIsPromoModalOpen(true);
+  }
+
+  function openEditPromoModal(promo: PromotionItem) {
+    setEditingPromo(promo);
+    setPromoForm({
+      title: promo.title,
+      subtitle: promo.subtitle || "",
+      badgeText: promo.badgeText || "",
+      imageUrl: promo.imageUrl || "",
+      ctaText: promo.ctaText || "Shop Now",
+      ctaUrl: promo.ctaUrl || "/shop",
+      discountCode: promo.discountCode || "",
+      placement: promo.placement,
+      theme: promo.theme,
+      isActive: promo.isActive,
+      showOnLogin: promo.showOnLogin,
+      showOnGuest: promo.showOnGuest,
+      delayMinutes: promo.delayMinutes,
+      sortOrder: promo.sortOrder,
+    });
+    setIsPromoModalOpen(true);
+  }
+
+  async function handleSavePromo(e: React.FormEvent) {
+    e.preventDefault();
+    if (!promoForm.title.trim()) {
+      error("Please enter a title");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const url = editingPromo ? `/api/admin/promotions/${editingPromo.id}` : "/api/admin/promotions";
+      const method = editingPromo ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(promoForm),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save promotion");
+
+      success("Saved Successfully 🎉", "Promotion updated");
+      setIsPromoModalOpen(false);
+      loadAllData();
+    } catch (err: any) {
+      error(err.message || "Error saving promotion");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleTogglePromoStatus(promo: PromotionItem) {
+    try {
+      const res = await fetch(`/api/admin/promotions/${promo.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !promo.isActive }),
+      });
+      if (res.ok) {
+        setPromotions((prev) =>
+          prev.map((p) => (p.id === promo.id ? { ...p, isActive: !promo.isActive } : p))
+        );
+        success("Status Updated", `Promotion is now ${!promo.isActive ? "Active" : "Hidden"}`);
+      }
+    } catch {
+      error("Failed to update status");
+    }
+  }
+
+  async function handleDeletePromo(id: string, title: string) {
+    if (!confirm(`Permanently delete "${title}"?`)) return;
+    try {
+      const res = await fetch(`/api/admin/promotions/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setPromotions((prev) => prev.filter((p) => p.id !== id));
+        success("Deleted", `Removed "${title}"`);
+      }
+    } catch {
+      error("Failed to delete promotion");
+    }
+  }
+
+  // Upload handler for banner image
+  async function handleBannerFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const fd = new FormData();
+    fd.append("file", file);
+
+    try {
+      const res = await fetch("/api/admin/promotions/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setBannerForm((prev) => ({ ...prev, imageUrl: data.url }));
+        success("Image Uploaded 🎉", "New lookbook image ready!");
+      } else {
+        throw new Error(data.error || "Upload failed");
+      }
+    } catch (err: any) {
+      error(err.message || "Image upload failed");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#E8E3D8] pb-5">
+    <div className="h-full flex flex-col min-h-0 space-y-6">
+      {/* Top Header */}
+      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FBF4E2] border border-[#C59B27]/40 text-xs font-bold uppercase tracking-wider text-[#8E6C0C]">
-            <span>✨ Festive Offers &amp; Marketing Engine</span>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">✨</span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Homepage, Hero &amp; Occasions Studio
+            </h1>
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#0C3B2E] mt-1.5">
-            Promotions &amp; Announcement Banners
-          </h1>
-          <p className="text-xs text-[#5B7A6F] mt-0.5">
-            Manage top announcement bars, time-delayed login poster popups, discount flash banners, and customer reach.
+          <p className="text-xs text-slate-500 mt-1">
+            Dedicated visual control for Hero lookbook models, Shop by Occasion curation, and festive banners.
           </p>
         </div>
 
+        <div className="flex items-center gap-2">
+          {activeTab === "OCCASIONS" && (
+            <button
+              onClick={() => openCreateBannerModal("OCCASION")}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#C59B27] hover:bg-[#B0881E] text-white transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
+            >
+              <span>+</span> Add New Occasion
+            </button>
+          )}
+          {activeTab === "HERO" && (
+            <button
+              onClick={() => openCreateBannerModal("HERO")}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#141416] hover:bg-neutral-800 text-white transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
+            >
+              <span>+</span> Create Hero Slide
+            </button>
+          )}
+          {activeTab === "PROMOTIONS" && (
+            <button
+              onClick={openCreatePromoModal}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#C59B27] hover:bg-[#B0881E] text-white transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
+            >
+              <span>+</span> Create Announcement / Popup
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main Studio Tabs */}
+      <div className="shrink-0 flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar">
         <button
-          onClick={openCreateModal}
-          className="px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#0C3B2E] text-white hover:bg-[#145241] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+          onClick={() => setActiveTab("OCCASIONS")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "OCCASIONS"
+              ? "bg-[#141416] text-white shadow-md"
+              : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+          }`}
         >
-          <span>＋</span> Create Promotion
+          <span>👗</span>
+          <span>Shop by Occasion</span>
+          <span className="px-2 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-mono">
+            {occasions.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("HERO")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "HERO"
+              ? "bg-[#141416] text-white shadow-md"
+              : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+          }`}
+        >
+          <span>🌟</span>
+          <span>Hero Banners &amp; Lookbook</span>
+          <span className="px-2 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-mono">
+            {heroes.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("PROMOTIONS")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "PROMOTIONS"
+              ? "bg-[#141416] text-white shadow-md"
+              : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+          }`}
+        >
+          <span>📢</span>
+          <span>Top Banners &amp; Popup Modals</span>
+          <span className="px-2 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-mono">
+            {promotions.length}
+          </span>
         </button>
       </div>
 
-      {/* Control Bar: Filters & Search */}
-      <div className="p-4 rounded-2xl bg-white border border-[#E8E3D8] shadow-2xs flex flex-wrap items-center justify-between gap-3">
-        {/* Search */}
-        <div className="relative min-w-[240px] flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">🔍</span>
-          <input
-            type="text"
-            placeholder="Search promotion title, coupon code, badge…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#E8E3D8] text-xs outline-none focus:border-[#0C3B2E] bg-[#FAF8F5]"
-          />
-        </div>
-
-        {/* Placement Filter */}
-        <div className="flex items-center gap-2">
-          <select
-            value={filterPlacement}
-            onChange={(e) => setFilterPlacement(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-[#E8E3D8] text-xs font-medium bg-[#FAF8F5] text-[#0C3B2E] outline-none"
-          >
-            <option value="ALL">All Placements (Top Bar, Popup, Hero)</option>
-            <option value="TOP_BANNER">Top Announcement Bar</option>
-            <option value="POPUP_MODAL">Login / Visitor Poster Popup Modal</option>
-            <option value="HERO_SPOTLIGHT">Homepage Festive Spotlight Card</option>
-            <option value="FLOAT_SNACKBAR">Floating Offer Badge</option>
-          </select>
-
-          {/* Status Filter */}
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-[#E8E3D8] text-xs font-medium bg-[#FAF8F5] text-[#0C3B2E] outline-none"
-          >
-            <option value="ALL">All Status</option>
-            <option value="ACTIVE">Active Only</option>
-            <option value="INACTIVE">Inactive / Paused</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Promotions Grid / Cards */}
-      {loading ? (
-        <div className="text-center py-20 bg-white rounded-3xl border border-[#E8E3D8] space-y-3">
-          <span className="inline-block w-8 h-8 border-2 border-[#0C3B2E] border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs text-[#5B7A6F] font-medium">Loading live promotions…</p>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-3xl border border-[#E8E3D8] space-y-4 px-4">
-          <div className="w-14 h-14 rounded-full bg-[#FAF8F5] border border-[#E8E3D8] flex items-center justify-center text-2xl mx-auto">
-            🏷️
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto min-h-0 pb-12">
+        {loading ? (
+          <div className="py-20 text-center space-y-3">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#C59B27] border-t-transparent" />
+            <p className="text-xs text-slate-500 font-semibold">Loading marketing assets studio…</p>
           </div>
-          <div className="space-y-1">
-            <h3 className="font-display text-base font-bold text-[#0C3B2E]">No promotions found</h3>
-            <p className="text-xs text-[#5B7A6F] max-w-sm mx-auto">
-              Create your first festive announcement, discount code banner, or time-delayed login poster popup.
-            </p>
-          </div>
-          <button
-            onClick={openCreateModal}
-            className="px-5 py-2 rounded-full text-xs font-bold uppercase bg-[#0C3B2E] text-white hover:bg-[#145241] transition-all cursor-pointer"
-          >
-            Create New Promotion →
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {filtered.map((promo) => {
-            const theme = THEME_LABELS[promo.theme] || THEME_LABELS.FESTIVE_GOLD;
-            const placement = PLACEMENT_LABELS[promo.placement] || { label: promo.placement, icon: "📢" };
-            const normalizedImg = normalizeImageUrl(promo.imageUrl);
+        ) : activeTab === "OCCASIONS" ? (
+          /* ========================================================
+             TAB 1: SHOP BY OCCASION MANAGER
+             ======================================================== */
+          <div className="space-y-6">
+            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 flex items-start gap-3">
+              <span className="text-lg">💡</span>
+              <div>
+                <p className="font-bold">Live Homepage Curation</p>
+                <p className="text-amber-800/80 mt-0.5">
+                  The cards below are rendered directly in the <strong>&quot;Shop by Occasion&quot;</strong> section on your homepage. You can update any card&apos;s photo, titles, badge tags, and target collection links anytime.
+                </p>
+              </div>
+            </div>
 
-            return (
-              <div
-                key={promo.id}
-                className={`rounded-3xl border ${
-                  promo.isActive ? "border-[#E8E3D8] bg-white" : "border-slate-200 bg-slate-50 opacity-75"
-                } p-5 space-y-4 shadow-xs transition-all relative overflow-hidden flex flex-col justify-between`}
-              >
-                <div className="space-y-3">
-                  {/* Top Meta Strip: Placement & Status Switch */}
-                  <div className="flex items-center justify-between gap-2 border-b border-[#E8E3D8]/60 pb-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#FAF8F5] border border-[#E8E3D8] text-[#0C3B2E]">
-                        <span>{placement.icon}</span>
-                        <span>{placement.label}</span>
-                      </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {occasions.map((occ) => (
+                <div
+                  key={occ.id}
+                  className={`rounded-3xl border overflow-hidden flex flex-col justify-between transition-all bg-white shadow-sm hover:shadow-md ${
+                    occ.isActive ? "border-slate-200" : "border-rose-200 opacity-60"
+                  }`}
+                >
+                  {/* Visual Occasion Card Preview */}
+                  <div className="relative aspect-[4/5] w-full bg-[#141416] p-5 flex flex-col justify-end overflow-hidden">
+                    {occ.imageUrl ? (
+                      <Image
+                        src={occ.imageUrl}
+                        alt={occ.title}
+                        fill
+                        sizes="300px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs text-slate-400">
+                        No image set
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/90 via-[#141416]/30 to-transparent" />
 
-                      {promo.showOnLogin && promo.showOnGuest && (
-                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200">
-                          👥 All Visitors
-                        </span>
-                      )}
-
-                      {promo.showOnLogin && !promo.showOnGuest && (
-                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
-                          👤 Logged In Only
-                        </span>
-                      )}
-
-                      {!promo.showOnLogin && promo.showOnGuest && (
-                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-teal-100 text-teal-800 border border-teal-200">
-                          🌐 Guests Only
-                        </span>
-                      )}
-
-                      <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
-                        ⏱️ {promo.delayMinutes > 0 ? `${promo.delayMinutes} min delay` : "⚡ Instant"}
-                      </span>
-                    </div>
-
-                    {/* Interactive Active / Deactive Switch */}
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-extrabold uppercase tracking-wider ${promo.isActive ? "text-emerald-700" : "text-slate-400"}`}>
-                        {promo.isActive ? "Active" : "Paused"}
+                    {/* Top Status & Order */}
+                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/75 text-white backdrop-blur-md">
+                        #{occ.sortOrder}
                       </span>
                       <button
-                        onClick={() => handleToggleStatus(promo)}
-                        className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
-                          promo.isActive ? "bg-emerald-600" : "bg-slate-300"
+                        onClick={() => handleToggleBannerStatus(occ)}
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-sm cursor-pointer ${
+                          occ.isActive ? "bg-emerald-600 text-white" : "bg-rose-600 text-white"
                         }`}
-                        title={promo.isActive ? "Click to Deactivate" : "Click to Activate"}
                       >
-                        <span
-                          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform shadow-xs ${
-                            promo.isActive ? "translate-x-5" : "translate-x-0"
-                          }`}
-                        />
+                        {occ.isActive ? "Active" : "Hidden"}
                       </button>
                     </div>
-                  </div>
 
-                  {/* Visual Preview Box */}
-                  <div className={`p-4 rounded-2xl ${theme.bg} ${theme.text} border ${theme.border} space-y-2 shadow-2xs relative overflow-hidden`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        {promo.badgeText && (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest bg-white/20 border border-white/30 text-white">
-                            {promo.badgeText}
-                          </span>
-                        )}
-                        <h4 className="font-display text-base font-bold text-white leading-tight">
-                          {promo.title}
-                        </h4>
-                        {promo.subtitle && (
-                          <p className="text-xs opacity-80 line-clamp-2 leading-relaxed">
-                            {promo.subtitle}
-                          </p>
-                        )}
-                      </div>
-
-                      {normalizedImg && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPreviewLightbox({
-                              isOpen: true,
-                              images: [{ imageUrl: normalizedImg, altText: promo.title }],
-                              productName: promo.title,
-                            })
-                          }
-                          className="relative h-16 w-16 rounded-xl overflow-hidden shrink-0 border border-white/20 bg-black/40 group cursor-pointer"
-                          title="Click for full-screen High Definition Detail Preview"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={normalizedImg}
-                            alt="Promo graphic"
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-extrabold tracking-wider">
-                            🔍 HD
-                          </div>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Code & CTA Preview */}
-                    <div className="pt-2 border-t border-white/15 flex flex-wrap items-center justify-between gap-2 text-xs">
-                      {promo.discountCode ? (
-                        <span className="font-mono text-xs font-black px-2.5 py-0.5 rounded bg-white text-[#141416] tracking-wider">
-                          🎟️ {promo.discountCode}
+                    {/* Bottom Card Content Preview */}
+                    <div className="relative z-10 space-y-1 text-white">
+                      {occ.badge && (
+                        <span className="inline-block px-2 py-0.2 rounded text-[9px] font-extrabold uppercase bg-white text-[#141416] shadow-xs">
+                          {occ.badge}
                         </span>
-                      ) : (
-                        <span className="text-[10px] opacity-70">No coupon code required</span>
                       )}
-
-                      <span className="text-[11px] font-bold underline opacity-90">
-                        {promo.ctaText || "Shop Now"} →
-                      </span>
+                      <h3 className="font-display text-base font-bold leading-tight">
+                        {occ.title}
+                      </h3>
+                      {occ.subtitle && (
+                        <p className="text-[11px] text-white/80 truncate">{occ.subtitle}</p>
+                      )}
+                      <p className="text-[10px] text-[#C59B27] font-mono truncate pt-1">
+                        🔗 {occ.linkUrl}
+                      </p>
                     </div>
                   </div>
-                </div>
 
-                {/* Footer Action Buttons */}
-                <div className="pt-3 border-t border-[#E8E3D8]/60 flex items-center justify-between text-xs">
-                  <span className="text-[10px] text-[#5B7A6F]">
-                    Theme: <strong>{theme.label.split(" ")[0]}</strong> · Order #{promo.sortOrder}
-                  </span>
-
-                  <div className="flex items-center gap-2">
+                  {/* Actions Footer */}
+                  <div className="p-3 border-t border-slate-100 flex items-center justify-between gap-2 bg-slate-50">
                     <button
-                      onClick={() => openEditModal(promo)}
-                      className="px-3 py-1.5 rounded-xl font-bold text-xs text-[#0C3B2E] bg-[#F2EFE8] hover:bg-[#E8E3D8] transition-colors cursor-pointer"
+                      onClick={() => openEditBannerModal(occ)}
+                      className="flex-1 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 border border-slate-200 text-slate-900 transition-colors shadow-2xs cursor-pointer flex items-center justify-center gap-1"
                     >
-                      ✏️ Edit
+                      <span>✏️</span> Edit Card &amp; Image
                     </button>
                     <button
-                      onClick={() => handleDelete(promo.id, promo.title)}
-                      className="px-3 py-1.5 rounded-xl font-bold text-xs text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer"
+                      onClick={() => handleDeleteBanner(occ.id, occ.title)}
+                      className="p-1.5 rounded-xl text-xs text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors cursor-pointer"
+                      title="Delete Occasion"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : activeTab === "HERO" ? (
+          /* ========================================================
+             TAB 2: HERO BANNER & SPOTLIGHT MANAGER
+             ======================================================== */
+          <div className="space-y-6">
+            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 flex items-start gap-3">
+              <span className="text-lg">🌟</span>
+              <div>
+                <p className="font-bold">Haute Couture Hero Section</p>
+                <p className="text-amber-800/80 mt-0.5">
+                  Customize the main headline, luxury tagline, and right-hand editorial lookbook model image that greets every visitor on your homepage.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {heroes.map((hero) => (
+                <div
+                  key={hero.id}
+                  className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4"
+                >
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 text-slate-700">
+                        HERO #{hero.sortOrder}
+                      </span>
+                      <span className="text-xs font-bold text-slate-900">{hero.title}</span>
+                    </div>
+                    <button
+                      onClick={() => handleToggleBannerStatus(hero)}
+                      className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider cursor-pointer ${
+                        hero.isActive ? "bg-emerald-600 text-white" : "bg-rose-600 text-white"
+                      }`}
+                    >
+                      {hero.isActive ? "Active on Homepage" : "Draft / Hidden"}
+                    </button>
+                  </div>
+
+                  {/* Hero Preview Box */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 bg-[#FAF8F5] p-4 rounded-2xl border border-[#E7DFD5]">
+                    <div className="sm:col-span-7 space-y-2">
+                      {hero.badge && (
+                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-white border border-[#C59B27]/40 text-[#8E6C0C]">
+                          {hero.badge}
+                        </span>
+                      )}
+                      <h4 className="font-display text-lg font-bold text-slate-900 leading-snug">
+                        {hero.title}
+                      </h4>
+                      <p className="text-xs text-slate-600 line-clamp-3">
+                        {hero.subtitle}
+                      </p>
+                      <div className="pt-2">
+                        <span className="inline-block px-4 py-1.5 rounded-full text-xs font-extrabold bg-[#C59B27] text-white">
+                          {hero.buttonText || "Explore New Season →"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-5 relative aspect-[3/4] rounded-xl overflow-hidden border border-[#E7DFD5] bg-slate-200">
+                      {hero.imageUrl ? (
+                        <Image
+                          src={hero.imageUrl}
+                          alt={hero.title}
+                          fill
+                          sizes="200px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-xs text-slate-400">
+                          No model image
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between gap-3 pt-2">
+                    <button
+                      onClick={() => openEditBannerModal(hero)}
+                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-[#141416] hover:bg-neutral-800 text-white transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <span>✏️</span> Edit Hero Headline, Text &amp; Model Image
+                    </button>
+                    <button
+                      onClick={() => handleDeleteBanner(hero.id, hero.title)}
+                      className="px-3 py-2 rounded-xl text-xs text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors cursor-pointer"
                     >
                       🗑️ Delete
                     </button>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* ========================================================
+             TAB 3: TOP BANNERS & POPUPS
+             ======================================================== */
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {promotions.map((promo) => {
+                const themeMeta = THEME_LABELS[promo.theme] || THEME_LABELS.FESTIVE_GOLD;
+                const placeMeta = PLACEMENT_LABELS[promo.placement] || { label: promo.placement, icon: "📢" };
 
-      {/* Create / Edit Modal Dialog */}
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="relative w-full max-w-2xl bg-white rounded-3xl border border-[#E8E3D8] shadow-2xl p-6 sm:p-8 space-y-6 animate-in zoom-in-95 duration-200 my-8">
-            
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-[#E8E3D8] pb-4">
-              <div>
-                <h3 className="font-display text-xl font-bold text-[#0C3B2E]">
-                  {editingPromo ? "Edit Promotion & Banner" : "Create New Promotion"}
+                return (
+                  <div
+                    key={promo.id}
+                    className={`rounded-3xl border overflow-hidden flex flex-col justify-between bg-white shadow-sm hover:shadow-md transition-all ${
+                      promo.isActive ? "border-slate-200" : "border-rose-200 opacity-60"
+                    }`}
+                  >
+                    <div className={`p-5 space-y-3 ${themeMeta.bg} text-white`}>
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-md">
+                          <span>{placeMeta.icon}</span>
+                          <span>{placeMeta.label}</span>
+                        </span>
+                        <button
+                          onClick={() => handleTogglePromoStatus(promo)}
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase cursor-pointer ${
+                            promo.isActive ? "bg-emerald-600 text-white" : "bg-rose-600 text-white"
+                          }`}
+                        >
+                          {promo.isActive ? "Active" : "Hidden"}
+                        </button>
+                      </div>
+
+                      <div>
+                        {promo.badgeText && (
+                          <span className={`text-[10px] font-extrabold uppercase ${themeMeta.text}`}>
+                            {promo.badgeText}
+                          </span>
+                        )}
+                        <h3 className="font-display text-base font-bold leading-snug">
+                          {promo.title}
+                        </h3>
+                        {promo.subtitle && (
+                          <p className="text-xs text-white/80 mt-1">{promo.subtitle}</p>
+                        )}
+                        {promo.discountCode && (
+                          <div className="mt-2 inline-block px-2 py-0.5 rounded bg-white/20 font-mono text-[10px] font-bold">
+                            CODE: {promo.discountCode}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-3 border-t border-slate-100 flex items-center justify-between gap-2 bg-slate-50">
+                      <button
+                        onClick={() => openEditPromoModal(promo)}
+                        className="flex-1 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 border border-slate-200 text-slate-900 transition-colors shadow-2xs cursor-pointer flex items-center justify-center gap-1"
+                      >
+                        <span>✏️</span> Edit Promotion
+                      </button>
+                      <button
+                        onClick={() => handleDeletePromo(promo.id, promo.title)}
+                        className="p-1.5 rounded-xl text-xs text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors cursor-pointer"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ========================================================
+          BANNER / OCCASION / HERO EDIT MODAL
+          ======================================================== */}
+      {isBannerModalOpen && (
+        <div className="fixed inset-0 z-50 p-4 flex items-center justify-center animate-in fade-in duration-150">
+          <div
+            onClick={() => setIsBannerModalOpen(false)}
+            className="fixed inset-0 bg-black/75 backdrop-blur-xs"
+          />
+
+          <div className="relative w-full max-w-xl rounded-3xl bg-white p-6 sm:p-8 border border-slate-200 shadow-2xl space-y-6 z-10 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">
+                  {bannerForm.position === "HERO" ? "🌟" : "👗"}
+                </span>
+                <h3 className="text-base sm:text-lg font-black text-slate-900">
+                  {editingBanner
+                    ? `Edit ${bannerForm.position === "HERO" ? "Hero Banner" : "Occasion Card"}`
+                    : `New ${bannerForm.position === "HERO" ? "Hero Banner" : "Occasion Card"}`}
                 </h3>
-                <p className="text-xs text-[#5B7A6F]">
-                  Configure banner copy, time-delayed login poster, discount code, and display placements.
-                </p>
               </div>
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-[#FAF8F5] border border-[#E8E3D8] text-[#0C3B2E] flex items-center justify-center font-bold hover:bg-[#E8E3D8] transition-colors cursor-pointer"
+                onClick={() => setIsBannerModalOpen(false)}
+                className="h-8 w-8 rounded-full border border-slate-200 hover:bg-slate-100 text-slate-500 font-bold flex items-center justify-center cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSave} className="space-y-4 text-xs">
-              
-              {/* Title & Badge */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="font-bold text-[#0C3B2E] block">Promotion Title *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Grand Festive Gala Sale — Flat 25% OFF"
-                    value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-[#0C3B2E] block">Badge Text (Short)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. FESTIVE OFFER"
-                    value={formBadgeText}
-                    onChange={(e) => setFormBadgeText(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5] uppercase"
-                  />
-                </div>
+            <form onSubmit={handleSaveBanner} className="space-y-4">
+              {/* Type / Position Indicator */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  Section Type
+                </label>
+                <select
+                  value={bannerForm.position}
+                  onChange={(e) => setBannerForm({ ...bannerForm, position: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
+                >
+                  <option value="OCCASION">👗 Shop by Occasion Card</option>
+                  <option value="HERO">🌟 Hero Main Lookbook Banner</option>
+                </select>
               </div>
 
-              {/* Subtitle */}
-              <div className="space-y-1">
-                <label className="font-bold text-[#0C3B2E] block">Subtitle / Description</label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Explore certified mulberry silk sarees, French linen shirts, and festive bespoke edits."
-                  value={formSubtitle}
-                  onChange={(e) => setFormSubtitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5] resize-none"
+              {/* Title */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  {bannerForm.position === "HERO" ? "Main Headline *" : "Occasion Title *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bannerForm.title}
+                  onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })}
+                  placeholder="e.g., Festive & Gala Edit, Wedding Silk Soirée"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
                 />
               </div>
 
-              {/* Placement & Theme */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-[#0C3B2E] block">Display Placement</label>
-                  <select
-                    value={formPlacement}
-                    onChange={(e) => setFormPlacement(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5] font-medium"
-                  >
-                    <option value="TOP_BANNER">Top Announcement Bar</option>
-                    <option value="POPUP_MODAL">Login / Visitor Poster Popup Modal</option>
-                    <option value="HERO_SPOTLIGHT">Homepage Festive Spotlight Card</option>
-                    <option value="FLOAT_SNACKBAR">Floating Bottom Offer Badge</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-[#0C3B2E] block">Festive Color Theme</label>
-                  <select
-                    value={formTheme}
-                    onChange={(e) => setFormTheme(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5] font-medium"
-                  >
-                    <option value="FESTIVE_GOLD">Champagne Gold (Festive &amp; Luxury)</option>
-                    <option value="ROYAL_RUBY">Royal Ruby (Bridal / Wedding Season)</option>
-                    <option value="EMERALD_EID">Emerald Eid (Regal Green &amp; Silver)</option>
-                    <option value="SUNSET_ORANGE">Sunset Orange (Summer / Holi)</option>
-                    <option value="MODERN_DARK">Modern Obsidian Noir</option>
-                  </select>
-                </div>
+              {/* Subtitle */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  {bannerForm.position === "HERO" ? "Sub-Headline / Story Tagline" : "Subtitle / Garment Details"}
+                </label>
+                <input
+                  type="text"
+                  value={bannerForm.subtitle}
+                  onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })}
+                  placeholder="e.g., Zari Velvet & Anarkalis, French Linen & Mandarin Shirts"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
+                />
               </div>
 
-              {/* Image URL & Direct File Upload */}
-              <div className="space-y-2 p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E8E3D8]">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-[#0C3B2E] block text-xs">
-                    Promotional Poster Image (Supports Google Drive / Share links, URLs &amp; Uploads)
-                  </label>
-                  <label className="px-3 py-1 rounded-xl bg-white border border-[#E8E3D8] hover:border-[#0C3B2E] text-[11px] font-bold text-[#0C3B2E] cursor-pointer shadow-2xs">
-                    <span>{uploadingImage ? "Processing…" : "📁 Upload Image File"}</span>
+              {/* Tag Badge */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  Tag Badge
+                </label>
+                <input
+                  type="text"
+                  value={bannerForm.badge}
+                  onChange={(e) => setBannerForm({ ...bannerForm, badge: e.target.value })}
+                  placeholder="e.g., Artisanal Craft, Pure Silk, Flat 40% Off"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
+                />
+              </div>
+
+              {/* Image URL & Upload */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Card / Model Photo
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={bannerForm.imageUrl}
+                    onChange={(e) => setBannerForm({ ...bannerForm, imageUrl: e.target.value })}
+                    placeholder="https://... or upload below"
+                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono focus:outline-hidden focus:border-[#C59B27]"
+                  />
+                  <label className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer shrink-0 flex items-center gap-1">
+                    <span>📷</span>
+                    <span>{uploadingImage ? "Uploading…" : "Upload"}</span>
                     <input
                       type="file"
                       accept="image/*"
+                      onChange={handleBannerFileUpload}
                       className="hidden"
-                      onChange={handleImageUpload}
                       disabled={uploadingImage}
                     />
                   </label>
                 </div>
 
-                <input
-                  type="text"
-                  placeholder="Paste any image URL or Google Drive link (e.g. https://... or /uploads/...)"
-                  value={formImageUrl}
-                  onChange={(e) => {
-                    setFormImageUrl(e.target.value);
-                    resolveImageUrl(e.target.value);
-                  }}
-                  onBlur={(e) => resolveImageUrl(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-white text-xs"
-                />
-
-                {/* Live Image Preview Box */}
-                {formImageUrl && (
-                  <div className="pt-2 flex items-center gap-3 bg-white p-2.5 rounded-xl border border-[#E8E3D8]">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPreviewLightbox({
-                          isOpen: true,
-                          images: [{ imageUrl: normalizeImageUrl(formImageUrl), altText: formTitle || "Promotion Preview" }],
-                          productName: formTitle || "Promotional Poster Detail Preview",
-                        })
-                      }
-                      className="relative w-24 h-16 rounded-lg overflow-hidden border border-[#E8E3D8] bg-slate-100 shrink-0 shadow-2xs group cursor-pointer"
-                      title="Click for full-screen High Definition Detail Preview"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        key={formImageUrl}
-                        src={normalizeImageUrl(formImageUrl)}
-                        alt="Preview"
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.opacity = "0.4";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-extrabold tracking-wider">
-                        🔍 ZOOM
-                      </div>
-                    </button>
-                    <div className="text-[10px] text-[#5B7A6F] leading-tight flex-1 min-w-0">
-                      <p className="font-bold text-[#0C3B2E]">✓ Image Connected &amp; Ready (Click image for HD Zoom)</p>
-                      <p className="truncate opacity-80">{formImageUrl.startsWith("data:") ? "Direct Image File Uploaded" : formImageUrl}</p>
-                    </div>
+                {/* Image Live Preview */}
+                {bannerForm.imageUrl && (
+                  <div className="relative h-44 w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
+                    <Image
+                      src={bannerForm.imageUrl}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                 )}
               </div>
 
-              {/* Time-Delayed Display Timing & Control (Always Visible) */}
-              <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-[#0C3B2E] block text-xs">
-                    ⏱️ Promotion Display Timing &amp; Delay (Minutes after Login / Visit)
+              {/* Target Link & Button Text */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Destination Link URL
                   </label>
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-200/60 text-amber-900">
-                    {formPlacement === "POPUP_MODAL" ? "🖼️ Controls Popup Poster Timing" : "📢 Controls Announcement Timing"}
-                  </span>
+                  <input
+                    type="text"
+                    value={bannerForm.linkUrl}
+                    onChange={(e) => setBannerForm({ ...bannerForm, linkUrl: e.target.value })}
+                    placeholder="/shop?category=women-kurtis"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono focus:outline-hidden focus:border-[#C59B27]"
+                  />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Button Text
+                  </label>
+                  <input
+                    type="text"
+                    value={bannerForm.buttonText}
+                    onChange={(e) => setBannerForm({ ...bannerForm, buttonText: e.target.value })}
+                    placeholder="Explore Outfits"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
+                  />
+                </div>
+              </div>
+
+              {/* Sort Order & Active */}
+              <div className="grid grid-cols-2 gap-3 items-center pt-2">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Sort Order
+                  </label>
                   <input
                     type="number"
-                    min="0"
-                    max="120"
-                    value={formDelayMinutes}
-                    onChange={(e) => setFormDelayMinutes(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                    className="w-24 px-3 py-2 rounded-xl border border-amber-300 outline-none focus:border-[#0C3B2E] bg-white font-black text-sm"
-                  />
-
-                  {/* Quick Preset Buttons */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {[
-                      { label: "⚡ Instant (0m)", val: 0 },
-                      { label: "1 min", val: 1 },
-                      { label: "2 mins", val: 2 },
-                      { label: "3 mins", val: 3 },
-                      { label: "5 mins", val: 5 },
-                      { label: "10 mins", val: 10 },
-                    ].map((preset) => (
-                      <button
-                        type="button"
-                        key={preset.val}
-                        onClick={() => setFormDelayMinutes(preset.val)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                          formDelayMinutes === preset.val
-                            ? "bg-[#0C3B2E] text-white shadow-xs"
-                            : "bg-white border border-amber-300/80 text-[#0C3B2E] hover:bg-amber-100"
-                        }`}
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <p className="text-[11px] text-[#5B7A6F] leading-tight">
-                  {formDelayMinutes === 0
-                    ? "⚡ Instant Delivery: Promotion appears immediately (1-2 seconds after login / page visit)."
-                    : `⏱️ Time-Delayed Delivery: Promotion will wait and popup precisely after the customer has spent ${formDelayMinutes} minute${formDelayMinutes > 1 ? "s" : ""} browsing.`}
-                </p>
-              </div>
-
-              {/* Coupon Code, CTA Text & CTA URL */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-[#0C3B2E] block">Promo Coupon Code</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. FESTIVE20"
-                    value={formDiscountCode}
-                    onChange={(e) => setFormDiscountCode(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5] font-mono uppercase"
+                    value={bannerForm.sortOrder}
+                    onChange={(e) => setBannerForm({ ...bannerForm, sortOrder: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-[#0C3B2E] block">Button Text</label>
-                  <input
-                    type="text"
-                    placeholder="Shop Collection"
-                    value={formCtaText}
-                    onChange={(e) => setFormCtaText(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label className="font-bold text-[#0C3B2E] block">Target Destination URL / Promoted Product *</label>
-                    <span className="text-[10px] text-[#5B7A6F]">Clicking poster opens this</span>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="e.g. /shop or /products/slug-name"
-                    value={formCtaUrl}
-                    onChange={(e) => setFormCtaUrl(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E8E3D8] outline-none focus:border-[#0C3B2E] bg-[#FAF8F5]"
-                  />
-                  {/* Quick destination presets */}
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {[
-                      { label: "All Shop", url: "/shop" },
-                      { label: "New Arrivals", url: "/shop?sort=newest" },
-                      { label: "Festive Saree", url: "/products/tussar-silk-hand-block-printed-saree" },
-                      { label: "Organza Silk", url: "/products/zari-woven-organza-silk-saree-scalloped" },
-                      { label: "Kurta Set", url: "/products/georgette-chikankari-embroidered-straight-kurta-set" },
-                      { label: "Nehru Jacket", url: "/products/raw-silk-blend-bandhgala-nehru-jacket" },
-                    ].map((dest) => (
-                      <button
-                        type="button"
-                        key={dest.url}
-                        onClick={() => setFormCtaUrl(dest.url)}
-                        className={`text-[10px] px-2 py-0.5 rounded-md border font-medium transition-colors cursor-pointer ${
-                          formCtaUrl === dest.url
-                            ? "bg-[#0C3B2E] text-white border-[#0C3B2E]"
-                            : "bg-white border-[#E8E3D8] text-[#5B7A6F] hover:border-[#0C3B2E]"
-                        }`}
-                      >
-                        {dest.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Target Audience & Event Triggers */}
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E3D8] space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-[#0C3B2E] block text-xs">
-                    🎯 Target Audience &amp; Event Trigger
-                  </label>
-                  <span className="text-[10px] text-[#5B7A6F]">Controls who sees this promotion</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {[
-                    {
-                      label: "👥 All Visitors",
-                      desc: "Guests & Logged-in Customers",
-                      guest: true,
-                      login: true,
-                    },
-                    {
-                      label: "👤 Logged-in Only",
-                      desc: "Appears upon / after login",
-                      guest: false,
-                      login: true,
-                    },
-                    {
-                      label: "🌐 Guests Only",
-                      desc: "Pre-login visitors without account",
-                      guest: true,
-                      login: false,
-                    },
-                  ].map((aud) => {
-                    const isSelected = formShowOnGuest === aud.guest && formShowOnLogin === aud.login;
-                    return (
-                      <button
-                        type="button"
-                        key={aud.label}
-                        onClick={() => {
-                          setFormShowOnGuest(aud.guest);
-                          setFormShowOnLogin(aud.login);
-                        }}
-                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                          isSelected
-                            ? "border-[#0C3B2E] bg-white shadow-xs ring-1 ring-[#0C3B2E]"
-                            : "border-[#E8E3D8] bg-[#FAF8F5] hover:bg-white"
-                        }`}
-                      >
-                        <p className={`font-bold text-xs ${isSelected ? "text-[#0C3B2E]" : "text-slate-700"}`}>{aud.label}</p>
-                        <p className="text-[10px] text-[#5B7A6F] mt-0.5 leading-tight">{aud.desc}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <label className="flex items-center gap-2 cursor-pointer font-medium text-[#0C3B2E] pt-1">
+                <div className="flex items-center gap-2 pt-4">
                   <input
                     type="checkbox"
-                    checked={formIsActive}
-                    onChange={(e) => setFormIsActive(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#0C3B2E] accent-[#0C3B2E]"
+                    id="bannerActive"
+                    checked={bannerForm.isActive}
+                    onChange={(e) => setBannerForm({ ...bannerForm, isActive: e.target.checked })}
+                    className="w-4 h-4 rounded accent-[#C59B27] cursor-pointer"
                   />
-                  <span className="font-bold text-xs">Promotion Status: Active (Live on Storefront)</span>
-                </label>
+                  <label htmlFor="bannerActive" className="text-xs font-bold text-slate-800 cursor-pointer">
+                    Show on Homepage
+                  </label>
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-3 border-t border-[#E8E3D8] flex items-center justify-end gap-3">
+              {/* Submit Buttons */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 rounded-full font-bold text-[#5B7A6F] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+                  onClick={() => setIsBannerModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={saving || uploadingImage}
-                  className="px-6 py-2.5 rounded-full font-bold uppercase tracking-wider bg-[#0C3B2E] text-white hover:bg-[#145241] transition-all shadow-md cursor-pointer disabled:opacity-50"
+                  disabled={saving}
+                  className="px-6 py-2.5 rounded-xl bg-[#C59B27] hover:bg-[#B0881E] text-white text-xs font-bold shadow-md cursor-pointer disabled:opacity-50"
                 >
-                  {saving ? "Saving…" : editingPromo ? "Update Promotion" : "Publish Promotion"}
+                  {saving ? "Saving…" : editingBanner ? "Update Card" : "Create Card"}
                 </button>
               </div>
             </form>
@@ -982,13 +930,171 @@ export default function PromotionsManager() {
         </div>
       )}
 
-      {/* High-Definition Luxury Image Preview Lightbox */}
-      <ProductImageLightbox
-        isOpen={previewLightbox.isOpen}
-        images={previewLightbox.images}
-        productName={previewLightbox.productName}
-        onClose={() => setPreviewLightbox({ isOpen: false, images: [], productName: "" })}
-      />
+      {/* ========================================================
+          PROMOTION EDIT MODAL
+          ======================================================== */}
+      {isPromoModalOpen && (
+        <div className="fixed inset-0 z-50 p-4 flex items-center justify-center animate-in fade-in duration-150">
+          <div
+            onClick={() => setIsPromoModalOpen(false)}
+            className="fixed inset-0 bg-black/75 backdrop-blur-xs"
+          />
+
+          <div className="relative w-full max-w-xl rounded-3xl bg-white p-6 sm:p-8 border border-slate-200 shadow-2xl space-y-6 z-10 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📢</span>
+                <h3 className="text-base sm:text-lg font-black text-slate-900">
+                  {editingPromo ? "Edit Promotion Offer" : "New Promotional Campaign"}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsPromoModalOpen(false)}
+                className="h-8 w-8 rounded-full border border-slate-200 hover:bg-slate-100 text-slate-500 font-bold flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePromo} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Placement Location *
+                  </label>
+                  <select
+                    value={promoForm.placement}
+                    onChange={(e) => setPromoForm({ ...promoForm, placement: e.target.value as any })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
+                  >
+                    <option value="TOP_BANNER">📢 Top Announcement Bar</option>
+                    <option value="POPUP_MODAL">🖼️ Popup Poster Modal</option>
+                    <option value="HERO_SPOTLIGHT">🌟 Homepage Hero Spotlight</option>
+                    <option value="FLOAT_SNACKBAR">🏷️ Floating Bottom Offer Badge</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Luxury Color Theme
+                  </label>
+                  <select
+                    value={promoForm.theme}
+                    onChange={(e) => setPromoForm({ ...promoForm, theme: e.target.value as any })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
+                  >
+                    <option value="FESTIVE_GOLD">👑 Champagne Gold (Festive)</option>
+                    <option value="ROYAL_RUBY">🌹 Royal Ruby (Bridal / Wedding)</option>
+                    <option value="EMERALD_EID">🌿 Emerald Eid (Festive Green)</option>
+                    <option value="SUNSET_ORANGE">🌅 Sunset Orange (Summer / Holi)</option>
+                    <option value="MODERN_DARK">🖤 Modern Obsidian Noir</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  Offer Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={promoForm.title}
+                  onChange={(e) => setPromoForm({ ...promoForm, title: e.target.value })}
+                  placeholder="e.g., Flat 10% Off on First Order + Free Express Shipping"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  Subtitle Description
+                </label>
+                <input
+                  type="text"
+                  value={promoForm.subtitle}
+                  onChange={(e) => setPromoForm({ ...promoForm, subtitle: e.target.value })}
+                  placeholder="e.g., Applicable on all handcrafted sarees, kurtis & linen shirts."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Badge Text
+                  </label>
+                  <input
+                    type="text"
+                    value={promoForm.badgeText}
+                    onChange={(e) => setPromoForm({ ...promoForm, badgeText: e.target.value })}
+                    placeholder="e.g., FESTIVE OFFER"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Coupon Code
+                  </label>
+                  <input
+                    type="text"
+                    value={promoForm.discountCode}
+                    onChange={(e) => setPromoForm({ ...promoForm, discountCode: e.target.value.toUpperCase() })}
+                    placeholder="e.g., FESTIVE10"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono font-bold focus:outline-hidden focus:border-[#C59B27]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    CTA Button Text
+                  </label>
+                  <input
+                    type="text"
+                    value={promoForm.ctaText}
+                    onChange={(e) => setPromoForm({ ...promoForm, ctaText: e.target.value })}
+                    placeholder="Shop Now"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    CTA Link URL
+                  </label>
+                  <input
+                    type="text"
+                    value={promoForm.ctaUrl}
+                    onChange={(e) => setPromoForm({ ...promoForm, ctaUrl: e.target.value })}
+                    placeholder="/shop"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono focus:outline-hidden focus:border-[#C59B27]"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPromoModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-6 py-2.5 rounded-xl bg-[#C59B27] hover:bg-[#B0881E] text-white text-xs font-bold shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  {saving ? "Saving…" : editingPromo ? "Update Offer" : "Launch Offer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

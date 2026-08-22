@@ -63,7 +63,7 @@ const OCCASIONS = [
 ];
 
 export default async function HomePage() {
-  const [categories, allProducts, rootCategories, promotions] = await Promise.all([
+  const [categories, allProducts, rootCategories, promotions, banners] = await Promise.all([
     prisma.category.findMany({
       where: { isActive: true, parentId: null },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -102,9 +102,14 @@ export default async function HomePage() {
       where: { isActive: true },
       orderBy: { sortOrder: "asc" },
     }),
+    prisma.banner.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    }),
   ]);
 
-  // Find custom hero promotion if configured in Admin
+  // Find custom hero promotion or admin configured hero banner
+  const heroBanner = banners.find((b) => b.position === "HERO");
   const heroPromo = promotions.find(
     (p) =>
       p.placement === "HERO_SPOTLIGHT" ||
@@ -112,48 +117,68 @@ export default async function HomePage() {
       p.placement === "POPUP_MODAL"
   );
 
-  // Dynamic image resolution for occasions from real catalog
-  const kurtaProduct = allProducts.find((p) => p.name.toLowerCase().includes("kurta") || p.name.toLowerCase().includes("kurti"));
-  const sareeProduct = allProducts.find((p) => p.name.toLowerCase().includes("saree") || p.name.toLowerCase().includes("sari"));
-  const menProduct = allProducts.find((p) => p.name.toLowerCase().includes("shirt") || p.department?.toLowerCase() === "men");
-  const dressProduct = allProducts.find((p) => p.name.toLowerCase().includes("dress") || p.name.toLowerCase().includes("anarkali"));
+  // Dedicated Admin Configured Occasions
+  const adminOccasions = banners.filter((b) => b.position === "OCCASION");
 
-  const dynamicOccasions = [
-    {
-      title: "Festive & Gala Edit",
-      subtitle: kurtaProduct ? kurtaProduct.name : "Zari Velvet & Anarkalis",
-      href: kurtaProduct ? `/products/${kurtaProduct.slug}` : "/shop?category=women-kurtis",
-      image: kurtaProduct?.images[0]?.imageUrl || "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80",
-      tag: "Artisanal Craft",
-    },
-    {
-      title: "Wedding & Silk Soirée",
-      subtitle: sareeProduct ? sareeProduct.name : "Mulberry Silk & Gowns",
-      href: sareeProduct ? `/products/${sareeProduct.slug}` : "/shop?category=women-sarees",
-      image: sareeProduct?.images[0]?.imageUrl || "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=800&auto=format&fit=crop&q=80",
-      tag: "Pure Silk",
-    },
-    {
-      title: "Sartorial Menswear",
-      subtitle: menProduct ? menProduct.name : "French Linen & Mandarin Shirts",
-      href: menProduct ? `/products/${menProduct.slug}` : "/shop?category=men-shirts",
-      image: menProduct?.images[0]?.imageUrl || "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80",
-      tag: "Tailored Linen",
-    },
-    {
-      title: "Earth & Sand Co-ords",
-      subtitle: dressProduct ? dressProduct.name : "Chanderi Silks & Sets",
-      href: dressProduct ? `/products/${dressProduct.slug}` : "/shop?onSale=true",
-      image: dressProduct?.images[0]?.imageUrl || "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80",
-      tag: "Curated Look",
-    },
-  ];
+  const dynamicOccasions =
+    adminOccasions.length > 0
+      ? adminOccasions.map((occ) => ({
+          title: occ.title,
+          subtitle: occ.subtitle || "Curated Haute Couture Look",
+          href: occ.linkUrl || "/shop",
+          image: occ.imageUrl || "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80",
+          tag: occ.badge || "Artisanal Craft",
+          buttonText: occ.buttonText || "Explore Outfits",
+        }))
+      : [
+          {
+            title: "Festive & Gala Edit",
+            subtitle: "Zari Velvet & Anarkalis",
+            href: "/shop?category=women-kurtis",
+            image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80",
+            tag: "Artisanal Craft",
+            buttonText: "Explore Outfits",
+          },
+          {
+            title: "Wedding & Silk Soirée",
+            subtitle: "Mulberry Silk & Gowns",
+            href: "/shop?category=women-dresses",
+            image: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=800&auto=format&fit=crop&q=80",
+            tag: "Pure Silk",
+            buttonText: "Explore Outfits",
+          },
+          {
+            title: "Sartorial Menswear",
+            subtitle: "French Linen & Mandarin Shirts",
+            href: "/shop?category=men-shirts",
+            image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80",
+            tag: "Tailored Linen",
+            buttonText: "Explore Outfits",
+          },
+          {
+            title: "Earth & Sand Co-ords",
+            subtitle: "Chanderi Silks & Sets",
+            href: "/shop?onSale=true",
+            image: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80",
+            tag: "Curated Look",
+            buttonText: "Explore Outfits",
+          },
+        ];
 
-  // Dynamic Hero Image: use custom admin promo image, or newest uploaded product photo, or fallback
+  // Dynamic Hero Image: use custom admin banner image, promo image, or catalog photo
   const heroImage =
+    heroBanner?.imageUrl ||
     heroPromo?.imageUrl ||
     allProducts[0]?.images[0]?.imageUrl ||
     "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&auto=format&fit=crop&q=85";
+
+  const heroHeadline = heroBanner?.title || "Timeless Elegance. Effortless Style.";
+  const heroSubtitle =
+    heroBanner?.subtitle ||
+    "Discover masterfully tailored garments crafted from certified pure Mulberry silks, breathable French linens, and rich hand-embroidered velvets. Designed for modern poise, uncompromising comfort, and true distinction.";
+  const heroBadge = heroBanner?.badge || "✦ The 2026 Signature Luxury Edit · Live Drops";
+  const heroCtaText = heroBanner?.buttonText || "Explore New Season →";
+  const heroCtaLink = heroBanner?.linkUrl || "/shop";
 
   const categoryPillars = rootCategories.map((rc) => {
     const childIds = new Set(rc.children.map((c) => c.id));
@@ -245,28 +270,25 @@ export default async function HomePage() {
             {/* Top Pill */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#C59B27]/40 bg-white text-xs font-bold uppercase tracking-wider text-[#141416] shadow-xs">
               <span className="w-2 h-2 rounded-full bg-[#C59B27] pulse-dot" />
-              <span>✦ The 2026 Signature Luxury Edit · Live Drops</span>
+              <span>{heroBadge}</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-[#141416] leading-[1.08]">
-              Timeless Elegance.<br />
-              <span className="text-[#C59B27]">
-                Effortless Style.
-              </span>
+              {heroHeadline}
             </h1>
 
             <p className="text-sm sm:text-base text-[#4B4E56] max-w-xl leading-relaxed">
-              Discover masterfully tailored garments crafted from certified pure Mulberry silks, breathable French linens, and rich hand-embroidered velvets. Designed for modern poise, uncompromising comfort, and true distinction.
+              {heroSubtitle}
             </p>
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
-                href="/shop"
+                href={heroCtaLink}
                 className="px-8 py-3.5 rounded-full font-extrabold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] transition-all duration-200 shadow-md hover:scale-102"
               >
-                Explore New Season →
+                {heroCtaText}
               </Link>
               <Link
                 href="/categories"
@@ -309,7 +331,7 @@ export default async function HomePage() {
                 fill
                 priority
                 sizes="(min-width: 1024px) 40vw, 100vw"
-                className="object-cover object-top group-hover:scale-105 transition-transform duration-700"
+                className="object-cover object-top"
               />
 
               {/* Luxury Vignette & Contrast Gradient */}
@@ -407,7 +429,7 @@ export default async function HomePage() {
                 alt={occ.title}
                 fill
                 sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                className="object-cover transition-transform duration-700 group-hover:scale-108"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/90 via-[#141416]/30 to-transparent" />
 
@@ -420,7 +442,7 @@ export default async function HomePage() {
                 </h3>
                 <p className="text-xs text-white/80">{occ.subtitle}</p>
                 <div className="pt-2 flex items-center gap-1 text-xs font-bold text-[#C59B27] group-hover:translate-x-1 transition-transform">
-                  <span>Explore Outfits</span>
+                  <span>{occ.buttonText || "Explore Outfits"}</span>
                   <span>→</span>
                 </div>
               </div>
