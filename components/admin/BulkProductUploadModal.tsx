@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/components/providers/ToastProvider";
 import DownloadCsvButton from "./DownloadCsvButton";
 
@@ -79,6 +79,7 @@ export default function BulkProductUploadModal({
   const { success, error: toastError } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [targetStore, setTargetStore] = useState<"garments" | "jewellery">("garments");
   const [file, setFile] = useState<File | null>(null);
   const [totalRowsFound, setTotalRowsFound] = useState<number>(0);
   const [uploading, setUploading] = useState(false);
@@ -104,6 +105,13 @@ export default function BulkProductUploadModal({
     variantsCreatedOrUpdated: number;
     errors: string[];
   } | null>(null);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const isJewel = document.cookie.includes("fc_admin_store=jewellery");
+      if (isJewel) setTargetStore("jewellery");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -153,7 +161,7 @@ export default function BulkProductUploadModal({
       const dataRows = allRows.slice(1);
       const totalRows = dataRows.length;
 
-      // Ultrafast resilient batch size: 10 garments per batch
+      // Resilient batch size: 10 items per batch
       const BATCH_SIZE = 10;
       const totalBatches = Math.ceil(totalRows / BATCH_SIZE);
 
@@ -188,7 +196,7 @@ export default function BulkProductUploadModal({
         let batchSuccess = false;
         for (let attempt = 1; attempt <= 2 && !batchSuccess; attempt++) {
           try {
-            const res = await fetch("/api/admin/products/bulk-upload", {
+            const res = await fetch(`/api/admin/products/bulk-upload?store=${targetStore}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ csvText: batchCsv }),
@@ -214,28 +222,14 @@ export default function BulkProductUploadModal({
               console.error(`Batch ${b + 1} network error:`, batchErr);
               accumulatedErrors.push(`Batch ${b + 1} (Rows ${batchStart + 1}-${batchEnd}): Network timeout or connection drop`);
             } else {
-              // Quick 500ms breather before retry
               await new Promise((r) => setTimeout(r, 500));
             }
           }
         }
-
-        // Update to reflect completed batch
-        const finishedPercent = Math.round(((b + 1) / totalBatches) * 100);
-        setProgressState({
-          currentBatch: b + 1,
-          totalBatches,
-          percent: finishedPercent,
-          processedRows: cumulativeProcessed,
-          totalRows,
-          productsCreated: cumulativeCreated,
-          productsUpdated: cumulativeUpdated,
-          variantsCreatedOrUpdated: cumulativeVariants,
-          currentRange: `${batchStart + 1} - ${batchEnd}`,
-        });
       }
 
       setUploading(false);
+      setProgressState(null);
 
       const finalResult = {
         success: true,
@@ -250,7 +244,7 @@ export default function BulkProductUploadModal({
       if (cumulativeProcessed > 0) {
         success(
           "Bulk Upload Completed 🎉",
-          `Successfully processed ${cumulativeProcessed} rows (${cumulativeCreated} created, ${cumulativeUpdated} updated, ${cumulativeVariants} SKUs synced)!`
+          `Successfully processed ${cumulativeProcessed} rows into ${targetStore.toUpperCase()} (${cumulativeCreated} created, ${cumulativeUpdated} updated, ${cumulativeVariants} SKUs synced)!`
         );
         onSuccess();
       } else {
@@ -283,7 +277,7 @@ export default function BulkProductUploadModal({
                 Bulk CSV Product &amp; Variant Upload
               </h2>
               <p className="text-xs text-dim mt-0.5">
-                High-speed resilient batch processor · Handles 1,000+ products without timeouts
+                Multi-Store Database Engine · Supports 72-Column Jewellery &amp; Garments CSVs
               </p>
             </div>
           </div>
@@ -298,23 +292,64 @@ export default function BulkProductUploadModal({
           )}
         </div>
 
-        {/* Step 1: Template Download */}
-        <div className="p-4 rounded-2xl border space-y-2.5 bg-amber-500/5" style={{ borderColor: "var(--fc-border)" }}>
+        {/* Store Selection Pills */}
+        <div className="flex items-center justify-between p-3 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+          <span className="text-xs font-bold text-neutral-600 dark:text-neutral-300">
+            Target Destination Store:
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTargetStore("jewellery")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                targetStore === "jewellery"
+                  ? "bg-[#C59B27] text-white shadow-sm"
+                  : "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:border-[#C59B27] border border-neutral-200 dark:border-neutral-700"
+              }`}
+            >
+              💍 Jewellery Store
+            </button>
+            <button
+              type="button"
+              onClick={() => setTargetStore("garments")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                targetStore === "garments"
+                  ? "bg-[#141416] text-white shadow-sm"
+                  : "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:border-[#141416] border border-neutral-200 dark:border-neutral-700"
+              }`}
+            >
+              👗 Garments Store
+            </button>
+          </div>
+        </div>
+
+        {/* Step 1: Download Templates */}
+        <div className="p-4 rounded-2xl border space-y-3 bg-amber-500/5" style={{ borderColor: "var(--fc-border)" }}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h4 className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                 <span>📋</span> Step 1: Download Sample Upload Template
               </h4>
               <p className="text-[11px] text-dim mt-0.5">
-                Download the official pre-formatted CSV template with example luxury apparel listings, sizes, and SKUs.
+                Choose the official template formatted for your catalogue.
               </p>
             </div>
-            <DownloadCsvButton
-              type="template"
-              label="Download Template CSV"
-              icon="📋"
-              className="bg-amber-600 hover:bg-amber-700 text-white border-transparent shrink-0"
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <DownloadCsvButton
+                type="template"
+                label="Garments Template"
+                icon="👗"
+                className="bg-neutral-800 hover:bg-neutral-900 text-white border-transparent shrink-0"
+              />
+              <a
+                href="/api/admin/export?type=jewellery-template"
+                download="fashion-cart-jewellery-72col-template.csv"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#C59B27] hover:bg-[#B0881E] text-white transition-all duration-200 cursor-pointer shadow-sm shrink-0"
+              >
+                <span>💍</span>
+                <span>Jewellery (72 Cols)</span>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -386,7 +421,7 @@ export default function BulkProductUploadModal({
             </div>
 
             <p className="text-[11px] text-slate-300 flex items-center justify-between">
-              <span>⚡ Uploading Garments {progressState.currentRange} of {progressState.totalRows}…</span>
+              <span>⚡ Uploading to {targetStore.toUpperCase()} {progressState.currentRange} of {progressState.totalRows}…</span>
               <span className="font-mono text-slate-400">Do not close window</span>
             </p>
 
@@ -420,59 +455,54 @@ export default function BulkProductUploadModal({
                 <p className="font-bold text-sm text-primary">{result.processedRows} rows</p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/40 border border-emerald-500/20">
-                <p className="text-[10px] text-dim">New Garments</p>
-                <p className="font-bold text-sm text-emerald-600">{result.productsCreated} items</p>
+                <p className="text-[10px] text-dim">New Products</p>
+                <p className="font-bold text-sm text-emerald-600">+{result.productsCreated}</p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/40 border border-emerald-500/20">
                 <p className="text-[10px] text-dim">Updated</p>
-                <p className="font-bold text-sm text-blue-600">{result.productsUpdated} items</p>
+                <p className="font-bold text-sm text-blue-600">{result.productsUpdated}</p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/40 border border-emerald-500/20">
-                <p className="text-[10px] text-dim">Variants Synced</p>
-                <p className="font-bold text-sm text-amber-600">{result.variantsCreatedOrUpdated} SKUs</p>
+                <p className="text-[10px] text-dim">SKUs Synced</p>
+                <p className="font-bold text-sm text-amber-600">{result.variantsCreatedOrUpdated}</p>
               </div>
             </div>
 
             {result.errors.length > 0 && (
-              <div className="mt-2 text-[10px] text-rose-600 space-y-1 p-2 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900">
-                <p className="font-bold">⚠️ Warnings ({result.errors.length}):</p>
-                <div className="max-h-24 overflow-y-auto space-y-0.5 font-mono text-[9.5px]">
-                  {result.errors.map((err, idx) => (
-                    <p key={idx}>{err}</p>
+              <div className="pt-2 border-t border-emerald-500/20 space-y-1">
+                <p className="text-[11px] font-bold text-amber-700">Noticeable Rows with Warnings:</p>
+                <ul className="text-[10px] text-dim space-y-0.5 max-h-24 overflow-y-auto font-mono bg-white/50 p-2 rounded-lg">
+                  {result.errors.map((err, i) => (
+                    <li key={i}>{err}</li>
                   ))}
-                </div>
+                </ul>
               </div>
             )}
           </div>
         )}
 
-        {/* Action Controls */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t" style={{ borderColor: "var(--fc-border)" }}>
+        {/* Footer Actions */}
+        <div className="flex items-center justify-end gap-3 pt-2 border-t" style={{ borderColor: "var(--fc-border)" }}>
           <button
-            onClick={onClose}
+            type="button"
             disabled={uploading}
-            className="px-4 py-2.5 rounded-xl text-xs font-bold text-dim hover:text-primary transition-colors disabled:opacity-30 cursor-pointer"
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-full border text-xs font-semibold hover:bg-black/5 disabled:opacity-50 cursor-pointer"
+            style={{ borderColor: "var(--fc-border)" }}
           >
-            {result ? "Close & View Catalog" : "Cancel"}
+            {result ? "Close" : "Cancel"}
           </button>
 
-          <button
-            onClick={handleUpload}
-            disabled={!file || uploading}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:brightness-110 disabled:opacity-50 cursor-pointer bg-[#C59B27]"
-          >
-            {uploading ? (
-              <>
-                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Importing ({progressState?.percent || 0}%)…</span>
-              </>
-            ) : (
-              <>
-                <span>📤</span>
-                <span>Start Import ({totalRowsFound > 0 ? `${totalRowsFound} Garments` : "Sync Catalog"})</span>
-              </>
-            )}
-          </button>
+          {!result && (
+            <button
+              type="button"
+              disabled={!file || uploading}
+              onClick={handleUpload}
+              className="px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all cursor-pointer disabled:opacity-50 bg-[#141416] hover:bg-[#25262B] active:scale-95"
+            >
+              {uploading ? "Processing Batch…" : `Start Upload (${totalRowsFound} items) →`}
+            </button>
+          )}
         </div>
       </div>
     </div>

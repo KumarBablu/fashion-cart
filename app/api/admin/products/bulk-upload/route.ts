@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ProductStatus } from "@prisma/client";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
@@ -16,31 +16,41 @@ function slugify(s: string) {
 }
 
 // Cleans third-party marketplace platform references and promotional noise
-function sanitizeDescription(desc: string, title: string, brand: string, fabric: string): string {
+function sanitizeDescription(desc: string, title: string, brand: string, material: string): string {
   if (!desc) {
-    return `${title} crafted with premium ${fabric || "fabrics"} and luxury finishing, curated exclusively for Fashion Cart.`;
+    return `${title} crafted with exquisite ${material || "premium materials"} and luxury finishing, curated exclusively for Fashion Cart.`;
   }
 
   let cleaned = desc
     .replace(/Buy\s+.*?\s+For\s+Only\s+Rs\.\s*[0-9.]+\s+Online\s+in\s+India\.?/gi, "")
-    .replace(/Shop\s+Online\s+For\s+Apparels\.?/gi, "")
-    .replace(/Huge\s+Collection\s+of\s+Branded\s+Clothes\s+Only\s+at\s+Flipkart\.com\.?/gi, "")
+    .replace(/Shop\s+Online\s+For\s+(?:Apparels|Jewellery)\.?/gi, "")
+    .replace(/Huge\s+Collection\s+of\s+Branded\s+(?:Clothes|Jewellery)\s+Only\s+at\s+Flipkart\.com\.?/gi, "")
     .replace(/\b(Flipkart|Amazon|Meesho|Myntra|Snapdeal|Ajio|Shopsy|TataCliq|Nykaa)\b(?:\.com)?/gi, "Fashion Cart")
     .replace(/\s+/g, " ")
     .trim();
 
   if (cleaned.length < 15) {
-    cleaned = `${title} from ${brand || "Fashion Cart Atelier"} crafted with ${fabric || "fine textiles"} and tailored for premium comfort and style.`;
+    cleaned = `${title} from ${brand || "Fashion Cart Atelier"} crafted with ${material || "fine craftsmanship"} and tailored for premium elegance and splendour.`;
   }
 
   return cleaned;
 }
 
-// Auto-extracts fabric from title or description if blank
-function extractFabric(title: string, desc: string, rawFabric?: string): string {
-  if (rawFabric && rawFabric.trim()) return rawFabric.trim();
+// Auto-extracts material / fabric
+function extractMaterial(title: string, desc: string, rawMaterial?: string): string {
+  if (rawMaterial && rawMaterial.trim()) return rawMaterial.trim();
 
   const combined = `${title} ${desc}`.toLowerCase();
+  // Jewellery materials
+  if (combined.includes("kundan")) return "Brass Alloy with Uncut Kundan";
+  if (combined.includes("polki")) return "Copper Alloy with Polki Stones";
+  if (combined.includes("american diamond") || combined.includes("cz") || combined.includes("zircon")) return "Brass Alloy with Cubic Zirconia";
+  if (combined.includes("temple")) return "Matte Antique Gold Brass Alloy";
+  if (combined.includes("pearl")) return "Alloy with Cultured Pearls";
+  if (combined.includes("silver") || combined.includes("925")) return "925 Sterling Silver Plated";
+  if (combined.includes("gold plated") || combined.includes("micro-plated") || combined.includes("micron")) return "24K Micro-Plated Brass";
+
+  // Garment fabrics
   if (combined.includes("georgette")) return "Pure Georgette";
   if (combined.includes("silk") && combined.includes("satin")) return "Silk Satin Blend";
   if (combined.includes("banarasi silk") || combined.includes("katan silk")) return "Pure Banarasi Silk";
@@ -50,20 +60,24 @@ function extractFabric(title: string, desc: string, rawFabric?: string): string 
   if (combined.includes("rayon")) return "Soft Premium Rayon";
   if (combined.includes("chiffon")) return "Flowing Chiffon";
   if (combined.includes("velvet")) return "Plush Velvet";
-  if (combined.includes("organza")) return "Delicate Organza";
-  if (combined.includes("crepe")) return "Draped Crepe";
-  if (combined.includes("denim")) return "Durable Denim";
-  if (combined.includes("leather")) return "Genuine Leather";
 
-  return "Premium Textile Blend";
+  return "Premium Alloy & Materials";
 }
 
 // Auto-extracts size from title or image URLs if blank
-function extractSize(title: string, imageUrls: string[], rawSize?: string): string {
+function extractSize(title: string, imageUrls: string[], rawSize?: string, isJewellery = false): string {
   if (rawSize && rawSize.trim()) return rawSize.trim();
 
-  const combined = `${title} ${imageUrls.join(" ")}`.toLowerCase();
+  if (isJewellery) {
+    const combined = title.toLowerCase();
+    if (combined.includes("adjustable") || combined.includes("free size")) return "Adjustable";
+    if (combined.includes("2.4") || combined.includes("2-4")) return "2.4";
+    if (combined.includes("2.6") || combined.includes("2-6")) return "2.6";
+    if (combined.includes("2.8") || combined.includes("2-8")) return "2.8";
+    return "Free Size / Adjustable";
+  }
 
+  const combined = `${title} ${imageUrls.join(" ")}`.toLowerCase();
   if (/(?:^|[^a-z0-9])xxxl(?:$|[^a-z0-9])/i.test(combined) || combined.includes("3xl")) return "3XL";
   if (/(?:^|[^a-z0-9])xxl(?:$|[^a-z0-9])/i.test(combined) || combined.includes("2xl")) return "XXL";
   if (/(?:^|[^a-z0-9])xl(?:$|[^a-z0-9])/i.test(combined)) return "XL";
@@ -75,125 +89,126 @@ function extractSize(title: string, imageUrls: string[], rawSize?: string): stri
   return "Free Size";
 }
 
-// Auto-extracts Pattern
-function extractPattern(title: string, rawPattern?: string): string {
-  if (rawPattern && rawPattern.trim()) return rawPattern.trim();
-  const lower = title.toLowerCase();
-  if (lower.includes("printed") || lower.includes("floral print")) return "Artisan Print";
-  if (lower.includes("woven") || lower.includes("zari")) return "Zari Woven";
-  if (lower.includes("embroidered")) return "Handcrafted Embroidery";
-  if (lower.includes("solid") || lower.includes("plain")) return "Solid Minimalist";
-  if (lower.includes("striped") || lower.includes("stripes")) return "Striped";
-  if (lower.includes("checked") || lower.includes("checks")) return "Checked";
-  return "Artisan Handloom";
-}
-
 // Automatically infers Department, Category, and Subcategory
-function inferTaxonomy(title: string, rawDept?: string, rawCat?: string, rawSubcat?: string) {
+function inferTaxonomy(title: string, rawDept?: string, rawCat?: string, rawSubcat?: string, isJewellery = false) {
   const lower = title.toLowerCase();
 
   let department = rawDept?.trim();
   let category = rawCat?.trim();
   let subcategory = rawSubcat?.trim();
 
-  // 1. Department fallback
+  if (isJewellery) {
+    if (!department) department = "Jewellery";
+    if (!category) {
+      if (lower.includes("choker") || lower.includes("necklace") || lower.includes("haar") || lower.includes("set")) category = "Necklaces & Sets";
+      else if (lower.includes("earring") || lower.includes("jhumka") || lower.includes("bali") || lower.includes("stud")) category = "Earrings & Jhumkas";
+      else if (lower.includes("bangle") || lower.includes("kada") || lower.includes("bracelet")) category = "Bangles & Kadas";
+      else if (lower.includes("ring")) category = "Rings";
+      else if (lower.includes("tikka") || lower.includes("nath") || lower.includes("anklet") || lower.includes("payal")) category = "Bridal Accents";
+      else category = "Fine Jewellery";
+    }
+    if (!subcategory) {
+      if (lower.includes("kundan")) subcategory = "Kundan Chokers";
+      else if (lower.includes("temple")) subcategory = "Temple Haar";
+      else if (lower.includes("jhumka")) subcategory = "Royal Jhumkas";
+      else if (lower.includes("kada")) subcategory = "Openable Kadas";
+      else if (lower.includes("solitaire")) subcategory = "Solitaire Rings";
+      else subcategory = category;
+    }
+    return { department, category, subcategory };
+  }
+
+  // 1. Department fallback for garments
   if (!department) {
-    if (lower.includes("women") || lower.includes("women's") || lower.includes("lady") || lower.includes("girl") || lower.includes("saree") || lower.includes("kurti") || lower.includes("anarkali") || lower.includes("lehenga") || lower.includes("dupatta")) {
+    if (lower.includes("women") || lower.includes("saree") || lower.includes("kurti") || lower.includes("lehenga") || lower.includes("anarkali") || lower.includes("gown") || lower.includes("dress")) {
       department = "Women";
-    } else if (lower.includes("men") || lower.includes("men's") || lower.includes("boy") || lower.includes("shirt") || lower.includes("t-shirt") || lower.includes("polo") || lower.includes("trouser") || lower.includes("blazer") || lower.includes("chino")) {
+    } else if (lower.includes("men") || lower.includes("shirt") || lower.includes("kurta") || lower.includes("trouser") || lower.includes("jeans")) {
       department = "Men";
-    } else if (lower.includes("kid") || lower.includes("baby") || lower.includes("infant") || lower.includes("child")) {
+    } else if (lower.includes("kid") || lower.includes("boy") || lower.includes("girl") || lower.includes("baby")) {
       department = "Kids";
     } else {
       department = "Women";
     }
   }
 
-  // 2. Subcategory / Category fallback
-  if (!subcategory) {
-    if (lower.includes("saree") || lower.includes("sari")) subcategory = "Mulberry Silk Sarees";
-    else if (lower.includes("kurta pant") || lower.includes("kurti set") || lower.includes("ethnic set")) subcategory = "Velvet & Silk Kurti Sets";
-    else if (lower.includes("kurti") || lower.includes("kurta")) subcategory = "Embroidered Silk Kurtis";
-    else if (lower.includes("polo") || lower.includes("t-shirt") || lower.includes("tshirt")) subcategory = "T-Shirts";
-    else if (lower.includes("shirt")) subcategory = "Pure French Linen Shirts";
-    else if (lower.includes("trouser") || lower.includes("pant") || lower.includes("chino")) subcategory = "Trousers & Chinos";
-    else if (lower.includes("dress") || lower.includes("gown") || lower.includes("maxi")) subcategory = "Evening Gowns & Dresses";
-    else if (lower.includes("lehenga") || lower.includes("choli")) subcategory = "Bridal & Festive Lehengas";
-    else subcategory = "Apparel & Couture";
-  }
-
-  if (!category) {
-    category = subcategory;
+  // 2. Category & Subcategory fallback
+  if (!category || !subcategory) {
+    if (lower.includes("saree") || lower.includes("sari")) {
+      category = category || "Ethnic Wear";
+      subcategory = subcategory || (lower.includes("banarasi") ? "Banarasi Silk Sarees" : lower.includes("cotton") ? "Cotton Sarees" : "Designer Sarees");
+    } else if (lower.includes("kurti") || lower.includes("kurta")) {
+      category = category || "Ethnic Wear";
+      subcategory = subcategory || "Kurtis & Tunics";
+    } else if (lower.includes("lehenga") || lower.includes("choli")) {
+      category = category || "Festive & Bridal";
+      subcategory = subcategory || "Bridal Lehengas";
+    } else if (lower.includes("dress") || lower.includes("gown")) {
+      category = category || "Western Wear";
+      subcategory = subcategory || "Maxi & Party Dresses";
+    } else if (lower.includes("shirt")) {
+      category = category || "Topwear";
+      subcategory = subcategory || "Linen & Casual Shirts";
+    } else if (lower.includes("jeans") || lower.includes("denim")) {
+      category = category || "Bottomwear";
+      subcategory = subcategory || "Denim Jeans";
+    } else {
+      category = category || "Apparel";
+      subcategory = subcategory || "Atelier Collection";
+    }
   }
 
   return { department, category, subcategory };
 }
 
-// In-memory Caches across requests
-const categoryCache = new Map<string, string>();
-const sellerCache = new Map<string, string>();
+// In-memory Category Resolver
+async function resolveCategoryHierarchy(department: string, subcategory: string, db: any): Promise<string> {
+  const cleanParent = department.trim();
+  const cleanSub = subcategory.trim();
+  const parentSlug = slugify(cleanParent);
+  const subSlug = slugify(`${cleanParent}-${cleanSub}`);
 
-async function resolveCategoryHierarchy(deptName: string, subcatName: string): Promise<string> {
-  const cleanDept = deptName.trim() || "Women";
-  const cleanSub = subcatName.trim() || "Apparel";
-  const cacheKey = `${cleanDept.toLowerCase()}:::${cleanSub.toLowerCase()}`;
-
-  if (categoryCache.has(cacheKey)) {
-    return categoryCache.get(cacheKey)!;
-  }
-
-  const deptSlug = slugify(cleanDept);
-
-  // 1. Find or create Department (Parent Category)
-  let parentCat = await prisma.category.findFirst({
+  let parentCat = await db.category.findFirst({
     where: {
-      OR: [
-        { name: { equals: cleanDept, mode: "insensitive" } },
-        { slug: deptSlug },
-      ],
-      parentId: null,
+      OR: [{ slug: parentSlug }, { slug: slugify(cleanParent) }, { name: { equals: cleanParent, mode: "insensitive" } }],
     },
   });
 
   if (!parentCat) {
     try {
-      parentCat = await prisma.category.create({
+      parentCat = await db.category.create({
         data: {
-          name: cleanDept,
-          slug: deptSlug,
+          name: cleanParent,
+          slug: parentSlug,
           isActive: true,
-          parentId: null,
         },
       });
     } catch {
-      parentCat = await prisma.category.findFirst({
-        where: { slug: deptSlug },
+      parentCat = await db.category.findFirst({
+        where: {
+          OR: [{ slug: parentSlug }, { slug: slugify(cleanParent) }],
+        },
       });
     }
   }
 
   if (!parentCat) {
-    const fallbackId = await getFallbackCategoryId();
-    categoryCache.set(cacheKey, fallbackId);
-    return fallbackId;
+    const fallback = await db.category.findFirst({ where: { isActive: true } });
+    return fallback?.id || "";
   }
 
-  // 2. Find or create Subcategory under Parent
-  const subSlug = `${deptSlug}-${slugify(cleanSub)}`;
-
-  let subCat = await prisma.category.findFirst({
+  let subCat = await db.category.findFirst({
     where: {
       OR: [
-        { name: { equals: cleanSub, mode: "insensitive" }, parentId: parentCat.id },
         { slug: subSlug },
         { slug: slugify(cleanSub) },
+        { name: { equals: cleanSub, mode: "insensitive" }, parentId: parentCat.id },
       ],
     },
   });
 
   if (!subCat) {
     try {
-      subCat = await prisma.category.create({
+      subCat = await db.category.create({
         data: {
           name: cleanSub,
           slug: subSlug,
@@ -202,7 +217,7 @@ async function resolveCategoryHierarchy(deptName: string, subcatName: string): P
         },
       });
     } catch {
-      subCat = await prisma.category.findFirst({
+      subCat = await db.category.findFirst({
         where: {
           OR: [{ slug: subSlug }, { slug: slugify(cleanSub) }],
         },
@@ -210,27 +225,7 @@ async function resolveCategoryHierarchy(deptName: string, subcatName: string): P
     }
   }
 
-  const finalId = subCat?.id || parentCat.id;
-  categoryCache.set(cacheKey, finalId);
-  return finalId;
-}
-
-async function getFallbackCategoryId(): Promise<string> {
-  let fallback = await prisma.category.findFirst({ where: { isActive: true } });
-  if (!fallback) {
-    try {
-      fallback = await prisma.category.create({
-        data: {
-          name: "Apparel & Couture",
-          slug: "apparel-couture",
-          isActive: true,
-        },
-      });
-    } catch {
-      fallback = await prisma.category.findFirst();
-    }
-  }
-  return fallback?.id || "";
+  return subCat?.id || parentCat.id;
 }
 
 function parseCsvRows(text: string): string[][] {
@@ -282,6 +277,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
   }
 
+  const storeParam = req.nextUrl.searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const activeStore = storeParam.toLowerCase().includes("jewel") ? "jewellery" : "garments";
+  const isJewellery = activeStore === "jewellery";
+  const db = getDb(activeStore);
+
   try {
     let csvText = "";
     const contentType = req.headers.get("content-type") || "";
@@ -313,39 +313,48 @@ export async function POST(req: NextRequest) {
     const header = rows[0].map((h) => h.toLowerCase().replace(/[^a-z0-9]/g, ""));
     const findIndex = (...patterns: string[]) => {
       for (const p of patterns) {
-        const idx = header.findIndex((h) => h === p || h.includes(p));
+        const cleanPattern = p.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const idx = header.findIndex((h) => h === cleanPattern || h.includes(cleanPattern));
         if (idx !== -1) return idx;
       }
       return -1;
     };
 
+    // Map all 72 columns and attribute synonyms
     const colIndex = {
       productId: findIndex("productid", "itemid"),
       sku: findIndex("sku", "variantid", "productsku"),
       title: findIndex("title", "name", "productname"),
       slug: findIndex("slug", "handle"),
-      productUrl: findIndex("producturl", "sellerurl", "sourcelink", "url"),
+      productUrl: findIndex("producturl", "sellerurl", "sourcelink", "sourceurl", "url"),
       department: findIndex("department", "maincategory", "gender", "dept"),
       category: findIndex("category", "parentcategory", "cat"),
       subcategory: findIndex("subcategory", "subcat", "type"),
-      brand: findIndex("brand", "designer"),
-      fabric: findIndex("fabric", "weave"),
-      material: findIndex("material", "composition"),
+      categoryPath: findIndex("categorypath"),
+      productType: findIndex("producttype", "attributeproducttype", "type"),
+      netQty: findIndex("netqty", "attributenetqty", "netquantity"),
+      materialType: findIndex("materialtype", "attributematerialtype", "material", "fabric", "composition"),
+      closureType: findIndex("closuretype", "attributeclosuretype", "closure"),
+      colourName: findIndex("colourname", "attributecolourname", "colour", "color", "shade"),
+      shape: findIndex("shape", "attributeshape", "motif"),
+      keyFeatures: findIndex("keyfeatures", "attributekeyfeatures", "highlights", "features"),
+      gender: findIndex("gender", "attributegender"),
+      occasion: findIndex("occasion", "attributeoccasion", "wear"),
+      designType: findIndex("designtype", "attributedesigntype", "design"),
+      gemType: findIndex("gemtype", "attributegemtype", "stone", "gem"),
+      plating: findIndex("plating", "attributeplating", "polish", "finish"),
+      metalType: findIndex("metaltype", "attributemetaltype", "metal"),
+      gift: findIndex("gift", "attributegift", "giftready"),
+      brand: findIndex("brand", "attributebrand", "designer"),
       description: findIndex("description", "desc", "details"),
       status: findIndex("status", "state"),
       availability: findIndex("availability", "stockstatus"),
-      colour: findIndex("colour", "color", "shade"),
-      size: findIndex("size", "dimensions"),
-      pattern: findIndex("pattern", "print", "motif"),
-      fit: findIndex("fit", "cut"),
-      occasion: findIndex("occasion", "wear"),
       price: findIndex("price", "sellingprice", "priceinr", "offerprice"),
       compareAtPrice: findIndex("compareatprice", "compareprice", "mrp", "originalprice"),
       discountPercent: findIndex("discountpercent", "discount", "offpercent"),
+      discountAmount: findIndex("discountamount"),
       currency: findIndex("currency"),
       stockQuantity: findIndex("stockquantity", "stock", "quantity", "qty"),
-      sellerName: findIndex("sellername", "vendorname", "suppliername", "seller"),
-      sellerId: findIndex("sellerid", "vendorid", "supplierid"),
       rating: findIndex("rating", "stars", "averagerating"),
       ratingCount: findIndex("ratingcount", "ratingscount"),
       reviewCount: findIndex("reviewcount", "totalreviews", "reviews"),
@@ -354,6 +363,19 @@ export async function POST(req: NextRequest) {
       imageUrl3: findIndex("imageurl3", "image3", "photo3"),
       imageUrl4: findIndex("imageurl4", "image4", "photo4"),
       imageUrl5: findIndex("imageurl5", "image5", "photo5"),
+      sellerName: findIndex("sellername", "attributesellername", "vendorname", "suppliername", "seller"),
+      sellerEmail: findIndex("selleremail"),
+      sellerAddress: findIndex("selleraddress", "attributeselleraddress"),
+      sellerLicenseNo: findIndex("sellerlicenseno", "attributesellerlicenseno"),
+      manufacturerOrMarketerName: findIndex("manufacturerormarketername", "attributemanufacturerormarketername"),
+      manufacturerOrMarketerAddress: findIndex("manufacturerormarketeraddress", "attributemanufacturerormarketeraddress"),
+      countryOfOrigin: findIndex("countryoforigin", "attributecountryoforigin", "origin"),
+      searchKeywords: findIndex("searchkeywords", "keywords", "tags"),
+      sourceUrl: findIndex("sourceurl"),
+      collectedAt: findIndex("collectedat"),
+      size: findIndex("size", "dimensions"),
+      pattern: findIndex("pattern", "print", "motif"),
+      fit: findIndex("fit", "cut"),
     };
 
     let processedCount = 0;
@@ -363,6 +385,8 @@ export async function POST(req: NextRequest) {
     let sellersCreatedOrLinked = 0;
     const errors: string[] = [];
 
+    const sellerCache = new Map<string, string>();
+
     for (let r = 1; r < rows.length; r++) {
       const row = rows[r];
       if (row.length === 0 || row.every((c) => !c)) continue;
@@ -370,13 +394,12 @@ export async function POST(req: NextRequest) {
       const getVal = (idx: number) => (idx >= 0 && idx < row.length ? row[idx].trim() : "");
 
       const rawTitle = getVal(colIndex.title);
-      const title = rawTitle || "Luxury Garment Listing";
-      const brand = getVal(colIndex.brand) || "Fashion Cart Atelier";
+      const title = rawTitle || (isJewellery ? "Imperial Jewellery Masterpiece" : "Luxury Garment Listing");
+      const brand = getVal(colIndex.brand) || (isJewellery ? "Imperial Fine Jewels" : "Fashion Cart Atelier");
       const rawCustomProductId = getVal(colIndex.productId);
       const rawSlug = getVal(colIndex.slug);
       const rawSku = getVal(colIndex.sku);
 
-      // Fast random entropy per row to guarantee 100% slug & SKU uniqueness instantly without DB loop
       const rowRandomEntropy = Math.random().toString(36).substring(2, 7).toLowerCase();
       const rowSkuEntropy = Math.random().toString(36).substring(2, 7).toUpperCase();
 
@@ -384,22 +407,53 @@ export async function POST(req: NextRequest) {
       const rawDept = getVal(colIndex.department);
       const rawCat = getVal(colIndex.category);
       const rawSubcat = getVal(colIndex.subcategory);
-      const { department, category, subcategory } = inferTaxonomy(title, rawDept, rawCat, rawSubcat);
-      const categoryPath = [department, category, subcategory]
+      const { department, category, subcategory } = inferTaxonomy(title, rawDept, rawCat, rawSubcat, isJewellery);
+      const rawCategoryPath = getVal(colIndex.categoryPath);
+      const categoryPath = rawCategoryPath || [department, category, subcategory]
         .filter(Boolean)
         .filter((v, i, a) => a.indexOf(v) === i)
         .join(" > ");
 
-      // 2. Fabric & Material
-      const rawFabric = getVal(colIndex.fabric);
+      // 2. Specifications & Materials
+      const rawMaterial = getVal(colIndex.materialType);
       const rawDesc = getVal(colIndex.description);
-      const fabric = extractFabric(title, rawDesc, rawFabric);
-      const material = getVal(colIndex.material) || fabric;
+      const material = extractMaterial(title, rawDesc, rawMaterial);
+      const description = sanitizeDescription(rawDesc, title, brand, material);
 
-      // 3. Clean Description
-      const description = sanitizeDescription(rawDesc, title, brand, fabric);
+      // Cleaned Specification Attributes Object without "Attribute" prefix
+      const specifications: Record<string, string> = {};
+      const addSpec = (key: string, val: string) => {
+        if (val && val.trim()) specifications[key] = val.trim();
+      };
 
-      // 4. Status & Availability
+      addSpec("product_type", getVal(colIndex.productType) || subcategory);
+      addSpec("net_qty", getVal(colIndex.netQty) || "1 Unit");
+      addSpec("material_type", material);
+      addSpec("closure_type", getVal(colIndex.closureType));
+      addSpec("colour_name", getVal(colIndex.colourName));
+      addSpec("shape", getVal(colIndex.shape));
+      addSpec("key_features", getVal(colIndex.keyFeatures));
+      addSpec("gender", getVal(colIndex.gender) || (isJewellery ? "Women" : department));
+      addSpec("occasion", getVal(colIndex.occasion) || (isJewellery ? "Bridal & Festive" : "Party & Casual"));
+      addSpec("design_type", getVal(colIndex.designType));
+      addSpec("gem_type", getVal(colIndex.gemType));
+      addSpec("plating", getVal(colIndex.plating) || (isJewellery ? "24K Micro-Plated Gold" : ""));
+      addSpec("metal_type", getVal(colIndex.metalType) || (isJewellery ? "Brass Alloy" : ""));
+      addSpec("gift", getVal(colIndex.gift) || "Velvet Gift Box Ready");
+      addSpec("country_of_origin", getVal(colIndex.countryOfOrigin) || "India 🇮🇳");
+      addSpec("search_keywords", getVal(colIndex.searchKeywords));
+      addSpec("source_url", getVal(colIndex.sourceUrl) || getVal(colIndex.productUrl));
+      addSpec("collected_at", getVal(colIndex.collectedAt) || new Date().toISOString());
+      
+      // Confidential Supplier attributes (Admin view only)
+      addSpec("seller_name", getVal(colIndex.sellerName));
+      addSpec("seller_email", getVal(colIndex.sellerEmail));
+      addSpec("seller_address", getVal(colIndex.sellerAddress));
+      addSpec("seller_license_no", getVal(colIndex.sellerLicenseNo));
+      addSpec("manufacturer_or_marketer_name", getVal(colIndex.manufacturerOrMarketerName));
+      addSpec("manufacturer_or_marketer_address", getVal(colIndex.manufacturerOrMarketerAddress));
+
+      // 3. Status & Availability
       const statusRaw = getVal(colIndex.status).toUpperCase();
       const status: ProductStatus =
         statusRaw === "DRAFT"
@@ -414,7 +468,7 @@ export async function POST(req: NextRequest) {
           ? "OUT_OF_STOCK"
           : "IN_STOCK";
 
-      // 5. Lookbook Images (Up to 5)
+      // 4. Images (Up to 5)
       const rawImageUrls = [
         getVal(colIndex.imageUrl),
         getVal(colIndex.imageUrl2),
@@ -425,126 +479,123 @@ export async function POST(req: NextRequest) {
 
       const imageUrls = rawImageUrls.map(normalizeImageUrl);
 
-      // 6. Variant Attributes
+      // 5. Variant Attributes
       const rawSize = getVal(colIndex.size);
-      const size = extractSize(title, rawImageUrls, rawSize);
-      const colour = getVal(colIndex.colour) || "Classic Multi";
-      const pattern = extractPattern(title, getVal(colIndex.pattern));
-      const fit = getVal(colIndex.fit) || "Regular Fit";
-      const occasion = getVal(colIndex.occasion) || "Festive & Daily Luxury";
+      const size = extractSize(title, rawImageUrls, rawSize, isJewellery);
+      const colour = getVal(colIndex.colourName) || "Classic Gold";
+      const pattern = getVal(colIndex.pattern) || (isJewellery ? "Handcrafted Kundan" : "Artisan Weave");
+      const fit = getVal(colIndex.fit) || (isJewellery ? "Comfort Fit" : "Regular Fit");
+      const occasion = getVal(colIndex.occasion) || (isJewellery ? "Bridal & Festive" : "Festive & Daily Luxury");
       const currency = getVal(colIndex.currency) || "INR";
 
-      // 7. Price & Discounts
-      const priceNum = Number(getVal(colIndex.price).replace(/[^0-9.]/g, "")) || 999;
+      // 6. Price & Discounts
+      const priceNum = Number(getVal(colIndex.price).replace(/[^0-9.]/g, "")) || (isJewellery ? 188 : 999);
       let compareNum = Number(getVal(colIndex.compareAtPrice).replace(/[^0-9.]/g, "")) || null;
       let discountNum = Number(getVal(colIndex.discountPercent).replace(/[^0-9.]/g, "")) || null;
 
-      // If discount percentage was provided in CSV, calculate original MRP
       if (discountNum && discountNum > 0 && discountNum < 90 && (!compareNum || compareNum <= priceNum)) {
         compareNum = Math.round(priceNum / (1 - discountNum / 100));
       }
 
-      // If compareAtPrice is missing or equal to/less than selling price, generate a realistic luxury retail MRP (~45% markup)
       if (!compareNum || compareNum <= priceNum) {
         compareNum = Math.round((priceNum * 1.5) / 50) * 50 - 1;
-        if (compareNum <= priceNum) compareNum = priceNum + 499;
+        if (compareNum <= priceNum) compareNum = priceNum + (isJewellery ? 299 : 499);
       }
 
       if (!discountNum && compareNum && compareNum > priceNum) {
         discountNum = Math.round(((compareNum - priceNum) / compareNum) * 100);
       }
 
-      // 8. Stock Quantity
-      const stockNum = parseInt(getVal(colIndex.stockQuantity).replace(/[^0-9]/g, "") || "25", 10) || 25;
+      // 7. Stock Quantity
+      const stockNum = parseInt(getVal(colIndex.stockQuantity).replace(/[^0-9]/g, "") || "50", 10) || 50;
 
-      // 9. Seller / Supplier
+      // 8. Seller / Supplier
       const sellerName = getVal(colIndex.sellerName);
-      let sellerIdStr = getVal(colIndex.sellerId);
-      if (!sellerIdStr && sellerName) {
-        sellerIdStr = `SLR-${slugify(sellerName).toUpperCase().slice(0, 8)}-101`;
-      }
+      const sellerEmail = getVal(colIndex.sellerEmail);
+      let sellerIdStr = `SLR-${slugify(sellerName || "VENDOR").toUpperCase().slice(0, 8)}-101`;
 
-      // 10. Ratings
-      const ratingNum = Number(getVal(colIndex.rating).replace(/[^0-9.]/g, "")) || 4.8;
-      const ratingCountNum = parseInt(getVal(colIndex.ratingCount).replace(/[^0-9]/g, "") || "18", 10);
-      const reviewCountNum = parseInt(getVal(colIndex.reviewCount).replace(/[^0-9]/g, "") || "12", 10);
+      // 9. Ratings
+      const ratingNum = Number(getVal(colIndex.rating).replace(/[^0-9.]/g, "")) || 4.9;
+      const ratingCountNum = parseInt(getVal(colIndex.ratingCount).replace(/[^0-9]/g, "") || "24", 10);
+      const reviewCountNum = parseInt(getVal(colIndex.reviewCount).replace(/[^0-9]/g, "") || "18", 10);
 
       try {
-        // 1. Resolve Category
-        const assignedCategoryId = await resolveCategoryHierarchy(department, subcategory);
+        // 1. Resolve Category in active store DB
+        const assignedCategoryId = await resolveCategoryHierarchy(department, subcategory, db);
 
-        // 2. Resolve or Create Seller with in-memory caching
+        // 2. Resolve or Create Seller in active store DB
         let linkedSellerId: string | null = null;
-        if (sellerIdStr || sellerName) {
-          const sellerLookupId = sellerIdStr || `SLR-${slugify(sellerName || "VENDOR").toUpperCase().slice(0, 10)}`;
-          
-          if (sellerCache.has(sellerLookupId)) {
-            linkedSellerId = sellerCache.get(sellerLookupId)!;
+        if (sellerName) {
+          if (sellerCache.has(sellerIdStr)) {
+            linkedSellerId = sellerCache.get(sellerIdStr)!;
           } else {
-            let seller = await prisma.seller.findUnique({
-              where: { sellerId: sellerLookupId },
+            let seller = await db.seller.findUnique({
+              where: { sellerId: sellerIdStr },
             });
 
             if (!seller) {
               try {
-                seller = await prisma.seller.create({
+                seller = await db.seller.create({
                   data: {
-                    sellerId: sellerLookupId,
-                    name: sellerName || `Supplier ${sellerLookupId}`,
+                    sellerId: sellerIdStr,
+                    name: sellerName,
+                    email: sellerEmail || null,
+                    address: getVal(colIndex.sellerAddress) || null,
                     url: getVal(colIndex.productUrl) || null,
                     isActive: true,
                   },
                 });
                 sellersCreatedOrLinked++;
               } catch {
-                seller = await prisma.seller.findFirst({
-                  where: { sellerId: sellerLookupId },
+                seller = await db.seller.findFirst({
+                  where: { sellerId: sellerIdStr },
                 });
               }
             }
             if (seller) {
               linkedSellerId = seller.id;
-              sellerCache.set(sellerLookupId, seller.id);
+              sellerCache.set(sellerIdStr, seller.id);
             }
           }
         }
 
-        // 3. Resolve Existing Product (by Product ID, Slug, SKU, or Title)
+        // 3. Resolve Existing Product
         let product: any = null;
         if (rawCustomProductId) {
-          product = await prisma.product.findFirst({
+          product = await db.product.findFirst({
             where: { productId: rawCustomProductId },
           });
         } else if (rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm")) {
-          product = await prisma.product.findUnique({
+          product = await db.product.findUnique({
             where: { slug: slugify(rawSlug) },
           });
         }
 
         if (!product && rawSku) {
-          const matchedVariant = await prisma.productVariant.findFirst({
+          const matchedVariant = await db.productVariant.findFirst({
             where: { sku: rawSku },
             select: { productId: true },
           });
           if (matchedVariant) {
-            product = await prisma.product.findUnique({
+            product = await db.product.findUnique({
               where: { id: matchedVariant.productId },
             });
           }
         }
 
         if (!product && title) {
-          product = await prisma.product.findFirst({
+          product = await db.product.findFirst({
             where: { name: { equals: title, mode: "insensitive" } },
           });
         }
 
-        // Determine Fast Collision-Proof Slug & ProductID
+        // Collision-proof Slug & ProductID
         const baseSlug = rawSlug && rawSlug.length > 2 && !rawSlug.startsWith("itm") ? slugify(rawSlug) : slugify(title);
         const finalSlug = product ? product.slug : `${baseSlug}-${rowRandomEntropy}`;
 
+        const brandPrefix = isJewellery ? "JW" : "GAR";
         const brandCode = slugify(brand || "FC").toUpperCase().slice(0, 4) || "FC";
-        const finalProductId = rawCustomProductId || product?.productId || `FC-PRD-${brandCode}-${rowSkuEntropy}`;
+        const finalProductId = rawCustomProductId || product?.productId || `FC-${brandPrefix}-${brandCode}-${rowSkuEntropy}`;
         const finalProductUrl = getVal(colIndex.productUrl) || `/products/${finalSlug}`;
 
         const productData = {
@@ -555,9 +606,9 @@ export async function POST(req: NextRequest) {
           department,
           subcategory,
           categoryPath,
-          productType: subcategory,
+          productType: getVal(colIndex.productType) || subcategory,
           brand,
-          fabric,
+          fabric: !isJewellery ? material : null,
           material,
           pattern,
           fit,
@@ -571,18 +622,20 @@ export async function POST(req: NextRequest) {
           sellerName: sellerName || null,
           sellerIdentifier: sellerIdStr || null,
           sellerUrl: finalProductUrl || null,
+          sellerEmail: sellerEmail || null,
           averageRating: ratingNum,
           ratingCount: ratingCountNum,
           totalReviews: reviewCountNum,
           reviewCount: reviewCountNum,
+          tags: getVal(colIndex.searchKeywords) || null,
+          specifications: specifications,
         };
 
-        // 4. Atomic Single-Query Creation or In-Place Update
         const sizeCode = slugify(size || "FS").toUpperCase().slice(0, 4) || "FS";
-        const finalSku = rawSku ? `${rawSku}-${rowSkuEntropy.slice(0, 3)}` : `FC-SKU-${brandCode}-${sizeCode}-${rowSkuEntropy}`;
+        const finalSku = rawSku ? `${rawSku}-${rowSkuEntropy.slice(0, 3)}` : `FC-${brandPrefix}-${brandCode}-${sizeCode}-${rowSkuEntropy}`;
 
         if (!product) {
-          product = await prisma.product.create({
+          product = await db.product.create({
             data: {
               ...productData,
               variants: {
@@ -601,7 +654,7 @@ export async function POST(req: NextRequest) {
                 createMany: {
                   data: imageUrls.map((url, imgIdx) => ({
                     imageUrl: url,
-                    altText: `${title} - Look ${imgIdx + 1}`,
+                    altText: `${title} - View ${imgIdx + 1}`,
                     sortOrder: imgIdx,
                   })),
                 },
@@ -611,13 +664,13 @@ export async function POST(req: NextRequest) {
           productsCreated++;
           variantsCreatedOrUpdated++;
         } else {
-          product = await prisma.product.update({
+          product = await db.product.update({
             where: { id: product.id },
             data: productData,
           });
           productsUpdated++;
 
-          const existingVariant = await prisma.productVariant.findFirst({
+          const existingVariant = await db.productVariant.findFirst({
             where: {
               productId: product.id,
               OR: [
@@ -628,7 +681,7 @@ export async function POST(req: NextRequest) {
           });
 
           if (existingVariant) {
-            await prisma.productVariant.update({
+            await db.productVariant.update({
               where: { id: existingVariant.id },
               data: {
                 price: priceNum,
@@ -639,7 +692,7 @@ export async function POST(req: NextRequest) {
               },
             });
           } else {
-            await prisma.productVariant.create({
+            await db.productVariant.create({
               data: {
                 productId: product.id,
                 sku: finalSku,
@@ -656,11 +709,11 @@ export async function POST(req: NextRequest) {
           variantsCreatedOrUpdated++;
 
           if (imageUrls.length > 0) {
-            await prisma.productImage.createMany({
+            await db.productImage.createMany({
               data: imageUrls.map((url, imgIdx) => ({
                 productId: product.id,
                 imageUrl: url,
-                altText: `${title} - Look ${imgIdx + 1}`,
+                altText: `${title} - View ${imgIdx + 1}`,
                 sortOrder: imgIdx,
               })),
               skipDuplicates: true,
@@ -677,6 +730,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      store: activeStore,
       processedRows: processedCount,
       productsCreated,
       productsUpdated,
