@@ -4,8 +4,8 @@ import { getStoresControl, saveStoresControl } from "@/lib/stores";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const admin = await getCurrentAdmin();
+export async function GET(req: NextRequest) {
+  const admin = await getCurrentAdmin(req);
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
   }
@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const admin = await getCurrentAdmin();
+  const admin = await getCurrentAdmin(req);
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
   }

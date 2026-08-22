@@ -28,6 +28,7 @@ export default function StoreAvailabilityManager({
       const res = await fetch("/api/admin/settings/stores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(updated),
       });
 

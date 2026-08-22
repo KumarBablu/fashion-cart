@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import { NextRequest } from "next/server";
 import { prisma, getDb } from "@/lib/db";
 import type { User } from "@prisma/client";
 
@@ -38,8 +39,6 @@ export async function setSessionCookie(rawToken: string, _expiresAt?: Date) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    // Omit expires & maxAge so the browser treats this as a pure Session Cookie.
-    // When the browser window is closed, the cookie is discarded, requiring a fresh login.
   });
 }
 
@@ -48,20 +47,41 @@ export async function clearSessionCookie() {
   cookieStore.delete(SESSION_COOKIE);
 }
 
-export async function getRawSessionToken(): Promise<string | undefined> {
-  const cookieStore = await cookies();
-  return cookieStore.get(SESSION_COOKIE)?.value;
+export async function getRawSessionToken(req?: NextRequest): Promise<string | undefined> {
+  if (req) {
+    const tokenFromReq = req.cookies.get(SESSION_COOKIE)?.value;
+    if (tokenFromReq) return tokenFromReq;
+  }
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get(SESSION_COOKIE)?.value;
+  } catch {
+    return undefined;
+  }
 }
 
-/** Resolves the current request's session to a User from the Primary Auth DB. */
-export async function getCurrentUser(): Promise<User | null> {
-  const rawToken = await getRawSessionToken();
+/** Resolves the current request's session to a User from either database. */
+export async function getCurrentUser(req?: NextRequest): Promise<User | null> {
+  const rawToken = await getRawSessionToken(req);
   if (!rawToken) return null;
 
-  const session = await prisma.session.findUnique({
-    where: { tokenHash: hashToken(rawToken) },
+  const tHash = hashToken(rawToken);
+
+  let session = await prisma.session.findUnique({
+    where: { tokenHash: tHash },
     include: { user: true },
-  });
+  }).catch(() => null);
+
+  if (!session) {
+    try {
+      session = await getDb("jewellery").session.findUnique({
+        where: { tokenHash: tHash },
+        include: { user: true },
+      });
+    } catch {
+      // ignore
+    }
+  }
 
   if (!session || session.expiresAt < new Date() || !session.user.isActive) {
     return null;
@@ -75,8 +95,8 @@ export async function getCurrentUser(): Promise<User | null> {
  * their profile into the target store's database (e.g. fashion-cart-jwellery) so
  * foreign keys on Cart, Orders, Reviews, and Addresses work with zero friction.
  */
-export async function getStoreUser(store: string = "garments"): Promise<User | null> {
-  const masterUser = await getCurrentUser();
+export async function getStoreUser(store: string = "garments", req?: NextRequest): Promise<User | null> {
+  const masterUser = await getCurrentUser(req);
   if (!masterUser) return null;
 
   if (store === "garments" || store === "default") {
@@ -111,16 +131,20 @@ export async function getStoreUser(store: string = "garments"): Promise<User | n
   }
 }
 
-export async function destroyCurrentSession() {
-  const rawToken = await getRawSessionToken();
+export async function destroyCurrentSession(req?: NextRequest) {
+  const rawToken = await getRawSessionToken(req);
   if (!rawToken) return;
-  await prisma.session.deleteMany({ where: { tokenHash: hashToken(rawToken) } });
+  const tHash = hashToken(rawToken);
+  await Promise.all([
+    prisma.session.deleteMany({ where: { tokenHash: tHash } }).catch(() => {}),
+    getDb("jewellery").session.deleteMany({ where: { tokenHash: tHash } }).catch(() => {}),
+  ]);
   await clearSessionCookie();
 }
 
 /** Throws-free helper: returns the user only if they are an active admin. */
-export async function getCurrentAdmin(): Promise<User | null> {
-  const user = await getCurrentUser();
+export async function getCurrentAdmin(req?: NextRequest): Promise<User | null> {
+  const user = await getCurrentUser(req);
   if (!user) return null;
   const isSuperAdminEmail =
     user.email.toLowerCase() === "bablusoni2825@gmail.com" ||
