@@ -49,11 +49,21 @@ const DEFAULT_METADATA = {
 
 export default async function CategoriesPage() {
   const categories = await prisma.category.findMany({
-    where: { isActive: true, parentId: null },
+    where: {
+      isActive: true,
+      parentId: null,
+      OR: [
+        { products: { some: { status: "ACTIVE" } } },
+        { children: { some: { isActive: true, products: { some: { status: "ACTIVE" } } } } },
+      ],
+    },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     include: {
       children: {
-        where: { isActive: true },
+        where: {
+          isActive: true,
+          products: { some: { status: "ACTIVE" } },
+        },
         orderBy: { sortOrder: "asc" },
         include: {
           products: {

@@ -81,8 +81,8 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       where: {
         isActive: true,
         OR: [
-          { parentId: null },
-          { parent: { isActive: true } },
+          { products: { some: { status: "ACTIVE" } } },
+          { children: { some: { isActive: true, products: { some: { status: "ACTIVE" } } } } },
         ],
       },
       select: { id: true, name: true, slug: true, parentId: true },

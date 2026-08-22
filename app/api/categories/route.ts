@@ -15,7 +15,22 @@ function slugify(s: string) {
 export async function GET(req: NextRequest) {
   const admin = await getCurrentAdmin();
   const includeInactive = req.nextUrl.searchParams.get("includeInactive") === "true" || !!admin;
-  const whereClause = includeInactive ? {} : { isActive: true };
+  const whereClause = includeInactive
+    ? {}
+    : {
+        isActive: true,
+        OR: [
+          { products: { some: { status: "ACTIVE" as const } } },
+          { children: { some: { isActive: true, products: { some: { status: "ACTIVE" as const } } } } },
+        ],
+      };
+
+  const childrenWhereClause = includeInactive
+    ? {}
+    : {
+        isActive: true,
+        products: { some: { status: "ACTIVE" as const } },
+      };
 
   try {
     const categories = await prisma.category.findMany({
@@ -23,7 +38,7 @@ export async function GET(req: NextRequest) {
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: {
         children: {
-          where: whereClause,
+          where: childrenWhereClause,
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
           include: {
             _count: {

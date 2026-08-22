@@ -9,11 +9,21 @@ export default async function Header() {
   const [user, categories] = await Promise.all([
     getCurrentUser(),
     prisma.category.findMany({
-      where: { isActive: true, parentId: null },
+      where: {
+        isActive: true,
+        parentId: null,
+        OR: [
+          { products: { some: { status: "ACTIVE" } } },
+          { children: { some: { isActive: true, products: { some: { status: "ACTIVE" } } } } },
+        ],
+      },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: {
         children: {
-          where: { isActive: true },
+          where: {
+            isActive: true,
+            products: { some: { status: "ACTIVE" } },
+          },
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
         },
       },
