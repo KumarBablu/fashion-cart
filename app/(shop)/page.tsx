@@ -192,132 +192,141 @@ export default async function HomePage() {
     <div className="space-y-20 pb-24 overflow-hidden">
       
       {/* 👑 ROW 1: Hero Banner Row */}
-      <div>
-
-        {/* Hero Section Container */}
-        <section className="relative bg-gradient-to-b from-[#FAF8F5] via-[#F4EFEA] to-[#FAF8F5] border-b border-[#E7DFD5]">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-20 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            
-            {/* Left Hero Column */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#C59B27]/40 bg-white text-xs font-bold uppercase tracking-wider text-[#141416] shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-[#C59B27] pulse-dot" />
-                <span>{heroBadge}</span>
-              </div>
-
-              <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-[#141416] leading-[1.08]">
-                {heroHeadline}
-              </h1>
-
-              <p className="text-sm sm:text-base text-[#4B4E56] max-w-xl leading-relaxed">
-                {heroSubtitle}
-              </p>
-
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <Link
-                  href={heroCtaLink}
-                  className="px-8 py-3.5 rounded-full font-extrabold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] transition-all duration-200 shadow-md hover:scale-102"
-                >
-                  {heroCtaText}
-                </Link>
-                <Link
-                  href="/categories"
-                  className="px-6 py-3.5 rounded-full border border-[#141416] bg-white font-bold text-xs uppercase tracking-wider text-[#141416] hover:bg-[#141416] hover:text-white transition-all duration-200"
-                >
-                  Browse Categories
-                </Link>
-                <WhatsAppConciergeButton
-                  className="px-5 py-3.5 rounded-full text-xs font-bold text-[#141416] border border-[#C59B27] bg-[#C59B27]/10 hover:bg-[#C59B27]/20 transition-colors flex items-center gap-1.5 cursor-pointer"
-                  customMessage="Hi Fashion Cart Stylist, I am exploring the 2026 luxury collection and would like personal outfit recommendations!"
-                >
-                  <span>💬</span> WhatsApp Stylist
-                </WhatsAppConciergeButton>
-              </div>
-
-              <div className="pt-6 border-t border-[#E7DFD5] grid grid-cols-3 gap-4 max-w-lg text-xs">
-                <div>
-                  <p className="text-xl sm:text-2xl font-black text-[#141416]">100%</p>
-                  <p className="text-[#787C87] text-[11px] mt-0.5">Certified Pure Fabrics</p>
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-black text-[#141416]">₹0</p>
-                  <p className="text-[#787C87] text-[11px] mt-0.5">Free Express Shipping</p>
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-black text-[#141416]">4.9 ★</p>
-                  <p className="text-[#787C87] text-[11px] mt-0.5">Over 3,500 Reviews</p>
-                </div>
-              </div>
+      <section className="relative bg-[#FAF8F5] border-b border-[#E7DFD5]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
+          
+          {/* Left Hero Column */}
+          <div className="lg:col-span-7 space-y-8">
+            {/* Live Drop Atelier Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#C59B27]/40 bg-white text-[11px] font-extrabold uppercase tracking-widest text-[#8E6C0C] shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-[#C59B27] pulse-dot" />
+              <span>{heroBadge}</span>
             </div>
 
-            {/* Right Hero Column: Editorial Model Card */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-[#E7DFD5] group">
-                <Image
-                  src={heroImage}
-                  alt="Traditional Indian Couture Model — Fashion Cart"
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 40vw, 100vw"
-                  unoptimized
-                  className="object-cover object-top"
-                />
+            {/* Main Headline */}
+            <div className="space-y-2">
+              <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.25rem] font-bold tracking-tight text-[#141416] leading-[1.06]">
+                Timeless Elegance. <br />
+                <span className="italic font-serif font-normal text-[#C59B27]">Effortless Style.</span>
+              </h1>
+              <p className="text-sm sm:text-base text-[#4B4E56] max-w-xl leading-relaxed pt-2">
+                {heroSubtitle}
+              </p>
+            </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/40 to-transparent" />
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3.5 pt-1">
+              <Link
+                href={heroCtaLink}
+                className="px-8 py-4 rounded-full font-extrabold text-xs uppercase tracking-widest bg-[#141416] text-white hover:bg-[#C59B27] hover:text-[#141416] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
+              >
+                {heroCtaText}
+              </Link>
+              <Link
+                href="/categories"
+                className="px-7 py-4 rounded-full border border-[#141416] bg-white font-bold text-xs uppercase tracking-wider text-[#141416] hover:bg-[#141416] hover:text-white transition-all duration-300 shadow-2xs cursor-pointer"
+              >
+                Browse Categories
+              </Link>
+              <WhatsAppConciergeButton
+                className="px-5 py-4 rounded-full text-xs font-bold text-[#141416] border border-[#C59B27]/40 bg-white hover:bg-[#FAF8F5] transition-all duration-300 shadow-2xs flex items-center gap-2 cursor-pointer"
+                customMessage="Hi Fashion Cart Stylist, I am exploring the 2026 luxury collection and would like personal outfit recommendations!"
+              >
+                <span>💬</span> WhatsApp Stylist
+              </WhatsAppConciergeButton>
+            </div>
 
-                <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#141416]/80 backdrop-blur-md text-[#C59B27] border border-[#C59B27]/40 shadow-sm flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] pulse-dot" />
-                    Editorial Lookbook 2026
-                  </span>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-[#C59B27] text-white shadow-sm">
-                    {heroPromo?.discountCode ? `CODE: ${heroPromo.discountCode}` : "CODE: FIRST10"}
-                  </span>
-                </div>
+            {/* 3 Luxury Trust Metric Cards */}
+            <div className="pt-6 border-t border-[#E7DFD5] grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div className="p-4 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
+                <p className="text-xl font-bold text-[#141416]">100%</p>
+                <p className="font-semibold text-[#141416] text-xs">Certified Pure Fabrics</p>
+                <p className="text-[#787C87] text-[10px]">Mulberry Silk &amp; French Linen</p>
+              </div>
 
-                <div className="absolute bottom-4 left-4 right-4 p-4 sm:p-5 rounded-2xl bg-[#141416]/85 backdrop-blur-xl border border-white/20 text-white space-y-3 shadow-2xl">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-[#C59B27]">✨</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#C59B27]">
-                        {heroPromo?.badgeText || "VIP Welcome Privilege"}
-                      </span>
-                    </div>
-                    <h3 className="font-display text-base sm:text-lg font-bold text-white leading-snug">
-                      {heroPromo?.title || "Flat 10% Off + Free Express Shipping"}
-                    </h3>
-                    <p className="text-[11px] text-white/75 leading-relaxed">
-                      {heroPromo?.subtitle || "Auto-applied on all handcrafted silk sarees, kurtis & tailored menswear."}
-                    </p>
-                  </div>
+              <div className="p-4 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
+                <p className="text-xl font-bold text-[#141416]">₹0</p>
+                <p className="font-semibold text-[#141416] text-xs">Express Doorstep Delivery</p>
+                <p className="text-[#787C87] text-[10px]">Dispatches in 24 Hours</p>
+              </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-center text-[10px] pt-1 border-t border-white/15">
-                    <div className="py-1">
-                      <span className="block text-sm">👑</span>
-                      <span className="font-semibold text-white">Tailored Fit</span>
-                    </div>
-                    <div className="py-1">
-                      <span className="block text-sm">💵</span>
-                      <span className="font-semibold text-white">COD Eligible</span>
-                    </div>
-                    <div className="py-1">
-                      <span className="block text-sm">📄</span>
-                      <span className="font-semibold text-white">GST Invoice</span>
-                    </div>
-                  </div>
-
-                  <Link
-                    href={heroPromo?.ctaUrl || "/shop"}
-                    className="block w-full text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] transition-colors shadow-md cursor-pointer"
-                  >
-                    {heroPromo?.ctaText || "Shop Exclusive Edits →"}
-                  </Link>
-                </div>
+              <div className="p-4 rounded-2xl bg-white border border-[#E7DFD5] shadow-2xs space-y-1">
+                <p className="text-xl font-bold text-[#C59B27]">4.9 ★</p>
+                <p className="font-semibold text-[#141416] text-xs">Over 3,500 Reviews</p>
+                <p className="text-[#787C87] text-[10px]">Exceptional Client Rating</p>
               </div>
             </div>
           </div>
-        </section>
-      </div>
+
+          {/* Right Hero Column: Editorial Model Card with VIP Glassmorphism Overlay */}
+          <div className="lg:col-span-5 relative">
+            <div className="relative aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl border border-[#E7DFD5] group">
+              <Image
+                src={heroImage}
+                alt="Traditional Indian Couture Model — Fashion Cart"
+                fill
+                priority
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                unoptimized
+                className="object-cover object-top transition-transform duration-700 group-hover:scale-103"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/40 to-transparent" />
+
+              {/* Top Pill Tags */}
+              <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+                <span className="px-3.5 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-[#141416]/80 backdrop-blur-md text-[#C59B27] border border-[#C59B27]/40 shadow-sm flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] pulse-dot" />
+                  Editorial Lookbook 2026
+                </span>
+                <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-[#C59B27] text-white shadow-sm">
+                  {heroPromo?.discountCode ? `CODE: ${heroPromo.discountCode}` : "CODE: FIRST10"}
+                </span>
+              </div>
+
+              {/* Bottom Glassmorphic Privilege Card */}
+              <div className="absolute bottom-4 left-4 right-4 p-5 rounded-2xl bg-[#141416]/85 backdrop-blur-xl border border-white/20 text-white space-y-3 shadow-2xl">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-[#C59B27]">✨</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#C59B27]">
+                      {heroPromo?.badgeText || "VIP Welcome Privilege"}
+                    </span>
+                  </div>
+                  <h3 className="font-display text-base sm:text-lg font-bold text-white leading-snug">
+                    {heroPromo?.title || "Flat 10% Off + Free Express Shipping"}
+                  </h3>
+                  <p className="text-[11px] text-white/75 leading-relaxed">
+                    {heroPromo?.subtitle || "Auto-applied on all handcrafted silk sarees, kurtis & tailored menswear."}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px] pt-1 border-t border-white/15">
+                  <div className="py-1">
+                    <span className="block text-sm">👑</span>
+                    <span className="font-semibold text-white">Tailored Fit</span>
+                  </div>
+                  <div className="py-1">
+                    <span className="block text-sm">💵</span>
+                    <span className="font-semibold text-white">COD Eligible</span>
+                  </div>
+                  <div className="py-1">
+                    <span className="block text-sm">📄</span>
+                    <span className="font-semibold text-white">GST Invoice</span>
+                  </div>
+                </div>
+
+                <Link
+                  href={heroPromo?.ctaUrl || "/shop"}
+                  className="block w-full text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] transition-colors shadow-md cursor-pointer"
+                >
+                  {heroPromo?.ctaText || "Shop Exclusive Edits →"}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* 👑 ROW 2: Categories Row ("Top Categories" - Styled like Shop by Occasion) */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
