@@ -211,7 +211,7 @@ export default function ProductsManager({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update status");
       setProducts((prev) => prev.map((p) => (p.id === prodId ? { ...p, status: newStatus } : p)));
-      success("Status Updated 🎉", `Garment listing set to ${newStatus}`);
+      success("Status Updated 🎉", `${store === "jewellery" ? "Jewellery item" : "Garment listing"} set to ${newStatus}`);
     } catch (err: any) {
       toastError("Error", err.message || "Could not update status");
     } finally {
@@ -267,18 +267,22 @@ export default function ProductsManager({
     }
   }
 
+  const isJewellery = store === "jewellery";
+  const itemTerm = isJewellery ? "piece" : "garment";
+  const itemsTerm = isJewellery ? "pieces" : "garments";
+
   return (
-    <div className="h-full flex flex-col min-h-0 overflow-hidden space-y-2.5">
-      {/* 1. TOP HEADER & FILTER CONTROLS (Fixed at Top) */}
-      <div className="shrink-0 space-y-2.5 bg-[#FAF8F5]">
+    <div className="w-full space-y-4 pb-20">
+      {/* 1. TOP HEADER & FILTER CONTROLS */}
+      <div className="space-y-3">
         {/* Top Header & Action Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2 text-slate-900 leading-tight">
-              <span>{store === "jewellery" ? "💍" : "👗"}</span> {store === "jewellery" ? "Jewellery Catalog & Products Manager" : "Catalog & Products Manager"}
+              <span>{isJewellery ? "💍" : "👗"}</span> {isJewellery ? "Jewellery Catalog & Products Manager" : "Catalog & Products Manager"}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Full management of {store === "jewellery" ? "handcrafted artificial fine jewellery" : "luxury garments"}, stock, and bulk actions ({products.length} {store === "jewellery" ? "pieces" : "garments"} total)
+              Full management of {isJewellery ? "handcrafted artificial fine jewellery" : "luxury garments"}, stock, and bulk actions ({products.length} {itemsTerm} total)
             </p>
           </div>
 
@@ -308,10 +312,10 @@ export default function ProductsManager({
               <span>📤</span> Bulk Upload
             </button>
             <Link
-              href={store === "jewellery" ? "/admin/products/new?store=jewellery" : "/admin/products/new"}
+              href={isJewellery ? "/admin/products/new?store=jewellery" : "/admin/products/new"}
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-xs transition-all hover:brightness-110 cursor-pointer bg-[#C59B27]"
             >
-              <span>+</span> Add {store === "jewellery" ? "Jewellery Piece" : "Garment"}
+              <span>+</span> Add {isJewellery ? "Jewellery Piece" : "Garment"}
             </Link>
           </div>
         </div>
@@ -328,7 +332,7 @@ export default function ProductsManager({
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                placeholder={store === "jewellery" ? "Search jewellery, SKU, gemstones, plating…" : "Search garments, SKU, fabric, brand…"}
+                placeholder={isJewellery ? "Search jewellery, SKU, gemstones, plating…" : "Search garments, SKU, fabric, brand…"}
                 className="w-full pl-9 pr-4 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-hidden focus:border-[#141416] transition-all font-medium"
               />
               <span className="absolute left-3 top-2 text-slate-400 text-xs">🔍</span>
@@ -421,7 +425,7 @@ export default function ProductsManager({
             {/* View Mode Toggle Switch */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400 font-medium">
-                Showing {filtered.length} garments
+                Showing {filtered.length} {itemsTerm}
               </span>
 
               <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100 p-0.5">
@@ -466,7 +470,7 @@ export default function ProductsManager({
                 onChange={toggleSelectAll}
                 className="w-4 h-4 rounded border-slate-300 accent-[#141416] cursor-pointer"
               />
-              <span>Select all {paginatedProducts.length} garments on this page</span>
+              <span>Select all {paginatedProducts.length} {itemsTerm} on this page</span>
             </label>
 
             <div className="flex items-center gap-2">
@@ -488,15 +492,15 @@ export default function ProductsManager({
           </div>
         )}
 
-        {/* Floating Bulk Action Bar */}
+        {/* Floating / Sticky Bulk Action Bar */}
         {selectedIds.size > 0 && (
-          <div className="p-2.5 rounded-2xl bg-[#141416] text-white shadow-2xl flex flex-wrap items-center justify-between gap-2 border border-slate-700 animate-in slide-in-from-top-2 duration-150">
+          <div className="sticky top-2 z-30 p-2.5 rounded-2xl bg-[#141416]/95 backdrop-blur-md text-white shadow-2xl flex flex-wrap items-center justify-between gap-2 border border-slate-700 animate-in slide-in-from-top-2 duration-150">
             <div className="flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#C59B27] font-mono text-xs font-bold text-black">
                 {selectedIds.size}
               </span>
               <span className="text-xs font-bold">
-                {selectedIds.size} {selectedIds.size === 1 ? "garment" : "garments"} selected
+                {selectedIds.size} {selectedIds.size === 1 ? itemTerm : itemsTerm} selected
               </span>
             </div>
 
@@ -565,8 +569,8 @@ export default function ProductsManager({
         )}
       </div>
 
-      {/* 2. DEDICATED PRODUCTS SCROLLABLE VIEWPORT (Only Products Scroll) */}
-      <div className="flex-1 overflow-y-auto min-h-0 pr-1.5 pb-2 no-scrollbar">
+      {/* 2. PRODUCTS SHOWCASE & DATA VIEW (Scrolls seamlessly with page) */}
+      <div className="space-y-4">
         {/* WRAPPED CARD SHOWCASE GRID VIEW (Default) */}
         {viewMode === "GRID" ? (
           paginatedProducts.length > 0 ? (
@@ -735,8 +739,8 @@ export default function ProductsManager({
           </div>
         ) : (
           <div className="rounded-2xl border border-slate-200 bg-white p-16 text-center space-y-3">
-            <p className="text-4xl">👗</p>
-            <h3 className="font-bold text-sm text-slate-800">No garments match your filters</h3>
+            <p className="text-4xl">{isJewellery ? "💍" : "👗"}</p>
+            <h3 className="font-bold text-sm text-slate-800">No {itemsTerm} match your filters</h3>
             <p className="text-xs text-slate-500">Try changing department, subcategory, or clearing search keywords.</p>
           </div>
         )
@@ -755,9 +759,9 @@ export default function ProductsManager({
                       className="w-4 h-4 rounded border-slate-300 accent-[#141416]"
                     />
                   </th>
-                  <th className="px-3 py-3">Garment Details</th>
+                  <th className="px-3 py-3">{isJewellery ? "Jewellery Details" : "Garment Details"}</th>
                   <th className="px-3 py-3">Department &amp; Subcategory</th>
-                  <th className="px-3 py-3">Fabric &amp; Brand</th>
+                  <th className="px-3 py-3">{isJewellery ? "Material & Brand" : "Fabric & Brand"}</th>
                   <th className="px-3 py-3">Variants</th>
                   <th className="px-3 py-3">Stock</th>
                   <th className="px-3 py-3">Price</th>
@@ -767,7 +771,7 @@ export default function ProductsManager({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {paginatedProducts.map((product) => {
-                  const primaryImage = normalizeImageUrl(product.images[0]?.imageUrl) || "/placeholder-garment.jpg";
+                  const primaryImage = normalizeImageUrl(product.images[0]?.imageUrl) || (isJewellery ? "/placeholder-jewellery.jpg" : "/placeholder-garment.jpg");
                   const isSelected = selectedIds.has(product.id);
                   const prices = product.variants.map((v) => Number(v.price));
                   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
@@ -795,44 +799,66 @@ export default function ProductsManager({
                           <div className="relative h-12 w-10 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100">
                             <Image src={primaryImage} alt="" fill className="object-cover" />
                           </div>
-                          <div>
+                          <div className="min-w-0 max-w-xs">
                             <Link
-                              href={`/admin/products/${product.id}`}
-                              className="font-bold text-xs text-slate-900 hover:text-[#C59B27] transition-colors line-clamp-1"
+                              href={`/admin/products/${product.id}${isJewellery ? "?store=jewellery" : ""}`}
+                              className="font-bold text-slate-900 hover:underline line-clamp-1 text-xs"
                             >
                               {product.name}
                             </Link>
-                            <span className="font-mono text-[10px] text-slate-400 block">{product.slug}</span>
+                            <p className="text-[10px] text-slate-400 font-mono line-clamp-1">{product.slug}</p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-3 py-3">
-                        <p className="font-bold text-slate-900 text-xs">
-                          {product.category?.name || "Uncategorized"}
-                        </p>
+                      <td className="px-3 py-3 text-slate-600 font-medium">
+                        {product.category?.parent?.name ? (
+                          <span>
+                            {product.category.parent.name} → <strong className="text-slate-800">{product.category.name}</strong>
+                          </span>
+                        ) : (
+                          <span>{product.category?.name || "—"}</span>
+                        )}
                       </td>
 
                       <td className="px-3 py-3 text-slate-600">
-                        {product.fabric || product.brand || "Atelier"}
+                        <span className="font-semibold text-slate-800">{product.fabric || product.brand || "—"}</span>
                       </td>
 
                       <td className="px-3 py-3">
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1 max-w-xs">
                           {product.variants.slice(0, 3).map((v) => (
-                            <span key={v.id} className="px-1.5 py-0.5 rounded text-[10px] font-mono border bg-slate-50 border-slate-200">
-                              {v.size}
+                            <span
+                              key={v.id}
+                              className="px-1.5 py-0.5 rounded-md bg-slate-100 text-[10px] font-mono text-slate-700"
+                            >
+                              {v.size} ({v.colour})
                             </span>
                           ))}
+                          {product.variants.length > 3 && (
+                            <span className="text-[10px] text-slate-400 font-bold self-center">
+                              +{product.variants.length - 3}
+                            </span>
+                          )}
                         </div>
                       </td>
 
-                      <td className="px-3 py-3 font-mono font-bold">
-                        {totalStock}
+                      <td className="px-3 py-3 font-semibold">
+                        <span
+                          className={
+                            totalStock === 0
+                              ? "text-rose-600 font-bold"
+                              : totalStock <= 5
+                              ? "text-amber-600 font-bold"
+                              : "text-slate-800"
+                          }
+                        >
+                          {totalStock}
+                        </span>
                       </td>
 
-                      <td className="px-3 py-3 font-mono font-bold text-slate-900">
-                        {formatINR(minPrice)}
+                      <td className="px-3 py-3 font-bold text-slate-900 font-mono">
+                        {minPrice === maxPrice ? formatINR(minPrice) : `${formatINR(minPrice)} – ${formatINR(maxPrice)}`}
                       </td>
 
                       <td className="px-3 py-3">
@@ -840,39 +866,39 @@ export default function ProductsManager({
                           value={product.status}
                           disabled={actionLoading === `status-${product.id}`}
                           onChange={(e) => updateSingleStatus(product.id, e.target.value as "ACTIVE" | "DRAFT" | "ARCHIVED")}
-                          className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border-none shadow-xs cursor-pointer focus:outline-hidden ${
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border cursor-pointer ${
                             product.status === "ACTIVE"
-                              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-300"
                               : product.status === "DRAFT"
-                              ? "bg-amber-500 text-white hover:bg-amber-600"
-                              : "bg-slate-700 text-white hover:bg-slate-800"
+                              ? "bg-amber-50 text-amber-700 border-amber-300"
+                              : "bg-slate-100 text-slate-600 border-slate-300"
                           }`}
                         >
-                          <option value="ACTIVE" className="bg-slate-900 text-white">ACTIVE</option>
-                          <option value="DRAFT" className="bg-slate-900 text-white">DRAFT / INACTIVE</option>
-                          <option value="ARCHIVED" className="bg-slate-900 text-white">ARCHIVED</option>
+                          <option value="ACTIVE">ACTIVE</option>
+                          <option value="DRAFT">DRAFT</option>
+                          <option value="ARCHIVED">ARCHIVED</option>
                         </select>
                       </td>
 
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <Link
-                            href={`/admin/products/${product.id}`}
-                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs"
+                            href={`/admin/products/${product.id}${isJewellery ? "?store=jewellery" : ""}`}
+                            className="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-xs"
                             title="Edit"
                           >
                             ✏️
                           </Link>
                           <button
                             onClick={() => duplicateProduct(product.id)}
-                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs"
+                            className="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-xs cursor-pointer"
                             title="Duplicate"
                           >
                             📋
                           </button>
                           <button
                             onClick={() => setDeleteModalProduct(product)}
-                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 text-xs text-rose-600"
+                            className="h-7 w-7 rounded-lg border border-slate-200 hover:bg-rose-50 hover:border-rose-200 text-rose-600 flex items-center justify-center text-xs cursor-pointer"
                             title="Delete"
                           >
                             🗑️
@@ -889,11 +915,11 @@ export default function ProductsManager({
       )}
       </div>
 
-      {/* 3. PINNED BOTTOM PAGINATION BAR (Fixed at Bottom) */}
+      {/* 3. PAGINATION BAR (Scrolls naturally at bottom) */}
       {totalPages > 1 && (
-        <div className="shrink-0 flex items-center justify-between px-4 py-2 rounded-2xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 shadow-2xs">
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 shadow-2xs">
           <span>
-            Page {currentPage} of {totalPages} ({filtered.length} garments total)
+            Page {currentPage} of {totalPages} ({filtered.length} {itemsTerm} total)
           </span>
 
           <div className="flex items-center gap-1.5">
@@ -940,7 +966,7 @@ export default function ProductsManager({
             <div className="flex items-center gap-3">
               <span className="text-3xl">🗑️</span>
               <div>
-                <h3 className="font-display text-lg font-bold text-rose-600">Delete / Archive Garment</h3>
+                <h3 className="font-display text-lg font-bold text-rose-600">Delete / Archive {isJewellery ? "Jewellery Piece" : "Garment"}</h3>
                 <p className="text-xs text-slate-500 line-clamp-1">{deleteModalProduct.name}</p>
               </div>
             </div>
@@ -985,7 +1011,7 @@ export default function ProductsManager({
             <div className="flex items-center gap-3">
               <span className="text-3xl">⚠️</span>
               <div>
-                <h3 className="font-display text-lg font-bold text-rose-600">Delete {selectedIds.size} Garments</h3>
+                <h3 className="font-display text-lg font-bold text-rose-600">Delete {selectedIds.size} {isJewellery ? (selectedIds.size === 1 ? "Jewellery Piece" : "Jewellery Pieces") : (selectedIds.size === 1 ? "Garment" : "Garments")}</h3>
                 <p className="text-xs text-slate-500">Bulk delete operation</p>
               </div>
             </div>
