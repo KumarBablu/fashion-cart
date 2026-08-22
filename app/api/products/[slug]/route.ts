@@ -60,7 +60,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
     return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 });
   }
 
-  const product = await getDb(store).product.update({ where: { slug }, data: parsed.data });
+  const product = await getDb(store).product.update({ where: { slug }, data: parsed.data as any });
   return NextResponse.json({ product });
 }
 

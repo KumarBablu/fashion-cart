@@ -49,7 +49,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   if (!product) notFound();
 
   return (
-    <div className="h-full overflow-y-auto min-h-0 max-w-4xl space-y-8 pr-1 pb-16">
+    <div className="w-full max-w-5xl space-y-8 pb-20">
       <div className="flex items-center justify-between border-b border-slate-200 pb-4">
         <div>
           <div className="flex items-center gap-2">
@@ -70,6 +70,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
       <div>
         <ProductForm
+          store={activeStore}
           categories={categories.map((c) => ({
             id: c.id,
             name: c.name,
@@ -105,6 +106,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
             isFeatured: product.isFeatured,
             isNewArrival: product.isNewArrival,
             isBestSeller: product.isBestSeller,
+            specifications: product.specifications,
           }}
         />
       </div>

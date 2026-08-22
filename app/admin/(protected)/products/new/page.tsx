@@ -20,7 +20,7 @@ export default async function NewProductPage({ searchParams }: { searchParams: P
   });
 
   return (
-    <div className="h-full overflow-y-auto min-h-0 max-w-4xl space-y-4 pr-1 pb-12">
+    <div className="w-full max-w-5xl space-y-6 pb-20">
       <div>
         <div className="flex items-center gap-2">
           <span className="text-2xl">{store === "jewellery" ? "💍" : "✨"}</span>
@@ -40,6 +40,7 @@ export default async function NewProductPage({ searchParams }: { searchParams: P
 
       <div className="mt-4">
         <ProductForm
+          store={store}
           categories={categories.map((c) => ({
             id: c.id,
             name: c.name,

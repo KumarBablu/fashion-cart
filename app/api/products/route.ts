@@ -144,6 +144,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A product with this slug already exists." }, { status: 409 });
   }
 
-  const product = await db.product.create({ data: parsed.data });
+  const product = await db.product.create({ data: parsed.data as any });
   return NextResponse.json({ product }, { status: 201 });
 }

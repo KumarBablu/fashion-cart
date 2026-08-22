@@ -99,6 +99,7 @@ export const productSchema = z.object({
   isNewArrival: z.boolean().optional(),
   isBestSeller: z.boolean().optional(),
   tags: z.string().optional().or(z.literal("")),
+  specifications: z.record(z.string(), z.any()).optional().nullable(),
 });
 
 export const sellerSchema = z.object({
