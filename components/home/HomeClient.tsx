@@ -107,13 +107,6 @@ export default function HomeClient({
             >
               <span className="text-base">{cat.icon}</span>
               <span className="font-display tracking-wide">{cat.name}</span>
-              <span
-                className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                  isActive ? "bg-[#C59B27] text-white" : "bg-[#F4EFEA] text-[#787C87]"
-                }`}
-              >
-                {cat.products.length} Items
-              </span>
             </button>
           );
         })}
@@ -138,7 +131,7 @@ export default function HomeClient({
             <div className="flex items-center gap-2">
               <span className="text-xl">{currentCategory.icon}</span>
               <span className="text-xs font-bold uppercase tracking-widest text-[#C59B27]">
-                Department Edit · {currentCategory.products.length} Curated Styles
+                Department Edit · Signature Collection
               </span>
             </div>
             <h3 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">
@@ -152,25 +145,25 @@ export default function HomeClient({
             <div className="flex flex-wrap items-center gap-2 pt-2">
               <button
                 onClick={() => setActiveSubcategorySlug("all")}
-                className={`px-3 py-1 rounded-full text-[11px] font-bold transition-colors cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer ${
                   activeSubcategorySlug === "all"
                     ? "bg-[#C59B27] text-white shadow-xs"
                     : "bg-white/10 text-[#E7DFD5] hover:bg-white/20"
                 }`}
               >
-                All {currentCategory.name} ({currentCategory.products.length})
+                All {currentCategory.name}
               </button>
               {currentCategory.subcategories.map((sub) => (
                 <button
                   key={sub.id}
                   onClick={() => setActiveSubcategorySlug(sub.slug)}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold transition-colors cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer ${
                     activeSubcategorySlug === sub.slug
                       ? "bg-[#C59B27] text-white shadow-xs"
                       : "bg-white/10 text-[#E7DFD5] hover:bg-white/20"
                   }`}
                 >
-                  {sub.name} {sub.count > 0 ? `(${sub.count})` : ""}
+                  {sub.name}
                 </button>
               ))}
             </div>
@@ -216,7 +209,7 @@ export default function HomeClient({
           href={`/shop?category=${currentCategory.slug}`}
           className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-extrabold text-xs uppercase tracking-wider text-[#141416] border border-[#C59B27] bg-white hover:bg-[#141416] hover:text-white transition-all duration-300 shadow-xs hover:shadow-md"
         >
-          <span>Explore Complete {currentCategory.name} Collection ({currentCategory.products.length}+ Items)</span>
+          <span>Explore Complete {currentCategory.name} Collection</span>
           <span>→</span>
         </Link>
       </div>

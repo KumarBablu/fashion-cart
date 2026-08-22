@@ -153,7 +153,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
             {categorySlug ? categories.find((c) => c.slug === categorySlug)?.name ?? "Catalog" : q ? `Results for "${q}"` : "All Apparel & Fashion"}
           </h1>
           <p className="text-xs text-dim mt-1">
-            Showing {products.length} of {total} available styles
+            Curated luxury apparel, certified pure fabrics &amp; new season drops
           </p>
         </div>
 

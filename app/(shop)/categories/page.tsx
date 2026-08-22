@@ -160,7 +160,7 @@ export default async function CategoriesPage() {
                       Department 0{idx + 1}
                     </span>
                     <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#F4EFEA] text-[#141416]">
-                      {cat.children.length} Sub-Collections
+                      Curated Atelier
                     </span>
                   </div>
 
@@ -221,7 +221,7 @@ export default async function CategoriesPage() {
                               {sub.name}
                             </p>
                             <p className="text-[10px] text-[#787C87] mt-0.5">
-                              {sub.products.length > 0 ? `${sub.products.length} Items` : "Curated Styles"}
+                              Curated Looks
                             </p>
                           </div>
                           <span className="text-[#787C87] group-hover:text-[#141416] group-hover:translate-x-0.5 transition-transform text-xs font-bold">
@@ -265,7 +265,7 @@ export default async function CategoriesPage() {
                                 alt={prod.name}
                                 fill
                                 sizes="80px"
-                                className="object-cover group-hover:scale-105 transition-transform"
+                                className="object-cover"
                               />
                             </div>
                             <div className="min-w-0 flex-1">
