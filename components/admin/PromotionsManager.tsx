@@ -376,6 +376,50 @@ export default function PromotionsManager() {
     }
   }
 
+  // Upload handler for promotion poster/image with instant client-side preview & serverless fallback
+  async function handlePromoFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      error("Image file is too large. Please select an image under 5MB.");
+      return;
+    }
+
+    setUploadingImage(true);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setPromoForm((prev) => ({ ...prev, imageUrl: dataUrl }));
+      }
+    };
+    reader.readAsDataURL(file);
+
+    const fd = new FormData();
+    fd.append("file", file);
+
+    try {
+      const res = await fetch("/api/admin/promotions/upload", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setPromoForm((prev) => ({ ...prev, imageUrl: data.url }));
+        success("Poster Image Uploaded 🎉", "Promotional image ready!");
+      } else {
+        success("Image Loaded 🎉", "Image loaded from device!");
+      }
+    } catch {
+      success("Image Loaded 🎉", "Image loaded from device!");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
   return (
     <div className="h-full flex flex-col min-h-0 space-y-6">
       {/* Top Header */}
@@ -1068,6 +1112,89 @@ export default function PromotionsManager() {
                   placeholder="e.g., Applicable on all handcrafted sarees, kurtis & linen shirts."
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-hidden focus:border-[#C59B27]"
                 />
+              </div>
+
+              {/* Promotional Poster / Image URL & Upload (Upload or URL) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                    Poster / Model Photo (Upload or URL)
+                  </label>
+                  {promoForm.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setPromoForm({ ...promoForm, imageUrl: "" })}
+                      className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                    >
+                      Remove Image ✕
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoForm.imageUrl}
+                    onChange={(e) => setPromoForm({ ...promoForm, imageUrl: e.target.value.trim() })}
+                    placeholder="Paste image link (https://...) or upload from device"
+                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono focus:outline-hidden focus:border-[#C59B27]"
+                  />
+                  <label className="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer shrink-0 flex items-center gap-1.5 transition-colors">
+                    <span>📷</span>
+                    <span>{uploadingImage ? "Uploading…" : "Upload File"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePromoFileUpload}
+                      className="hidden"
+                      disabled={uploadingImage}
+                    />
+                  </label>
+                </div>
+
+                {/* Quick Presets / Suggestions */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[10px] text-slate-500 font-bold">Presets:</span>
+                  <button
+                    type="button"
+                    onClick={() => setPromoForm({ ...promoForm, imageUrl: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80" })}
+                    className="px-2 py-0.5 rounded text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
+                  >
+                    Varanasi Silk
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPromoForm({ ...promoForm, imageUrl: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80" })}
+                    className="px-2 py-0.5 rounded text-[9px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold cursor-pointer"
+                  >
+                    Kundan Jewellery
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPromoForm({ ...promoForm, imageUrl: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=800&auto=format&fit=crop&q=80" })}
+                    className="px-2 py-0.5 rounded text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
+                  >
+                    Bridal Soirée
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPromoForm({ ...promoForm, imageUrl: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80" })}
+                    className="px-2 py-0.5 rounded text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
+                  >
+                    French Linen
+                  </button>
+                </div>
+
+                {/* Image Live Preview */}
+                {promoForm.imageUrl && (
+                  <div className="relative h-44 w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 mt-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={promoForm.imageUrl}
+                      alt="Promotion Poster Preview"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
