@@ -1,74 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
-import HomeClient from "@/components/home/HomeClient";
+import CategoryShowcase from "@/components/home/CategoryShowcase";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 export const dynamic = "force-dynamic";
 
-function serialize(items: any[]) {
-  return items.map((p) => ({
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
-    createdAt: p.createdAt,
-    brand: p.brand,
-    fabric: p.fabric,
-    categoryId: p.categoryId,
-    category: p.category ? { id: p.category.id, name: p.category.name, slug: p.category.slug } : null,
-    averageRating: Number(p.averageRating || 4.85),
-    totalReviews: Number(p.totalReviews || 48),
-    images: p.images,
-    variants: p.variants.map((v: any) => ({
-      id: v.id,
-      colour: v.colour,
-      size: v.size,
-      stockQuantity: v.stockQuantity,
-      price: Number(v.price),
-      compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
-    })),
-  }));
-}
-
-const OCCASIONS = [
-  {
-    title: "Festive & Gala Edit",
-    subtitle: "Zari Velvet & Anarkalis",
-    href: "/shop?category=women-kurtis",
-    image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&auto=format&fit=crop&q=80",
-    tag: "Artisanal Craft",
-  },
-  {
-    title: "Wedding & Silk Soirée",
-    subtitle: "Mulberry Silk & Gowns",
-    href: "/shop?category=women-dresses",
-    image: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=800&auto=format&fit=crop&q=80",
-    tag: "Pure Silk",
-  },
-  {
-    title: "Sartorial Menswear",
-    subtitle: "French Linen & Mandarin Shirts",
-    href: "/shop?category=men-shirts",
-    image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&auto=format&fit=crop&q=80",
-    tag: "Tailored Linen",
-  },
-  {
-    title: "Earth & Sand Co-ords",
-    subtitle: "Chanderi Silks & Sets",
-    href: "/shop?onSale=true",
-    image: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80",
-    tag: "Flat 40% Off",
-  },
-];
-
 export default async function HomePage() {
-  const [categories, allProducts, rootCategories, promotions, banners] = await Promise.all([
-    prisma.category.findMany({
-      where: { isActive: true, parentId: null },
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      take: 6,
-    }),
+  const [allProducts, rootCategories, promotions, banners] = await Promise.all([
     prisma.product.findMany({
       where: {
         status: "ACTIVE",
@@ -81,7 +20,7 @@ export default async function HomePage() {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: 40,
+      take: 20,
       include: {
         images: { orderBy: { sortOrder: "asc" } },
         variants: { where: { isActive: true } },
@@ -180,71 +119,41 @@ export default async function HomePage() {
   const heroCtaText = heroBanner?.buttonText || "Explore New Season →";
   const heroCtaLink = heroBanner?.linkUrl || "/shop";
 
-  const categoryPillars = rootCategories.map((rc) => {
-    const childIds = new Set(rc.children.map((c) => c.id));
-    const matchingProducts = allProducts.filter(
-      (p) => p.categoryId === rc.id || (p.categoryId && childIds.has(p.categoryId))
-    ).slice(0, 10);
-
-    return {
-      ...rc,
-      products: matchingProducts,
-      children: rc.children.map((c) => ({
-        ...c,
-        products: allProducts.filter((p) => p.categoryId === c.id).slice(0, 10),
-      })),
-    };
-  });
-
-  const META: Record<string, { icon: string; tagline: string; bannerImage: string }> = {
+  const META: Record<string, { icon: string; tagline: string; bannerImage: string; badge: string }> = {
     women: {
       icon: "🥻",
       tagline: "Pure Varanasi Mulberry Silks, Micro-Velvets & Zardozi Anarkalis",
-      bannerImage: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1000&auto=format&fit=crop&q=85",
+      bannerImage: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1200&auto=format&fit=crop&q=85",
+      badge: "Royal Heritage Atelier",
     },
     men: {
       icon: "👔",
       tagline: "100% Certified French Linen, Mandarin Collars & Italian Chinos",
-      bannerImage: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=1000&auto=format&fit=crop&q=85",
+      bannerImage: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=1200&auto=format&fit=crop&q=85",
+      badge: "Master Tailored Sartorial Cuts",
     },
     western: {
       icon: "✨",
       tagline: "Liquid Satin Cocktail Gowns, Structured Linen Blazers & Co-ords",
-      bannerImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1000&auto=format&fit=crop&q=85",
+      bannerImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&auto=format&fit=crop&q=85",
+      badge: "Haute Contemporary Chic",
     },
     kids: {
       icon: "🧸",
       tagline: "Junior Festive Brocades, Fairy Tulle Frocks & Organic Cotton",
-      bannerImage: "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=1000&auto=format&fit=crop&q=85",
+      bannerImage: "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=1200&auto=format&fit=crop&q=85",
+      badge: "Gentle Pure Comfort Edits",
     },
   };
 
-  const categoryCollections = categoryPillars.map((cat) => {
-    const meta = META[cat.slug] || {
-      icon: "👗",
-      tagline: "Curated Artisanal Luxury Outfits & Tailored Edits",
-      bannerImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&auto=format&fit=crop&q=85",
+  const departments = rootCategories.map((cat) => {
+    const slugKey = cat.slug.toLowerCase();
+    const meta = META[slugKey] || {
+      icon: slugKey.includes("men") ? "👔" : slugKey.includes("kid") ? "🧸" : "👗",
+      tagline: `Curated luxury apparel, tailored cuts & artisanal craft for ${cat.name}`,
+      bannerImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&auto=format&fit=crop&q=85",
+      badge: "Signature Collection",
     };
-
-    // Combine products from category itself + all child subcategories
-    const productMap = new Map<string, any>();
-    for (const p of cat.products) {
-      productMap.set(p.id, p);
-    }
-    for (const child of cat.children) {
-      for (const p of child.products) {
-        if (!productMap.has(p.id)) {
-          productMap.set(p.id, p);
-        }
-      }
-    }
-
-    const subcategories = cat.children.map((child) => ({
-      id: child.id,
-      name: child.name,
-      slug: child.slug,
-      count: child.products.length,
-    }));
 
     return {
       id: cat.id,
@@ -253,8 +162,12 @@ export default async function HomePage() {
       icon: meta.icon,
       tagline: meta.tagline,
       bannerImage: meta.bannerImage,
-      subcategories,
-      products: serialize(Array.from(productMap.values())),
+      badge: meta.badge,
+      subcategories: cat.children.map((child) => ({
+        id: child.id,
+        name: child.name,
+        slug: child.slug,
+      })),
     };
   });
 
@@ -394,9 +307,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 🌸 Interactive Category-Wise Curated Collections */}
+      {/* 🌸 Step-by-Step Category & Subcategory Atelier Discovery */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <HomeClient categoryCollections={categoryCollections} />
+        <CategoryShowcase departments={departments} />
       </section>
 
       {/* 👑 Curated Occasions Gallery */}
