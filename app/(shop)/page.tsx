@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { getStoresControl } from "@/lib/stores";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,14 @@ export default async function StoreGatewayLandingPage() {
   const storesControl = await getStoresControl();
   const isGarmentsActive = storesControl.garments.isActive;
   const isJewelleryActive = storesControl.jewellery.isActive;
+
+  // If only 1 store is active, seamlessly take the user directly to the active store
+  if (isGarmentsActive && !isJewelleryActive) {
+    redirect("/garments");
+  }
+  if (!isGarmentsActive && isJewelleryActive) {
+    redirect("/jewellery");
+  }
 
   return (
     <div className="relative min-h-[92vh] flex flex-col justify-between bg-[#FAF8F5] overflow-hidden selection:bg-[#C59B27] selection:text-white">
@@ -100,11 +109,6 @@ export default async function StoreGatewayLandingPage() {
                   <span className="text-xs">👗</span>
                   <span>Maison I • Haute Couture</span>
                 </span>
-                {!isGarmentsActive && (
-                  <span className="px-3 py-1 rounded-full bg-rose-600/90 text-white text-[10px] font-extrabold uppercase tracking-widest border border-rose-400/50 shadow-md">
-                    🔴 Closed
-                  </span>
-                )}
               </div>
 
               {/* Bottom Intro Text */}
@@ -152,12 +156,12 @@ export default async function StoreGatewayLandingPage() {
                     Over 120+ Curated Outfits
                   </span>
                   <span className="text-[10px] text-[#787C87]">
-                    {isGarmentsActive ? "Hand-finished artisan tailoring" : "Temporarily undergoing curation"}
+                    Hand-finished artisan tailoring
                   </span>
                 </div>
 
                 <div className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#141416] group-hover:bg-[#C59B27] text-white group-hover:text-[#141416] text-xs font-extrabold uppercase tracking-wider transition-all duration-300 shadow-md group-hover:shadow-xl shrink-0">
-                  <span>{isGarmentsActive ? "Enter Garments Atelier" : "View Notice"}</span>
+                  <span>Enter Garments Atelier</span>
                   <span className="transform group-hover:translate-x-1.5 transition-transform duration-300 text-sm">
                     →
                   </span>
@@ -195,11 +199,6 @@ export default async function StoreGatewayLandingPage() {
                   <span className="text-xs">💍</span>
                   <span>Maison II • Imperial Jewels</span>
                 </span>
-                {!isJewelleryActive && (
-                  <span className="px-3 py-1 rounded-full bg-rose-600/90 text-white text-[10px] font-extrabold uppercase tracking-widest border border-rose-400/50 shadow-md">
-                    🔴 Closed
-                  </span>
-                )}
               </div>
 
               {/* Bottom Intro Text */}
@@ -247,12 +246,12 @@ export default async function StoreGatewayLandingPage() {
                     24K Gold Micron Plating
                   </span>
                   <span className="text-[10px] text-[#8C6B08]">
-                    {isJewelleryActive ? "Anti-tarnish & skin-friendly alloy" : "Temporarily undergoing curation"}
+                    Anti-tarnish &amp; skin-friendly alloy
                   </span>
                 </div>
 
                 <div className="gold-jewellery-btn inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 shadow-md group-hover:shadow-xl shrink-0">
-                  <span>{isJewelleryActive ? "Enter Jewels Atelier" : "View Notice"}</span>
+                  <span>Enter Jewels Atelier</span>
                   <span className="transform group-hover:translate-x-1.5 transition-transform duration-300 text-sm">
                     →
                   </span>

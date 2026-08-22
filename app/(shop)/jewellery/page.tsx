@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { getStoresControl } from "@/lib/stores";
-import StoreClosedNotice from "@/components/ui/StoreClosedNotice";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +15,7 @@ export const metadata = {
 export default async function JewelleryHomePage() {
   const storesControl = await getStoresControl();
   if (!storesControl.jewellery.isActive) {
-    return (
-      <StoreClosedNotice
-        store="jewellery"
-        closedMessage={storesControl.jewellery.closedMessage}
-      />
-    );
+    redirect("/garments");
   }
 
   const jewelleryDb = getDb("jewellery");

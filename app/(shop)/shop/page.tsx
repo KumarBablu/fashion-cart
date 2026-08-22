@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
+import { redirect } from "next/navigation";
 import { getStoresControl } from "@/lib/stores";
-import StoreClosedNotice from "@/components/ui/StoreClosedNotice";
 import { Prisma } from "@prisma/client";
 import ProductCard from "@/components/products/ProductCard";
 import ShopFilters from "@/components/products/ShopFilters";
@@ -19,10 +19,10 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   
   const storesControl = await getStoresControl();
   if (store === "jewellery" && !storesControl.jewellery.isActive) {
-    return <StoreClosedNotice store="jewellery" closedMessage={storesControl.jewellery.closedMessage} />;
+    redirect("/shop?store=garments");
   }
   if (store === "garments" && !storesControl.garments.isActive) {
-    return <StoreClosedNotice store="garments" closedMessage={storesControl.garments.closedMessage} />;
+    redirect("/shop?store=jewellery");
   }
 
   const db = getDb(store);
