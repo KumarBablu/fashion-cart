@@ -20,9 +20,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   if (payment.status === "VERIFIED") {
     return NextResponse.json({ error: "Payment is already verified." }, { status: 400 });
   }
-  if (!payment.screenshotPath || !payment.utrNumber) {
+  if (!payment.screenshotPath && !payment.utrNumber) {
     return NextResponse.json(
-      { error: "Cannot approve a payment with no screenshot/UTR submitted." },
+      { error: "Cannot approve a payment with no screenshot or payment proof submitted." },
       { status: 400 }
     );
   }
