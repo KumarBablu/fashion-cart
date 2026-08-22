@@ -377,8 +377,6 @@ export default function CartDrawer({
 
               {/* Trust Badges */}
               <div className="pt-2 flex items-center justify-center gap-4 text-[10px] text-[#787C87] border-t border-[#E7DFD5]/60 font-medium">
-                <span className="flex items-center gap-1">🔒 256-Bit SSL</span>
-                <span>•</span>
                 <span className="flex items-center gap-1">✨ 100% Authentic</span>
                 <span>•</span>
                 <span className="flex items-center gap-1">🔄 7-Day Returns</span>

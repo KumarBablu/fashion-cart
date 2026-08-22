@@ -229,9 +229,6 @@ export default function CheckoutPage() {
             <p className="text-[11px] text-[#BB8A52] font-semibold">Official Fashion Cart Storefront</p>
           </div>
         </div>
-        <span className="text-xs text-[#0C3B2E] font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#E8E3D8] shadow-xs">
-          <span>🔒</span> 256-bit SSL Encrypted
-        </span>
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
