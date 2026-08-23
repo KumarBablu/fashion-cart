@@ -112,16 +112,14 @@ export default function JewelleryHeroBanner({
   adminBanners?: any[];
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
 
-  // 👑 Multi-Store Slide Engine:
-  // Dynamically generate slides based on store products and admin banners
+  // 👑 Multi-Store Slide Engine (Standardized Top 3 Slides across all stores):
   const activeHeroBanners = (adminBanners || []).filter((b) => b.position === "HERO" && b.isActive);
 
   let dynamicSlides: JewelleryBannerSlide[] = [];
 
   if (activeHeroBanners.length >= 2) {
-    dynamicSlides = activeHeroBanners.map((b, idx) => ({
+    dynamicSlides = activeHeroBanners.slice(0, 3).map((b, idx) => ({
       id: b.id || `admin-hero-${idx}`,
       tag: b.badge || "👑 Signature Collection",
       title: b.title || "Imperial Heritage in",
@@ -140,8 +138,8 @@ export default function JewelleryHeroBanner({
       masterpieceHref: b.linkUrl || "/shop?store=jewellery",
     }));
   } else if (products.length > 0) {
-    // Generate 1 slide per product from the store catalog (up to 6 products)
-    const productPool = products.slice(0, 6);
+    // Generate exactly 3 spotlight slides from the store catalog
+    const productPool = products.slice(0, 3);
     dynamicSlides = productPool.map((prod, idx) => {
       const defaultTemplate = DEFAULT_JEWELLERY_SLIDES[idx % DEFAULT_JEWELLERY_SLIDES.length];
       const price = prod.variants?.[0]?.price
@@ -175,27 +173,23 @@ export default function JewelleryHeroBanner({
     });
   }
 
-  // Ensure at least 3 rotating slides always exist
+  // Ensure exactly 3 rotating slides always exist
   const slides: JewelleryBannerSlide[] =
     dynamicSlides.length >= 2 ? dynamicSlides : DEFAULT_JEWELLERY_SLIDES;
 
-  // Continuous reliable auto-advance frequency
+  // Unconditional continuous auto-rotation every 6.5s
   useEffect(() => {
-    if (slides.length <= 1 || isPaused) return;
+    if (slides.length <= 1) return;
 
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, AUTO_CHANGE_INTERVAL_MS);
 
     return () => clearInterval(timer);
-  }, [slides.length, isPaused]);
+  }, [slides.length]);
 
   return (
-    <section
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      className="relative min-h-[calc(100vh-76px)] lg:min-h-[calc(100vh-80px)] text-white overflow-hidden border-b border-[#D4AF37]/30 shadow-2xl flex flex-col justify-between"
-    >
+    <section className="relative min-h-[calc(100vh-76px)] lg:min-h-[calc(100vh-80px)] text-white overflow-hidden border-b border-[#D4AF37]/30 shadow-2xl flex flex-col justify-between">
       {/* 🌟 1. Full-Bleed Background Image with continuous cross-fade */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#040E0B]">
         {slides.map((s, idx) => (
