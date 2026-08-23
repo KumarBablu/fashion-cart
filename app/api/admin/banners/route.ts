@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -63,25 +63,29 @@ const DEFAULT_HERO = {
   isActive: true,
 };
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
+
   try {
-    let banners = await prisma.banner.findMany({
+    let banners = await db.banner.findMany({
       orderBy: [{ position: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
     // If no banners exist yet, seed initial default hero & occasions so admin has immediate visual editing controls
     if (banners.length === 0) {
-      await prisma.banner.create({ data: DEFAULT_HERO });
+      await db.banner.create({ data: DEFAULT_HERO });
       for (const occ of DEFAULT_OCCASIONS) {
-        await prisma.banner.create({ data: occ });
+        await db.banner.create({ data: occ });
       }
 
-      banners = await prisma.banner.findMany({
+      banners = await db.banner.findMany({
         orderBy: [{ position: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
       });
     }
@@ -99,6 +103,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
+
   try {
     const body = await req.json();
     const { title, subtitle, badge, linkUrl, imageUrl, buttonText, position, isActive, sortOrder } = body;
@@ -107,7 +115,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    const created = await prisma.banner.create({
+    const created = await db.banner.create({
       data: {
         title: title.trim(),
         subtitle: subtitle?.trim() || null,

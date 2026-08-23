@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -11,17 +11,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
 
   try {
     const body = await req.json();
     const { title, subtitle, badge, linkUrl, imageUrl, buttonText, position, isActive, sortOrder } = body;
 
-    const existing = await prisma.banner.findUnique({ where: { id } });
+    const existing = await db.banner.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Banner not found" }, { status: 404 });
     }
 
-    const updated = await prisma.banner.update({
+    const updated = await db.banner.update({
       where: { id },
       data: {
         title: title !== undefined ? title.trim() : existing.title,
@@ -54,14 +57,17 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
 
   const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
 
   try {
-    const existing = await prisma.banner.findUnique({ where: { id } });
+    const existing = await db.banner.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Banner not found" }, { status: 404 });
     }
 
-    await prisma.banner.delete({ where: { id } });
+    await db.banner.delete({ where: { id } });
 
     return NextResponse.json({
       success: true,

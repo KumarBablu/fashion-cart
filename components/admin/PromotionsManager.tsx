@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
 
@@ -55,12 +56,56 @@ const PLACEMENT_LABELS: Record<string, { label: string; icon: string }> = {
 };
 
 export default function PromotionsManager() {
+  const searchParams = useSearchParams();
+  const [activeStore, setActiveStore] = useState<string>("garments");
   const [activeTab, setActiveTab] = useState<"OCCASIONS" | "HERO" | "PROMOTIONS">("OCCASIONS");
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const [promotions, setPromotions] = useState<PromotionItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Banner Modal State (Hero / Occasion)
+  const { success, error } = useToast();
+
+  const loadAllData = useCallback(async (storeToLoad?: string) => {
+    const currentStore = storeToLoad || activeStore;
+    setLoading(true);
+    try {
+      const [bRes, pRes] = await Promise.all([
+        fetch(`/api/admin/banners?store=${currentStore}`),
+        fetch(`/api/admin/promotions?store=${currentStore}`),
+      ]);
+
+      if (bRes.ok) {
+        const bData = await bRes.json();
+        setBanners(bData.banners || []);
+      }
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        setPromotions(pData.promotions || []);
+      }
+    } catch {
+      error("Network error while loading marketing settings");
+    } finally {
+      setLoading(false);
+    }
+  }, [activeStore, error]);
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("store");
+    if (fromUrl) {
+      setActiveStore(fromUrl);
+      loadAllData(fromUrl);
+      return;
+    }
+
+    const match = typeof document !== "undefined" ? document.cookie.match(/(?:^|;\s*)fc_admin_store=([^;]+)/) : null;
+    if (match && match[1]) {
+      setActiveStore(match[1]);
+      loadAllData(match[1]);
+    } else {
+      loadAllData("garments");
+    }
+  }, [searchParams, loadAllData]);
+
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<BannerItem | null>(null);
   const [bannerForm, setBannerForm] = useState({
@@ -97,35 +142,6 @@ export default function PromotionsManager() {
 
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-
-  const { success, error } = useToast();
-
-  useEffect(() => {
-    loadAllData();
-  }, []);
-
-  async function loadAllData() {
-    setLoading(true);
-    try {
-      const [bRes, pRes] = await Promise.all([
-        fetch("/api/admin/banners"),
-        fetch("/api/admin/promotions"),
-      ]);
-
-      if (bRes.ok) {
-        const bData = await bRes.json();
-        setBanners(bData.banners || []);
-      }
-      if (pRes.ok) {
-        const pData = await pRes.json();
-        setPromotions(pData.promotions || []);
-      }
-    } catch {
-      error("Network error while loading marketing settings");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const occasions = banners.filter((b) => b.position === "OCCASION");
   const heroes = banners.filter((b) => b.position === "HERO");
@@ -173,7 +189,7 @@ export default function PromotionsManager() {
 
     setSaving(true);
     try {
-      const url = editingBanner ? `/api/admin/banners/${editingBanner.id}` : "/api/admin/banners";
+      const url = editingBanner ? `/api/admin/banners/${editingBanner.id}?store=${activeStore}` : `/api/admin/banners?store=${activeStore}`;
       const method = editingBanner ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -197,7 +213,7 @@ export default function PromotionsManager() {
 
   async function handleToggleBannerStatus(banner: BannerItem) {
     try {
-      const res = await fetch(`/api/admin/banners/${banner.id}`, {
+      const res = await fetch(`/api/admin/banners/${banner.id}?store=${activeStore}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !banner.isActive }),
@@ -216,7 +232,7 @@ export default function PromotionsManager() {
   async function handleDeleteBanner(id: string, title: string) {
     if (!confirm(`Permanently delete "${title}"?`)) return;
     try {
-      const res = await fetch(`/api/admin/banners/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/banners/${id}?store=${activeStore}`, { method: "DELETE" });
       if (res.ok) {
         setBanners((prev) => prev.filter((b) => b.id !== id));
         success("Deleted", `Removed "${title}"`);
