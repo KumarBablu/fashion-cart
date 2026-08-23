@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import NavigationProgress from "@/components/providers/NavigationProgress";
+import LuxuryClickEffects from "@/components/providers/LuxuryClickEffects";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
@@ -75,6 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Suspense fallback={null}>
               <NavigationProgress />
             </Suspense>
+            <LuxuryClickEffects />
             {children}
           </ToastProvider>
         </ThemeProvider>
