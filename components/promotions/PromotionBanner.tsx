@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -10,6 +11,7 @@ type Promotion = {
   title: string;
   subtitle?: string | null;
   badgeText?: string | null;
+  imageUrl?: string | null;
   discountCode?: string | null;
   ctaText?: string | null;
   ctaUrl?: string | null;
@@ -155,6 +157,18 @@ export default function PromotionBanner() {
           href={currentPromo.ctaUrl || "/shop"}
           className="flex-1 flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2.5 text-center sm:text-left group cursor-pointer"
         >
+          {currentPromo.imageUrl && (
+            <div className="relative h-6 w-8 rounded-md overflow-hidden border border-white/20 shrink-0">
+              <Image
+                src={currentPromo.imageUrl}
+                alt={currentPromo.title}
+                fill
+                sizes="32px"
+                className="object-cover"
+              />
+            </div>
+          )}
+
           {currentPromo.badgeText && (
             <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${theme.badgeBg}`}>
               {currentPromo.badgeText}
@@ -164,6 +178,11 @@ export default function PromotionBanner() {
           <span className="font-bold text-xs leading-tight group-hover:underline">
             {currentPromo.title}
           </span>
+          {currentPromo.subtitle && (
+            <span className="text-[11px] opacity-90 hidden sm:inline">
+              · {currentPromo.subtitle}
+            </span>
+          )}
 
           {currentPromo.discountCode && (
             <button
