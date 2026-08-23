@@ -104,38 +104,98 @@ const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
 
 const AUTO_CHANGE_INTERVAL_MS = 6500;
 
-export default function JewelleryHeroBanner({ products = [] }: { products?: any[] }) {
+export default function JewelleryHeroBanner({
+  products = [],
+  adminBanners = [],
+}: {
+  products?: any[];
+  adminBanners?: any[];
+}) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
-  // Dynamically link slides to real jewellery products if available
-  const slides: JewelleryBannerSlide[] = DEFAULT_JEWELLERY_SLIDES.map((slide, idx) => {
-    const prod = products[idx] || products[0];
-    if (!prod) return slide;
+  // 👑 Multi-Store Slide Engine:
+  // Dynamically generate slides based on store products and admin banners
+  const activeHeroBanners = (adminBanners || []).filter((b) => b.position === "HERO" && b.isActive);
 
-    const price = prod.variants?.[0]?.price ? `₹${Number(prod.variants[0].price).toLocaleString("en-IN")} · In Stock` : slide.masterpiecePrice;
-    const prodUrl = `/products/${prod.slug}?store=jewellery`;
-    const prodImg = prod.images?.[0]?.imageUrl || slide.bgImageUrl;
+  let dynamicSlides: JewelleryBannerSlide[] = [];
 
-    return {
-      ...slide,
-      masterpieceName: prod.name || slide.masterpieceName,
-      masterpiecePrice: price,
-      masterpieceHref: prodUrl,
-      primaryBtnHref: prodUrl,
-      bgImageUrl: prodImg,
-    };
-  });
+  if (activeHeroBanners.length >= 2) {
+    dynamicSlides = activeHeroBanners.map((b, idx) => ({
+      id: b.id || `admin-hero-${idx}`,
+      tag: b.badge || "👑 Signature Collection",
+      title: b.title || "Imperial Heritage in",
+      titleHighlight: "Fine Handcrafted Jewels.",
+      description: b.subtitle || "Discover masterfully crafted fine jewellery designed for royal celebrations.",
+      pills: DEFAULT_JEWELLERY_SLIDES[idx % DEFAULT_JEWELLERY_SLIDES.length].pills,
+      primaryBtnText: b.buttonText || "Shop Collection →",
+      primaryBtnHref: b.linkUrl || "/shop?store=jewellery",
+      conciergeMsg: "Hi Imperial Jewels Stylist, I would like personal jewellery recommendations!",
+      bgImageUrl: b.imageUrl || DEFAULT_JEWELLERY_SLIDES[idx % DEFAULT_JEWELLERY_SLIDES.length].bgImageUrl,
+      lookbookBadge: b.badge || "👑 Masterpiece",
+      masterpieceCollection: "✨ Imperial Edit 2026",
+      masterpieceName: b.title,
+      masterpieceDescription: b.subtitle || "24K Micro-Plated craftsmanship.",
+      masterpiecePrice: "In Stock",
+      masterpieceHref: b.linkUrl || "/shop?store=jewellery",
+    }));
+  } else if (products.length > 0) {
+    // Generate 1 slide per product from the store catalog (up to 6 products)
+    const productPool = products.slice(0, 6);
+    dynamicSlides = productPool.map((prod, idx) => {
+      const defaultTemplate = DEFAULT_JEWELLERY_SLIDES[idx % DEFAULT_JEWELLERY_SLIDES.length];
+      const price = prod.variants?.[0]?.price
+        ? `₹${Number(prod.variants[0].price).toLocaleString("en-IN")} · In Stock`
+        : defaultTemplate.masterpiecePrice;
+      const prodUrl = `/products/${prod.slug}?store=jewellery`;
+      const prodImg = prod.images?.[0]?.imageUrl || defaultTemplate.bgImageUrl;
+
+      const words = (prod.name || "").split(" ");
+      const titlePrefix = words.length > 2 ? words.slice(0, 3).join(" ") + " in" : defaultTemplate.title;
+      const titleSuffix = words.length > 2 ? words.slice(3).join(" ") : defaultTemplate.titleHighlight;
+
+      return {
+        id: prod.id || `jewellery-prod-${idx}`,
+        tag: prod.category?.name ? `👑 ${prod.category.name}` : defaultTemplate.tag,
+        title: titlePrefix,
+        titleHighlight: titleSuffix,
+        description: prod.description ? prod.description.slice(0, 160) : defaultTemplate.description,
+        pills: defaultTemplate.pills,
+        primaryBtnText: "View Featured Jewellery →",
+        primaryBtnHref: prodUrl,
+        conciergeMsg: `Hi Imperial Jewels Stylist, I would like to inquire about ${prod.name}!`,
+        bgImageUrl: prodImg,
+        lookbookBadge: prod.category?.name ? `👑 ${prod.category.name}` : defaultTemplate.lookbookBadge,
+        masterpieceCollection: `✦ Spotlight Piece #${idx + 1}`,
+        masterpieceName: prod.name,
+        masterpieceDescription: prod.description ? prod.description.slice(0, 120) : defaultTemplate.masterpieceDescription,
+        masterpiecePrice: price,
+        masterpieceHref: prodUrl,
+      };
+    });
+  }
+
+  // Ensure at least 3 rotating slides always exist
+  const slides: JewelleryBannerSlide[] =
+    dynamicSlides.length >= 2 ? dynamicSlides : DEFAULT_JEWELLERY_SLIDES;
 
   // Continuous reliable auto-advance frequency
   useEffect(() => {
+    if (slides.length <= 1 || isPaused) return;
+
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, AUTO_CHANGE_INTERVAL_MS);
+
     return () => clearInterval(timer);
-  }, [slides.length, currentSlide]);
+  }, [slides.length, isPaused]);
 
   return (
-    <section className="relative min-h-[calc(100vh-76px)] lg:min-h-[calc(100vh-80px)] text-white overflow-hidden border-b border-[#D4AF37]/30 shadow-2xl flex flex-col justify-between">
+    <section
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      className="relative min-h-[calc(100vh-76px)] lg:min-h-[calc(100vh-80px)] text-white overflow-hidden border-b border-[#D4AF37]/30 shadow-2xl flex flex-col justify-between"
+    >
       {/* 🌟 1. Full-Bleed Background Image with continuous cross-fade */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#040E0B]">
         {slides.map((s, idx) => (

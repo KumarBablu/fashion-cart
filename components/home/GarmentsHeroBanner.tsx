@@ -112,60 +112,90 @@ export default function GarmentsHeroBanner({
   adminBanners?: any[];
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
-  // If admin has created HERO banners, use them; otherwise use rich default slides linked to real products
-  const heroBanners = adminBanners.filter((b) => b.position === "HERO" && b.isActive);
+  // 👑 Multi-Store Slide Engine:
+  // Dynamically generate slides based on store products and admin banners
+  const activeHeroBanners = (adminBanners || []).filter((b) => b.position === "HERO" && b.isActive);
 
+  let dynamicSlides: GarmentBannerSlide[] = [];
+
+  if (activeHeroBanners.length >= 2) {
+    dynamicSlides = activeHeroBanners.map((b, idx) => ({
+      id: b.id || `admin-hero-${idx}`,
+      tag: b.badge || "✦ Exclusive Collection",
+      title: b.title || "Timeless Elegance in",
+      titleHighlight: "Signature Atelier Cuts.",
+      description: b.subtitle || "Discover masterfully tailored garments crafted with certified pure fabrics.",
+      pills: DEFAULT_GARMENT_SLIDES[idx % DEFAULT_GARMENT_SLIDES.length].pills,
+      primaryBtnText: b.buttonText || "Shop Collection →",
+      primaryBtnHref: b.linkUrl || "/shop",
+      conciergeMsg: "Hi Fashion Cart Stylist, I would like personal outfit recommendations!",
+      bgImageUrl: b.imageUrl || DEFAULT_GARMENT_SLIDES[idx % DEFAULT_GARMENT_SLIDES.length].bgImageUrl,
+      lookbookBadge: b.badge || "👑 Signature Edit",
+      masterpieceCollection: "✦ Collection 2026",
+      masterpieceName: b.title,
+      masterpieceDescription: b.subtitle || "Certified luxury craftsmanship.",
+      masterpiecePrice: "In Stock",
+      masterpieceHref: b.linkUrl || "/shop",
+    }));
+  } else if (products.length > 0) {
+    // Generate 1 slide per product from the store catalog (up to 6 products)
+    const productPool = products.slice(0, 6);
+    dynamicSlides = productPool.map((prod, idx) => {
+      const defaultTemplate = DEFAULT_GARMENT_SLIDES[idx % DEFAULT_GARMENT_SLIDES.length];
+      const price = prod.variants?.[0]?.price
+        ? `₹${Number(prod.variants[0].price).toLocaleString("en-IN")} · In Stock`
+        : defaultTemplate.masterpiecePrice;
+      const prodUrl = `/products/${prod.slug}`;
+      const prodImg = prod.images?.[0]?.imageUrl || defaultTemplate.bgImageUrl;
+
+      const words = (prod.name || "").split(" ");
+      const titlePrefix = words.length > 2 ? words.slice(0, 3).join(" ") + " in" : defaultTemplate.title;
+      const titleSuffix = words.length > 2 ? words.slice(3).join(" ") : defaultTemplate.titleHighlight;
+
+      return {
+        id: prod.id || `garment-prod-${idx}`,
+        tag: prod.category?.name ? `🥻 ${prod.category.name}` : defaultTemplate.tag,
+        title: titlePrefix,
+        titleHighlight: titleSuffix,
+        description: prod.description ? prod.description.slice(0, 160) : defaultTemplate.description,
+        pills: defaultTemplate.pills,
+        primaryBtnText: "Explore Collection →",
+        primaryBtnHref: prodUrl,
+        conciergeMsg: `Hi Fashion Cart Stylist, I would like to inquire about ${prod.name}!`,
+        bgImageUrl: prodImg,
+        lookbookBadge: prod.category?.name ? `👗 ${prod.category.name}` : defaultTemplate.lookbookBadge,
+        masterpieceCollection: `✦ Spotlight Look #${idx + 1}`,
+        masterpieceName: prod.name,
+        masterpieceDescription: prod.description ? prod.description.slice(0, 120) : defaultTemplate.masterpieceDescription,
+        masterpiecePrice: price,
+        masterpieceHref: prodUrl,
+      };
+    });
+  }
+
+  // Ensure at least 3 rotating slides always exist
   const slides: GarmentBannerSlide[] =
-    heroBanners.length > 0
-      ? heroBanners.map((b, idx) => ({
-          id: b.id || `admin-hero-${idx}`,
-          tag: b.badge || "✦ Exclusive Collection",
-          title: b.title || "Timeless Elegance in",
-          titleHighlight: "Signature Atelier Cuts.",
-          description: b.subtitle || "Discover masterfully tailored garments crafted with certified pure fabrics.",
-          pills: DEFAULT_GARMENT_SLIDES[idx % DEFAULT_GARMENT_SLIDES.length].pills,
-          primaryBtnText: b.buttonText || "Shop Collection →",
-          primaryBtnHref: b.linkUrl || "/shop",
-          conciergeMsg: "Hi Fashion Cart Stylist, I would like personal outfit recommendations!",
-          bgImageUrl: b.imageUrl || DEFAULT_GARMENT_SLIDES[idx % DEFAULT_GARMENT_SLIDES.length].bgImageUrl,
-          lookbookBadge: b.badge || "👑 Signature Edit",
-          masterpieceCollection: "✦ Collection 2026",
-          masterpieceName: b.title,
-          masterpieceDescription: b.subtitle || "Certified luxury craftsmanship.",
-          masterpiecePrice: "In Stock",
-          masterpieceHref: b.linkUrl || "/shop",
-        }))
-      : DEFAULT_GARMENT_SLIDES.map((slide, idx) => {
-          const prod = products[idx] || products[0];
-          if (!prod) return slide;
-
-          const price = prod.variants?.[0]?.price
-            ? `₹${Number(prod.variants[0].price).toLocaleString("en-IN")} · In Stock`
-            : slide.masterpiecePrice;
-          const prodUrl = `/products/${prod.slug}`;
-          const prodImg = prod.images?.[0]?.imageUrl || slide.bgImageUrl;
-
-          return {
-            ...slide,
-            masterpieceName: prod.name || slide.masterpieceName,
-            masterpiecePrice: price,
-            masterpieceHref: prodUrl,
-            primaryBtnHref: prodUrl,
-            bgImageUrl: prodImg,
-          };
-        });
+    dynamicSlides.length >= 2 ? dynamicSlides : DEFAULT_GARMENT_SLIDES;
 
   // Continuous reliable auto-advance frequency
   useEffect(() => {
+    if (slides.length <= 1 || isPaused) return;
+
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, AUTO_CHANGE_INTERVAL_MS);
+
     return () => clearInterval(timer);
-  }, [slides.length, currentSlide]);
+  }, [slides.length, isPaused]);
 
   return (
-    <section className="relative min-h-[calc(100vh-76px)] lg:min-h-[calc(100vh-80px)] text-white overflow-hidden border-b border-[#E7DFD5] shadow-2xl flex flex-col justify-between">
+    <section
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      className="relative min-h-[calc(100vh-76px)] lg:min-h-[calc(100vh-80px)] text-white overflow-hidden border-b border-[#E7DFD5] shadow-2xl flex flex-col justify-between"
+    >
       {/* 🌟 1. Full-Bleed Background Image with continuous cross-fade */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#141416]">
         {slides.map((s, idx) => (
