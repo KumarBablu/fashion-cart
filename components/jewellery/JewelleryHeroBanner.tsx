@@ -162,11 +162,11 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
           </div>
         ))}
 
-        {/* Multi-tier Atmospheric Gradient Scrim for crisp text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#040E0B]/95 via-[#061A14]/85 to-[#040E0B]/40 lg:to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#040E0B] via-transparent to-[#040E0B]/60" />
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-[#0D2C22]/60 rounded-full blur-3xl pointer-events-none" />
+        {/* Lighter, Luminous Atmospheric Gradient Scrim so the background jewellery is clearly visible */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#040E0B]/75 via-[#061A14]/45 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#040E0B]/75 via-transparent to-[#040E0B]/30" />
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-[#0D2C22]/30 rounded-full blur-3xl pointer-events-none" />
       </div>
 
       {/* 👑 2. Foreground Content Overlay */}
@@ -175,19 +175,19 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
         {/* Left Headline & Masterpiece Summary */}
         <div key={`left-${slide.id}`} className="lg:col-span-7 space-y-6 sm:space-y-7 animate-fade-in-up">
           
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#D4AF37]/60 bg-[#061A14]/90 text-[11px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-xl backdrop-blur-md">
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#D4AF37]/60 bg-[#061A14]/75 text-[11px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-xl backdrop-blur-md">
             <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
             <span>{slide.tag}</span>
           </div>
 
           <div className="space-y-3">
-            <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.2rem] font-bold tracking-tight text-white leading-[1.08] drop-shadow-md">
+            <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.2rem] font-bold tracking-tight text-white leading-[1.08] [text-shadow:_0_3px_16px_rgba(0,0,0,0.9)]">
               {slide.title} <br />
-              <span className="bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7] bg-clip-text text-transparent italic font-serif font-normal drop-shadow-sm">
+              <span className="bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7] bg-clip-text text-transparent italic font-serif font-normal [text-shadow:_0_3px_16px_rgba(0,0,0,0.7)]">
                 {slide.titleHighlight}
               </span>
             </h1>
-            <p className="text-sm sm:text-base text-[#FDFBF7]/90 max-w-xl leading-relaxed drop-shadow-xs">
+            <p className="text-sm sm:text-base text-[#FDFBF7] max-w-xl leading-relaxed [text-shadow:_0_2px_10px_rgba(0,0,0,0.85)]">
               {slide.description}
             </p>
           </div>
@@ -199,7 +199,7 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
                 key={pill.name}
                 href={pill.href}
                 prefetch={true}
-                className="px-3.5 py-1.5 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/80 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] text-xs font-bold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-full border border-[#D4AF37]/60 bg-[#061A14]/70 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] text-xs font-bold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
               >
                 {pill.name}
               </Link>
@@ -246,7 +246,7 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
           <Link
             href={slide.masterpieceHref}
             prefetch={true}
-            className="block relative rounded-3xl overflow-hidden backdrop-blur-xl bg-[#061A14]/80 border-2 border-[#D4AF37]/60 shadow-[0_25px_70px_rgba(0,0,0,0.85)] p-6 space-y-4 hover:border-[#D4AF37] transition-all group cursor-pointer"
+            className="block relative rounded-3xl overflow-hidden backdrop-blur-md bg-[#061A14]/55 border border-[#D4AF37]/50 shadow-[0_20px_50px_rgba(0,0,0,0.6)] p-6 space-y-4 hover:border-[#D4AF37] transition-all group cursor-pointer"
           >
             {/* Top Badge */}
             <div className="flex items-center justify-between">

@@ -192,10 +192,10 @@ export default function GarmentsHeroBanner({
           </div>
         ))}
 
-        {/* Multi-tier Atmospheric Gradient Scrim for crisp readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#141416]/95 via-[#141416]/80 to-[#141416]/40 lg:to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-transparent to-[#141416]/60" />
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-[#C59B27]/15 rounded-full blur-3xl pointer-events-none" />
+        {/* Lighter, Luminous Atmospheric Gradient Scrim so the fashion model and fabric is clearly visible */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#141416]/75 via-[#141416]/45 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/75 via-transparent to-[#141416]/30" />
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-[#C59B27]/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-[#C59B27]/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
@@ -205,19 +205,19 @@ export default function GarmentsHeroBanner({
         {/* Left Headline & Masterpiece Summary */}
         <div key={`left-${slide.id}`} className="lg:col-span-7 space-y-6 sm:space-y-7 animate-fade-in-up">
           
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#C59B27]/50 bg-[#141416]/90 text-[11px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-xl backdrop-blur-md">
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#C59B27]/50 bg-[#141416]/75 text-[11px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-xl backdrop-blur-md">
             <span className="w-2.5 h-2.5 rounded-full bg-[#C59B27] animate-pulse" />
             <span>{slide.tag}</span>
           </div>
 
           <div className="space-y-3">
-            <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.25rem] font-bold tracking-tight text-white leading-[1.06] drop-shadow-md">
+            <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.25rem] font-bold tracking-tight text-white leading-[1.06] [text-shadow:_0_3px_16px_rgba(0,0,0,0.9)]">
               {slide.title} <br />
-              <span className="italic font-serif font-normal text-[#C59B27] drop-shadow-sm">
+              <span className="italic font-serif font-normal text-[#C59B27] [text-shadow:_0_3px_16px_rgba(0,0,0,0.7)]">
                 {slide.titleHighlight}
               </span>
             </h1>
-            <p className="text-sm sm:text-base text-[#FAF8F5]/90 max-w-xl leading-relaxed drop-shadow-xs">
+            <p className="text-sm sm:text-base text-[#FAF8F5] max-w-xl leading-relaxed [text-shadow:_0_2px_10px_rgba(0,0,0,0.85)]">
               {slide.description}
             </p>
           </div>
@@ -229,7 +229,7 @@ export default function GarmentsHeroBanner({
                 key={pill.name}
                 href={pill.href}
                 prefetch={true}
-                className="px-3.5 py-1.5 rounded-full border border-[#C59B27]/40 bg-[#141416]/80 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] text-xs font-bold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-full border border-[#C59B27]/40 bg-[#141416]/70 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] text-xs font-bold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
               >
                 {pill.name}
               </Link>
@@ -255,15 +255,15 @@ export default function GarmentsHeroBanner({
 
           {/* Trust Highlights */}
           <div className="pt-5 border-t border-white/20 grid grid-cols-3 gap-3 text-xs text-[#FAF8F5]/90">
-            <div className="p-3.5 rounded-2xl bg-[#141416]/85 backdrop-blur-md border border-white/15 space-y-0.5 shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-[#141416]/80 backdrop-blur-md border border-white/15 space-y-0.5 shadow-sm">
               <p className="text-sm sm:text-base font-bold text-white">100% Pure Silks</p>
               <p className="text-[10px] text-white/70">Certified Handloom Quality</p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-[#141416]/85 backdrop-blur-md border border-white/15 space-y-0.5 shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-[#141416]/80 backdrop-blur-md border border-white/15 space-y-0.5 shadow-sm">
               <p className="text-sm sm:text-base font-bold text-white">Free Express</p>
               <p className="text-[10px] text-white/70">Dispatches in 24 Hours</p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-[#141416]/85 backdrop-blur-md border border-white/15 space-y-0.5 shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-[#141416]/80 backdrop-blur-md border border-white/15 space-y-0.5 shadow-sm">
               <p className="text-sm sm:text-base font-bold text-white">4.9 ★ Rating</p>
               <p className="text-[10px] text-white/70">Over 3,500 Client Reviews</p>
             </div>
@@ -276,7 +276,7 @@ export default function GarmentsHeroBanner({
           <Link
             href={slide.masterpieceHref}
             prefetch={true}
-            className="block relative rounded-3xl overflow-hidden backdrop-blur-xl bg-[#141416]/80 border-2 border-[#C59B27]/60 shadow-[0_25px_70px_rgba(0,0,0,0.85)] p-6 space-y-4 hover:border-[#C59B27] transition-all group cursor-pointer"
+            className="block relative rounded-3xl overflow-hidden backdrop-blur-md bg-[#141416]/55 border border-[#C59B27]/50 shadow-[0_20px_50px_rgba(0,0,0,0.6)] p-6 space-y-4 hover:border-[#C59B27] transition-all group cursor-pointer"
           >
             {/* Top Badge */}
             <div className="flex items-center justify-between">
