@@ -48,6 +48,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [store, setStore] = useState<"garments" | "jewellery">("garments");
 
   // Coupon state
   const [couponInput, setCouponInput] = useState("");
@@ -63,11 +64,29 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"MANUAL_UPI" | "COD" | "ONLINE_GATEWAY">("MANUAL_UPI");
   const [customerNotes, setCustomerNotes] = useState("");
 
+  function getActiveStore(): "garments" | "jewellery" {
+    if (typeof window === "undefined") return "garments";
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeParam = urlParams.get("store");
+    if (storeParam === "jewellery") return "jewellery";
+    if (storeParam === "garments") return "garments";
+    const match = document.cookie.match(/(?:^|;\s*)fc_store=([^;]+)/);
+    if (match && match[1] === "jewellery") return "jewellery";
+    const saved = sessionStorage.getItem("fc_active_store");
+    if (saved === "jewellery") return "jewellery";
+    return "garments";
+  }
+
   async function loadAll() {
+    const activeStore = getActiveStore();
+    setStore(activeStore);
     try {
-      const [addrRes, cartRes] = await Promise.all([fetch("/api/addresses"), fetch("/api/cart")]);
+      const [addrRes, cartRes] = await Promise.all([
+        fetch("/api/addresses"),
+        fetch(`/api/cart?store=${activeStore}`)
+      ]);
       if (addrRes.status === 401) {
-        router.push("/login?next=/checkout");
+        router.push(`/login?next=${encodeURIComponent(`/checkout${activeStore === "jewellery" ? "?store=jewellery" : ""}`)}`);
         return;
       }
       const addrData = await addrRes.json();
@@ -121,7 +140,7 @@ export default function CheckoutPage() {
       const res = await fetch("/api/coupons/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponInput.trim(), subtotal }),
+        body: JSON.stringify({ code: couponInput.trim(), subtotal, store }),
       });
 
       const data = await res.json();
@@ -152,7 +171,7 @@ export default function CheckoutPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/orders", {
+      const res = await fetch(`/api/orders?store=${store}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -160,6 +179,7 @@ export default function CheckoutPage() {
           couponCode: appliedCoupon?.code || undefined,
           paymentMethod,
           customerNotes: customerNotes.trim() || undefined,
+          store,
         }),
       });
 
@@ -173,7 +193,7 @@ export default function CheckoutPage() {
       window.dispatchEvent(new CustomEvent("cart-updated"));
 
       if (paymentMethod === "MANUAL_UPI") {
-        router.push(`/checkout/${data.order.id}/payment`);
+        router.push(`/checkout/${data.order.id}/payment${store === "jewellery" ? "?store=jewellery" : ""}`);
       } else {
         success(
           paymentMethod === "COD" ? "Order Confirmed! 🚚" : "Payment Verified! 🎉",
@@ -198,14 +218,14 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-lg px-4 py-24 text-center">
-        <h1 className="font-display text-2xl font-bold">Your cart is empty</h1>
-        <p className="text-xs text-dim mt-2">Add items to your cart before proceeding to checkout.</p>
+        <h1 className="font-display text-2xl font-bold">Your {store === "jewellery" ? "Jewellery" : "Garments"} cart is empty</h1>
+        <p className="text-xs text-dim mt-2">Add items to your boutique cart before proceeding to checkout.</p>
         <button
-          onClick={() => router.push("/shop")}
-          className="mt-6 px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white"
-          style={{ backgroundColor: "var(--fc-primary)" }}
+          onClick={() => router.push(store === "jewellery" ? "/jewellery" : "/garments")}
+          className="mt-6 px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white cursor-pointer"
+          style={{ backgroundColor: store === "jewellery" ? "#C59B27" : "var(--fc-primary)" }}
         >
-          Browse Shop →
+          Explore {store === "jewellery" ? "Jewellery Boutique" : "Garments Boutique"} →
         </button>
       </div>
     );

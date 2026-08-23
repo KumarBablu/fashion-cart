@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -102,65 +103,128 @@ export default async function OrdersPage() {
           return (
             <div
               key={order.id}
-              className="rounded-2xl border p-5 transition-all card-theme flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="rounded-2xl border p-5 transition-all card-theme space-y-4"
               style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}
             >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2.5">
-                  <Link href={`/account/orders/${order.id}`} className="font-bold text-sm hover:text-primary transition-colors">
-                    {order.orderNumber}
-                  </Link>
-                  <span
-                    className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                    style={{ backgroundColor: statusInfo.bg, color: statusInfo.color }}
-                  >
-                    {statusInfo.label}
-                  </span>
-                  <span
-                    className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider"
-                    style={{
-                      backgroundColor: isJewelleryOrder ? "rgba(197, 155, 39, 0.15)" : "rgba(20, 20, 22, 0.08)",
-                      color: isJewelleryOrder ? "#C59B27" : "var(--fc-text)",
-                    }}
-                  >
-                    {isJewelleryOrder ? "💍 Jewellery" : "👗 Garments"}
-                  </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-3" style={{ borderColor: "var(--fc-border)" }}>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2.5">
+                    <Link href={`/account/orders/${order.id}`} className="font-bold text-sm hover:text-primary transition-colors">
+                      {order.orderNumber}
+                    </Link>
+                    <span
+                      className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                      style={{ backgroundColor: statusInfo.bg, color: statusInfo.color }}
+                    >
+                      {statusInfo.label}
+                    </span>
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider"
+                      style={{
+                        backgroundColor: isJewelleryOrder ? "rgba(197, 155, 39, 0.15)" : "rgba(20, 20, 22, 0.08)",
+                        color: isJewelleryOrder ? "#C59B27" : "var(--fc-text)",
+                      }}
+                    >
+                      {isJewelleryOrder ? "💍 Jewellery" : "👗 Garments"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-dim">
+                    Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })} · {order.items.length} item{order.items.length > 1 ? "s" : ""}
+                  </p>
                 </div>
-                <p className="text-xs text-dim">
-                  Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })} · {order.items.length} item{order.items.length > 1 ? "s" : ""}
-                </p>
+
+                <div className="flex items-center gap-4 justify-between sm:justify-end">
+                  <div className="text-left sm:text-right">
+                    <p className="text-base font-bold text-primary">{formatINR(order.total)}</p>
+                    <p className="text-[11px] text-dim">{order.paymentMethod.replace(/_/g, " ")}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {isPaid && (
+                      <a
+                        href={`/api/invoices/${order.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-full border text-xs font-semibold hover:border-primary hover:text-primary transition-colors"
+                        style={{ borderColor: "var(--fc-border)" }}
+                      >
+                        Invoice
+                      </a>
+                    )}
+                    <Link
+                      href={`/account/orders/${order.id}`}
+                      className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-white"
+                      style={{ backgroundColor: isJewelleryOrder ? "#C59B27" : "var(--fc-primary)" }}
+                    >
+                      Details →
+                    </Link>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex items-center gap-4 justify-between sm:justify-end">
-                <div className="text-left sm:text-right">
-                  <p className="text-base font-bold text-primary">{formatINR(order.total)}</p>
-                  <p className="text-[11px] text-dim">{order.paymentMethod.replace(/_/g, " ")}</p>
-                </div>
+              {/* Ordered Products Preview with direct product links */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                {order.items.map((item) => {
+                  const productSlug = item.product?.slug;
+                  const imageUrl = item.product?.images?.[0]?.imageUrl;
+                  const productHref = productSlug
+                    ? `/products/${productSlug}${isJewelleryOrder ? "?store=jewellery" : ""}`
+                    : null;
 
-                <div className="flex items-center gap-2">
-                  {isPaid && (
-                    <a
-                      href={`/api/invoices/${order.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 rounded-full border text-xs font-semibold hover:border-primary hover:text-primary transition-colors"
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-2.5 rounded-xl border bg-black/2 dark:bg-white/2"
                       style={{ borderColor: "var(--fc-border)" }}
                     >
-                      Invoice
-                    </a>
-                  )}
-                  <Link
-                    href={`/account/orders/${order.id}`}
-                    className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-white"
-                    style={{ backgroundColor: "var(--fc-primary)" }}
-                  >
-                    Details →
-                  </Link>
-                </div>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {imageUrl ? (
+                          <div className="relative h-11 w-10 rounded-lg overflow-hidden border shrink-0 bg-white" style={{ borderColor: "var(--fc-border)" }}>
+                            <Image
+                              src={imageUrl}
+                              alt={item.productNameSnapshot}
+                              fill
+                              sizes="40px"
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-11 w-10 rounded-lg border flex items-center justify-center shrink-0 text-sm" style={{ borderColor: "var(--fc-border)" }}>
+                            {isJewelleryOrder ? "💍" : "👗"}
+                          </div>
+                        )}
+                        <div className="min-w-0 pr-2">
+                          {productHref ? (
+                            <Link href={productHref} className="font-bold text-xs hover:underline line-clamp-1" style={{ color: "var(--fc-text)" }}>
+                              {item.productNameSnapshot}
+                            </Link>
+                          ) : (
+                            <p className="font-bold text-xs line-clamp-1" style={{ color: "var(--fc-text)" }}>
+                              {item.productNameSnapshot}
+                            </p>
+                          )}
+                          <p className="text-[11px] text-dim">
+                            {item.colourSnapshot} · {item.sizeSnapshot} · Qty: {item.quantity}
+                          </p>
+                        </div>
+                      </div>
+
+                      {productHref && (
+                        <Link
+                          href={productHref}
+                          className="px-2.5 py-1 rounded-full text-[10px] font-bold border hover:bg-black/5 dark:hover:bg-white/5 shrink-0 transition-colors"
+                          style={{ borderColor: "var(--fc-border)", color: "var(--fc-text)" }}
+                        >
+                          View ↗
+                        </Link>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );

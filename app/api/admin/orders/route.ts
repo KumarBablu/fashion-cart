@@ -4,10 +4,15 @@ import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 
 export async function GET(req: NextRequest) {
-  const admin = await getCurrentAdmin();
+  const admin = await getCurrentAdmin(req);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const sp = req.nextUrl.searchParams;
+  const cookieStore = req.cookies.get("fc_admin_store")?.value;
+  const store = sp.get("store") === "jewellery" || (!sp.get("store") && cookieStore === "jewellery") ? "jewellery" : "garments";
+  const { getDb } = await import("@/lib/db");
+  const db = getDb(store);
+
   const status = sp.get("status");
   const paymentStatus = sp.get("paymentStatus");
   const from = sp.get("from");
@@ -39,15 +44,15 @@ export async function GET(req: NextRequest) {
   };
 
   const [orders, total] = await Promise.all([
-    prisma.order.findMany({
+    db.order.findMany({
       where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: { user: true, payment: true, items: true },
     }),
-    prisma.order.count({ where }),
+    db.order.count({ where }),
   ]);
 
-  return NextResponse.json({ orders, pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } });
+  return NextResponse.json({ orders, store, pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } });
 }

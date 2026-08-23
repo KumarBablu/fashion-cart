@@ -155,14 +155,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <h3 className="font-display text-base font-bold mb-3">Order Items</h3>
         <div className="divide-y" style={{ borderColor: "var(--fc-border)" }}>
           {order.items.map((item) => {
-            const productSlug = item.product?.slug;
+            const rawSlug = item.product?.slug || item.productNameSnapshot.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+            const productHref = rawSlug ? `/products/${rawSlug}${isJewelleryOrder ? "?store=jewellery" : ""}` : null;
             const productImage = item.product?.images?.[0]?.imageUrl;
 
             return (
               <div key={item.id} className="flex flex-wrap justify-between items-center py-4 text-sm gap-3">
                 <div className="flex items-center gap-3">
-                  {productImage && (
-                    <div className="relative h-14 w-12 rounded-lg overflow-hidden border shrink-0" style={{ borderColor: "var(--fc-border)" }}>
+                  {productImage ? (
+                    <div className="relative h-14 w-12 rounded-lg overflow-hidden border shrink-0 bg-white" style={{ borderColor: "var(--fc-border)" }}>
                       <Image
                         src={productImage}
                         alt={item.productNameSnapshot}
@@ -171,11 +172,21 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                         className="object-cover"
                       />
                     </div>
+                  ) : (
+                    <div className="h-14 w-12 rounded-lg border flex items-center justify-center shrink-0 text-xl" style={{ borderColor: "var(--fc-border)" }}>
+                      {isJewelleryOrder ? "💍" : "👗"}
+                    </div>
                   )}
                   <div>
-                    <p className="font-bold text-sm" style={{ color: "var(--fc-text)" }}>
-                      {item.productNameSnapshot}
-                    </p>
+                    {productHref ? (
+                      <Link href={productHref} className="font-bold text-sm hover:underline" style={{ color: "var(--fc-text)" }}>
+                        {item.productNameSnapshot}
+                      </Link>
+                    ) : (
+                      <p className="font-bold text-sm" style={{ color: "var(--fc-text)" }}>
+                        {item.productNameSnapshot}
+                      </p>
+                    )}
                     <p className="text-xs text-dim mt-0.5">
                       SKU: <span className="font-mono">{item.skuSnapshot}</span> · {item.colourSnapshot} / {item.sizeSnapshot} · Qty: {item.quantity}
                     </p>
@@ -183,18 +194,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {productSlug && (
+                  {productHref && (
                     <Link
-                      href={`/products/${productSlug}`}
-                      className="px-3 py-1.5 rounded-full border text-xs font-bold transition-all hover:bg-[#141416] hover:text-white"
+                      href={productHref}
+                      className="px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all hover:bg-black/5 dark:hover:bg-white/5"
                       style={{ borderColor: "var(--fc-border)", color: "var(--fc-text)" }}
                     >
-                      View Product →
+                      View Product ↗
                     </Link>
                   )}
                   {order.status === "DELIVERED" && (
                     <Link
-                      href={`/shop`}
+                      href={isJewelleryOrder ? "/jewellery" : "/garments"}
                       className="px-3 py-1 rounded-full border border-[#FFBA00] text-[11px] font-bold text-[#0C3B2E] bg-[#FFF7E0] hover:bg-[#FFBA00] transition-colors"
                     >
                       ⭐ Write Review

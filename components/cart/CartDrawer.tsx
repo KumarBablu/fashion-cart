@@ -27,6 +27,7 @@ export default function CartDrawer({
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [store, setStore] = useState<"garments" | "jewellery">("garments");
   const { error, success } = useToast();
 
   const FREE_SHIPPING_THRESHOLD = 999;
@@ -35,10 +36,24 @@ export default function CartDrawer({
     setMounted(true);
   }, []);
 
+  function getActiveStore(): "garments" | "jewellery" {
+    if (typeof window === "undefined") return "garments";
+    const path = window.location.pathname;
+    if (path.startsWith("/jewellery")) return "jewellery";
+    if (path.startsWith("/garments")) return "garments";
+    const match = document.cookie.match(/(?:^|;\s*)fc_store=([^;]+)/);
+    if (match && match[1] === "jewellery") return "jewellery";
+    const saved = sessionStorage.getItem("fc_active_store");
+    if (saved === "jewellery") return "jewellery";
+    return "garments";
+  }
+
   async function loadCart() {
     setLoading(true);
+    const active = getActiveStore();
+    setStore(active);
     try {
-      const res = await fetch("/api/cart");
+      const res = await fetch(`/api/cart?store=${active}`);
       if (res.ok) {
         const data = await res.json();
         setItems(data?.cart?.items || []);
@@ -360,14 +375,18 @@ export default function CartDrawer({
               {/* Action Buttons */}
               <div className="space-y-2 pt-1">
                 <Link
-                  href="/checkout"
+                  href={`/checkout${store === "jewellery" ? "?store=jewellery" : ""}`}
                   onClick={onClose}
-                  className="w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block bg-gradient-to-r from-[#C59B27] via-[#D4AF37] to-[#B8860B] text-white hover:brightness-105 transition-all shadow-md cursor-pointer"
+                  className={`w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block text-white hover:brightness-105 transition-all shadow-md cursor-pointer ${
+                    store === "jewellery"
+                      ? "bg-gradient-to-r from-[#C59B27] via-[#D4AF37] to-[#B8860B]"
+                      : "bg-[#141416] hover:bg-[#25262B]"
+                  }`}
                 >
                   Proceed to Secure Checkout →
                 </Link>
                 <Link
-                  href="/cart"
+                  href={`/cart${store === "jewellery" ? "?store=jewellery" : ""}`}
                   onClick={onClose}
                   className="w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] hover:bg-[#E7DFD5] transition-colors cursor-pointer"
                 >

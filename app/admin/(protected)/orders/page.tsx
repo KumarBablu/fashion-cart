@@ -58,14 +58,15 @@ export default async function AdminOrdersPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2">
-            <span>📦</span> Orders Fulfillment Desk
+            <span>📦</span> Orders Fulfillment Desk ({store === "jewellery" ? "💍 Jewellery" : "👗 Garments"})
           </h1>
-          <p className="text-xs text-dim mt-0.5">Manage customer orders, track courier logistics, and verify payments ({total} total orders)</p>
+          <p className="text-xs text-dim mt-0.5">Manage customer orders, track courier logistics, and verify payments ({total} total {store} orders)</p>
         </div>
-        <DownloadCsvButton type="orders" label="Export Orders CSV" />
+        <DownloadCsvButton type="orders" label={`Export ${store === "jewellery" ? "Jewellery" : "Garments"} Orders CSV`} />
       </div>
 
       <form className="flex flex-wrap gap-2" method="GET">
+        <input type="hidden" name="store" value={store} />
         <input name="q" defaultValue={sp.q} placeholder="Search order #, name, email…" className="rounded-xl border px-3 py-2 text-xs outline-none focus:border-primary" style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }} />
         <select name="status" defaultValue={sp.status ?? ""} className="rounded-xl border px-3 py-2 text-xs outline-none focus:border-primary" style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}>
           <option value="">All statuses</option>
@@ -92,17 +93,27 @@ export default async function AdminOrdersPage({
             {orders.map((o) => (
               <tr key={o.id} className="border-b border-line last:border-0">
                 <td className="px-4 py-3">
-                  <Link href={`/admin/orders/${o.id}`} className="font-medium hover:text-marigold-deep">{o.orderNumber}</Link>
+                  <Link href={`/admin/orders/${o.id}?store=${store}`} className="font-medium hover:text-marigold-deep">{o.orderNumber}</Link>
                 </td>
-                <td className="px-4 py-3 text-ink-soft">{o.user.name}</td>
+                <td className="px-4 py-3 text-ink-soft">{o.user?.name || "Guest Customer"}</td>
                 <td className="px-4 py-3 text-ink-soft">{new Date(o.createdAt).toLocaleDateString("en-IN")}</td>
                 <td className="px-4 py-3">{formatINR(o.total)}</td>
                 <td className="px-4 py-3 text-ink-soft">{o.payment?.status.replace(/_/g, " ")}</td>
-                <td className="px-4 py-3">{o.status.replace(/_/g, " ")}</td>
+                <td className="px-4 py-3">
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    o.status === "CONFIRMED" || o.status === "DELIVERED"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : o.status === "PENDING_PAYMENT"
+                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                      : "bg-slate-100 text-slate-700 border border-slate-200"
+                  }`}>
+                    {o.status.replace(/_/g, " ")}
+                  </span>
+                </td>
               </tr>
             ))}
             {orders.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-ink-soft">No orders found.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-ink-soft">No {store} orders found.</td></tr>
             )}
           </tbody>
         </table>
@@ -111,7 +122,7 @@ export default async function AdminOrdersPage({
       {totalPages > 1 && (
         <div className="mt-4 flex gap-2 text-sm">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Link key={p} href={`/admin/orders?page=${p}`} className={`h-8 w-8 flex items-center justify-center rounded-full border ${p === page ? "bg-ink text-white border-ink" : "border-line"}`}>
+            <Link key={p} href={`/admin/orders?page=${p}&store=${store}`} className={`h-8 w-8 flex items-center justify-center rounded-full border ${p === page ? "bg-ink text-white border-ink" : "border-line"}`}>
               {p}
             </Link>
           ))}

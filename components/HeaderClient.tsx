@@ -52,9 +52,22 @@ export default function HeaderClient({
     }
   }, [isLoggedIn]);
 
+  function getActiveStore(): "garments" | "jewellery" {
+    if (typeof window === "undefined") return "garments";
+    const path = window.location.pathname;
+    if (path.startsWith("/jewellery")) return "jewellery";
+    if (path.startsWith("/garments")) return "garments";
+    const match = document.cookie.match(/(?:^|;\s*)fc_store=([^;]+)/);
+    if (match && match[1] === "jewellery") return "jewellery";
+    const saved = sessionStorage.getItem("fc_active_store");
+    if (saved === "jewellery") return "jewellery";
+    return "garments";
+  }
+
   function refreshCartCount() {
     if (!isLoggedIn) return;
-    fetch("/api/cart")
+    const store = getActiveStore();
+    fetch(`/api/cart?store=${store}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.cart?.items) {

@@ -82,6 +82,8 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
           onClick={() => {
             setActiveStore("garments");
             sessionStorage.setItem("fc_active_store", "garments");
+            document.cookie = "fc_store=garments; path=/; max-age=31536000; SameSite=Lax";
+            window.dispatchEvent(new CustomEvent("cart-updated"));
           }}
           className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full transition-all duration-200 ${
             !isJewellery
@@ -100,6 +102,8 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
           onClick={() => {
             setActiveStore("jewellery");
             sessionStorage.setItem("fc_active_store", "jewellery");
+            document.cookie = "fc_store=jewellery; path=/; max-age=31536000; SameSite=Lax";
+            window.dispatchEvent(new CustomEvent("cart-updated"));
           }}
           className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full transition-all duration-200 ${
             isJewellery

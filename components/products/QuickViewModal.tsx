@@ -148,11 +148,13 @@ export default function QuickViewModal({
     }
 
     setAdding(true);
+    const isJewel = (product as any)?.productId?.startsWith("FC-JW") || (product as any)?.department === "Jewellery" || (typeof window !== "undefined" && (window.location.pathname.startsWith("/jewellery") || window.location.search.includes("store=jewellery")));
+    const currentStore = isJewel ? "jewellery" : "garments";
     try {
-      const res = await fetch("/api/cart", {
+      const res = await fetch(`/api/cart?store=${currentStore}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ variantId: selectedVariant.id, quantity }),
+        body: JSON.stringify({ variantId: selectedVariant.id, quantity, store: currentStore }),
       });
 
       if (res.status === 401) {
@@ -165,7 +167,7 @@ export default function QuickViewModal({
         window.dispatchEvent(new CustomEvent("cart-updated"));
         onClose();
         if (goToCheckout) {
-          router.push("/checkout");
+          router.push(`/checkout${currentStore === "jewellery" ? "?store=jewellery" : ""}`);
         }
       } else {
         const data = await res.json();

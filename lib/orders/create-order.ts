@@ -36,6 +36,7 @@ export async function createOrder(
     couponCode?: string;
     paymentMethod?: "MANUAL_UPI" | "COD" | "ONLINE_GATEWAY";
     customerNotes?: string;
+    store?: "garments" | "jewellery";
   }
 ) {
   const paymentMethod = options?.paymentMethod || "MANUAL_UPI";
@@ -55,19 +56,27 @@ export async function createOrder(
   const garmentsItems = garmentsCart?.items || [];
   const jewelleryItems = jewelleryCart?.items || [];
 
-  if (garmentsItems.length === 0 && jewelleryItems.length === 0) {
-    throw new CheckoutError("CART_EMPTY", "Your cart is empty.");
-  }
-
   // Determine active store for this order
-  const store: "garments" | "jewellery" = jewelleryItems.length > 0 ? "jewellery" : "garments";
-  const db = getDb(store);
-  const activeCart = store === "jewellery" ? jewelleryCart! : garmentsCart!;
-  const cartItems = activeCart.items;
+  let store: "garments" | "jewellery" = options?.store || (jewelleryItems.length > 0 ? "jewellery" : "garments");
+  let activeCart = store === "jewellery" ? jewelleryCart : garmentsCart;
+  let cartItems = activeCart?.items || [];
+
+  if (cartItems.length === 0) {
+    // If chosen store cart is empty, check other store as fallback
+    const altStore = store === "jewellery" ? "garments" : "jewellery";
+    const altCart = altStore === "jewellery" ? jewelleryCart : garmentsCart;
+    if (altCart && altCart.items.length > 0) {
+      store = altStore;
+      activeCart = altCart;
+      cartItems = altCart.items;
+    }
+  }
 
   if (cartItems.length === 0) {
     throw new CheckoutError("CART_EMPTY", "Your cart is empty.");
   }
+
+  const db = getDb(store);
 
   // Ensure user exists in target store DB
   await getStoreUser(store);
@@ -280,37 +289,42 @@ export async function createOrder(
         },
       });
 
-      // Clear the user's cart in this store
-      await tx.cartItem.deleteMany({ where: { cartId: activeCart.id } });
+      // Clear the user's cart ONLY if payment is immediately confirmed (COD / ONLINE_GATEWAY).
+      // For MANUAL_UPI, items stay in cart until payment proof is uploaded or verified, allowing customer to manage cart.
+      if (paymentMethod === "COD" || paymentMethod === "ONLINE_GATEWAY") {
+        if (activeCart?.id) {
+          await tx.cartItem.deleteMany({ where: { cartId: activeCart.id } });
+        }
+      }
 
       return createdOrder;
     });
 
-    // Dispatch background notifications asynchronously
-    void (async () => {
-      try {
-        const fullOrder = await db.order.findUnique({
-          where: { id: order.id },
-          include: { user: true, items: true, payment: true },
-        });
-
-        if (fullOrder) {
-          sendOrderPlacedEmail(fullOrder).catch((err) => {
-            console.error("Order placed email failed to dispatch:", err);
+    // Dispatch background notifications asynchronously ONLY for confirmed orders
+    if (order.status === "CONFIRMED") {
+      void (async () => {
+        try {
+          const fullOrder = await db.order.findUnique({
+            where: { id: order.id },
+            include: { user: true, items: true, payment: true },
           });
 
-          const phone = fullOrder.user.phone || (fullOrder.shippingAddressSnapshot as any)?.mobileNumber;
-          if (phone) {
-            sendMobileSms({
-              to: phone,
-              message: formatOrderPlacedSms(fullOrder),
-              templateType: "ORDER_PLACED",
-            }).catch((smsErr) => {
-              console.error("Order placed SMS failed to dispatch:", smsErr);
+          if (fullOrder) {
+            sendOrderPlacedEmail(fullOrder).catch((err) => {
+              console.error("Order placed email failed to dispatch:", err);
             });
-          }
 
-          if (order.status === "CONFIRMED") {
+            const phone = fullOrder.user.phone || (fullOrder.shippingAddressSnapshot as any)?.mobileNumber;
+            if (phone) {
+              sendMobileSms({
+                to: phone,
+                message: formatOrderPlacedSms(fullOrder),
+                templateType: "ORDER_PLACED",
+              }).catch((smsErr) => {
+                console.error("Order placed SMS failed to dispatch:", smsErr);
+              });
+            }
+
             try {
               const { buffer, invoiceNumber } = await generateInvoiceBufferForOrder(order.id);
               sendPaymentVerifiedEmail(fullOrder, buffer, `FashionCart-Invoice-${order.orderNumber}-${invoiceNumber}.pdf`).catch((err) => {
@@ -320,11 +334,11 @@ export async function createOrder(
               console.error("Invoice generation deferred:", invoiceErr);
             }
           }
+        } catch (bgErr) {
+          console.error("Background order notification error:", bgErr);
         }
-      } catch (bgErr) {
-        console.error("Background order notification error:", bgErr);
-      }
-    })();
+      })();
+    }
 
     return order;
   } catch (err) {

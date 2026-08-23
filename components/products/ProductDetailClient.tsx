@@ -190,11 +190,13 @@ export default function ProductDetailClient({
     }
 
     setAdding(true);
+    const isJewel = (product as any).productId?.startsWith("FC-JW") || (product as any).department === "Jewellery" || (typeof window !== "undefined" && (window.location.pathname.startsWith("/jewellery") || window.location.search.includes("store=jewellery")));
+    const currentStore = isJewel ? "jewellery" : "garments";
     try {
-      const res = await fetch("/api/cart", {
+      const res = await fetch(`/api/cart?store=${currentStore}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ variantId: selected.id, quantity }),
+        body: JSON.stringify({ variantId: selected.id, quantity, store: currentStore }),
       });
 
       if (res.status === 401) {
@@ -206,7 +208,7 @@ export default function ProductDetailClient({
         success("Added to Bag! 🛍️", `${product.name} (${colour}/${size})`);
         window.dispatchEvent(new CustomEvent("cart-updated"));
         if (redirectToCheckout) {
-          router.push("/checkout");
+          router.push(`/checkout${currentStore === "jewellery" ? "?store=jewellery" : ""}`);
         }
       } else {
         const data = await res.json();

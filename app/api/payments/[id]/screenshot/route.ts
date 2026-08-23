@@ -79,6 +79,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       data: { status: "PAYMENT_REVIEW" },
     });
 
+    // Clear the cart now that customer has officially submitted payment proof
+    const userCart = await db.cart.findUnique({ where: { userId: user.id } });
+    if (userCart) {
+      await db.cartItem.deleteMany({ where: { cartId: userCart.id } }).catch(() => null);
+    }
+
     // Alert admin of newly submitted payment proof
     sendPaymentProofSubmittedAdminAlert(payment.order, rawUtr || "Screenshot Verification").catch(() => null);
 
