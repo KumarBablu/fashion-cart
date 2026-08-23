@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/auth/session";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { PromotionPlacement, PromotionTheme } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -15,16 +15,19 @@ export async function PUT(
   }
 
   const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
 
   try {
     const body = await req.json();
 
-    const existing = await prisma.promotion.findUnique({ where: { id } });
+    const existing = await db.promotion.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Promotion not found" }, { status: 404 });
     }
 
-    const updated = await prisma.promotion.update({
+    const updated = await db.promotion.update({
       where: { id },
       data: {
         ...(body.title !== undefined && { title: body.title.trim() }),
@@ -63,9 +66,17 @@ export async function DELETE(
   }
 
   const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
 
   try {
-    await prisma.promotion.delete({ where: { id } });
+    const existing = await db.promotion.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Promotion not found" }, { status: 404 });
+    }
+
+    await db.promotion.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting promotion:", error);

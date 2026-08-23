@@ -71,7 +71,9 @@ export default function PromotionBanner() {
       return;
     }
 
-    fetch("/api/promotions/active?placement=TOP_BANNER")
+    const store = pathname.startsWith("/jewellery") ? "jewellery" : "garments";
+
+    fetch(`/api/promotions/active?placement=TOP_BANNER&store=${store}`)
       .then((res) => res.json())
       .then((data) => {
         if (data?.promotions && data.promotions.length > 0) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/auth/session";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { PromotionPlacement, PromotionTheme } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -11,8 +11,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
+
   try {
-    const promotions = await prisma.promotion.findMany({
+    const promotions = await db.promotion.findMany({
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     });
     return NextResponse.json({ promotions });
@@ -27,6 +31,10 @@ export async function POST(req: NextRequest) {
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
 
   try {
     const body = await req.json();
@@ -52,7 +60,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Promotion title is required" }, { status: 400 });
     }
 
-    const promotion = await prisma.promotion.create({
+    const promotion = await db.promotion.create({
       data: {
         title: title.trim(),
         subtitle: subtitle ? subtitle.trim() : null,

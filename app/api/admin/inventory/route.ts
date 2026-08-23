@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -9,8 +9,10 @@ export async function GET(req: NextRequest) {
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const statusFilter = req.nextUrl.searchParams.get("status"); // IN_STOCK | LOW_STOCK | OUT_OF_STOCK
+  const store = req.nextUrl.searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
 
-  const variants = await prisma.productVariant.findMany({
+  const variants = await db.productVariant.findMany({
     where: { isActive: true },
     orderBy: { stockQuantity: "asc" },
     include: { product: { select: { name: true, slug: true } } },

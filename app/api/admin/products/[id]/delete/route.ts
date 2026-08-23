@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 
 async function handleDeleteOrArchive(req: NextRequest, id: string) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  let db = getDb(store === "jewellery" ? "jewellery" : "garments");
+
   try {
-    const product = await prisma.product.findUnique({
-      where: { id },
-    });
+    let product = await db.product.findUnique({ where: { id } });
+    if (!product) {
+      db = getDb(store === "jewellery" ? "garments" : "jewellery");
+      product = await db.product.findUnique({ where: { id } });
+    }
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Permanently remove product: unlink historical order items (preserving their title/sku/price snapshot) and cascade delete all relations
-    await prisma.$transaction(async (tx) => {
+    // Permanently remove product: unlink historical order items and cascade delete all relations
+    await db.$transaction(async (tx: any) => {
       // Unlink order items safely
       await tx.orderItem.updateMany({
         where: { productId: id },

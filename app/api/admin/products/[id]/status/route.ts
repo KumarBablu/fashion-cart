@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +9,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -18,11 +21,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Invalid status value" }, { status: 400 });
     }
 
-    const updated = await prisma.product.update({
-      where: { id },
-      data: { status },
-      select: { id: true, name: true, status: true },
-    });
+    let updated = null;
+    try {
+      updated = await db.product.update({
+        where: { id },
+        data: { status },
+        select: { id: true, name: true, status: true },
+      });
+    } catch {
+      // Fallback to alternative db in case store cookie was mismatched
+      const altDb = getDb(store === "jewellery" ? "garments" : "jewellery");
+      updated = await altDb.product.update({
+        where: { id },
+        data: { status },
+        select: { id: true, name: true, status: true },
+      });
+    }
 
     return NextResponse.json({
       success: true,

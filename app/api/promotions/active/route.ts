@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { PromotionPlacement } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
 
@@ -9,6 +9,9 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const placementParam = searchParams.get("placement");
+    const storeParam = searchParams.get("store") || req.cookies.get("fc_store")?.value || "garments";
+    const db = getDb(storeParam === "jewellery" ? "jewellery" : "garments");
+
     const user = await getCurrentUser();
     const isLoggedIn = !!user;
 
@@ -46,7 +49,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const promotions = await prisma.promotion.findMany({
+    const promotions = await db.promotion.findMany({
       where: whereClause,
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     });

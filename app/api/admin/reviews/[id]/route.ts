@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 
 export async function PUT(
@@ -10,10 +10,14 @@ export async function PUT(
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
+
   const body = await req.json().catch(() => ({}));
   const status = body.status; // "APPROVED" or "REJECTED"
 
-  const review = await prisma.review.update({
+  const review = await db.review.update({
     where: { id },
     data: { status },
   });
@@ -29,7 +33,11 @@ export async function DELETE(
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  await prisma.review.delete({ where: { id } });
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
+
+  await db.review.delete({ where: { id } });
 
   return NextResponse.json({ success: true });
 }

@@ -59,7 +59,9 @@ export default function PromotionModal() {
       return;
     }
 
-    fetch("/api/promotions/active?placement=POPUP_MODAL")
+    const store = (pathname || "").startsWith("/jewellery") ? "jewellery" : "garments";
+
+    fetch(`/api/promotions/active?placement=POPUP_MODAL&store=${store}`)
       .then((res) => res.json())
       .then((data) => {
         if (data?.promotions && data.promotions.length > 0) {

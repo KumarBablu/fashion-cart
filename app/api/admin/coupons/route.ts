@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { z } from "zod";
 
@@ -15,11 +15,15 @@ const createCouponSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const coupons = await prisma.coupon.findMany({
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
+
+  const coupons = await db.coupon.findMany({
     orderBy: { createdAt: "desc" },
     include: { _count: { select: { orders: true } } },
   });
@@ -31,6 +35,10 @@ export async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { searchParams } = new URL(req.url);
+  const store = searchParams.get("store") || req.cookies.get("fc_admin_store")?.value || "garments";
+  const db = getDb(store === "jewellery" ? "jewellery" : "garments");
+
   const body = await req.json().catch(() => null);
   const parsed = createCouponSchema.safeParse(body);
   if (!parsed.success) {
@@ -39,12 +47,12 @@ export async function POST(req: NextRequest) {
 
   const { code, description, discountType, discountValue, minOrderAmount, maxDiscountAmount, usageLimit, endDate, isActive } = parsed.data;
 
-  const existing = await prisma.coupon.findUnique({ where: { code } });
+  const existing = await db.coupon.findUnique({ where: { code } });
   if (existing) {
     return NextResponse.json({ error: "A coupon with this code already exists." }, { status: 400 });
   }
 
-  const coupon = await prisma.coupon.create({
+  const coupon = await db.coupon.create({
     data: {
       code,
       description: description || null,
