@@ -27,7 +27,7 @@ export type GarmentBannerSlide = {
 const DEFAULT_GARMENT_SLIDES: GarmentBannerSlide[] = [
   {
     id: "silk-sarees",
-    tag: "🥻 The 2026 Signature Heritage Atelier",
+    tag: "🥻 Heritage Atelier 2026",
     title: "Timeless Elegance in",
     titleHighlight: "Certified Pure Mulberry Silks.",
     description:
@@ -52,7 +52,7 @@ const DEFAULT_GARMENT_SLIDES: GarmentBannerSlide[] = [
   },
   {
     id: "mens-linen",
-    tag: "👔 Master Tailored Sartorial Cuts",
+    tag: "👔 Sartorial Linen Atelier",
     title: "Sartorial Poise &",
     titleHighlight: "100% Certified French Linen.",
     description:
@@ -77,7 +77,7 @@ const DEFAULT_GARMENT_SLIDES: GarmentBannerSlide[] = [
   },
   {
     id: "contemporary-chic",
-    tag: "✨ Haute Contemporary Chic",
+    tag: "✨ Contemporary Chic",
     title: "Modern Poise &",
     titleHighlight: "Liquid Satin Cocktail Edits.",
     description:
@@ -167,7 +167,7 @@ export default function GarmentsHeroBanner({
 
   return (
     <section
-      className="relative min-h-[580px] sm:min-h-[640px] lg:min-h-[700px] text-white overflow-hidden border-b border-[#E7DFD5] shadow-2xl flex flex-col justify-between"
+      className="relative min-h-[440px] sm:min-h-[480px] lg:min-h-[520px] text-white overflow-hidden border-b border-[#E7DFD5] shadow-xl flex flex-col justify-between"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -192,44 +192,44 @@ export default function GarmentsHeroBanner({
           </div>
         ))}
 
-        {/* Lighter, Luminous Atmospheric Gradient Scrim so the fashion model and fabric is clearly visible */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#141416]/75 via-[#141416]/45 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/75 via-transparent to-[#141416]/30" />
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-[#C59B27]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-[#C59B27]/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Lighter, Luminous Atmospheric Gradient Scrim */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#141416]/75 via-[#141416]/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/70 via-transparent to-[#141416]/25" />
+        <div className="absolute -top-40 -right-40 w-[400px] h-[400px] bg-[#C59B27]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-[#C59B27]/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* 👑 2. Foreground Content Overlay */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-28 w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+      {/* 👑 2. Foreground Content Overlay (Refined Standard Luxury Proportions) */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-14 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
         
         {/* Left Headline & Masterpiece Summary */}
-        <div key={`left-${slide.id}`} className="lg:col-span-7 space-y-6 sm:space-y-7 animate-fade-in-up">
+        <div key={`left-${slide.id}`} className="lg:col-span-7 space-y-4 sm:space-y-5 animate-fade-in-up">
           
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#C59B27]/50 bg-[#141416]/75 text-[11px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-xl backdrop-blur-md">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#C59B27] animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#C59B27]/50 bg-[#141416]/75 text-[10px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-md backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] animate-pulse" />
             <span>{slide.tag}</span>
           </div>
 
-          <div className="space-y-3">
-            <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.25rem] font-bold tracking-tight text-white leading-[1.06] [text-shadow:_0_3px_16px_rgba(0,0,0,0.9)]">
+          <div className="space-y-2">
+            <h1 className="font-display text-2xl sm:text-3xl lg:text-[2.6rem] font-bold tracking-tight text-white leading-[1.12] [text-shadow:_0_2px_12px_rgba(0,0,0,0.85)]">
               {slide.title} <br />
-              <span className="italic font-serif font-normal text-[#C59B27] [text-shadow:_0_3px_16px_rgba(0,0,0,0.7)]">
+              <span className="italic font-serif font-normal text-[#C59B27] [text-shadow:_0_2px_12px_rgba(0,0,0,0.7)]">
                 {slide.titleHighlight}
               </span>
             </h1>
-            <p className="text-sm sm:text-base text-[#FAF8F5] max-w-xl leading-relaxed [text-shadow:_0_2px_10px_rgba(0,0,0,0.85)]">
+            <p className="text-xs sm:text-sm text-[#FAF8F5]/90 max-w-lg leading-relaxed [text-shadow:_0_1px_8px_rgba(0,0,0,0.8)]">
               {slide.description}
             </p>
           </div>
 
           {/* Quick Category Pills with Glow */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
             {slide.pills.map((pill) => (
               <Link
                 key={pill.name}
                 href={pill.href}
                 prefetch={true}
-                className="px-3.5 py-1.5 rounded-full border border-[#C59B27]/40 bg-[#141416]/70 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] text-xs font-bold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+                className="px-2.5 py-1 rounded-full border border-[#C59B27]/40 bg-[#141416]/65 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] text-[11px] font-semibold transition-all duration-200 shadow-2xs active:scale-95 cursor-pointer"
               >
                 {pill.name}
               </Link>
@@ -237,16 +237,16 @@ export default function GarmentsHeroBanner({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3.5 pt-2">
+          <div className="flex flex-wrap items-center gap-3 pt-1">
             <Link
               href={slide.primaryBtnHref}
               prefetch={true}
-              className="px-8 py-4 rounded-full font-extrabold text-xs uppercase tracking-widest bg-[#C59B27] text-[#141416] hover:bg-[#F3E5AB] active:scale-95 transition-all duration-200 shadow-[0_4px_30px_rgba(197,155,39,0.4)] cursor-pointer"
+              className="px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-[#141416] hover:bg-[#F3E5AB] active:scale-95 transition-all duration-200 shadow-[0_2px_20px_rgba(197,155,39,0.4)] cursor-pointer"
             >
               View Featured Outfit →
             </Link>
             <WhatsAppConciergeButton
-              className="px-6 py-4 rounded-full text-xs font-bold text-[#F3E5AB] border border-[#C59B27]/50 bg-[#141416]/90 backdrop-blur-md hover:bg-[#25262B] active:scale-95 transition-all duration-200 shadow-md flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 rounded-full text-xs font-semibold text-[#F3E5AB] border border-[#C59B27]/50 bg-[#141416]/80 backdrop-blur-md hover:bg-[#25262B] active:scale-95 transition-all duration-200 shadow-sm flex items-center gap-1.5 cursor-pointer"
               customMessage={slide.conciergeMsg}
             >
               <span>💬</span> WhatsApp Stylist
@@ -254,18 +254,18 @@ export default function GarmentsHeroBanner({
           </div>
 
           {/* Trust Highlights */}
-          <div className="pt-5 border-t border-white/20 grid grid-cols-3 gap-3 text-xs text-[#FAF8F5]/90">
-            <div className="p-3.5 rounded-2xl bg-[#141416]/80 backdrop-blur-md border border-white/15 space-y-0.5 shadow-sm">
-              <p className="text-sm sm:text-base font-bold text-white">100% Pure Silks</p>
-              <p className="text-[10px] text-white/70">Certified Handloom Quality</p>
+          <div className="pt-3 border-t border-white/20 grid grid-cols-3 gap-2.5 text-xs text-[#FAF8F5]/90">
+            <div className="p-2.5 rounded-xl bg-[#141416]/70 backdrop-blur-md border border-white/15 space-y-0.5 shadow-2xs">
+              <p className="text-xs font-bold text-white">100% Pure Silks</p>
+              <p className="text-[9px] text-white/70">Handloom Quality</p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-[#141416]/80 backdrop-blur-md border border-white/15 space-y-0.5 shadow-sm">
-              <p className="text-sm sm:text-base font-bold text-white">Free Express</p>
-              <p className="text-[10px] text-white/70">Dispatches in 24 Hours</p>
+            <div className="p-2.5 rounded-xl bg-[#141416]/70 backdrop-blur-md border border-white/15 space-y-0.5 shadow-2xs">
+              <p className="text-xs font-bold text-white">Free Express</p>
+              <p className="text-[9px] text-white/70">Dispatches in 24h</p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-[#141416]/80 backdrop-blur-md border border-white/15 space-y-0.5 shadow-sm">
-              <p className="text-sm sm:text-base font-bold text-white">4.9 ★ Rating</p>
-              <p className="text-[10px] text-white/70">Over 3,500 Client Reviews</p>
+            <div className="p-2.5 rounded-xl bg-[#141416]/70 backdrop-blur-md border border-white/15 space-y-0.5 shadow-2xs">
+              <p className="text-xs font-bold text-white">4.9 ★ Rating</p>
+              <p className="text-[9px] text-white/70">Over 3,500 Reviews</p>
             </div>
           </div>
 
@@ -276,50 +276,50 @@ export default function GarmentsHeroBanner({
           <Link
             href={slide.masterpieceHref}
             prefetch={true}
-            className="block relative rounded-3xl overflow-hidden backdrop-blur-md bg-[#141416]/55 border border-[#C59B27]/50 shadow-[0_20px_50px_rgba(0,0,0,0.6)] p-6 space-y-4 hover:border-[#C59B27] transition-all group cursor-pointer"
+            className="block relative rounded-2xl overflow-hidden backdrop-blur-md bg-[#141416]/60 border border-[#C59B27]/50 shadow-[0_15px_40px_rgba(0,0,0,0.6)] p-4 sm:p-5 space-y-3 hover:border-[#C59B27] transition-all group cursor-pointer"
           >
             {/* Top Badge */}
             <div className="flex items-center justify-between">
-              <span className="px-3 py-1 rounded-full bg-[#C59B27]/20 border border-[#C59B27]/50 text-[10px] font-extrabold uppercase tracking-widest text-[#F3E5AB]">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#C59B27]/20 border border-[#C59B27]/50 text-[9px] font-extrabold uppercase tracking-widest text-[#F3E5AB]">
                 {slide.lookbookBadge}
               </span>
-              <span className="text-[11px] font-mono font-bold text-[#F3E5AB]">
+              <span className="text-[10px] font-mono font-bold text-[#F3E5AB]">
                 ✦ {currentSlide + 1} / {slides.length}
               </span>
             </div>
 
             {/* Thumbnail Preview */}
-            <div className="relative h-56 w-full rounded-2xl overflow-hidden border border-[#C59B27]/40 shadow-inner">
+            <div className="relative h-44 sm:h-48 w-full rounded-xl overflow-hidden border border-[#C59B27]/35 shadow-inner">
               <Image
                 src={slide.bgImageUrl}
                 alt={slide.masterpieceName}
                 fill
-                sizes="400px"
-                className="object-cover object-top group-hover:scale-108 transition-transform duration-700 ease-out"
+                sizes="360px"
+                className="object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/90 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/85 via-transparent to-transparent" />
             </div>
 
             {/* Details */}
-            <div className="space-y-1.5 text-white">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#C59B27] block">
+            <div className="space-y-1 text-white">
+              <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#C59B27] block">
                 {slide.masterpieceCollection}
               </span>
-              <h3 className="font-display text-lg font-bold text-[#F3E5AB] group-hover:text-white transition-colors">
+              <h3 className="font-display text-sm sm:text-base font-bold text-[#F3E5AB] group-hover:text-white transition-colors line-clamp-1">
                 {slide.masterpieceName}
               </h3>
-              <p className="text-xs text-[#FAF8F5]/85 leading-relaxed">
+              <p className="text-[11px] text-[#FAF8F5]/85 leading-relaxed line-clamp-2">
                 {slide.masterpieceDescription}
               </p>
             </div>
 
             {/* Price & Action */}
             <div className="pt-2 flex items-center justify-between border-t border-white/20">
-              <span className="font-mono font-bold text-sm text-[#F3E5AB]">
+              <span className="font-mono font-bold text-xs text-[#F3E5AB]">
                 {slide.masterpiecePrice}
               </span>
-              <span className="px-4 py-2 rounded-full text-xs font-bold text-[#141416] bg-[#C59B27] group-hover:bg-[#F3E5AB] transition-colors shadow-sm">
-                View Product Details →
+              <span className="px-3 py-1.5 rounded-full text-[11px] font-bold text-[#141416] bg-[#C59B27] group-hover:bg-[#F3E5AB] transition-colors shadow-xs">
+                View Details →
               </span>
             </div>
 
@@ -329,17 +329,17 @@ export default function GarmentsHeroBanner({
       </div>
 
       {/* 👑 3. Slide Navigation Controls & Indicators */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-6 flex items-center justify-between w-full">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-4 flex items-center justify-between w-full">
         {/* Slide Indicators */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {slides.map((s, idx) => (
             <button
               key={s.id}
               onClick={() => setCurrentSlide(idx)}
-              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                 currentSlide === idx
-                  ? "w-8 bg-gradient-to-r from-[#F3E5AB] to-[#C59B27] shadow-xs"
-                  : "w-2.5 bg-white/30 hover:bg-white/60"
+                  ? "w-6 bg-gradient-to-r from-[#F3E5AB] to-[#C59B27] shadow-xs"
+                  : "w-2 bg-white/30 hover:bg-white/60"
               }`}
               aria-label={`Go to slide ${idx + 1}`}
             />
@@ -347,12 +347,12 @@ export default function GarmentsHeroBanner({
         </div>
 
         {/* Next / Prev Navigation Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() =>
               setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
             }
-            className="w-10 h-10 rounded-full border border-white/20 bg-[#141416]/90 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-90"
+            className="w-8 h-8 rounded-full border border-white/20 bg-[#141416]/80 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-90 text-xs"
             aria-label="Previous Slide"
           >
             ←
@@ -361,7 +361,7 @@ export default function GarmentsHeroBanner({
             onClick={() =>
               setCurrentSlide((prev) => (prev + 1) % slides.length)
             }
-            className="w-10 h-10 rounded-full border border-white/20 bg-[#141416]/90 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-90"
+            className="w-8 h-8 rounded-full border border-white/20 bg-[#141416]/80 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-90 text-xs"
             aria-label="Next Slide"
           >
             →
