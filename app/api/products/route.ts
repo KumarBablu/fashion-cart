@@ -23,6 +23,9 @@ export async function GET(req: NextRequest) {
   const brand = sp.get("brand");
   const sort = sp.get("sort") ?? "newest";
   const page = Math.max(1, Number(sp.get("page") ?? 1));
+  const limitParam = sp.get("limit") || sp.get("pageSize");
+  const isAll = sp.get("all") === "true";
+  const limit = isAll ? 1000 : limitParam ? Math.min(1000, Math.max(1, Number(limitParam))) : PAGE_SIZE;
 
   const categorySlug = subcategory ?? category;
 
@@ -82,8 +85,8 @@ export async function GET(req: NextRequest) {
     db.product.findMany({
       where,
       orderBy,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      skip: isAll ? 0 : (page - 1) * limit,
+      take: limit,
       include: {
         images: { take: 2, orderBy: { sortOrder: "asc" } },
         variants: { where: { isActive: true } },

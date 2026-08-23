@@ -76,7 +76,7 @@ export default function PromotionsManager() {
       const [bRes, pRes, prodRes] = await Promise.all([
         fetch(`/api/admin/banners?store=${currentStore}`),
         fetch(`/api/admin/promotions?store=${currentStore}`),
-        fetch(`/api/products?store=${currentStore}&pageSize=100`),
+        fetch(`/api/products?store=${currentStore}&all=true`),
       ]);
 
       if (bRes.ok) {
@@ -919,7 +919,6 @@ export default function PromotionsManager() {
                             p.category?.name?.toLowerCase().includes(q)
                           );
                         })
-                        .slice(0, 30)
                         .map((prod) => {
                           const img = prod.images?.[0]?.imageUrl || "";
                           const price = prod.variants?.[0]?.price
@@ -1255,7 +1254,6 @@ export default function PromotionsManager() {
                             p.category?.name?.toLowerCase().includes(q)
                           );
                         })
-                        .slice(0, 30)
                         .map((prod) => {
                           const img = prod.images?.[0]?.imageUrl || "";
                           const price = prod.variants?.[0]?.price
