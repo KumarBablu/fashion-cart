@@ -113,13 +113,13 @@ export default function GarmentsHeroBanner({
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // 👑 Multi-Store Slide Engine (Standardized Top 3 Slides across all stores):
+  // 👑 Multi-Store Slide Engine (Dynamic Count matching Admin Banners / Catalog):
   const activeHeroBanners = (adminBanners || []).filter((b) => b.position === "HERO" && b.isActive);
 
   let dynamicSlides: GarmentBannerSlide[] = [];
 
-  if (activeHeroBanners.length >= 2) {
-    dynamicSlides = activeHeroBanners.slice(0, 3).map((b, idx) => ({
+  if (activeHeroBanners.length > 0) {
+    dynamicSlides = activeHeroBanners.map((b, idx) => ({
       id: b.id || `admin-hero-${idx}`,
       tag: b.badge || "✦ Exclusive Collection",
       title: b.title || "Timeless Elegance in",
@@ -138,8 +138,8 @@ export default function GarmentsHeroBanner({
       masterpieceHref: b.linkUrl || "/shop",
     }));
   } else if (products.length > 0) {
-    // Generate exactly 3 spotlight slides from the store catalog
-    const productPool = products.slice(0, 3);
+    // Generate spotlight slides from the store catalog
+    const productPool = products.slice(0, 4);
     dynamicSlides = productPool.map((prod, idx) => {
       const defaultTemplate = DEFAULT_GARMENT_SLIDES[idx % DEFAULT_GARMENT_SLIDES.length];
       const price = prod.variants?.[0]?.price
@@ -173,9 +173,9 @@ export default function GarmentsHeroBanner({
     });
   }
 
-  // Ensure exactly 3 rotating slides always exist
+  // Ensure rotating slides exist (respecting exact admin count if configured)
   const slides: GarmentBannerSlide[] =
-    dynamicSlides.length >= 2 ? dynamicSlides : DEFAULT_GARMENT_SLIDES;
+    dynamicSlides.length > 0 ? dynamicSlides : DEFAULT_GARMENT_SLIDES;
 
   // Unconditional continuous auto-rotation every 6.5s
   useEffect(() => {
