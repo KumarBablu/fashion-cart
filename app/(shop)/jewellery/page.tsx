@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db";
 import { getStoresControl } from "@/lib/stores";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 import ScrollReveal, { ScrollRevealGroup } from "@/components/ui/ScrollReveal";
+import JewelleryHeroBanner from "@/components/jewellery/JewelleryHeroBanner";
 
 export const revalidate = 60;
 
@@ -159,134 +160,8 @@ export default async function JewelleryHomePage() {
   return (
     <div className="theme-jewellery min-h-screen bg-[#FCFAF6] text-[#061A14] space-y-16 sm:space-y-24 pb-24">
       
-      {/* 1. Grand Royal Jewellery Hero Showcase Banner */}
-      <section className="relative bg-[#061A14] text-white overflow-hidden border-b border-[#D4AF37]/40 shadow-2xl">
-        {/* Background Radial Gold & Emerald Ambiance */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0D2C22] via-[#061A14] to-[#040E0B] opacity-95" />
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#0D2C22]/40 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-28 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          
-          {/* Left Headline & Masterpiece Summary */}
-          <div className="lg:col-span-7 space-y-6 sm:space-y-8">
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#D4AF37]/60 bg-[#061A14]/90 text-[11px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-xl backdrop-blur-md">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
-              <span>Imperial Fine &amp; Handcrafted Artificial Jewellery</span>
-            </div>
-
-            <div className="space-y-4">
-              <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.2rem] font-bold tracking-tight text-white leading-[1.08]">
-                Heirloom Royalty in <br />
-                <span className="bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7] bg-clip-text text-transparent italic font-serif font-normal">
-                  24K Micro-Plated Gold.
-                </span>
-              </h1>
-              <p className="text-sm sm:text-base text-[#FDFBF7]/85 max-w-xl leading-relaxed">
-                Adorn yourself in timeless splendour. Handcrafted Uncut Kundan, Real Pearls, Antique Temple Jhumkas, Openable Kadas, and American Diamond Solitaires curated for royal weddings and celebrations.
-              </p>
-            </div>
-
-            {/* Hero Quick Category Pills */}
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              {[
-                { name: "👑 Bridal Chokers", href: "/shop?store=jewellery&category=necklaces-sets" },
-                { name: "💎 Kundan Sets", href: "/shop?store=jewellery&q=Kundan" },
-                { name: "✨ 24K Bangles", href: "/shop?store=jewellery&category=bangles-kadas" },
-                { name: "🌸 Royal Jhumkas", href: "/shop?store=jewellery&category=earrings-jhumkas" },
-                { name: "💍 Solitaire Rings", href: "/shop?store=jewellery&category=rings" },
-              ].map((pill) => (
-                <Link
-                  key={pill.name}
-                  href={pill.href}
-                  prefetch={true}
-                  className="px-3.5 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#0D2C22]/80 hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] text-xs font-bold transition-all duration-200 shadow-xs active:scale-95 cursor-pointer"
-                >
-                  {pill.name}
-                </Link>
-              ))}
-            </div>
-
-            {/* Main Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3.5 pt-3">
-              <Link
-                href="/shop?store=jewellery"
-                prefetch={true}
-                className="px-8 py-4 rounded-full font-extrabold text-xs uppercase tracking-widest text-[#061A14] bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#E5C158] hover:brightness-110 active:scale-95 transition-all duration-200 shadow-[0_4px_25px_rgba(212,175,55,0.4)] cursor-pointer"
-              >
-                Shop Jewellery Catalog →
-              </Link>
-              <WhatsAppConciergeButton
-                className="px-6 py-4 rounded-full text-xs font-bold text-[#F3E5AB] border border-[#D4AF37]/50 bg-[#061A14] hover:bg-[#0D2C22] active:scale-95 transition-all duration-200 shadow-md flex items-center gap-2 cursor-pointer"
-                customMessage="Hi Imperial Jewels Stylist, I would like bridal/festive jewellery recommendations!"
-              >
-                <span>💬</span> Bridal Concierge
-              </WhatsAppConciergeButton>
-            </div>
-
-            {/* Trust Highlights */}
-            <div className="pt-6 border-t border-[#D4AF37]/20 grid grid-cols-3 gap-3 text-xs text-[#F3E5AB]/90">
-              <div className="p-3.5 rounded-2xl bg-[#0D2C22]/70 border border-[#D4AF37]/25 space-y-0.5 shadow-sm">
-                <p className="text-base font-bold text-white">24K Micro-Polish</p>
-                <p className="text-[10px] text-[#F3E5AB]/75">Long-Lasting Golden Shield</p>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-[#0D2C22]/70 border border-[#D4AF37]/25 space-y-0.5 shadow-sm">
-                <p className="text-base font-bold text-white">Anti-Tarnish</p>
-                <p className="text-[10px] text-[#F3E5AB]/75">100% Skin Safe &amp; Lead-Free</p>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-[#0D2C22]/70 border border-[#D4AF37]/25 space-y-0.5 shadow-sm">
-                <p className="text-base font-bold text-white">Velvet Box</p>
-                <p className="text-[10px] text-[#F3E5AB]/75">Luxury Gift Packaging</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Hero Editorial Lookbook Card */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl overflow-hidden border-2 border-[#D4AF37]/60 shadow-[0_25px_70px_rgba(0,0,0,0.7)] group">
-              <div className="relative h-96 sm:h-[490px] w-full">
-                <Image
-                  src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1000&auto=format&fit=crop&q=85"
-                  alt="Imperial Royal Kundan Bridal Set"
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 40vw"
-                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#061A14] via-[#061A14]/35 to-transparent" />
-              </div>
-
-              {/* Floating Luxury Tag Badge */}
-              <div className="absolute top-4 right-4 px-3.5 py-1.5 rounded-full bg-[#061A14]/85 backdrop-blur-md border border-[#D4AF37]/50 text-[10px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-lg">
-                👑 Artisan Handcrafted
-              </div>
-
-              <div className="absolute bottom-4 left-4 right-4 p-4.5 rounded-2xl bg-[#061A14]/90 backdrop-blur-md border border-[#D4AF37]/40 text-white space-y-1.5">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#D4AF37] block">
-                  ✨ Haute Bridal Collection 2026
-                </span>
-                <h3 className="font-display text-lg font-bold text-[#F3E5AB]">
-                  Mughal Kundan &amp; Pearl Choker Set
-                </h3>
-                <p className="text-xs text-[#FAF8F5]/85">
-                  Includes Grand Choker, Bahubali Jhumkas &amp; Matching Maang Tikka with 24K Micro-Plated finish.
-                </p>
-                <div className="pt-2 flex items-center justify-between">
-                  <span className="font-mono font-bold text-sm text-[#F3E5AB]">₹188 · In Stock</span>
-                  <Link
-                    href="/shop?store=jewellery"
-                    prefetch={true}
-                    className="text-xs font-bold text-[#D4AF37] hover:underline"
-                  >
-                    View Details →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
+      {/* 1. Grand Royal Jewellery Interactive Hero Showcase Banner Suite */}
+      <JewelleryHeroBanner />
 
       {/* 2. Top Jewellery Categories Row */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
@@ -391,7 +266,77 @@ export default async function JewelleryHomePage() {
         </ScrollRevealGroup>
       </section>
 
-      {/* 4. Latest Jewellery Arrivals Showcase */}
+      {/* 4. Grand Royal Bridal Pavilion Promotional Feature Banner */}
+      <ScrollReveal direction="up" distance={30}>
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#061A14] via-[#0D2C22] to-[#040E0B] border-2 border-[#D4AF37]/50 shadow-2xl">
+            {/* Ambient Lighting & Background Sparkle */}
+            <div className="absolute -top-32 -left-32 w-80 h-80 bg-[#D4AF37]/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-8 sm:p-12 lg:p-14">
+              <div className="lg:col-span-7 space-y-5 text-white">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#061A14]/90 border border-[#D4AF37]/50 text-[10px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-md">
+                  <span>✦ 2026 BRIDAL PAVILION</span>
+                </div>
+                <h3 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
+                  The Royal Bridal Pavilion <br />
+                  <span className="bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7] bg-clip-text text-transparent italic font-serif">
+                    Complimentary Velvet Casket
+                  </span>
+                </h3>
+                <p className="text-xs sm:text-sm text-[#FAF8F5]/85 max-w-lg leading-relaxed">
+                  Every order includes our signature cushioned velvet presentation box, anti-tarnish zip-lock sleeves, and a certificate of 24K micro-gold electroplating.
+                </p>
+
+                {/* VIP Coupon Badge */}
+                <div className="inline-flex items-center gap-3 p-2.5 rounded-2xl bg-[#061A14]/80 border border-[#D4AF37]/40 text-xs text-[#F3E5AB]">
+                  <span className="text-lg">🏷️</span>
+                  <span>Use VIP Code <strong className="font-mono font-bold text-white bg-[#D4AF37]/30 px-2 py-0.5 rounded">ROYAL10</strong> for 10% OFF</span>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/shop?store=jewellery&category=necklaces-sets"
+                    prefetch={true}
+                    className="px-7 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-[#061A14] bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#E5C158] hover:brightness-110 active:scale-95 transition-all shadow-lg cursor-pointer"
+                  >
+                    Explore Bridal Sets →
+                  </Link>
+                  <Link
+                    href="/shop?store=jewellery"
+                    prefetch={true}
+                    className="px-6 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-[#F3E5AB] border border-[#D4AF37]/50 hover:bg-[#0D2C22] active:scale-95 transition-all cursor-pointer"
+                  >
+                    View All Jewellery
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Showcase Visual */}
+              <div className="lg:col-span-5 relative">
+                <div className="relative h-64 sm:h-80 w-full rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-xl group">
+                  <Image
+                    src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1000&auto=format&fit=crop&q=85"
+                    alt="Royal Bridal Pavilion Jewellery"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 40vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#061A14]/80 via-transparent to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-[#061A14]/90 backdrop-blur-xs border border-[#D4AF37]/30 text-white text-center">
+                    <span className="text-[11px] font-bold text-[#F3E5AB] block">
+                      Jaipur Kundan &amp; Polki Artisan Masterpiece
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* 5. Latest Jewellery Arrivals Showcase */}
       {allProducts.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
           <ScrollReveal direction="up" distance={20}>
