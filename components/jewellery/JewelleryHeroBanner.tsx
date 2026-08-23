@@ -15,7 +15,7 @@ export type JewelleryBannerSlide = {
   primaryBtnText: string;
   primaryBtnHref: string;
   conciergeMsg: string;
-  imageUrl: string;
+  bgImageUrl: string;
   lookbookBadge: string;
   masterpieceCollection: string;
   masterpieceName: string;
@@ -41,7 +41,7 @@ const JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     primaryBtnText: "Shop Bridal Catalog →",
     primaryBtnHref: "/shop?store=jewellery&category=necklaces-sets",
     conciergeMsg: "Hi Imperial Jewels Stylist, I would like Kundan & Bridal jewellery recommendations!",
-    imageUrl: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1400&auto=format&fit=crop&q=85",
+    bgImageUrl: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1920&auto=format&fit=crop&q=90",
     lookbookBadge: "👑 Artisan Handcrafted",
     masterpieceCollection: "✨ Haute Bridal Collection 2026",
     masterpieceName: "Mughal Kundan & Pearl Choker Set",
@@ -66,7 +66,7 @@ const JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     primaryBtnText: "Explore Temple Gold →",
     primaryBtnHref: "/shop?store=jewellery&q=Temple",
     conciergeMsg: "Hi Imperial Jewels Stylist, I am interested in Antique Temple Jewellery!",
-    imageUrl: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1400&auto=format&fit=crop&q=85",
+    bgImageUrl: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1920&auto=format&fit=crop&q=90",
     lookbookBadge: "🪔 Temple Heritage",
     masterpieceCollection: "🌟 Sacred Antique Edits",
     masterpieceName: "Lakshmi Kasu Mala & Nakshi Jhumkas",
@@ -91,7 +91,7 @@ const JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     primaryBtnText: "Shop Diamond Edits →",
     primaryBtnHref: "/shop?store=jewellery&q=Diamond",
     conciergeMsg: "Hi Imperial Jewels Stylist, please share American Diamond & Solitaire jewellery options!",
-    imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1400&auto=format&fit=crop&q=85",
+    bgImageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1920&auto=format&fit=crop&q=90",
     lookbookBadge: "💎 5A CZ Diamonds",
     masterpieceCollection: "💫 Gala Solitaire 2026",
     masterpieceName: "Riviera Solitaire CZ Tennis Choker",
@@ -110,7 +110,7 @@ export default function JewelleryHeroBanner() {
     if (isPaused) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % JEWELLERY_SLIDES.length);
-    }, 6500);
+    }, 7000);
     return () => clearInterval(interval);
   }, [isPaused]);
 
@@ -118,17 +118,40 @@ export default function JewelleryHeroBanner() {
 
   return (
     <section
-      className="relative bg-[#061A14] text-white overflow-hidden border-b border-[#D4AF37]/40 shadow-2xl transition-all duration-700"
+      className="relative min-h-[580px] sm:min-h-[640px] lg:min-h-[700px] text-white overflow-hidden border-b border-[#D4AF37]/50 shadow-2xl flex flex-col justify-between"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Background Radial Gold & Emerald Ambiance */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0D2C22] via-[#061A14] to-[#040E0B] opacity-95" />
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#0D2C22]/40 rounded-full blur-3xl pointer-events-none" />
+      {/* 🌟 1. Full-Bleed Cinematic Background Image with Cross-fade & Ken-Burns Zoom */}
+      <div className="absolute inset-0 z-0 overflow-hidden bg-[#040E0B]">
+        {JEWELLERY_SLIDES.map((s, idx) => (
+          <div
+            key={s.id}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              currentSlide === idx ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
+            }`}
+            style={{ transitionProperty: "opacity, transform", transitionDuration: "1200ms" }}
+          >
+            <Image
+              src={s.bgImageUrl}
+              alt={s.masterpieceName}
+              fill
+              priority={idx === 0}
+              sizes="100vw"
+              className="object-cover object-center transform scale-102 transition-transform duration-7000 ease-out"
+            />
+          </div>
+        ))}
 
-      {/* Slide Transition Wrapper */}
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 sm:py-20 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+        {/* Multi-tier Atmospheric Gradient Scrim for crystal clear text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#040E0B]/95 via-[#061A14]/85 to-[#040E0B]/40 lg:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#040E0B] via-transparent to-[#040E0B]/60" />
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-[#0D2C22]/60 rounded-full blur-3xl pointer-events-none" />
+      </div>
+
+      {/* 👑 2. Foreground Content Overlay */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-28 w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
         
         {/* Left Headline & Masterpiece Summary */}
         <div key={`left-${slide.id}`} className="lg:col-span-7 space-y-6 sm:space-y-7 animate-fade-in-up">
@@ -139,25 +162,25 @@ export default function JewelleryHeroBanner() {
           </div>
 
           <div className="space-y-3">
-            <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.2rem] font-bold tracking-tight text-white leading-[1.08]">
+            <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.2rem] font-bold tracking-tight text-white leading-[1.08] drop-shadow-md">
               {slide.title} <br />
-              <span className="bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7] bg-clip-text text-transparent italic font-serif font-normal">
+              <span className="bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7] bg-clip-text text-transparent italic font-serif font-normal drop-shadow-sm">
                 {slide.titleHighlight}
               </span>
             </h1>
-            <p className="text-sm sm:text-base text-[#FDFBF7]/85 max-w-xl leading-relaxed">
+            <p className="text-sm sm:text-base text-[#FDFBF7]/90 max-w-xl leading-relaxed drop-shadow-xs">
               {slide.description}
             </p>
           </div>
 
-          {/* Quick Category Pills */}
+          {/* Quick Category Pills with Glow */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
             {slide.pills.map((pill) => (
               <Link
                 key={pill.name}
                 href={pill.href}
                 prefetch={true}
-                className="px-3.5 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#0D2C22]/80 hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] text-xs font-bold transition-all duration-200 shadow-xs active:scale-95 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/80 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] text-xs font-bold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
               >
                 {pill.name}
               </Link>
@@ -169,12 +192,12 @@ export default function JewelleryHeroBanner() {
             <Link
               href={slide.primaryBtnHref}
               prefetch={true}
-              className="px-8 py-4 rounded-full font-extrabold text-xs uppercase tracking-widest text-[#061A14] bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#E5C158] hover:brightness-110 active:scale-95 transition-all duration-200 shadow-[0_4px_25px_rgba(212,175,55,0.4)] cursor-pointer"
+              className="px-8 py-4 rounded-full font-extrabold text-xs uppercase tracking-widest text-[#061A14] bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#E5C158] hover:brightness-110 active:scale-95 transition-all duration-200 shadow-[0_4px_30px_rgba(212,175,55,0.5)] cursor-pointer"
             >
               {slide.primaryBtnText}
             </Link>
             <WhatsAppConciergeButton
-              className="px-6 py-4 rounded-full text-xs font-bold text-[#F3E5AB] border border-[#D4AF37]/50 bg-[#061A14] hover:bg-[#0D2C22] active:scale-95 transition-all duration-200 shadow-md flex items-center gap-2 cursor-pointer"
+              className="px-6 py-4 rounded-full text-xs font-bold text-[#F3E5AB] border border-[#D4AF37]/50 bg-[#061A14]/90 backdrop-blur-md hover:bg-[#0D2C22] active:scale-95 transition-all duration-200 shadow-md flex items-center gap-2 cursor-pointer"
               customMessage={slide.conciergeMsg}
             >
               <span>💬</span> Bridal Concierge
@@ -182,44 +205,51 @@ export default function JewelleryHeroBanner() {
           </div>
 
           {/* Trust Highlights */}
-          <div className="pt-5 border-t border-[#D4AF37]/20 grid grid-cols-3 gap-3 text-xs text-[#F3E5AB]/90">
-            <div className="p-3.5 rounded-2xl bg-[#0D2C22]/70 border border-[#D4AF37]/25 space-y-0.5 shadow-sm">
+          <div className="pt-5 border-t border-[#D4AF37]/30 grid grid-cols-3 gap-3 text-xs text-[#F3E5AB]/95">
+            <div className="p-3.5 rounded-2xl bg-[#061A14]/85 backdrop-blur-md border border-[#D4AF37]/30 space-y-0.5 shadow-sm">
               <p className="text-sm sm:text-base font-bold text-white">24K Micro-Polish</p>
-              <p className="text-[10px] text-[#F3E5AB]/75">Long-Lasting Golden Shield</p>
+              <p className="text-[10px] text-[#F3E5AB]/80">Long-Lasting Golden Shield</p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-[#0D2C22]/70 border border-[#D4AF37]/25 space-y-0.5 shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-[#061A14]/85 backdrop-blur-md border border-[#D4AF37]/30 space-y-0.5 shadow-sm">
               <p className="text-sm sm:text-base font-bold text-white">Anti-Tarnish</p>
-              <p className="text-[10px] text-[#F3E5AB]/75">100% Skin Safe &amp; Lead-Free</p>
+              <p className="text-[10px] text-[#F3E5AB]/80">100% Skin Safe &amp; Lead-Free</p>
             </div>
-            <div className="p-3.5 rounded-2xl bg-[#0D2C22]/70 border border-[#D4AF37]/25 space-y-0.5 shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-[#061A14]/85 backdrop-blur-md border border-[#D4AF37]/30 space-y-0.5 shadow-sm">
               <p className="text-sm sm:text-base font-bold text-white">Velvet Box</p>
-              <p className="text-[10px] text-[#F3E5AB]/75">Luxury Gift Packaging</p>
+              <p className="text-[10px] text-[#F3E5AB]/80">Luxury Gift Packaging</p>
             </div>
           </div>
 
         </div>
 
-        {/* Right Hero Editorial Lookbook Card */}
-        <div key={`right-${slide.id}`} className="lg:col-span-5 relative animate-fade-in">
-          <div className="relative rounded-3xl overflow-hidden border-2 border-[#D4AF37]/60 shadow-[0_25px_70px_rgba(0,0,0,0.7)] group">
-            <div className="relative h-96 sm:h-[490px] w-full">
+        {/* Right Glassmorphic Floating Masterpiece Spotlight Card */}
+        <div key={`right-${slide.id}`} className="lg:col-span-5 relative animate-fade-in hidden lg:block">
+          <div className="relative rounded-3xl overflow-hidden backdrop-blur-xl bg-[#061A14]/80 border-2 border-[#D4AF37]/60 shadow-[0_25px_70px_rgba(0,0,0,0.85)] p-6 space-y-4">
+            
+            {/* Top Badge */}
+            <div className="flex items-center justify-between">
+              <span className="px-3 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[10px] font-extrabold uppercase tracking-widest text-[#F3E5AB]">
+                {slide.lookbookBadge}
+              </span>
+              <span className="text-[11px] font-mono font-bold text-[#F3E5AB]">
+                ✦ {currentSlide + 1} / {JEWELLERY_SLIDES.length}
+              </span>
+            </div>
+
+            {/* Thumbnail Preview */}
+            <div className="relative h-56 w-full rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-inner group">
               <Image
-                src={slide.imageUrl}
+                src={slide.bgImageUrl}
                 alt={slide.masterpieceName}
                 fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                sizes="400px"
+                className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#061A14] via-[#061A14]/35 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#061A14]/90 via-transparent to-transparent" />
             </div>
 
-            {/* Floating Luxury Tag Badge */}
-            <div className="absolute top-4 right-4 px-3.5 py-1.5 rounded-full bg-[#061A14]/85 backdrop-blur-md border border-[#D4AF37]/50 text-[10px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-lg">
-              {slide.lookbookBadge}
-            </div>
-
-            <div className="absolute bottom-4 left-4 right-4 p-4.5 rounded-2xl bg-[#061A14]/90 backdrop-blur-md border border-[#D4AF37]/40 text-white space-y-1.5">
+            {/* Details */}
+            <div className="space-y-1.5 text-white">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#D4AF37] block">
                 {slide.masterpieceCollection}
               </span>
@@ -229,26 +259,29 @@ export default function JewelleryHeroBanner() {
               <p className="text-xs text-[#FAF8F5]/85 leading-relaxed">
                 {slide.masterpieceDescription}
               </p>
-              <div className="pt-2 flex items-center justify-between">
-                <span className="font-mono font-bold text-sm text-[#F3E5AB]">
-                  {slide.masterpiecePrice}
-                </span>
-                <Link
-                  href={slide.masterpieceHref}
-                  prefetch={true}
-                  className="text-xs font-bold text-[#D4AF37] hover:underline"
-                >
-                  View Details →
-                </Link>
-              </div>
             </div>
+
+            {/* Price & Action */}
+            <div className="pt-2 flex items-center justify-between border-t border-[#D4AF37]/30">
+              <span className="font-mono font-bold text-sm text-[#F3E5AB]">
+                {slide.masterpiecePrice}
+              </span>
+              <Link
+                href={slide.masterpieceHref}
+                prefetch={true}
+                className="px-4 py-2 rounded-full text-xs font-bold text-[#061A14] bg-[#F3E5AB] hover:bg-[#D4AF37] transition-colors shadow-sm"
+              >
+                View Piece →
+              </Link>
+            </div>
+
           </div>
         </div>
 
       </div>
 
-      {/* Slide Navigation Controls & Indicators */}
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-6 flex items-center justify-between">
+      {/* 👑 3. Slide Navigation Controls & Indicators */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-6 flex items-center justify-between w-full">
         {/* Slide Indicators */}
         <div className="flex items-center gap-2">
           {JEWELLERY_SLIDES.map((s, idx) => (
@@ -257,8 +290,8 @@ export default function JewelleryHeroBanner() {
               onClick={() => setCurrentSlide(idx)}
               className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
                 currentSlide === idx
-                  ? "w-8 bg-gradient-to-r from-[#F3E5AB] to-[#D4AF37]"
-                  : "w-2.5 bg-white/25 hover:bg-white/50"
+                  ? "w-8 bg-gradient-to-r from-[#F3E5AB] to-[#D4AF37] shadow-xs"
+                  : "w-2.5 bg-white/30 hover:bg-white/60"
               }`}
               aria-label={`Go to slide ${idx + 1}`}
             />
@@ -271,7 +304,7 @@ export default function JewelleryHeroBanner() {
             onClick={() =>
               setCurrentSlide((prev) => (prev - 1 + JEWELLERY_SLIDES.length) % JEWELLERY_SLIDES.length)
             }
-            className="w-9 h-9 rounded-full border border-[#D4AF37]/40 bg-[#061A14]/80 hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-90"
+            className="w-10 h-10 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/90 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-90"
             aria-label="Previous Slide"
           >
             ←
@@ -280,7 +313,7 @@ export default function JewelleryHeroBanner() {
             onClick={() =>
               setCurrentSlide((prev) => (prev + 1) % JEWELLERY_SLIDES.length)
             }
-            className="w-9 h-9 rounded-full border border-[#D4AF37]/40 bg-[#061A14]/80 hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-90"
+            className="w-10 h-10 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/90 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-90"
             aria-label="Next Slide"
           >
             →
