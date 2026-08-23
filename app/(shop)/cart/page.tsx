@@ -107,17 +107,66 @@ export default function CartPage() {
 
   if (loggedOut) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-24 text-center">
-        <div className="p-8 rounded-3xl border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
-          <h1 className="font-display text-2xl font-bold">Your Shopping Cart</h1>
-          <p className="mt-2 text-xs text-dim">Please log in to view saved items in your cart.</p>
-          <Link
-            href="/login?next=/cart"
-            className="mt-6 inline-block rounded-full px-8 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-md"
-            style={{ backgroundColor: "var(--fc-primary)" }}
-          >
-            Login to Your Account
-          </Link>
+      <div className="mx-auto max-w-lg px-4 py-20 text-center animate-luxury-up">
+        <div
+          className="p-8 sm:p-10 rounded-3xl border shadow-xl space-y-6"
+          style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}
+        >
+          {/* Luxury Icon with Gold Halo */}
+          <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#141416] via-[#2A2B30] to-[#141416] border border-[#C59B27]/50 flex items-center justify-center mx-auto shadow-xl">
+            <span className="text-3xl">🔒</span>
+            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#C59B27] text-white text-xs font-bold shadow-sm">
+              ✦
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            <span className="inline-block px-3 py-1 rounded-full bg-[#FBF4E2] border border-[#C59B27]/40 text-[10px] font-extrabold uppercase tracking-widest text-[#8E6C0C]">
+              Atelier Member Access
+            </span>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">
+              Sign In to View Your Cart
+            </h1>
+            <p className="text-xs text-[#787C87] max-w-sm mx-auto leading-relaxed">
+              Please sign in to access your saved items, bespoke apparel, fine jewellery, and VIP member checkout.
+            </p>
+          </div>
+
+          <div className="space-y-3 pt-2 max-w-xs mx-auto">
+            <Link
+              href="/login?next=/cart"
+              className="w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block text-white bg-[#141416] hover:bg-[#25262B] transition-all shadow-lg active:scale-95 cursor-pointer luxury-card-hover"
+              style={{
+                border: "1px solid rgba(197, 155, 39, 0.4)",
+              }}
+            >
+              Sign In to Your Account →
+            </Link>
+            <Link
+              href="/register"
+              className="w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block border border-[#E7DFD5] bg-white text-[#141416] hover:bg-[#FAF8F5] transition-all shadow-xs active:scale-95 cursor-pointer"
+            >
+              Create New Account
+            </Link>
+          </div>
+
+          <div className="pt-4 border-t border-[#E7DFD5] text-left space-y-2 text-[11px] text-[#4B4E56] max-w-xs mx-auto">
+            <p className="font-bold uppercase text-[10px] tracking-wider text-center mb-2 text-[#C59B27]">
+              ✦ Member Privileges
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-[#C59B27] font-bold">✓</span>
+              <span>Persistent cart synced across all your devices</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#C59B27] font-bold">✓</span>
+              <span>Instant 1-click VIP coupon codes & discounts</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#C59B27] font-bold">✓</span>
+              <span>Real-time courier tracking & concierge updates</span>
+            </div>
+          </div>
         </div>
       </div>
     );

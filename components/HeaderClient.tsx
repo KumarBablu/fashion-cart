@@ -251,6 +251,7 @@ export default function HeaderClient({
       <CartDrawer
         isOpen={cartDrawerOpen}
         onClose={() => setCartDrawerOpen(false)}
+        isLoggedIn={hasActiveSession}
       />
 
       {/* Universal Luxury Search Command Palette */}

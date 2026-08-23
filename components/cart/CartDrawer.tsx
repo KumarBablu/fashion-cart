@@ -17,10 +17,12 @@ type CartItem = {
 export default function CartDrawer({
   isOpen,
   onClose,
+  isLoggedIn = false,
   onCartChange,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  isLoggedIn?: boolean;
   onCartChange?: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -49,6 +51,10 @@ export default function CartDrawer({
   }
 
   async function loadCart() {
+    if (!isLoggedIn) {
+      setItems([]);
+      return;
+    }
     setLoading(true);
     const active = getActiveStore();
     setStore(active);
@@ -75,7 +81,7 @@ export default function CartDrawer({
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isOpen]);
+  }, [isOpen, isLoggedIn]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -220,7 +226,70 @@ export default function CartDrawer({
 
           {/* 3. Main Scrollable Items List */}
           <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4">
-            {loading && items.length === 0 ? (
+            {!isLoggedIn ? (
+              <div className="text-center py-12 px-3 space-y-6 animate-luxury-up">
+                {/* Luxury Icon with Gold Halo */}
+                <div className="relative w-18 h-18 rounded-3xl bg-gradient-to-tr from-[#141416] via-[#2A2B30] to-[#141416] border border-[#C59B27]/50 flex items-center justify-center mx-auto shadow-xl">
+                  <span className="text-3xl">🔒</span>
+                  <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#C59B27] text-white text-xs font-bold shadow-sm">
+                    ✦
+                  </span>
+                </div>
+
+                {/* Title & Description */}
+                <div className="space-y-2">
+                  <span className="inline-block px-3 py-1 rounded-full bg-[#FBF4E2] border border-[#C59B27]/40 text-[10px] font-extrabold uppercase tracking-widest text-[#8E6C0C]">
+                    Atelier Member Access
+                  </span>
+                  <h3 className="font-display text-2xl font-bold text-[#141416] tracking-tight">
+                    Sign In to View Shopping Bag
+                  </h3>
+                  <p className="text-xs text-[#787C87] max-w-xs mx-auto leading-relaxed">
+                    Please log in to your account to review your selected garments, fine jewellery, and checkout securely.
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2.5 pt-1 max-w-xs mx-auto">
+                  <Link
+                    href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/cart")}`}
+                    onClick={onClose}
+                    className="w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block text-white bg-[#141416] hover:bg-[#25262B] transition-all shadow-lg active:scale-95 cursor-pointer luxury-card-hover"
+                    style={{
+                      border: "1px solid rgba(197, 155, 39, 0.4)",
+                    }}
+                  >
+                    Sign In to Your Account →
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={onClose}
+                    className="w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block border border-[#E7DFD5] bg-white text-[#141416] hover:bg-[#FAF8F5] transition-all shadow-xs active:scale-95 cursor-pointer"
+                  >
+                    Create New Account
+                  </Link>
+                </div>
+
+                {/* Perks Checklist */}
+                <div className="pt-4 border-t border-[#E7DFD5] text-left space-y-2 text-[11px] text-[#4B4E56] max-w-xs mx-auto">
+                  <p className="font-bold uppercase text-[10px] tracking-wider text-center mb-2 text-[#C59B27]">
+                    ✦ Member Privileges
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#C59B27] font-bold">✓</span>
+                    <span>Persistent cart synced across all devices</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#C59B27] font-bold">✓</span>
+                    <span>Instant 1-click VIP coupon codes & discounts</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#C59B27] font-bold">✓</span>
+                    <span>Real-time tracking & WhatsApp order concierge</span>
+                  </div>
+                </div>
+              </div>
+            ) : loading && items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-xs text-[#787C87] space-y-3">
                 <span className="w-8 h-8 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin" />
                 <span className="font-medium">Loading your shopping bag…</span>
