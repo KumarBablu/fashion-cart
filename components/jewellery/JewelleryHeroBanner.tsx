@@ -189,7 +189,7 @@ export default function JewelleryHeroBanner({
   }, [slides.length]);
 
   return (
-    <section className="relative min-h-[calc(100vh-76px)] lg:min-h-[calc(100vh-80px)] text-white overflow-hidden border-b border-[#D4AF37]/30 shadow-2xl flex flex-col justify-between">
+    <section className="relative min-h-[440px] sm:min-h-[480px] lg:min-h-[520px] text-white overflow-hidden border-b border-[#D4AF37]/30 shadow-2xl flex flex-col justify-between">
       {/* 🌟 1. Full-Bleed Background Image with continuous cross-fade */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#040E0B]">
         {slides.map((s, idx) => (
@@ -216,11 +216,11 @@ export default function JewelleryHeroBanner({
         <div className="absolute inset-0 bg-gradient-to-t from-[#040E0B]/70 via-transparent to-[#040E0B]/20" />
       </div>
 
-      {/* 👑 2. Foreground Content Overlay (Full Viewport Centered) */}
-      <div className="relative z-10 my-auto mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+      {/* 👑 2. Foreground Content Overlay (Compact Balanced Proportions) */}
+      <div className="relative z-10 my-auto mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
         
         {/* Left Headline & Masterpiece Summary (Stacked Layer Cross-Fade Animation) */}
-        <div className="lg:col-span-7 relative min-h-[320px] sm:min-h-[350px] flex items-center">
+        <div className="lg:col-span-7 relative min-h-[260px] sm:min-h-[290px] flex items-center">
           {slides.map((s, idx) => {
             const isActive = currentSlide === idx;
             return (
@@ -292,14 +292,14 @@ export default function JewelleryHeroBanner({
           })}
         </div>
 
-        {/* Right Glassmorphic Floating Masterpiece Spotlight Card (Lavish, Borderless & Full Proportions) */}
-        <div className="lg:col-span-5 relative hidden lg:flex justify-end items-center min-h-[420px]">
+        {/* Right Glassmorphic Floating Masterpiece Spotlight Card (Lavish, Borderless & Compact Proportions) */}
+        <div className="lg:col-span-5 relative hidden lg:flex justify-end items-center min-h-[340px]">
           {slides.map((s, idx) => {
             const isActive = currentSlide === idx;
             return (
               <div
                 key={s.id}
-                className={`w-full max-w-[440px] sm:max-w-[470px] lg:max-w-[490px] transition-all duration-700 ease-in-out ${
+                className={`w-full max-w-[390px] sm:max-w-[420px] lg:max-w-[440px] transition-all duration-700 ease-in-out ${
                   isActive
                     ? "opacity-100 scale-100 relative z-10 pointer-events-auto"
                     : "opacity-0 scale-95 pointer-events-none absolute right-0 z-0"
@@ -308,11 +308,11 @@ export default function JewelleryHeroBanner({
                 <Link
                   href={s.masterpieceHref}
                   prefetch={true}
-                  className="block w-full rounded-3xl overflow-hidden backdrop-blur-xl bg-[#061A14]/55 border-0 shadow-[0_30px_70px_rgba(0,0,0,0.75)] p-5 sm:p-6 space-y-4 transition-all group cursor-pointer"
+                  className="block w-full rounded-3xl overflow-hidden backdrop-blur-xl bg-[#061A14]/55 border-0 shadow-[0_30px_70px_rgba(0,0,0,0.75)] p-4 sm:p-5 space-y-3.5 transition-all group cursor-pointer"
                 >
                   {/* Top Badge */}
                   <div className="flex items-center justify-between">
-                    <span className="px-3.5 py-1 rounded-full bg-[#D4AF37]/20 text-[10px] font-bold uppercase tracking-wider text-[#F3E5AB]">
+                    <span className="px-3.5 py-0.5 rounded-full bg-[#D4AF37]/20 text-[10px] font-bold uppercase tracking-wider text-[#F3E5AB]">
                       {s.lookbookBadge}
                     </span>
                     <span className="text-xs font-mono font-semibold text-[#F3E5AB]/85">
@@ -321,7 +321,7 @@ export default function JewelleryHeroBanner({
                   </div>
 
                   {/* Thumbnail Preview (Grand High-Definition Borderless Image) */}
-                  <div className="relative h-64 sm:h-72 lg:h-80 w-full rounded-2xl overflow-hidden shadow-xl">
+                  <div className="relative h-52 sm:h-60 lg:h-64 w-full rounded-2xl overflow-hidden shadow-xl">
                     <Image
                       src={s.bgImageUrl}
                       alt={s.masterpieceName}
