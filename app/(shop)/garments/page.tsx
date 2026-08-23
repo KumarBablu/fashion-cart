@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { getStoresControl } from "@/lib/stores";
 import SubcategoriesGrid from "@/components/home/SubcategoriesGrid";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
-import ScrollReveal from "@/components/ui/ScrollReveal";
+import ScrollReveal, { ScrollRevealGroup } from "@/components/ui/ScrollReveal";
 
 export const revalidate = 60;
 
@@ -346,8 +346,8 @@ export default async function HomePage() {
       </section>
 
       {/* 👑 ROW 2: Categories Row ("Top Categories" - Styled like Shop by Occasion) */}
-      <ScrollReveal direction="up" distance={28}>
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+        <ScrollReveal direction="up" distance={20}>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E7DFD5] pb-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">
@@ -365,66 +365,63 @@ export default async function HomePage() {
               View All Categories →
             </Link>
           </div>
+        </ScrollReveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {departments.map((dept, idx) => {
-              const catImage = dept.imageUrl || dept.bannerImage;
-              return (
-                <Link
-                  key={dept.id}
-                  href={`/shop?category=${dept.slug}`}
-                  prefetch={true}
-                  className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[4/5] flex flex-col justify-end p-6 bg-[#141416] shadow-md transition-all duration-400 hover:shadow-2xl hover:-translate-y-2 luxury-card-hover animate-luxury-up cursor-pointer"
-                  style={{ animationDelay: `${idx * 50}ms` }}
-                >
-                  <Image
-                    src={catImage}
-                    alt={dept.name}
-                    fill
-                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                    unoptimized
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/95 via-[#141416]/40 to-transparent" />
+        <ScrollRevealGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerMs={80} distance={44}>
+          {departments.map((dept) => {
+            const catImage = dept.imageUrl || dept.bannerImage;
+            return (
+              <Link
+                key={dept.id}
+                href={`/shop?category=${dept.slug}`}
+                prefetch={true}
+                className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[4/5] flex flex-col justify-end p-6 bg-[#141416] shadow-md transition-all duration-500 hover:shadow-2xl hover:-translate-y-2.5 luxury-card-hover cursor-pointer block w-full"
+              >
+                <Image
+                  src={catImage}
+                  alt={dept.name}
+                  fill
+                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                  unoptimized
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/95 via-[#141416]/40 to-transparent" />
 
-                  <div className="relative z-10 space-y-1">
-                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white text-[#141416] backdrop-blur-md shadow-xs">
-                      {dept.icon} {dept.badge}
-                    </span>
-                    <h3 className="font-display text-xl font-bold text-white leading-tight group-hover:text-[#C59B27] transition-colors">
-                      {dept.name}
-                    </h3>
-                    <p className="text-xs text-white/80 line-clamp-1">{dept.tagline}</p>
-                    <div className="pt-2 flex items-center gap-1 text-xs font-bold text-[#C59B27] group-hover:translate-x-1 transition-transform">
-                      <span>Explore Department</span>
-                      <span>→</span>
-                    </div>
+                <div className="relative z-10 space-y-1">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white text-[#141416] backdrop-blur-md shadow-xs">
+                    {dept.icon} {dept.badge}
+                  </span>
+                  <h3 className="font-display text-xl font-bold text-white leading-tight group-hover:text-[#C59B27] transition-colors">
+                    {dept.name}
+                  </h3>
+                  <p className="text-xs text-white/80 line-clamp-1">{dept.tagline}</p>
+                  <div className="pt-2 flex items-center gap-1 text-xs font-bold text-[#C59B27] group-hover:translate-x-1 transition-transform">
+                    <span>Explore Department</span>
+                    <span>→</span>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      </ScrollReveal>
+                </div>
+              </Link>
+            );
+          })}
+        </ScrollRevealGroup>
+      </section>
 
       {/* 👗 ROW 3: Sub Categories Rows ("Explore Subcategories" - Styled like Shop by Occasion) */}
-      <ScrollReveal direction="up" distance={28}>
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SubcategoriesGrid
-            subcategories={allSubcategories}
-            departments={departments.map((d) => ({
-              id: d.id,
-              name: d.name,
-              slug: d.slug,
-              icon: d.icon,
-            }))}
-          />
-        </section>
-      </ScrollReveal>
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SubcategoriesGrid
+          subcategories={allSubcategories}
+          departments={departments.map((d) => ({
+            id: d.id,
+            name: d.name,
+            slug: d.slug,
+            icon: d.icon,
+          }))}
+        />
+      </section>
 
       {/* 👑 ROW 4: Shop by Occasion Row */}
-      <ScrollReveal direction="up" distance={28}>
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+        <ScrollReveal direction="up" distance={20}>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E7DFD5] pb-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">
@@ -442,44 +439,43 @@ export default async function HomePage() {
               View All Collections →
             </Link>
           </div>
+        </ScrollReveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {dynamicOccasions.map((occ, idx) => (
-              <Link
-                key={occ.title}
-                href={occ.href}
-                prefetch={true}
-                className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[4/5] flex flex-col justify-end p-6 bg-[#141416] shadow-md transition-all duration-400 hover:shadow-2xl hover:-translate-y-2 luxury-card-hover animate-luxury-up cursor-pointer"
-                style={{ animationDelay: `${idx * 50}ms` }}
-              >
-                <Image
-                  src={occ.image}
-                  alt={occ.title}
-                  fill
-                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                  unoptimized
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/90 via-[#141416]/30 to-transparent" />
+        <ScrollRevealGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerMs={80} distance={44}>
+          {dynamicOccasions.map((occ) => (
+            <Link
+              key={occ.title}
+              href={occ.href}
+              prefetch={true}
+              className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[4/5] flex flex-col justify-end p-6 bg-[#141416] shadow-md transition-all duration-500 hover:shadow-2xl hover:-translate-y-2.5 luxury-card-hover cursor-pointer block w-full"
+            >
+              <Image
+                src={occ.image}
+                alt={occ.title}
+                fill
+                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                unoptimized
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/90 via-[#141416]/30 to-transparent" />
 
-                <div className="relative z-10 space-y-1">
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white text-[#141416] backdrop-blur-md shadow-xs">
-                    {occ.tag}
-                  </span>
-                  <h3 className="font-display text-lg sm:text-xl font-bold text-white leading-tight group-hover:text-[#C59B27] transition-colors">
-                    {occ.title}
-                  </h3>
-                  <p className="text-xs text-white/80">{occ.subtitle}</p>
-                  <div className="pt-2 flex items-center gap-1 text-xs font-bold text-[#C59B27] group-hover:translate-x-1 transition-transform">
-                    <span>{occ.buttonText || "Explore Outfits"}</span>
-                    <span>→</span>
-                  </div>
+              <div className="relative z-10 space-y-1">
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white text-[#141416] backdrop-blur-md shadow-xs">
+                  {occ.tag}
+                </span>
+                <h3 className="font-display text-lg sm:text-xl font-bold text-white leading-tight group-hover:text-[#C59B27] transition-colors">
+                  {occ.title}
+                </h3>
+                <p className="text-xs text-white/80">{occ.subtitle}</p>
+                <div className="pt-2 flex items-center gap-1 text-xs font-bold text-[#C59B27] group-hover:translate-x-1 transition-transform">
+                  <span>{occ.buttonText || "Explore Outfits"}</span>
+                  <span>→</span>
                 </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      </ScrollReveal>
+              </div>
+            </Link>
+          ))}
+        </ScrollRevealGroup>
+      </section>
 
       {/* 🛡️ ROW 5: Clean Assurance & Privilege Banner */}
       <ScrollReveal direction="up" distance={28}>

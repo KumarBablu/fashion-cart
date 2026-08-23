@@ -6,7 +6,7 @@ import ProductCard from "@/components/products/ProductCard";
 import ShopFilters from "@/components/products/ShopFilters";
 import Link from "next/link";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import ScrollReveal from "@/components/ui/ScrollReveal";
+import ScrollReveal, { ScrollRevealGroup } from "@/components/ui/ScrollReveal";
 
 export const revalidate = 60;
 
@@ -245,13 +245,11 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
               </Link>
             </div>
           ) : (
-            <ScrollReveal direction="up" distance={24}>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </ScrollReveal>
+            <ScrollRevealGroup className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6" staggerMs={60} distance={36}>
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </ScrollRevealGroup>
           )}
 
           {/* Pagination */}

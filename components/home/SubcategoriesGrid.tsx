@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import ScrollReveal, { ScrollRevealGroup } from "@/components/ui/ScrollReveal";
 
 export type SubcategoryCardItem = {
   id: string;
@@ -167,61 +168,62 @@ export default function SubcategoriesGrid({
 
   return (
     <div className="space-y-6">
-      {/* Header & Department Filter Switcher */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E7DFD5] pb-4">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">
-            ✦ Curated Silhouettes
-          </span>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">
-            Explore Subcategories
-          </h2>
-        </div>
+      {/* Subcategories Section Header */}
+      <ScrollReveal direction="up" distance={20}>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E7DFD5] pb-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">
+              ✦ Signature Styles
+            </span>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">
+              Explore Subcategories
+            </h2>
+          </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-          <button
-            onClick={() => setSelectedDeptSlug("ALL")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap shadow-2xs ${
-              selectedDeptSlug === "ALL"
-                ? "bg-[#141416] text-white border border-[#141416]"
-                : "bg-white text-[#141416] border border-[#E7DFD5] hover:bg-[#FAF8F5]"
-            }`}
-          >
-            All Silhouettes
-          </button>
+          {/* Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <button
+              onClick={() => setSelectedDeptSlug("ALL")}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap shadow-2xs ${
+                selectedDeptSlug === "ALL"
+                  ? "bg-[#141416] text-white border border-[#141416]"
+                  : "bg-white text-[#141416] border border-[#E7DFD5] hover:bg-[#FAF8F5]"
+              }`}
+            >
+              All Silhouettes
+            </button>
 
-          {departments.map((dept) => {
-            const isActive = selectedDeptSlug === dept.slug;
-            return (
-              <button
-                key={dept.id}
-                onClick={() => setSelectedDeptSlug(dept.slug)}
-                className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap shadow-2xs flex items-center gap-1.5 ${
-                  isActive
-                    ? "bg-[#141416] text-white border border-[#141416]"
-                    : "bg-white text-[#141416] border border-[#E7DFD5] hover:bg-[#FAF8F5]"
-                }`}
-              >
-                <span>{dept.icon}</span>
-                <span>{dept.name}</span>
-              </button>
-            );
-          })}
+            {departments.map((dept) => {
+              const isActive = selectedDeptSlug === dept.slug;
+              return (
+                <button
+                  key={dept.id}
+                  onClick={() => setSelectedDeptSlug(dept.slug)}
+                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap shadow-2xs flex items-center gap-1.5 ${
+                    isActive
+                      ? "bg-[#141416] text-white border border-[#141416]"
+                      : "bg-white text-[#141416] border border-[#E7DFD5] hover:bg-[#FAF8F5]"
+                  }`}
+                >
+                  <span>{dept.icon}</span>
+                  <span>{dept.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </ScrollReveal>
 
       {/* Visual Subcategories Cards Grid (Matching Shop by Occasion layout) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filteredSubcategories.map((sub, idx) => {
+      <ScrollRevealGroup className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" staggerMs={70} distance={44}>
+        {filteredSubcategories.map((sub) => {
           const meta = getSubcategoryMeta(sub.slug, sub.imageUrl, sub.parentName);
           return (
             <Link
               key={sub.id}
               href={`/shop?category=${sub.slug}`}
               prefetch={true}
-              className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[4/5] flex flex-col justify-end p-6 bg-[#141416] shadow-md transition-all duration-400 hover:shadow-2xl hover:-translate-y-2 luxury-card-hover animate-luxury-up cursor-pointer"
-              style={{ animationDelay: `${idx * 40}ms` }}
+              className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[4/5] flex flex-col justify-end p-6 bg-[#141416] shadow-md transition-all duration-500 hover:shadow-2xl hover:-translate-y-2.5 luxury-card-hover cursor-pointer block w-full"
             >
               <Image
                 src={meta.image}
@@ -249,7 +251,7 @@ export default function SubcategoriesGrid({
             </Link>
           );
         })}
-      </div>
+      </ScrollRevealGroup>
     </div>
   );
 }
