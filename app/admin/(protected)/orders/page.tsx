@@ -87,18 +87,24 @@ export default async function AdminOrdersPage({
               <th className="px-4 py-3">Amount</th>
               <th className="px-4 py-3">Payment</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {orders.map((o) => (
-              <tr key={o.id} className="border-b border-line last:border-0">
+              <tr key={o.id} className="border-b border-line last:border-0 hover:bg-slate-50/50 transition-colors">
                 <td className="px-4 py-3">
-                  <Link href={`/admin/orders/${o.id}?store=${store}`} className="font-medium hover:text-marigold-deep">{o.orderNumber}</Link>
+                  <Link href={`/admin/orders/${o.id}?store=${store}`} className="font-bold text-primary hover:underline">{o.orderNumber}</Link>
                 </td>
-                <td className="px-4 py-3 text-ink-soft">{o.user?.name || "Guest Customer"}</td>
+                <td className="px-4 py-3 text-ink-soft">
+                  <div className="font-medium text-[#141416]">{o.user?.name || "Guest Customer"}</div>
+                  <div className="text-[10px] text-dim">{o.user?.email}</div>
+                </td>
                 <td className="px-4 py-3 text-ink-soft">{new Date(o.createdAt).toLocaleDateString("en-IN")}</td>
-                <td className="px-4 py-3">{formatINR(o.total)}</td>
-                <td className="px-4 py-3 text-ink-soft">{o.payment?.status.replace(/_/g, " ")}</td>
+                <td className="px-4 py-3 font-mono font-bold">{formatINR(o.total)}</td>
+                <td className="px-4 py-3 text-ink-soft">
+                  <span className="text-xs font-mono">{o.payment?.status.replace(/_/g, " ")}</span>
+                </td>
                 <td className="px-4 py-3">
                   <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
                     o.status === "CONFIRMED" || o.status === "DELIVERED"
@@ -110,10 +116,18 @@ export default async function AdminOrdersPage({
                     {o.status.replace(/_/g, " ")}
                   </span>
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <Link
+                    href={`/admin/orders/${o.id}?store=${store}`}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#FAF8F5] text-[#141416] border border-[#E7DFD5] hover:border-[#C59B27] hover:text-[#C59B27] transition-all cursor-pointer"
+                  >
+                    <span>Manage / Reachout →</span>
+                  </Link>
+                </td>
               </tr>
             ))}
             {orders.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-ink-soft">No {store} orders found.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-ink-soft">No {store} orders found.</td></tr>
             )}
           </tbody>
         </table>

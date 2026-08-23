@@ -15,6 +15,7 @@ import {
   profileUpdatedEmailTemplate,
   adminAccessAttemptAlertEmailTemplate,
   accountDeletedEmailTemplate,
+  orderReachoutEmailTemplate,
 } from "./templates";
 
 type SendEmailOptions = {
@@ -420,6 +421,36 @@ export async function sendAccountDeletedEmail(user: { name: string; email: strin
     html,
     templateName: "ACCOUNT_DELETED",
     metadata: { userEmail: user.email },
+  });
+}
+
+export async function sendOrderReachoutEmail(params: {
+  recipientEmail: string;
+  customerName: string;
+  orderNumber: string;
+  subject: string;
+  message: string;
+  orderStatus?: string;
+  paymentStatus?: string;
+  totalAmount?: number;
+  items?: Array<{ name: string; quantity: number; size?: string; price?: number }>;
+  actionUrl?: string;
+  actionText?: string;
+  storeName?: string;
+  sentByAdminEmail?: string;
+}) {
+  const html = orderReachoutEmailTemplate(params);
+  return sendEmail({
+    to: params.recipientEmail,
+    subject: params.subject,
+    html,
+    templateName: "ADMIN_ORDER_REACHOUT",
+    metadata: {
+      orderNumber: params.orderNumber,
+      sentByAdmin: params.sentByAdminEmail,
+      subject: params.subject,
+      customerEmail: params.recipientEmail,
+    },
   });
 }
 

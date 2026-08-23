@@ -418,4 +418,109 @@ export function accountDeletedEmailTemplate(name: string, email: string) {
   return layout("Your Fashion Cart Account Has Been Deleted", content);
 }
 
+// 15. Custom Admin Reachout Email for Orders
+export function orderReachoutEmailTemplate(params: {
+  customerName: string;
+  orderNumber: string;
+  subject: string;
+  message: string;
+  orderStatus?: string;
+  paymentStatus?: string;
+  totalAmount?: number;
+  items?: Array<{ name: string; quantity: number; size?: string; price?: number }>;
+  actionUrl?: string;
+  actionText?: string;
+  storeName?: string;
+}) {
+  const {
+    customerName,
+    orderNumber,
+    subject,
+    message,
+    orderStatus,
+    paymentStatus,
+    totalAmount,
+    items = [],
+    actionUrl,
+    actionText = "View Order Details →",
+    storeName = "Fashion Cart Atelier",
+  } = params;
+
+  const targetUrl = actionUrl || `${BASE_URL}/account/orders/${orderNumber}`;
+
+  // Format message paragraphs cleanly
+  const formattedMessage = message
+    .split("\n\n")
+    .map((paragraph) => `<p style="margin: 0 0 14px 0; line-height: 1.6;">${paragraph.replace(/\n/g, "<br/>")}</p>`)
+    .join("");
+
+  const content = `
+    <div style="border-bottom: 2px solid #E7DFD5; padding-bottom: 16px; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <span class="badge">✦ Order #${orderNumber}</span>
+        ${orderStatus ? `<span style="font-size: 11px; font-weight: bold; color: #787C87; text-transform: uppercase;">Status: <strong>${orderStatus}</strong></span>` : ""}
+      </div>
+      <h2 style="color: #141416; font-size: 20px; font-weight: 800; margin: 12px 0 4px 0;">${subject}</h2>
+      <p style="font-size: 13px; color: #787C87; margin: 0;">Message from ${storeName} Concierge Team</p>
+    </div>
+
+    <div style="font-size: 14px; color: #3A3D45; margin-bottom: 24px;">
+      <p style="margin-bottom: 16px;">Dear <strong>${customerName}</strong>,</p>
+      ${formattedMessage}
+    </div>
+
+    ${
+      items.length > 0
+        ? `
+      <div class="card" style="margin: 20px 0;">
+        <h4 style="margin: 0 0 10px 0; color: #141416; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">📦 Order Summary (${orderNumber})</h4>
+        <table class="table" style="margin: 0;">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th style="text-align: center;">Qty</th>
+              ${items[0]?.price ? '<th style="text-align: right;">Amount</th>' : ''}
+            </tr>
+          </thead>
+          <tbody>
+            ${items
+              .map(
+                (item) => `
+              <tr>
+                <td><strong>${item.name}</strong>${item.size ? ` <span style="font-size: 11px; color: #787C87;">(${item.size})</span>` : ""}</td>
+                <td style="text-align: center;">${item.quantity}</td>
+                ${item.price ? `<td style="text-align: right; font-family: monospace;">${formatINR(item.price * item.quantity)}</td>` : ""}
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+        ${
+          totalAmount
+            ? `
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E7DFD5; padding-top: 12px; margin-top: 12px;">
+            <span style="font-size: 12px; font-weight: bold; color: #787C87;">Total Order Value:</span>
+            <span style="font-size: 16px; font-weight: 900; color: #141416; font-family: monospace;">${formatINR(totalAmount)}</span>
+          </div>
+        `
+            : ""
+        }
+      </div>
+    `
+        : ""
+    }
+
+    <div style="text-align: center; margin: 28px 0 20px 0;">
+      <a href="${targetUrl}" class="button">${actionText}</a>
+    </div>
+
+    <div style="background-color: #FAF8F5; border-radius: 12px; padding: 14px 18px; border: 1px dashed #C59B27; margin-top: 24px; font-size: 12px; color: #555861;">
+      <strong>Need urgent help?</strong> Reply directly to this email or reach our WhatsApp Concierge desk anytime. We are dedicated to providing you with an exquisite shopping experience.
+    </div>
+  `;
+
+  return layout(`${subject} | Fashion Cart`, content);
+}
+
 

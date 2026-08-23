@@ -4,6 +4,7 @@ import { formatINR } from "@/lib/format";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import PaymentVerifyPanel from "@/components/admin/PaymentVerifyPanel";
 import OrderFulfillmentManager from "@/components/admin/OrderFulfillmentManager";
+import OrderEmailReachoutModal from "@/components/admin/OrderEmailReachoutModal";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   const { id } = await params;
 
   const { getDb } = await import("@/lib/db");
+  let store: "garments" | "jewellery" = "garments";
   let order = await getDb("garments").order.findUnique({
     where: { id },
     include: {
@@ -43,6 +45,9 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         invoice: true,
       },
     });
+    if (order) {
+      store = "jewellery";
+    }
   }
 
   if (!order) notFound();
@@ -75,6 +80,23 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <OrderEmailReachoutModal
+            orderId={order.id}
+            orderNumber={order.orderNumber}
+            customerName={order.user.name}
+            customerEmail={order.user.email}
+            orderStatus={order.status}
+            paymentStatus={order.payment?.status}
+            totalAmount={Number(order.total)}
+            items={order.items.map((it) => ({
+              name: it.productNameSnapshot,
+              quantity: it.quantity,
+              size: it.sizeSnapshot || undefined,
+              price: Number(it.unitPrice),
+            }))}
+            store={store}
+            mobileNumber={addr?.mobileNumber}
+          />
           {addr?.mobileNumber && (
             <a
               href={`https://wa.me/91${addr.mobileNumber.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
@@ -82,7 +104,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-emerald-600 text-white shadow-sm flex items-center gap-1.5 hover:bg-emerald-700"
+              className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-emerald-600 text-white shadow-sm flex items-center gap-1.5 hover:bg-emerald-700 active:scale-95"
             >
               <span>📲</span> WhatsApp Update
             </a>
@@ -90,7 +112,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <a
             href={`/invoices/${order.id}`}
             target="_blank"
-            className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-sm flex items-center gap-1.5 hover:brightness-105"
+            className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-sm flex items-center gap-1.5 hover:brightness-105 active:scale-95"
             style={{ backgroundColor: "var(--fc-primary)" }}
           >
             <span>📄</span> Tax Invoice / Receipt
@@ -98,7 +120,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <a
             href={`/invoices/${order.id}`}
             target="_blank"
-            className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#FFBA00] text-[#0C3B2E] shadow-sm flex items-center gap-1.5 hover:bg-[#EAA800]"
+            className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#FFBA00] text-[#0C3B2E] shadow-sm flex items-center gap-1.5 hover:bg-[#EAA800] active:scale-95"
           >
             <span>📦</span> Print Parcel Label (4×6)
           </a>
