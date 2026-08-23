@@ -31,7 +31,7 @@ const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     title: "Heirloom Royalty in",
     titleHighlight: "24K Micro-Plated Gold.",
     description:
-      "Adorn yourself in timeless splendour. Handcrafted Uncut Kundan, Real South-Sea Pearls, and intricate Meenakari chokers curated for grand royal celebrations.",
+      "Handcrafted Uncut Kundan, Real South-Sea Pearls, and intricate Meenakari chokers curated for grand celebrations.",
     pills: [
       { name: "👑 Bridal Chokers", href: "/shop?store=jewellery&category=necklaces-sets" },
       { name: "💎 Kundan Sets", href: "/shop?store=jewellery&q=Kundan" },
@@ -43,10 +43,10 @@ const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     conciergeMsg: "Hi Imperial Jewels Stylist, I would like Kundan & Bridal jewellery recommendations!",
     bgImageUrl: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1920&auto=format&fit=crop&q=90",
     lookbookBadge: "👑 Artisan Handcrafted",
-    masterpieceCollection: "✨ Haute Bridal Collection 2026",
+    masterpieceCollection: "✨ Bridal Collection 2026",
     masterpieceName: "Mughal Kundan & Pearl Choker Set",
     masterpieceDescription:
-      "Grand Choker, Bahubali Jhumkas & Matching Maang Tikka with 24K Micro-Plated finish.",
+      "Grand Choker & Bahubali Jhumkas with 24K Micro-Plated gold finish.",
     masterpiecePrice: "₹188 · In Stock",
     masterpieceHref: "/shop?store=jewellery",
   },
@@ -56,7 +56,7 @@ const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     title: "Divine Heritage &",
     titleHighlight: "Antique Nakshi Masterpieces.",
     description:
-      "Sculpted by master goldsmiths in antique matte gold. Sacred Lakshmi motifs, peacock Nakshi carving, and auspicious long temple haars designed for authentic tradition.",
+      "Sculpted by master goldsmiths in antique matte gold. Sacred Lakshmi motifs and long temple haars designed for authentic tradition.",
     pills: [
       { name: "🪔 Temple Haars", href: "/shop?store=jewellery&q=Temple" },
       { name: "🦚 Nakshi Kadas", href: "/shop?store=jewellery&category=bangles-kadas" },
@@ -71,7 +71,7 @@ const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     masterpieceCollection: "🌟 Sacred Antique Edits",
     masterpieceName: "Lakshmi Kasu Mala & Nakshi Jhumkas",
     masterpieceDescription:
-      "24K Antique Matte finish with micro-carved deities and ruby cabochon embellishments.",
+      "24K Antique Matte finish with micro-carved deities & ruby cabochon.",
     masterpiecePrice: "₹188 · In Stock",
     masterpieceHref: "/shop?store=jewellery",
   },
@@ -81,7 +81,7 @@ const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     title: "Flawless Sparkle with",
     titleHighlight: "American Diamond CZ Jewels.",
     description:
-      "Ultra-precision 5A Cubic Zirconia cut to perfection with rhodium and platinum plating. Brilliant tennis chokers, cocktail rings, and cascading chandeliers.",
+      "Ultra-precision 5A Cubic Zirconia cut to perfection with rhodium finish. Brilliant tennis chokers, cocktail rings, and chandeliers.",
     pills: [
       { name: "💎 Tennis Chokers", href: "/shop?store=jewellery&q=Tennis" },
       { name: "💍 Solitaire CZ Rings", href: "/shop?store=jewellery&category=rings" },
@@ -96,7 +96,7 @@ const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     masterpieceCollection: "💫 Gala Solitaire 2026",
     masterpieceName: "Riviera Solitaire CZ Tennis Choker",
     masterpieceDescription:
-      "Platinum rhodium finish with heart & arrow faceting, hypoallergenic with security clasp.",
+      "Platinum rhodium finish with heart & arrow faceting, hypoallergenic.",
     masterpiecePrice: "₹188 · In Stock",
     masterpieceHref: "/shop?store=jewellery",
   },
@@ -137,10 +137,8 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
   const slide = slides[currentSlide] || slides[0];
 
   return (
-    <section
-      className="relative min-h-[440px] sm:min-h-[480px] lg:min-h-[520px] text-white overflow-hidden border-b border-[#D4AF37]/40 shadow-xl flex flex-col justify-between"
-    >
-      {/* 🌟 1. Full-Bleed Cinematic Background Image with continuous cross-fade */}
+    <section className="relative min-h-[340px] sm:min-h-[380px] lg:min-h-[420px] text-white overflow-hidden border-b border-[#D4AF37]/30 shadow-lg flex flex-col justify-between">
+      {/* 🌟 1. Full-Bleed Background Image */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#040E0B]">
         {slides.map((s, idx) => (
           <div
@@ -162,80 +160,70 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
         ))}
 
         {/* Lighter, Luminous Atmospheric Gradient Scrim */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#040E0B]/75 via-[#061A14]/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#040E0B]/70 via-transparent to-[#040E0B]/25" />
-        <div className="absolute -top-40 -right-40 w-[400px] h-[400px] bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-[#0D2C22]/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#040E0B]/80 via-[#061A14]/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#040E0B]/70 via-transparent to-[#040E0B]/20" />
       </div>
 
-      {/* 👑 2. Foreground Content Overlay (Refined Standard Luxury Proportions) */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-14 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
+      {/* 👑 2. Compact & Standard Luxury Foreground Overlay */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-9 w-full grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
         
         {/* Left Headline & Masterpiece Summary */}
-        <div key={`left-${slide.id}`} className="lg:col-span-7 space-y-4 sm:space-y-5 animate-fade-in-up">
+        <div key={`left-${slide.id}`} className="lg:col-span-7 space-y-3 sm:space-y-3.5 animate-fade-in-up">
           
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/75 text-[10px] font-extrabold uppercase tracking-widest text-[#F3E5AB] shadow-md backdrop-blur-md">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/40 bg-[#061A14]/75 text-[9px] font-bold uppercase tracking-widest text-[#F3E5AB] backdrop-blur-md">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
             <span>{slide.tag}</span>
           </div>
 
-          <div className="space-y-2">
-            <h1 className="font-display text-2xl sm:text-3xl lg:text-[2.6rem] font-bold tracking-tight text-white leading-[1.12] [text-shadow:_0_2px_12px_rgba(0,0,0,0.85)]">
-              {slide.title} <br />
-              <span className="bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7] bg-clip-text text-transparent italic font-serif font-normal [text-shadow:_0_2px_12px_rgba(0,0,0,0.7)]">
+          <div className="space-y-1.5">
+            <h1 className="font-display text-xl sm:text-2xl lg:text-[1.85rem] font-semibold tracking-tight text-white leading-tight [text-shadow:_0_2px_10px_rgba(0,0,0,0.8)]">
+              {slide.title}{" "}
+              <span className="bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7] bg-clip-text text-transparent italic font-serif font-normal">
                 {slide.titleHighlight}
               </span>
             </h1>
-            <p className="text-xs sm:text-sm text-[#FDFBF7]/90 max-w-lg leading-relaxed [text-shadow:_0_1px_8px_rgba(0,0,0,0.8)]">
+            <p className="text-xs sm:text-[13px] text-[#FDFBF7]/85 max-w-lg leading-relaxed line-clamp-2 [text-shadow:_0_1px_6px_rgba(0,0,0,0.7)]">
               {slide.description}
             </p>
           </div>
 
-          {/* Quick Category Pills with Glow */}
+          {/* Compact Category Pills */}
           <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
             {slide.pills.map((pill) => (
               <Link
                 key={pill.name}
                 href={pill.href}
                 prefetch={true}
-                className="px-2.5 py-1 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/65 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] text-[11px] font-semibold transition-all duration-200 shadow-2xs active:scale-95 cursor-pointer"
+                className="px-2.5 py-0.5 rounded-full border border-[#D4AF37]/40 bg-[#061A14]/65 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] text-[10px] font-semibold transition-all duration-150 shadow-2xs active:scale-95 cursor-pointer"
               >
                 {pill.name}
               </Link>
             ))}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 pt-1">
+          {/* Compact Standard Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
             <Link
               href={slide.primaryBtnHref}
               prefetch={true}
-              className="px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-[#061A14] bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#E5C158] hover:brightness-110 active:scale-95 transition-all duration-200 shadow-[0_2px_20px_rgba(212,175,55,0.4)] cursor-pointer"
+              className="px-5 py-2 rounded-full font-bold text-[11px] uppercase tracking-wider text-[#061A14] bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#E5C158] hover:brightness-110 active:scale-95 transition-all duration-150 shadow-[0_2px_14px_rgba(212,175,55,0.35)] cursor-pointer"
             >
               View Featured Jewellery →
             </Link>
             <WhatsAppConciergeButton
-              className="px-4 py-2.5 rounded-full text-xs font-semibold text-[#F3E5AB] border border-[#D4AF37]/50 bg-[#061A14]/80 backdrop-blur-md hover:bg-[#0D2C22] active:scale-95 transition-all duration-200 shadow-sm flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-2 rounded-full text-[11px] font-medium text-[#F3E5AB] border border-[#D4AF37]/40 bg-[#061A14]/75 backdrop-blur-md hover:bg-[#0D2C22] active:scale-95 transition-all duration-150 flex items-center gap-1.5 cursor-pointer"
               customMessage={slide.conciergeMsg}
             >
               <span>💬</span> Bridal Concierge
             </WhatsAppConciergeButton>
           </div>
 
-          {/* Trust Highlights */}
-          <div className="pt-3 border-t border-[#D4AF37]/25 grid grid-cols-3 gap-2.5 text-xs text-[#F3E5AB]/90">
-            <div className="p-2.5 rounded-xl bg-[#061A14]/70 backdrop-blur-md border border-[#D4AF37]/25 space-y-0.5 shadow-2xs">
-              <p className="text-xs font-bold text-white">24K Micro-Polish</p>
-              <p className="text-[9px] text-[#F3E5AB]/75">Long-Lasting Shield</p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-[#061A14]/70 backdrop-blur-md border border-[#D4AF37]/25 space-y-0.5 shadow-2xs">
-              <p className="text-xs font-bold text-white">Anti-Tarnish</p>
-              <p className="text-[9px] text-[#F3E5AB]/75">100% Skin Safe</p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-[#061A14]/70 backdrop-blur-md border border-[#D4AF37]/25 space-y-0.5 shadow-2xs">
-              <p className="text-xs font-bold text-white">Velvet Box</p>
-              <p className="text-[9px] text-[#F3E5AB]/75">Gift Packaging</p>
-            </div>
+          {/* Minimalist Single-Line Luxury Trust Strip */}
+          <div className="pt-2.5 border-t border-[#D4AF37]/20 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#F3E5AB]/90 font-medium">
+            <span className="flex items-center gap-1">✦ 24K Micro-Polish</span>
+            <span className="flex items-center gap-1">✦ 100% Anti-Tarnish</span>
+            <span className="flex items-center gap-1">✦ Velvet Gift Packaging</span>
+            <span className="flex items-center gap-1 text-white font-semibold">✦ 4.9 ★ (3,500+ Reviews)</span>
           </div>
 
         </div>
@@ -245,50 +233,50 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
           <Link
             href={slide.masterpieceHref}
             prefetch={true}
-            className="block relative rounded-2xl overflow-hidden backdrop-blur-md bg-[#061A14]/60 border border-[#D4AF37]/50 shadow-[0_15px_40px_rgba(0,0,0,0.6)] p-4 sm:p-5 space-y-3 hover:border-[#D4AF37] transition-all group cursor-pointer"
+            className="block max-w-[290px] ml-auto relative rounded-xl overflow-hidden backdrop-blur-md bg-[#061A14]/55 border border-[#D4AF37]/40 shadow-[0_12px_32px_rgba(0,0,0,0.5)] p-3.5 space-y-2.5 hover:border-[#D4AF37] transition-all group cursor-pointer"
           >
             {/* Top Badge */}
             <div className="flex items-center justify-between">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[9px] font-extrabold uppercase tracking-widest text-[#F3E5AB]">
+              <span className="px-2 py-0.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[8.5px] font-bold uppercase tracking-wider text-[#F3E5AB]">
                 {slide.lookbookBadge}
               </span>
-              <span className="text-[10px] font-mono font-bold text-[#F3E5AB]">
+              <span className="text-[9px] font-mono font-semibold text-[#F3E5AB]/80">
                 ✦ {currentSlide + 1} / {slides.length}
               </span>
             </div>
 
             {/* Thumbnail Preview */}
-            <div className="relative h-44 sm:h-48 w-full rounded-xl overflow-hidden border border-[#D4AF37]/35 shadow-inner">
+            <div className="relative h-36 w-full rounded-lg overflow-hidden border border-[#D4AF37]/25 shadow-inner">
               <Image
                 src={slide.bgImageUrl}
                 alt={slide.masterpieceName}
                 fill
-                sizes="360px"
+                sizes="300px"
                 className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#061A14]/85 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#061A14]/80 via-transparent to-transparent" />
             </div>
 
             {/* Details */}
-            <div className="space-y-1 text-white">
-              <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#D4AF37] block">
+            <div className="space-y-0.5 text-white">
+              <span className="text-[8.5px] font-bold uppercase tracking-widest text-[#D4AF37] block">
                 {slide.masterpieceCollection}
               </span>
-              <h3 className="font-display text-sm sm:text-base font-bold text-[#F3E5AB] group-hover:text-white transition-colors line-clamp-1">
+              <h3 className="font-display text-xs sm:text-[13px] font-semibold text-[#F3E5AB] group-hover:text-white transition-colors line-clamp-1">
                 {slide.masterpieceName}
               </h3>
-              <p className="text-[11px] text-[#FAF8F5]/85 leading-relaxed line-clamp-2">
+              <p className="text-[10px] text-[#FAF8F5]/80 leading-snug line-clamp-1">
                 {slide.masterpieceDescription}
               </p>
             </div>
 
             {/* Price & Action */}
-            <div className="pt-2 flex items-center justify-between border-t border-[#D4AF37]/25">
-              <span className="font-mono font-bold text-xs text-[#F3E5AB]">
+            <div className="pt-1.5 flex items-center justify-between border-t border-[#D4AF37]/20">
+              <span className="font-mono font-bold text-[11px] text-[#F3E5AB]">
                 {slide.masterpiecePrice}
               </span>
-              <span className="px-3 py-1.5 rounded-full text-[11px] font-bold text-[#061A14] bg-[#F3E5AB] group-hover:bg-[#D4AF37] transition-colors shadow-xs">
-                View Details →
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold text-[#061A14] bg-[#F3E5AB] group-hover:bg-[#D4AF37] transition-colors shadow-2xs">
+                View →
               </span>
             </div>
 
@@ -298,17 +286,17 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
       </div>
 
       {/* 👑 3. Slide Navigation Controls & Frequency Progress Indicators */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-4 flex items-center justify-between w-full">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-3 flex items-center justify-between w-full">
         {/* Animated Slide Progress Indicators */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {slides.map((s, idx) => (
             <button
               key={s.id}
               onClick={() => setCurrentSlide(idx)}
-              className={`relative h-1.5 rounded-full overflow-hidden transition-all duration-300 cursor-pointer ${
+              className={`relative h-1 rounded-full overflow-hidden transition-all duration-300 cursor-pointer ${
                 currentSlide === idx
-                  ? "w-10 bg-white/20"
-                  : "w-3 bg-white/30 hover:bg-white/60"
+                  ? "w-8 bg-white/20"
+                  : "w-2.5 bg-white/30 hover:bg-white/60"
               }`}
               aria-label={`Go to slide ${idx + 1}`}
             >
@@ -326,12 +314,12 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
         </div>
 
         {/* Next / Prev Navigation Buttons */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <button
             onClick={() =>
               setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
             }
-            className="w-8 h-8 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/80 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-90 text-xs"
+            className="w-7 h-7 rounded-full border border-[#D4AF37]/40 bg-[#061A14]/75 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 text-[10px]"
             aria-label="Previous Slide"
           >
             ←
@@ -340,7 +328,7 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
             onClick={() =>
               setCurrentSlide((prev) => (prev + 1) % slides.length)
             }
-            className="w-8 h-8 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/80 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-90 text-xs"
+            className="w-7 h-7 rounded-full border border-[#D4AF37]/40 bg-[#061A14]/75 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 text-[10px]"
             aria-label="Next Slide"
           >
             →
