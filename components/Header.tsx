@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import HeaderClient from "./HeaderClient";
@@ -33,11 +34,13 @@ export default async function Header() {
       <AnnouncementBar />
       <header className="bg-white/95 backdrop-blur-md border-b border-[#E8E3D8] shadow-xs transition-colors duration-200 w-full">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <HeaderClient
-            isLoggedIn={!!user}
-            userName={user?.name}
-            categories={categories as any}
-          />
+          <Suspense fallback={<div className="h-16 sm:h-18 flex items-center justify-between" />}>
+            <HeaderClient
+              isLoggedIn={!!user}
+              userName={user?.name}
+              categories={categories as any}
+            />
+          </Suspense>
         </div>
       </header>
     </div>

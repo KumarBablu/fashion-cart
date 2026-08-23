@@ -81,7 +81,7 @@ export default function NavigationProgress() {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-[99999] pointer-events-none h-[3.5px] bg-transparent overflow-hidden"
+      className="fixed top-0 left-0 right-0 z-[99999] pointer-events-none h-[4px] bg-transparent overflow-hidden"
       aria-hidden="true"
     >
       <div
@@ -89,11 +89,11 @@ export default function NavigationProgress() {
         style={{
           width: `${progress}%`,
           opacity: progress === 100 ? 0 : 1,
-          boxShadow: "0 0 16px rgba(212, 175, 55, 0.9), 0 0 6px rgba(243, 229, 171, 0.8)",
+          boxShadow: "0 0 20px rgba(212, 175, 55, 1), 0 0 10px rgba(243, 229, 171, 0.9), 0 1px 4px rgba(0, 0, 0, 0.4)",
         }}
       >
         {/* Leading Sparkling Light Dot */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white blur-[1px] opacity-90 shadow-[0_0_8px_#FFFFFF]" />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white blur-[1px] opacity-100 shadow-[0_0_12px_#FFFFFF]" />
       </div>
     </div>
   );

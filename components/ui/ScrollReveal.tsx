@@ -47,14 +47,23 @@ export default function ScrollReveal({
         });
       },
       {
-        threshold,
-        rootMargin: "0px 0px -30px 0px",
+        threshold: 0.01,
+        rootMargin: "50px 0px 50px 0px",
       }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
-  }, [once, threshold]);
+
+    // Safety fallback: ensure element is visible even if observer encounters an edge case
+    const safetyTimer = setTimeout(() => {
+      setIsVisible(true);
+    }, 400);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(safetyTimer);
+    };
+  }, [once]);
 
   const getInitialTransform = () => {
     if (direction === "up") return `translate3d(0, ${distance}px, 0)`;
