@@ -24,7 +24,7 @@ export type JewelleryBannerSlide = {
   masterpieceHref: string;
 };
 
-const JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
+const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
   {
     id: "bridal-kundan",
     tag: "👑 Imperial Fine & Handcrafted Jewellery",
@@ -38,8 +38,8 @@ const JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
       { name: "✨ 24K Bangles", href: "/shop?store=jewellery&category=bangles-kadas" },
       { name: "🌸 Royal Jhumkas", href: "/shop?store=jewellery&category=earrings-jhumkas" },
     ],
-    primaryBtnText: "Shop Bridal Catalog →",
-    primaryBtnHref: "/shop?store=jewellery&category=necklaces-sets",
+    primaryBtnText: "View Featured Piece →",
+    primaryBtnHref: "/shop?store=jewellery",
     conciergeMsg: "Hi Imperial Jewels Stylist, I would like Kundan & Bridal jewellery recommendations!",
     bgImageUrl: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1920&auto=format&fit=crop&q=90",
     lookbookBadge: "👑 Artisan Handcrafted",
@@ -63,8 +63,8 @@ const JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
       { name: "✨ Matte Gold Jhumkas", href: "/shop?store=jewellery&category=earrings-jhumkas" },
       { name: "👑 Kasu Malas", href: "/shop?store=jewellery&q=Kasu" },
     ],
-    primaryBtnText: "Explore Temple Gold →",
-    primaryBtnHref: "/shop?store=jewellery&q=Temple",
+    primaryBtnText: "View Featured Piece →",
+    primaryBtnHref: "/shop?store=jewellery",
     conciergeMsg: "Hi Imperial Jewels Stylist, I am interested in Antique Temple Jewellery!",
     bgImageUrl: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1920&auto=format&fit=crop&q=90",
     lookbookBadge: "🪔 Temple Heritage",
@@ -73,7 +73,7 @@ const JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     masterpieceDescription:
       "24K Antique Matte finish with micro-carved deities and ruby cabochon embellishments.",
     masterpiecePrice: "₹188 · In Stock",
-    masterpieceHref: "/shop?store=jewellery&q=Temple",
+    masterpieceHref: "/shop?store=jewellery",
   },
   {
     id: "american-diamond",
@@ -88,8 +88,8 @@ const JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
       { name: "✨ Cocktail Chandeliers", href: "/shop?store=jewellery&category=earrings-jhumkas" },
       { name: "🌟 Tennis Bracelets", href: "/shop?store=jewellery&category=bangles-kadas" },
     ],
-    primaryBtnText: "Shop Diamond Edits →",
-    primaryBtnHref: "/shop?store=jewellery&q=Diamond",
+    primaryBtnText: "View Featured Piece →",
+    primaryBtnHref: "/shop?store=jewellery",
     conciergeMsg: "Hi Imperial Jewels Stylist, please share American Diamond & Solitaire jewellery options!",
     bgImageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1920&auto=format&fit=crop&q=90",
     lookbookBadge: "💎 5A CZ Diamonds",
@@ -98,23 +98,42 @@ const JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     masterpieceDescription:
       "Platinum rhodium finish with heart & arrow faceting, hypoallergenic with security clasp.",
     masterpiecePrice: "₹188 · In Stock",
-    masterpieceHref: "/shop?store=jewellery&q=Diamond",
+    masterpieceHref: "/shop?store=jewellery",
   },
 ];
 
-export default function JewelleryHeroBanner() {
+export default function JewelleryHeroBanner({ products = [] }: { products?: any[] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+
+  // Dynamically link slides to real jewellery products if available
+  const slides: JewelleryBannerSlide[] = DEFAULT_JEWELLERY_SLIDES.map((slide, idx) => {
+    const prod = products[idx] || products[0];
+    if (!prod) return slide;
+
+    const price = prod.variants?.[0]?.price ? `₹${Number(prod.variants[0].price).toLocaleString("en-IN")} · In Stock` : slide.masterpiecePrice;
+    const prodUrl = `/products/${prod.slug}?store=jewellery`;
+    const prodImg = prod.images?.[0]?.imageUrl || slide.bgImageUrl;
+
+    return {
+      ...slide,
+      masterpieceName: prod.name || slide.masterpieceName,
+      masterpiecePrice: price,
+      masterpieceHref: prodUrl,
+      primaryBtnHref: prodUrl,
+      bgImageUrl: prodImg,
+    };
+  });
 
   useEffect(() => {
     if (isPaused) return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % JEWELLERY_SLIDES.length);
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 7000);
     return () => clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, slides.length]);
 
-  const slide = JEWELLERY_SLIDES[currentSlide];
+  const slide = slides[currentSlide] || slides[0];
 
   return (
     <section
@@ -122,9 +141,9 @@ export default function JewelleryHeroBanner() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* 🌟 1. Full-Bleed Cinematic Background Image with Cross-fade & Ken-Burns Zoom */}
+      {/* 🌟 1. Full-Bleed Cinematic Background Image */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#040E0B]">
-        {JEWELLERY_SLIDES.map((s, idx) => (
+        {slides.map((s, idx) => (
           <div
             key={s.id}
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
@@ -143,7 +162,7 @@ export default function JewelleryHeroBanner() {
           </div>
         ))}
 
-        {/* Multi-tier Atmospheric Gradient Scrim for crystal clear text readability */}
+        {/* Multi-tier Atmospheric Gradient Scrim for crisp text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#040E0B]/95 via-[#061A14]/85 to-[#040E0B]/40 lg:to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#040E0B] via-transparent to-[#040E0B]/60" />
         <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
@@ -194,7 +213,7 @@ export default function JewelleryHeroBanner() {
               prefetch={true}
               className="px-8 py-4 rounded-full font-extrabold text-xs uppercase tracking-widest text-[#061A14] bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#E5C158] hover:brightness-110 active:scale-95 transition-all duration-200 shadow-[0_4px_30px_rgba(212,175,55,0.5)] cursor-pointer"
             >
-              {slide.primaryBtnText}
+              View Featured Jewellery →
             </Link>
             <WhatsAppConciergeButton
               className="px-6 py-4 rounded-full text-xs font-bold text-[#F3E5AB] border border-[#D4AF37]/50 bg-[#061A14]/90 backdrop-blur-md hover:bg-[#0D2C22] active:scale-95 transition-all duration-200 shadow-md flex items-center gap-2 cursor-pointer"
@@ -224,20 +243,23 @@ export default function JewelleryHeroBanner() {
 
         {/* Right Glassmorphic Floating Masterpiece Spotlight Card */}
         <div key={`right-${slide.id}`} className="lg:col-span-5 relative animate-fade-in hidden lg:block">
-          <div className="relative rounded-3xl overflow-hidden backdrop-blur-xl bg-[#061A14]/80 border-2 border-[#D4AF37]/60 shadow-[0_25px_70px_rgba(0,0,0,0.85)] p-6 space-y-4">
-            
+          <Link
+            href={slide.masterpieceHref}
+            prefetch={true}
+            className="block relative rounded-3xl overflow-hidden backdrop-blur-xl bg-[#061A14]/80 border-2 border-[#D4AF37]/60 shadow-[0_25px_70px_rgba(0,0,0,0.85)] p-6 space-y-4 hover:border-[#D4AF37] transition-all group cursor-pointer"
+          >
             {/* Top Badge */}
             <div className="flex items-center justify-between">
               <span className="px-3 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[10px] font-extrabold uppercase tracking-widest text-[#F3E5AB]">
                 {slide.lookbookBadge}
               </span>
               <span className="text-[11px] font-mono font-bold text-[#F3E5AB]">
-                ✦ {currentSlide + 1} / {JEWELLERY_SLIDES.length}
+                ✦ {currentSlide + 1} / {slides.length}
               </span>
             </div>
 
             {/* Thumbnail Preview */}
-            <div className="relative h-56 w-full rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-inner group">
+            <div className="relative h-56 w-full rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-inner">
               <Image
                 src={slide.bgImageUrl}
                 alt={slide.masterpieceName}
@@ -253,7 +275,7 @@ export default function JewelleryHeroBanner() {
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#D4AF37] block">
                 {slide.masterpieceCollection}
               </span>
-              <h3 className="font-display text-lg font-bold text-[#F3E5AB]">
+              <h3 className="font-display text-lg font-bold text-[#F3E5AB] group-hover:text-white transition-colors">
                 {slide.masterpieceName}
               </h3>
               <p className="text-xs text-[#FAF8F5]/85 leading-relaxed">
@@ -266,16 +288,12 @@ export default function JewelleryHeroBanner() {
               <span className="font-mono font-bold text-sm text-[#F3E5AB]">
                 {slide.masterpiecePrice}
               </span>
-              <Link
-                href={slide.masterpieceHref}
-                prefetch={true}
-                className="px-4 py-2 rounded-full text-xs font-bold text-[#061A14] bg-[#F3E5AB] hover:bg-[#D4AF37] transition-colors shadow-sm"
-              >
-                View Piece →
-              </Link>
+              <span className="px-4 py-2 rounded-full text-xs font-bold text-[#061A14] bg-[#F3E5AB] group-hover:bg-[#D4AF37] transition-colors shadow-sm">
+                View Product Details →
+              </span>
             </div>
 
-          </div>
+          </Link>
         </div>
 
       </div>
@@ -284,7 +302,7 @@ export default function JewelleryHeroBanner() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-6 flex items-center justify-between w-full">
         {/* Slide Indicators */}
         <div className="flex items-center gap-2">
-          {JEWELLERY_SLIDES.map((s, idx) => (
+          {slides.map((s, idx) => (
             <button
               key={s.id}
               onClick={() => setCurrentSlide(idx)}
@@ -302,7 +320,7 @@ export default function JewelleryHeroBanner() {
         <div className="flex items-center gap-2">
           <button
             onClick={() =>
-              setCurrentSlide((prev) => (prev - 1 + JEWELLERY_SLIDES.length) % JEWELLERY_SLIDES.length)
+              setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
             }
             className="w-10 h-10 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/90 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-90"
             aria-label="Previous Slide"
@@ -311,7 +329,7 @@ export default function JewelleryHeroBanner() {
           </button>
           <button
             onClick={() =>
-              setCurrentSlide((prev) => (prev + 1) % JEWELLERY_SLIDES.length)
+              setCurrentSlide((prev) => (prev + 1) % slides.length)
             }
             className="w-10 h-10 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/90 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-90"
             aria-label="Next Slide"

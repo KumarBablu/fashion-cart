@@ -161,7 +161,7 @@ export default async function JewelleryHomePage() {
     <div className="theme-jewellery min-h-screen bg-[#FCFAF6] text-[#061A14] space-y-16 sm:space-y-24 pb-24">
       
       {/* 1. Grand Royal Jewellery Interactive Hero Showcase Banner Suite */}
-      <JewelleryHeroBanner />
+      <JewelleryHeroBanner products={allProducts} />
 
       {/* 2. Top Jewellery Categories Row */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
