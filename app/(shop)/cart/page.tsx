@@ -205,10 +205,10 @@ export default function CartPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
         {/* Cart Items List */}
-        <div className="p-6 rounded-2xl border space-y-4" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
+        <div className="p-6 rounded-2xl border space-y-4 shadow-sm animate-luxury-up" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
           <div className="divide-y" style={{ borderColor: "var(--fc-border)" }}>
-            {items.map((item) => (
-              <div key={item.id} className="flex gap-4 py-4 first:pt-0 last:pb-0">
+            {items.map((item, idx) => (
+              <div key={item.id} className="flex gap-4 py-4 first:pt-0 last:pb-0 animate-fade-in-up" style={{ animationDelay: `${idx * 40}ms` }}>
                 <div className="relative h-28 w-24 shrink-0 rounded-xl overflow-hidden bg-black/5 border" style={{ borderColor: "var(--fc-border)" }}>
                   {item.product.images[0] ? (
                     <Image src={item.product.images[0].imageUrl} alt={item.product.name} fill className="object-cover" />
@@ -261,12 +261,12 @@ export default function CartPage() {
         </div>
 
         {/* Right Summary Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-6 animate-luxury-up" style={{ animationDelay: "100ms" }}>
           {/* Coupon Code Section */}
-          <div className="p-5 rounded-2xl border space-y-3" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
+          <div className="p-5 rounded-2xl border space-y-3 shadow-xs" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
             <p className="text-xs font-bold uppercase tracking-wider text-dim">Have a Promo Coupon?</p>
             {appliedCoupon ? (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs animate-fade-in">
                 <div>
                   <p className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
                     ✓ {appliedCoupon.code}
@@ -276,7 +276,7 @@ export default function CartPage() {
                 <button
                   type="button"
                   onClick={() => setAppliedCoupon(null)}
-                  className="text-xs text-rose-500 font-bold hover:underline"
+                  className="text-xs text-rose-500 font-bold hover:underline cursor-pointer"
                 >
                   Remove
                 </button>
@@ -294,7 +294,7 @@ export default function CartPage() {
                 <button
                   type="submit"
                   disabled={validating}
-                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase border hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase border hover:bg-black/5 dark:hover:bg-white/5 transition-all disabled:opacity-50 active:scale-95 cursor-pointer"
                   style={{ borderColor: "var(--fc-border)" }}
                 >
                   {validating ? "…" : "Apply"}
@@ -314,7 +314,7 @@ export default function CartPage() {
           </div>
 
           {/* Pricing Box */}
-          <div className="p-6 rounded-2xl border space-y-4" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
+          <div className="p-6 rounded-2xl border space-y-4 shadow-sm" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
             <h3 className="font-display text-base font-bold">Order Summary</h3>
 
             <div className="space-y-2 text-xs">
@@ -334,14 +334,17 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between text-base font-bold pt-3 border-t" style={{ borderColor: "var(--fc-border)" }}>
                 <span>Total Amount</span>
-                <span className="text-primary text-lg">{formatINR(total)}</span>
+                <span className="text-primary text-lg font-black">{formatINR(total)}</span>
               </div>
             </div>
 
             <Link
               href="/checkout"
-              className="block w-full py-3.5 rounded-full font-bold text-center text-xs uppercase tracking-wider text-white shadow-lg transition-all hover:brightness-105"
-              style={{ backgroundColor: "var(--fc-primary)" }}
+              className="block w-full py-4 rounded-full font-bold text-center text-xs uppercase tracking-wider text-white shadow-xl transition-all hover:brightness-105 active:scale-95 cursor-pointer luxury-card-hover"
+              style={{
+                background: "linear-gradient(135deg, #141416 0%, #25262B 100%)",
+                border: "1px solid rgba(197, 155, 39, 0.4)",
+              }}
             >
               Proceed to Checkout →
             </Link>

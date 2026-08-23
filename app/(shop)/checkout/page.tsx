@@ -253,10 +253,10 @@ export default function CheckoutPage() {
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
         {/* Left Column: Address & Payment */}
-        <div className="space-y-8">
+        <div className="space-y-8 animate-luxury-up">
           {/* 1. Address Selection */}
           <section
-            className="p-6 rounded-2xl border space-y-4"
+            className="p-6 rounded-2xl border space-y-4 shadow-sm"
             style={{
               backgroundColor: "var(--fc-surface)",
               borderColor: "var(--fc-border)",
@@ -372,10 +372,10 @@ export default function CheckoutPage() {
         </div>
 
         {/* Right Column: Order Summary & Coupon */}
-        <div className="space-y-6">
+        <div className="space-y-6 animate-luxury-up" style={{ animationDelay: "120ms" }}>
           {/* Coupon Box */}
           <div
-            className="p-5 rounded-2xl border space-y-3"
+            className="p-5 rounded-2xl border space-y-3 shadow-xs"
             style={{
               backgroundColor: "var(--fc-surface)",
               borderColor: "var(--fc-border)",
@@ -384,7 +384,7 @@ export default function CheckoutPage() {
             <p className="text-xs font-bold uppercase tracking-wider text-dim">🏷️ Apply Promo Coupon</p>
 
             {appliedCoupon ? (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs animate-fade-in">
                 <div>
                   <p className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
                     ✓ {appliedCoupon.code}
@@ -415,7 +415,7 @@ export default function CheckoutPage() {
                 <button
                   type="submit"
                   disabled={validatingCoupon}
-                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase border hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase border hover:bg-black/5 dark:hover:bg-white/5 transition-all disabled:opacity-50 active:scale-95 cursor-pointer"
                   style={{ borderColor: "var(--fc-border)" }}
                 >
                   {validatingCoupon ? "…" : "Apply"}
@@ -426,7 +426,7 @@ export default function CheckoutPage() {
 
           {/* Items & Total Summary */}
           <div
-            className="p-6 rounded-2xl border space-y-4"
+            className="p-6 rounded-2xl border space-y-4 shadow-sm"
             style={{
               backgroundColor: "var(--fc-surface)",
               borderColor: "var(--fc-border)",
@@ -471,8 +471,13 @@ export default function CheckoutPage() {
             <button
               disabled={!selectedAddress || items.length === 0 || submitting}
               onClick={placeOrder}
-              className="w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-lg transition-all hover:brightness-105 disabled:opacity-50"
-              style={{ backgroundColor: "var(--fc-primary)" }}
+              className={`w-full py-4 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-xl transition-all hover:brightness-105 active:scale-95 disabled:opacity-50 cursor-pointer luxury-card-hover ${
+                store === "jewellery" ? "gold-jewellery-btn" : "gold-btn"
+              }`}
+              style={{
+                background: "linear-gradient(135deg, #141416 0%, #25262B 100%)",
+                border: "1px solid rgba(197, 155, 39, 0.4)",
+              }}
             >
               {submitting
                 ? "Processing Order…"

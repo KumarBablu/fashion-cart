@@ -24,6 +24,7 @@ export default function CartDrawer({
   onCartChange?: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -35,6 +36,14 @@ export default function CartDrawer({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  function handleSmoothClose() {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 260);
+  }
 
   function getActiveStore(): "garments" | "jewellery" {
     if (typeof window === "undefined") return "garments";
@@ -67,6 +76,7 @@ export default function CartDrawer({
 
   useEffect(() => {
     if (isOpen) {
+      setIsClosing(false);
       loadCart();
       document.body.style.overflow = "hidden";
     } else {
@@ -111,7 +121,7 @@ export default function CartDrawer({
     }
   }
 
-  if (!isOpen || !mounted) return null;
+  if ((!isOpen && !isClosing) || !mounted) return null;
 
   const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce((sum, i) => sum + Number(i.variant.price) * i.quantity, 0);
@@ -125,16 +135,24 @@ export default function CartDrawer({
       aria-modal="true"
       aria-label="Shopping Bag & Cart Review"
     >
-      {/* Premium Backdrop Overlay with Subtle Blur */}
+      {/* Premium Backdrop Overlay with Smooth Fade */}
       <div
-        onClick={onClose}
-        className="fixed inset-0 bg-[#141416]/65 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
+        onClick={handleSmoothClose}
+        className={`fixed inset-0 bg-[#141416]/70 backdrop-blur-md transition-opacity duration-300 ease-out cursor-pointer ${
+          isClosing ? "opacity-0" : "opacity-100"
+        }`}
       />
 
       {/* Slide-in Full-Height Luxury Drawer Panel */}
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10">
-        <aside className="w-screen max-w-md h-full bg-[#FAF8F5] text-[#141416] shadow-2xl border-l border-[#E7DFD5] flex flex-col justify-between transition-transform duration-300 ease-out animate-in slide-in-from-right">
-          
+        <aside
+          className={`w-screen max-w-md h-full bg-[#FAF8F5] text-[#141416] shadow-2xl border-l border-[#C59B27]/40 flex flex-col justify-between transition-transform duration-300 ease-out ${
+            isClosing ? "translate-x-full" : "translate-x-0"
+          }`}
+          style={{
+            boxShadow: "-8px 0 32px rgba(20, 20, 22, 0.25), -2px 0 12px rgba(197, 155, 39, 0.15)",
+          }}
+        >
           {/* 1. Header Section */}
           <div className="p-4 sm:p-5 border-b border-[#E7DFD5] bg-white flex items-center justify-between shrink-0 shadow-xs">
             <div className="flex items-center gap-3">
@@ -163,8 +181,8 @@ export default function CartDrawer({
             </div>
 
             <button
-              onClick={onClose}
-              className="w-9 h-9 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-[#E7DFD5] text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs"
+              onClick={handleSmoothClose}
+              className="w-9 h-9 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-[#E7DFD5] text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
               aria-label="Close cart review"
               title="Close (Esc)"
             >
@@ -216,15 +234,15 @@ export default function CartDrawer({
                   </p>
                 </div>
                 <button
-                  onClick={onClose}
-                  className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-md cursor-pointer"
+                  onClick={handleSmoothClose}
+                  className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-md cursor-pointer active:scale-95"
                 >
                   Explore Signature Collection →
                 </button>
               </div>
             ) : (
               <div className="space-y-3.5 divide-y divide-[#E7DFD5]/70">
-                {items.map((item) => {
+                {items.map((item, idx) => {
                   const isBusy = updatingId === item.id;
                   const itemPrice = Number(item.variant.price);
                   const itemTotal = itemPrice * item.quantity;
@@ -232,9 +250,10 @@ export default function CartDrawer({
                   return (
                     <div
                       key={item.id}
-                      className={`pt-3.5 first:pt-0 flex gap-3.5 items-start transition-opacity duration-200 ${
+                      className={`pt-3.5 first:pt-0 flex gap-3.5 items-start transition-all duration-300 animate-luxury-up ${
                         isBusy ? "opacity-50 pointer-events-none" : "opacity-100"
                       }`}
+                      style={{ animationDelay: `${idx * 50}ms` }}
                     >
                       {/* Product Thumbnail */}
                       <Link
@@ -376,10 +395,10 @@ export default function CartDrawer({
               <div className="space-y-2 pt-1">
                 <Link
                   href={`/checkout${store === "jewellery" ? "?store=jewellery" : ""}`}
-                  onClick={onClose}
-                  className={`w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block text-white hover:brightness-105 transition-all shadow-md cursor-pointer ${
+                  onClick={handleSmoothClose}
+                  className={`w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block text-white hover:brightness-105 transition-all shadow-md cursor-pointer active:scale-95 luxury-card-hover ${
                     store === "jewellery"
-                      ? "bg-gradient-to-r from-[#C59B27] via-[#D4AF37] to-[#B8860B]"
+                      ? "gold-jewellery-btn"
                       : "bg-[#141416] hover:bg-[#25262B]"
                   }`}
                 >
@@ -387,8 +406,8 @@ export default function CartDrawer({
                 </Link>
                 <Link
                   href={`/cart${store === "jewellery" ? "?store=jewellery" : ""}`}
-                  onClick={onClose}
-                  className="w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] hover:bg-[#E7DFD5] transition-colors cursor-pointer"
+                  onClick={handleSmoothClose}
+                  className="w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] hover:bg-[#E7DFD5] transition-all cursor-pointer active:scale-95"
                 >
                   View Full Cart &amp; Apply Coupons
                 </Link>
