@@ -31,7 +31,7 @@ const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
     title: "Heirloom Royalty in",
     titleHighlight: "24K Micro-Plated Gold.",
     description:
-      "Adorn yourself in timeless splendour. Handcrafted Uncut Kundan, Real South-Sea Pearls, and intricate Meenakari chokers curated for grand royal weddings and regal celebrations.",
+      "Adorn yourself in timeless splendour. Handcrafted Uncut Kundan, Real South-Sea Pearls, and intricate Meenakari chokers curated for grand royal celebrations.",
     pills: [
       { name: "👑 Bridal Chokers", href: "/shop?store=jewellery&category=necklaces-sets" },
       { name: "💎 Kundan Sets", href: "/shop?store=jewellery&q=Kundan" },
@@ -135,7 +135,7 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
   }, [slides.length, currentSlide]);
 
   return (
-    <section className="relative min-h-[500px] sm:min-h-[560px] lg:min-h-[620px] text-white overflow-hidden border-b border-[#D4AF37]/30 shadow-2xl flex flex-col justify-between">
+    <section className="relative min-h-[calc(100vh-76px)] lg:min-h-[calc(100vh-80px)] text-white overflow-hidden border-b border-[#D4AF37]/30 shadow-2xl flex flex-col justify-between">
       {/* 🌟 1. Full-Bleed Background Image with continuous cross-fade */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#040E0B]">
         {slides.map((s, idx) => (
@@ -162,17 +162,17 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
         <div className="absolute inset-0 bg-gradient-to-t from-[#040E0B]/70 via-transparent to-[#040E0B]/20" />
       </div>
 
-      {/* 👑 2. Foreground Content Overlay with Silky Smooth Cross-Fade */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      {/* 👑 2. Foreground Content Overlay (Full Viewport Centered) */}
+      <div className="relative z-10 my-auto mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
         
         {/* Left Headline & Masterpiece Summary (Stacked Layer Cross-Fade Animation) */}
-        <div className="lg:col-span-7 relative min-h-[280px] sm:min-h-[300px] flex items-center">
+        <div className="lg:col-span-7 relative min-h-[320px] sm:min-h-[350px] flex items-center">
           {slides.map((s, idx) => {
             const isActive = currentSlide === idx;
             return (
               <div
                 key={s.id}
-                className={`w-full space-y-4 sm:space-y-5 transition-all duration-700 ease-in-out ${
+                className={`w-full space-y-4 sm:space-y-6 transition-all duration-700 ease-in-out ${
                   isActive
                     ? "opacity-100 translate-y-0 relative z-10"
                     : "opacity-0 translate-y-2 pointer-events-none absolute inset-0 z-0"
@@ -183,14 +183,14 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
                   <span>{s.tag}</span>
                 </div>
 
-                <div className="space-y-2 sm:space-y-2.5">
-                  <h1 className="font-display text-2xl sm:text-4xl lg:text-[3.15rem] font-bold tracking-tight text-white leading-[1.1] [text-shadow:_0_2px_14px_rgba(0,0,0,0.85)]">
+                <div className="space-y-2.5 sm:space-y-3">
+                  <h1 className="font-display text-3xl sm:text-5xl lg:text-[3.5rem] font-bold tracking-tight text-white leading-[1.08] [text-shadow:_0_2px_14px_rgba(0,0,0,0.85)]">
                     {s.title} <br />
                     <span className="bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7] bg-clip-text text-transparent italic font-serif font-normal [text-shadow:_0_2px_14px_rgba(0,0,0,0.7)]">
                       {s.titleHighlight}
                     </span>
                   </h1>
-                  <p className="text-xs sm:text-sm lg:text-base text-[#FDFBF7]/90 max-w-xl leading-relaxed [text-shadow:_0_1px_8px_rgba(0,0,0,0.75)]">
+                  <p className="text-sm sm:text-base lg:text-lg text-[#FDFBF7]/90 max-w-xl leading-relaxed [text-shadow:_0_1px_8px_rgba(0,0,0,0.75)]">
                     {s.description}
                   </p>
                 </div>
@@ -202,7 +202,7 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
                       key={pill.name}
                       href={pill.href}
                       prefetch={true}
-                      className="px-3 py-1 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/70 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] text-xs font-semibold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-full border border-[#D4AF37]/50 bg-[#061A14]/70 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] text-xs font-semibold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
                     >
                       {pill.name}
                     </Link>
@@ -210,16 +210,16 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-wrap items-center gap-3 pt-2">
+                <div className="flex flex-wrap items-center gap-3.5 pt-2">
                   <Link
                     href={s.primaryBtnHref}
                     prefetch={true}
-                    className="px-7 py-3 rounded-full font-bold text-xs uppercase tracking-wider text-[#061A14] bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#E5C158] hover:brightness-110 active:scale-95 transition-all duration-200 shadow-[0_4px_24px_rgba(212,175,55,0.45)] cursor-pointer"
+                    className="px-8 py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-[#061A14] bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#E5C158] hover:brightness-110 active:scale-95 transition-all duration-200 shadow-[0_4px_24px_rgba(212,175,55,0.45)] cursor-pointer"
                   >
                     View Featured Jewellery →
                   </Link>
                   <WhatsAppConciergeButton
-                    className="px-5 py-3 rounded-full text-xs font-semibold text-[#F3E5AB] border border-[#D4AF37]/50 bg-[#061A14]/80 backdrop-blur-md hover:bg-[#0D2C22] active:scale-95 transition-all duration-200 shadow-md flex items-center gap-2 cursor-pointer"
+                    className="px-6 py-3.5 rounded-full text-xs font-semibold text-[#F3E5AB] border border-[#D4AF37]/50 bg-[#061A14]/80 backdrop-blur-md hover:bg-[#0D2C22] active:scale-95 transition-all duration-200 shadow-md flex items-center gap-2 cursor-pointer"
                     customMessage={s.conciergeMsg}
                   >
                     <span>💬</span> Bridal Concierge
@@ -227,7 +227,7 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
                 </div>
 
                 {/* Minimalist Single-Line Luxury Trust Strip */}
-                <div className="pt-3 border-t border-[#D4AF37]/25 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-[#F3E5AB]/95 font-medium">
+                <div className="pt-3.5 border-t border-[#D4AF37]/25 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs sm:text-sm text-[#F3E5AB]/95 font-medium">
                   <span className="flex items-center gap-1.5">✦ 24K Micro-Polish</span>
                   <span className="flex items-center gap-1.5">✦ 100% Anti-Tarnish</span>
                   <span className="flex items-center gap-1.5">✦ Velvet Gift Packaging</span>
@@ -238,14 +238,14 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
           })}
         </div>
 
-        {/* Right Glassmorphic Floating Masterpiece Spotlight Card (Lavish, Borderless & Prominently Sized) */}
-        <div className="lg:col-span-5 relative hidden lg:flex justify-end items-center min-h-[340px]">
+        {/* Right Glassmorphic Floating Masterpiece Spotlight Card (Lavish, Borderless & Full Proportions) */}
+        <div className="lg:col-span-5 relative hidden lg:flex justify-end items-center min-h-[420px]">
           {slides.map((s, idx) => {
             const isActive = currentSlide === idx;
             return (
               <div
                 key={s.id}
-                className={`w-full max-w-[390px] transition-all duration-700 ease-in-out ${
+                className={`w-full max-w-[440px] sm:max-w-[470px] lg:max-w-[490px] transition-all duration-700 ease-in-out ${
                   isActive
                     ? "opacity-100 scale-100 relative z-10 pointer-events-auto"
                     : "opacity-0 scale-95 pointer-events-none absolute right-0 z-0"
@@ -254,25 +254,25 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
                 <Link
                   href={s.masterpieceHref}
                   prefetch={true}
-                  className="block w-full rounded-3xl overflow-hidden backdrop-blur-xl bg-[#061A14]/55 border-0 shadow-[0_25px_60px_rgba(0,0,0,0.7)] p-5 space-y-3.5 transition-all group cursor-pointer"
+                  className="block w-full rounded-3xl overflow-hidden backdrop-blur-xl bg-[#061A14]/55 border-0 shadow-[0_30px_70px_rgba(0,0,0,0.75)] p-5 sm:p-6 space-y-4 transition-all group cursor-pointer"
                 >
                   {/* Top Badge */}
                   <div className="flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full bg-[#D4AF37]/20 text-[10px] font-bold uppercase tracking-wider text-[#F3E5AB]">
+                    <span className="px-3.5 py-1 rounded-full bg-[#D4AF37]/20 text-[10px] font-bold uppercase tracking-wider text-[#F3E5AB]">
                       {s.lookbookBadge}
                     </span>
-                    <span className="text-[11px] font-mono font-semibold text-[#F3E5AB]/85">
+                    <span className="text-xs font-mono font-semibold text-[#F3E5AB]/85">
                       ✦ {idx + 1} / {slides.length}
                     </span>
                   </div>
 
-                  {/* Thumbnail Preview (Prominent, High-Res Borderless Viewport) */}
-                  <div className="relative h-52 sm:h-56 w-full rounded-2xl overflow-hidden shadow-lg">
+                  {/* Thumbnail Preview (Grand High-Definition Borderless Image) */}
+                  <div className="relative h-64 sm:h-72 lg:h-80 w-full rounded-2xl overflow-hidden shadow-xl">
                     <Image
                       src={s.bgImageUrl}
                       alt={s.masterpieceName}
                       fill
-                      sizes="420px"
+                      sizes="500px"
                       className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#061A14]/85 via-transparent to-transparent" />
@@ -283,17 +283,17 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
                     <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] block">
                       {s.masterpieceCollection}
                     </span>
-                    <h3 className="font-display text-base sm:text-lg font-semibold text-[#F3E5AB] group-hover:text-white transition-colors line-clamp-1">
+                    <h3 className="font-display text-base sm:text-lg lg:text-xl font-semibold text-[#F3E5AB] group-hover:text-white transition-colors line-clamp-1">
                       {s.masterpieceName}
                     </h3>
-                    <p className="text-xs text-[#FAF8F5]/85 leading-snug line-clamp-2">
+                    <p className="text-xs sm:text-sm text-[#FAF8F5]/85 leading-snug line-clamp-2">
                       {s.masterpieceDescription}
                     </p>
                   </div>
 
                   {/* Price & Action */}
-                  <div className="pt-2.5 flex items-center justify-between border-t border-white/10">
-                    <span className="font-mono font-bold text-sm text-[#F3E5AB]">
+                  <div className="pt-3 flex items-center justify-between border-t border-white/10">
+                    <span className="font-mono font-bold text-sm sm:text-base text-[#F3E5AB]">
                       {s.masterpiecePrice}
                     </span>
                     <span className="px-4 py-2 rounded-full text-xs font-bold text-[#061A14] bg-[#F3E5AB] group-hover:bg-[#D4AF37] transition-colors shadow-sm">
