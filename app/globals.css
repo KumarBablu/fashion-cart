@@ -475,3 +475,12 @@ main {
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
+
+@keyframes carouselProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}

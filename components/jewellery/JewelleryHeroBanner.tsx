@@ -102,9 +102,10 @@ const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
   },
 ];
 
+const AUTO_CHANGE_INTERVAL_MS = 4500;
+
 export default function JewelleryHeroBanner({ products = [] }: { products?: any[] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
 
   // Dynamically link slides to real jewellery products if available
   const slides: JewelleryBannerSlide[] = DEFAULT_JEWELLERY_SLIDES.map((slide, idx) => {
@@ -125,23 +126,21 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
     };
   });
 
+  // Continuous reliable auto-advance frequency
   useEffect(() => {
-    if (isPaused) return;
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 7000);
-    return () => clearInterval(interval);
-  }, [isPaused, slides.length]);
+    }, AUTO_CHANGE_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [slides.length, currentSlide]);
 
   const slide = slides[currentSlide] || slides[0];
 
   return (
     <section
       className="relative min-h-[440px] sm:min-h-[480px] lg:min-h-[520px] text-white overflow-hidden border-b border-[#D4AF37]/40 shadow-xl flex flex-col justify-between"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
     >
-      {/* 🌟 1. Full-Bleed Cinematic Background Image */}
+      {/* 🌟 1. Full-Bleed Cinematic Background Image with continuous cross-fade */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#040E0B]">
         {slides.map((s, idx) => (
           <div
@@ -298,21 +297,31 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
 
       </div>
 
-      {/* 👑 3. Slide Navigation Controls & Indicators */}
+      {/* 👑 3. Slide Navigation Controls & Frequency Progress Indicators */}
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-4 flex items-center justify-between w-full">
-        {/* Slide Indicators */}
-        <div className="flex items-center gap-1.5">
+        {/* Animated Slide Progress Indicators */}
+        <div className="flex items-center gap-2">
           {slides.map((s, idx) => (
             <button
               key={s.id}
               onClick={() => setCurrentSlide(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+              className={`relative h-1.5 rounded-full overflow-hidden transition-all duration-300 cursor-pointer ${
                 currentSlide === idx
-                  ? "w-6 bg-gradient-to-r from-[#F3E5AB] to-[#D4AF37] shadow-xs"
-                  : "w-2 bg-white/30 hover:bg-white/60"
+                  ? "w-10 bg-white/20"
+                  : "w-3 bg-white/30 hover:bg-white/60"
               }`}
               aria-label={`Go to slide ${idx + 1}`}
-            />
+            >
+              {currentSlide === idx && (
+                <div
+                  key={`progress-${currentSlide}-${idx}`}
+                  className="absolute inset-0 bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7]"
+                  style={{
+                    animation: `carouselProgress ${AUTO_CHANGE_INTERVAL_MS}ms linear forwards`,
+                  }}
+                />
+              )}
+            </button>
           ))}
         </div>
 
