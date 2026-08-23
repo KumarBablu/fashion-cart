@@ -38,18 +38,23 @@ export default function HeaderClient({
   const [hasActiveSession, setHasActiveSession] = useState<boolean>(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const active = sessionStorage.getItem("fc_user_session") === "active";
-      if (isLoggedIn && active) {
-        setHasActiveSession(true);
-      } else if (isLoggedIn && !active) {
-        // Window was closed and reopened: purge stale session quietly
-        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    fetch("/api/auth/me")
+      .then((r) => {
+        if (r.ok) {
+          setHasActiveSession(true);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("fc_user_session", "active");
+          }
+        } else {
+          setHasActiveSession(false);
+          if (typeof window !== "undefined") {
+            sessionStorage.removeItem("fc_user_session");
+          }
+        }
+      })
+      .catch(() => {
         setHasActiveSession(false);
-      } else {
-        setHasActiveSession(false);
-      }
-    }
+      });
   }, [isLoggedIn]);
 
   function getActiveStore(): "garments" | "jewellery" {

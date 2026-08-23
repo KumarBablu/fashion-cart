@@ -27,6 +27,7 @@ export default function CartDrawer({
 }) {
   const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isAuthRequired, setIsAuthRequired] = useState(false);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [store, setStore] = useState<"garments" | "jewellery">("garments");
@@ -51,21 +52,25 @@ export default function CartDrawer({
   }
 
   async function loadCart() {
-    if (!isLoggedIn) {
-      setItems([]);
-      return;
-    }
     setLoading(true);
     const active = getActiveStore();
     setStore(active);
     try {
       const res = await fetch(`/api/cart?store=${active}`);
+      if (res.status === 401) {
+        setIsAuthRequired(true);
+        setItems([]);
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setItems(data?.cart?.items || []);
+        setIsAuthRequired(false);
+      } else {
+        setIsAuthRequired(true);
       }
     } catch {
-      // ignore
+      setIsAuthRequired(true);
     } finally {
       setLoading(false);
     }
@@ -129,6 +134,7 @@ export default function CartDrawer({
 
   if (!mounted) return null;
 
+  const showAuthPrompt = isAuthRequired || !isLoggedIn;
   const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce((sum, i) => sum + Number(i.variant.price) * i.quantity, 0);
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
@@ -179,9 +185,11 @@ export default function CartDrawer({
                   <h2 className="font-display text-lg font-black text-[#141416] tracking-tight leading-none">
                     Shopping Bag
                   </h2>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-[#141416] text-[#FFFFFF] font-mono">
-                    {totalQuantity} {totalQuantity === 1 ? "item" : "items"}
-                  </span>
+                  {!showAuthPrompt && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-[#141416] text-[#FFFFFF] font-mono">
+                      {totalQuantity} {totalQuantity === 1 ? "item" : "items"}
+                    </span>
+                  )}
                 </div>
                 <p className="text-[10px] text-[#C59B27] uppercase tracking-[0.2em] font-bold mt-0.5">
                   Fashion Cart Premium Outlet
@@ -202,31 +210,33 @@ export default function CartDrawer({
             </button>
           </div>
 
-          {/* 2. Free Express Delivery Progress Ribbon */}
-          <div className="px-5 py-3 border-b border-[#E7DFD5] bg-[#F4EFEA]/80 shrink-0">
-            <div className="flex items-center justify-between text-xs mb-1.5">
-              {remainingForFreeShipping === 0 ? (
-                <span className="font-bold text-[#2E7D32] flex items-center gap-1.5">
-                  <span>✨</span> Free Express Delivery Unlocked!
-                </span>
-              ) : (
-                <span className="text-[#4B4E56] font-medium">
-                  Add <strong className="text-[#141416] font-bold">{formatINR(remainingForFreeShipping)}</strong> more for <strong className="text-[#C59B27] font-bold">FREE Express Delivery</strong>
-                </span>
-              )}
-              <span className="text-[10px] font-mono font-bold text-[#787C87]">{progressPercent}%</span>
+          {/* 2. Free Express Delivery Progress Ribbon (Only when logged in and has items) */}
+          {!showAuthPrompt && items.length > 0 && (
+            <div className="px-5 py-3 border-b border-[#E7DFD5] bg-[#F4EFEA]/80 shrink-0">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                {remainingForFreeShipping === 0 ? (
+                  <span className="font-bold text-[#2E7D32] flex items-center gap-1.5">
+                    <span>✨</span> Free Express Delivery Unlocked!
+                  </span>
+                ) : (
+                  <span className="text-[#4B4E56] font-medium">
+                    Add <strong className="text-[#141416] font-bold">{formatINR(remainingForFreeShipping)}</strong> more for <strong className="text-[#C59B27] font-bold">FREE Express Delivery</strong>
+                  </span>
+                )}
+                <span className="text-[10px] font-mono font-bold text-[#787C87]">{progressPercent}%</span>
+              </div>
+              <div className="w-full h-2 bg-[#E7DFD5] rounded-full overflow-hidden p-0.5">
+                <div
+                  className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-[#C59B27] via-[#E0BF48] to-[#2E7D32]"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full h-2 bg-[#E7DFD5] rounded-full overflow-hidden p-0.5">
-              <div
-                className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-[#C59B27] via-[#E0BF48] to-[#2E7D32]"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
+          )}
 
           {/* 3. Main Scrollable Items List */}
           <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4">
-            {!isLoggedIn ? (
+            {showAuthPrompt ? (
               <div className="text-center py-12 px-3 space-y-6 animate-luxury-up">
                 {/* Luxury Icon with Gold Halo */}
                 <div className="relative w-18 h-18 rounded-3xl bg-gradient-to-tr from-[#141416] via-[#2A2B30] to-[#141416] border border-[#C59B27]/50 flex items-center justify-center mx-auto shadow-xl">
