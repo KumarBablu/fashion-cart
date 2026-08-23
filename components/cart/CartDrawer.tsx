@@ -24,7 +24,6 @@ export default function CartDrawer({
   onCartChange?: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -36,14 +35,6 @@ export default function CartDrawer({
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  function handleSmoothClose() {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsClosing(false);
-      onClose();
-    }, 260);
-  }
 
   function getActiveStore(): "garments" | "jewellery" {
     if (typeof window === "undefined") return "garments";
@@ -76,7 +67,6 @@ export default function CartDrawer({
 
   useEffect(() => {
     if (isOpen) {
-      setIsClosing(false);
       loadCart();
       document.body.style.overflow = "hidden";
     } else {
@@ -86,6 +76,16 @@ export default function CartDrawer({
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   async function updateQty(id: string, quantity: number) {
     setUpdatingId(id);
@@ -121,7 +121,7 @@ export default function CartDrawer({
     }
   }
 
-  if ((!isOpen && !isClosing) || !mounted) return null;
+  if (!mounted) return null;
 
   const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce((sum, i) => sum + Number(i.variant.price) * i.quantity, 0);
@@ -130,27 +130,30 @@ export default function CartDrawer({
 
   const drawerContent = (
     <div
-      className="fixed inset-0 z-[999999] overflow-hidden"
+      className={`fixed inset-0 z-[999999] overflow-hidden transition-all duration-300 ${
+        isOpen ? "visible pointer-events-auto" : "invisible pointer-events-none"
+      }`}
       role="dialog"
       aria-modal="true"
       aria-label="Shopping Bag & Cart Review"
     >
       {/* Premium Backdrop Overlay with Smooth Fade */}
       <div
-        onClick={handleSmoothClose}
+        onClick={onClose}
         className={`fixed inset-0 bg-[#141416]/70 backdrop-blur-md transition-opacity duration-300 ease-out cursor-pointer ${
-          isClosing ? "opacity-0" : "opacity-100"
+          isOpen ? "opacity-100" : "opacity-0"
         }`}
       />
 
       {/* Slide-in Full-Height Luxury Drawer Panel */}
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10">
         <aside
-          className={`w-screen max-w-md h-full bg-[#FAF8F5] text-[#141416] shadow-2xl border-l border-[#C59B27]/40 flex flex-col justify-between transition-transform duration-300 ease-out ${
-            isClosing ? "translate-x-full" : "translate-x-0"
+          className={`w-screen max-w-md h-full bg-[#FAF8F5] text-[#141416] shadow-2xl border-l border-[#C59B27]/40 flex flex-col justify-between transform transition-transform duration-350 ease-out ${
+            isOpen ? "translate-x-0" : "translate-x-full"
           }`}
           style={{
-            boxShadow: "-8px 0 32px rgba(20, 20, 22, 0.25), -2px 0 12px rgba(197, 155, 39, 0.15)",
+            boxShadow: "-8px 0 36px rgba(20, 20, 22, 0.28), -2px 0 14px rgba(197, 155, 39, 0.2)",
+            transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
           {/* 1. Header Section */}
@@ -181,7 +184,7 @@ export default function CartDrawer({
             </div>
 
             <button
-              onClick={handleSmoothClose}
+              onClick={onClose}
               className="w-9 h-9 rounded-full border border-[#E7DFD5] bg-[#FAF8F5] hover:bg-[#E7DFD5] text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
               aria-label="Close cart review"
               title="Close (Esc)"
@@ -234,7 +237,7 @@ export default function CartDrawer({
                   </p>
                 </div>
                 <button
-                  onClick={handleSmoothClose}
+                  onClick={onClose}
                   className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider bg-[#141416] text-white hover:bg-[#25262B] transition-all shadow-md cursor-pointer active:scale-95"
                 >
                   Explore Signature Collection →
@@ -288,7 +291,7 @@ export default function CartDrawer({
                           </Link>
                           <button
                             onClick={() => remove(item.id)}
-                            className="text-[#787C87] hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            className="text-[#787C87] hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer active:scale-90"
                             title="Remove from bag"
                             aria-label="Remove item"
                           >
@@ -315,7 +318,7 @@ export default function CartDrawer({
                           <div className="inline-flex items-center border border-[#E7DFD5] rounded-xl bg-white shadow-2xs overflow-hidden">
                             <button
                               onClick={() => updateQty(item.id, Math.max(1, item.quantity - 1))}
-                              className="px-2.5 py-1 text-xs font-bold text-[#141416] hover:bg-[#F4EFEA] transition-colors cursor-pointer"
+                              className="px-2.5 py-1 text-xs font-bold text-[#141416] hover:bg-[#F4EFEA] transition-colors cursor-pointer active:scale-90"
                               aria-label="Decrease quantity"
                               disabled={item.quantity <= 1}
                             >
@@ -326,7 +329,7 @@ export default function CartDrawer({
                             </span>
                             <button
                               onClick={() => updateQty(item.id, Math.min(item.variant.stockQuantity || 99, item.quantity + 1))}
-                              className="px-2.5 py-1 text-xs font-bold text-[#141416] hover:bg-[#F4EFEA] transition-colors cursor-pointer"
+                              className="px-2.5 py-1 text-xs font-bold text-[#141416] hover:bg-[#F4EFEA] transition-colors cursor-pointer active:scale-90"
                               aria-label="Increase quantity"
                               disabled={item.quantity >= (item.variant.stockQuantity || 99)}
                             >
@@ -395,7 +398,7 @@ export default function CartDrawer({
               <div className="space-y-2 pt-1">
                 <Link
                   href={`/checkout${store === "jewellery" ? "?store=jewellery" : ""}`}
-                  onClick={handleSmoothClose}
+                  onClick={onClose}
                   className={`w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block text-white hover:brightness-105 transition-all shadow-md cursor-pointer active:scale-95 luxury-card-hover ${
                     store === "jewellery"
                       ? "gold-jewellery-btn"
@@ -406,7 +409,7 @@ export default function CartDrawer({
                 </Link>
                 <Link
                   href={`/cart${store === "jewellery" ? "?store=jewellery" : ""}`}
-                  onClick={handleSmoothClose}
+                  onClick={onClose}
                   className="w-full py-2.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block border border-[#E7DFD5] bg-[#FAF8F5] text-[#141416] hover:bg-[#E7DFD5] transition-all cursor-pointer active:scale-95"
                 >
                   View Full Cart &amp; Apply Coupons
