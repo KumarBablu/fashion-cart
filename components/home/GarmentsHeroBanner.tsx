@@ -164,11 +164,9 @@ export default function GarmentsHeroBanner({
     return () => clearInterval(timer);
   }, [slides.length, currentSlide]);
 
-  const slide = slides[currentSlide] || slides[0];
-
   return (
-    <section className="relative min-h-[340px] sm:min-h-[380px] lg:min-h-[420px] text-white overflow-hidden border-b border-[#E7DFD5] shadow-lg flex flex-col justify-between">
-      {/* 🌟 1. Full-Bleed Background Image */}
+    <section className="relative min-h-[360px] sm:min-h-[400px] lg:min-h-[440px] text-white overflow-hidden border-b border-[#E7DFD5] shadow-lg flex flex-col justify-between">
+      {/* 🌟 1. Full-Bleed Background Image with continuous cross-fade */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#141416]">
         {slides.map((s, idx) => (
           <div
@@ -194,123 +192,149 @@ export default function GarmentsHeroBanner({
         <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/70 via-transparent to-[#141416]/20" />
       </div>
 
-      {/* 👑 2. Compact & Standard Luxury Foreground Overlay */}
+      {/* 👑 2. Foreground Content Overlay with Silky Smooth Cross-Fade */}
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-9 w-full grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
         
-        {/* Left Headline & Masterpiece Summary */}
-        <div key={`left-${slide.id}`} className="lg:col-span-7 space-y-3 sm:space-y-3.5 animate-fade-in-up">
-          
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-[#C59B27]/40 bg-[#141416]/75 text-[9px] font-bold uppercase tracking-widest text-[#F3E5AB] backdrop-blur-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] animate-pulse" />
-            <span>{slide.tag}</span>
-          </div>
-
-          <div className="space-y-1.5">
-            <h1 className="font-display text-xl sm:text-2xl lg:text-[1.85rem] font-semibold tracking-tight text-white leading-tight [text-shadow:_0_2px_10px_rgba(0,0,0,0.8)]">
-              {slide.title}{" "}
-              <span className="italic font-serif font-normal text-[#C59B27]">
-                {slide.titleHighlight}
-              </span>
-            </h1>
-            <p className="text-xs sm:text-[13px] text-[#FAF8F5]/85 max-w-lg leading-relaxed line-clamp-2 [text-shadow:_0_1px_6px_rgba(0,0,0,0.7)]">
-              {slide.description}
-            </p>
-          </div>
-
-          {/* Compact Category Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-            {slide.pills.map((pill) => (
-              <Link
-                key={pill.name}
-                href={pill.href}
-                prefetch={true}
-                className="px-2.5 py-0.5 rounded-full border border-[#C59B27]/40 bg-[#141416]/65 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] text-[10px] font-semibold transition-all duration-150 shadow-2xs active:scale-95 cursor-pointer"
+        {/* Left Headline & Masterpiece Summary (Stacked Layer Cross-Fade Animation) */}
+        <div className="lg:col-span-7 relative min-h-[220px] sm:min-h-[230px] flex items-center">
+          {slides.map((s, idx) => {
+            const isActive = currentSlide === idx;
+            return (
+              <div
+                key={s.id}
+                className={`w-full space-y-3 sm:space-y-3.5 transition-all duration-700 ease-in-out ${
+                  isActive
+                    ? "opacity-100 translate-y-0 relative z-10"
+                    : "opacity-0 translate-y-2 pointer-events-none absolute inset-0 z-0"
+                }`}
               >
-                {pill.name}
-              </Link>
-            ))}
-          </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-[#C59B27]/40 bg-[#141416]/75 text-[9px] font-bold uppercase tracking-widest text-[#F3E5AB] backdrop-blur-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] animate-pulse" />
+                  <span>{s.tag}</span>
+                </div>
 
-          {/* Compact Standard Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5 pt-1">
-            <Link
-              href={slide.primaryBtnHref}
-              prefetch={true}
-              className="px-5 py-2 rounded-full font-bold text-[11px] uppercase tracking-wider bg-[#C59B27] text-[#141416] hover:bg-[#F3E5AB] active:scale-95 transition-all duration-150 shadow-[0_2px_14px_rgba(197,155,39,0.35)] cursor-pointer"
-            >
-              Explore Collection →
-            </Link>
-            <WhatsAppConciergeButton
-              className="px-3.5 py-2 rounded-full text-[11px] font-medium text-[#F3E5AB] border border-[#C59B27]/40 bg-[#141416]/75 backdrop-blur-md hover:bg-[#25262B] active:scale-95 transition-all duration-150 flex items-center gap-1.5 cursor-pointer"
-              customMessage={slide.conciergeMsg}
-            >
-              <span>💬</span> WhatsApp Stylist
-            </WhatsAppConciergeButton>
-          </div>
+                <div className="space-y-1.5">
+                  <h1 className="font-display text-xl sm:text-2xl lg:text-[1.85rem] font-semibold tracking-tight text-white leading-tight [text-shadow:_0_2px_10px_rgba(0,0,0,0.8)]">
+                    {s.title}{" "}
+                    <span className="italic font-serif font-normal text-[#C59B27]">
+                      {s.titleHighlight}
+                    </span>
+                  </h1>
+                  <p className="text-xs sm:text-[13px] text-[#FAF8F5]/85 max-w-lg leading-relaxed line-clamp-2 [text-shadow:_0_1px_6px_rgba(0,0,0,0.7)]">
+                    {s.description}
+                  </p>
+                </div>
 
-          {/* Minimalist Single-Line Luxury Trust Strip */}
-          <div className="pt-2.5 border-t border-white/15 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#FAF8F5]/90 font-medium">
-            <span className="flex items-center gap-1">✦ 100% Pure Silks</span>
-            <span className="flex items-center gap-1">✦ Free Express Dispatch (24h)</span>
-            <span className="flex items-center gap-1">✦ Certified Quality</span>
-            <span className="flex items-center gap-1 text-white font-semibold">✦ 4.9 ★ (3,500+ Reviews)</span>
-          </div>
+                {/* Compact Category Pills */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  {s.pills.map((pill) => (
+                    <Link
+                      key={pill.name}
+                      href={pill.href}
+                      prefetch={true}
+                      className="px-2.5 py-0.5 rounded-full border border-[#C59B27]/40 bg-[#141416]/65 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] text-[10px] font-semibold transition-all duration-200 shadow-2xs active:scale-95 cursor-pointer"
+                    >
+                      {pill.name}
+                    </Link>
+                  ))}
+                </div>
 
+                {/* Compact Standard Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                  <Link
+                    href={s.primaryBtnHref}
+                    prefetch={true}
+                    className="px-5 py-2 rounded-full font-bold text-[11px] uppercase tracking-wider bg-[#C59B27] text-[#141416] hover:bg-[#F3E5AB] active:scale-95 transition-all duration-200 shadow-[0_2px_14px_rgba(197,155,39,0.35)] cursor-pointer"
+                  >
+                    Explore Collection →
+                  </Link>
+                  <WhatsAppConciergeButton
+                    className="px-3.5 py-2 rounded-full text-[11px] font-medium text-[#F3E5AB] border border-[#C59B27]/40 bg-[#141416]/75 backdrop-blur-md hover:bg-[#25262B] active:scale-95 transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
+                    customMessage={s.conciergeMsg}
+                  >
+                    <span>💬</span> WhatsApp Stylist
+                  </WhatsAppConciergeButton>
+                </div>
+
+                {/* Minimalist Single-Line Luxury Trust Strip */}
+                <div className="pt-2.5 border-t border-white/15 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#FAF8F5]/90 font-medium">
+                  <span className="flex items-center gap-1">✦ 100% Pure Silks</span>
+                  <span className="flex items-center gap-1">✦ Free Express Dispatch (24h)</span>
+                  <span className="flex items-center gap-1">✦ Certified Quality</span>
+                  <span className="flex items-center gap-1 text-white font-semibold">✦ 4.9 ★ (3,500+ Reviews)</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Right Glassmorphic Floating Masterpiece Spotlight Card */}
-        <div key={`right-${slide.id}`} className="lg:col-span-5 relative animate-fade-in hidden lg:block">
-          <Link
-            href={slide.masterpieceHref}
-            prefetch={true}
-            className="block max-w-[290px] ml-auto relative rounded-xl overflow-hidden backdrop-blur-md bg-[#141416]/55 border border-[#C59B27]/40 shadow-[0_12px_32px_rgba(0,0,0,0.5)] p-3.5 space-y-2.5 hover:border-[#C59B27] transition-all group cursor-pointer"
-          >
-            {/* Top Badge */}
-            <div className="flex items-center justify-between">
-              <span className="px-2 py-0.5 rounded-full bg-[#C59B27]/20 border border-[#C59B27]/40 text-[8.5px] font-bold uppercase tracking-wider text-[#F3E5AB]">
-                {slide.lookbookBadge}
-              </span>
-              <span className="text-[9px] font-mono font-semibold text-[#F3E5AB]/80">
-                ✦ {currentSlide + 1} / {slides.length}
-              </span>
-            </div>
+        {/* Right Glassmorphic Floating Masterpiece Spotlight Card (Borderless & Slightly Larger Size) */}
+        <div className="lg:col-span-5 relative hidden lg:flex justify-end items-center min-h-[260px]">
+          {slides.map((s, idx) => {
+            const isActive = currentSlide === idx;
+            return (
+              <div
+                key={s.id}
+                className={`w-full max-w-[340px] transition-all duration-700 ease-in-out ${
+                  isActive
+                    ? "opacity-100 scale-100 relative z-10 pointer-events-auto"
+                    : "opacity-0 scale-95 pointer-events-none absolute right-0 z-0"
+                }`}
+              >
+                <Link
+                  href={s.masterpieceHref}
+                  prefetch={true}
+                  className="block w-full rounded-2xl overflow-hidden backdrop-blur-xl bg-[#141416]/50 border-0 shadow-[0_20px_50px_rgba(0,0,0,0.65)] p-4 space-y-3 transition-all group cursor-pointer"
+                >
+                  {/* Top Badge */}
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#C59B27]/20 text-[9px] font-bold uppercase tracking-wider text-[#F3E5AB]">
+                      {s.lookbookBadge}
+                    </span>
+                    <span className="text-[9.5px] font-mono font-semibold text-[#F3E5AB]/80">
+                      ✦ {idx + 1} / {slides.length}
+                    </span>
+                  </div>
 
-            {/* Thumbnail Preview */}
-            <div className="relative h-36 w-full rounded-lg overflow-hidden border border-[#C59B27]/25 shadow-inner">
-              <Image
-                src={slide.bgImageUrl}
-                alt={slide.masterpieceName}
-                fill
-                sizes="300px"
-                className="object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/80 via-transparent to-transparent" />
-            </div>
+                  {/* Thumbnail Preview (Clean Borderless Image) */}
+                  <div className="relative h-44 sm:h-48 w-full rounded-xl overflow-hidden shadow-md">
+                    <Image
+                      src={s.bgImageUrl}
+                      alt={s.masterpieceName}
+                      fill
+                      sizes="340px"
+                      className="object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/85 via-transparent to-transparent" />
+                  </div>
 
-            {/* Details */}
-            <div className="space-y-0.5 text-white">
-              <span className="text-[8.5px] font-bold uppercase tracking-widest text-[#C59B27] block">
-                {slide.masterpieceCollection}
-              </span>
-              <h3 className="font-display text-xs sm:text-[13px] font-semibold text-[#F3E5AB] group-hover:text-white transition-colors line-clamp-1">
-                {slide.masterpieceName}
-              </h3>
-              <p className="text-[10px] text-[#FAF8F5]/80 leading-snug line-clamp-1">
-                {slide.masterpieceDescription}
-              </p>
-            </div>
+                  {/* Details */}
+                  <div className="space-y-0.5 text-white">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-[#C59B27] block">
+                      {s.masterpieceCollection}
+                    </span>
+                    <h3 className="font-display text-sm font-semibold text-[#F3E5AB] group-hover:text-white transition-colors line-clamp-1">
+                      {s.masterpieceName}
+                    </h3>
+                    <p className="text-[11px] text-[#FAF8F5]/80 leading-snug line-clamp-1">
+                      {s.masterpieceDescription}
+                    </p>
+                  </div>
 
-            {/* Price & Action */}
-            <div className="pt-1.5 flex items-center justify-between border-t border-white/15">
-              <span className="font-mono font-bold text-[11px] text-[#F3E5AB]">
-                {slide.masterpiecePrice}
-              </span>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold text-[#141416] bg-[#C59B27] group-hover:bg-[#F3E5AB] transition-colors shadow-2xs">
-                View →
-              </span>
-            </div>
+                  {/* Price & Action */}
+                  <div className="pt-2 flex items-center justify-between border-t border-white/10">
+                    <span className="font-mono font-bold text-xs text-[#F3E5AB]">
+                      {s.masterpiecePrice}
+                    </span>
+                    <span className="px-3 py-1.5 rounded-full text-[10.5px] font-semibold text-[#141416] bg-[#C59B27] group-hover:bg-[#F3E5AB] transition-colors shadow-2xs">
+                      View Details →
+                    </span>
+                  </div>
 
-          </Link>
+                </Link>
+              </div>
+            );
+          })}
         </div>
 
       </div>
@@ -349,7 +373,7 @@ export default function GarmentsHeroBanner({
             onClick={() =>
               setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
             }
-            className="w-7 h-7 rounded-full border border-white/20 bg-[#141416]/75 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 text-[10px]"
+            className="w-7 h-7 rounded-full bg-[#141416]/75 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 text-[10px]"
             aria-label="Previous Slide"
           >
             ←
@@ -358,7 +382,7 @@ export default function GarmentsHeroBanner({
             onClick={() =>
               setCurrentSlide((prev) => (prev + 1) % slides.length)
             }
-            className="w-7 h-7 rounded-full border border-white/20 bg-[#141416]/75 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 text-[10px]"
+            className="w-7 h-7 rounded-full bg-[#141416]/75 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 text-[10px]"
             aria-label="Next Slide"
           >
             →
