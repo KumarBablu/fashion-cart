@@ -309,8 +309,8 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
 
       </div>
 
-      {/* 👑 3. Slide Navigation Controls & Frequency Progress Indicators (Grouped, Non-Overlapping) */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-5 flex items-center justify-between w-full">
+      {/* 👑 3. Slide Navigation Controls & Frequency Progress Indicators */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-5 flex items-center justify-start w-full">
         {/* Left Side: Animated Progress Bar + Mini Arrow Buttons Grouped Cleanly */}
         <div className="flex items-center gap-3.5">
           {/* Progress Indicators */}
@@ -362,11 +362,6 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
               </svg>
             </button>
           </div>
-        </div>
-
-        {/* Right side has zero elements, guaranteeing NO overlap with the floating WhatsApp button! */}
-        <div className="hidden sm:block text-[11px] text-white/40 tracking-widest uppercase font-mono pr-16">
-          Imperial Haute Atelier
         </div>
       </div>
 
