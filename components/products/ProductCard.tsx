@@ -7,6 +7,7 @@ import { formatINR, discountPercent } from "@/lib/format";
 import QuickViewModal from "./QuickViewModal";
 import { useToast } from "@/components/providers/ToastProvider";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
+import { ScrollBounceCard } from "@/components/ui/ScrollReveal";
 
 type CardProduct = {
   id?: string;
@@ -103,129 +104,120 @@ export default function ProductCard({ product }: { product: CardProduct }) {
 
   return (
     <>
-      <div
-        className="group relative flex flex-col rounded-3xl bg-white border border-[#E7DFD5] p-3 transition-all duration-300 hover:border-[#C59B27] hover:shadow-2xl hover:-translate-y-1.5 luxury-card-hover"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {/* Product Image Canvas */}
-        <Link
-          href={`/products/${product.slug}`}
-          prefetch={true}
-          className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-[#F4EFEA] block"
+      <ScrollBounceCard className="w-full h-full">
+        <div
+          className="group relative flex flex-col rounded-3xl bg-white border border-[#E7DFD5] p-3 transition-all duration-300 hover:border-[#C59B27] hover:shadow-2xl hover:-translate-y-1.5 luxury-card-hover w-full h-full"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
-          <Image
-            src={isHovered && secondaryImage ? secondaryImage : primaryImage}
-            alt={product.name}
-            fill
-            unoptimized
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
-          />
-
-          {/* Top Badges */}
-          <div className="absolute left-2.5 top-2.5 flex flex-col gap-1 z-10">
-            {pct && (
-              <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-[#C59B27] text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
-                {pct}% OFF
-              </span>
-            )}
-            {isNew && !pct && (
-              <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase bg-[#141416] text-white shadow-sm">
-                New
-              </span>
-            )}
-            {!inStock && (
-              <span className="rounded-lg bg-[#141416]/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
-                Sold Out
-              </span>
-            )}
-          </div>
-
-          {/* Wishlist Heart Top Right */}
-          <button
-            onClick={handleWishlistToggle}
-            className={`absolute right-2.5 top-2.5 z-10 h-8 w-8 rounded-full border flex items-center justify-center backdrop-blur-md transition-all shadow-xs cursor-pointer active:scale-90 ${
-              isWishlisted
-                ? "bg-rose-50 border-rose-300 text-rose-600 scale-110"
-                : "bg-white/90 border-[#E7DFD5] text-[#787C87] hover:text-rose-600 hover:scale-110"
-            }`}
-            aria-label="Save to Wishlist"
+          {/* Product Image Canvas */}
+          <Link
+            href={`/products/${product.slug}`}
+            prefetch={true}
+            className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-[#F4EFEA] block"
           >
-            {isWishlisted ? "❤️" : "♡"}
-          </button>
+            <Image
+              src={isHovered && secondaryImage ? secondaryImage : primaryImage}
+              alt={product.name}
+              fill
+              unoptimized
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+            />
 
-          {/* Hover Size Strip Overlay */}
-          {sizes.length > 0 && (
-            <div className="absolute inset-x-2.5 bottom-14 hidden sm:flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
-              <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7DFD5] shadow-md">
-                <span className="text-[9px] font-bold uppercase text-[#787C87] mr-0.5">Sizes:</span>
-                {sizes.slice(0, 5).map((s) => (
-                  <span key={s} className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#F4EFEA] text-[#141416]">
-                    {s}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Quick View Button Hover Overlay */}
-          <div className="absolute inset-x-2.5 bottom-2.5 hidden sm:flex opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-3 group-hover:translate-y-0 z-10">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setQuickViewOpen(true);
-              }}
-              className="w-full py-2.5 rounded-xl text-[11px] font-extrabold uppercase tracking-wider shadow-lg bg-[#C59B27] hover:bg-[#B0881E] text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 cursor-pointer"
-            >
-              <span>👁️</span> Quick View
-            </button>
-          </div>
-        </Link>
-
-        {/* Product Details */}
-        <div className="mt-3 flex flex-1 flex-col justify-between space-y-2">
-          <div>
-            <div className="flex items-center justify-between gap-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#C59B27] truncate">
-                {product.brand || "Fashion Cart Atelier"}
-              </p>
-              <span className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#F4EFEA] text-[#141416] border border-[#C59B27]/30">
-                <span className="text-[#C59B27]">✦</span> Assured
-              </span>
-            </div>
-
-            <Link href={`/products/${product.slug}`} prefetch={true} className="block mt-0.5">
-              <h3
-                className="text-xs sm:text-sm font-semibold text-[#141416] truncate hover:text-[#C59B27] transition-colors"
-                title={product.name}
-              >
-                {product.name}
-              </h3>
-            </Link>
-
-            {/* Ratings pill */}
-            <div className="mt-1 flex items-center gap-1.5 text-xs">
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.2 rounded-md text-[10px] font-extrabold bg-[#FBF4E2] text-[#8E6C0C] border border-[#C59B27]/40">
-                <span>{ratingVal}</span>
-                <span>★</span>
-              </span>
-              <span className="text-[11px] text-[#787C87] font-medium">({reviewsCount})</span>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-[#E7DFD5] flex flex-col gap-1">
-            <div className="flex items-baseline justify-between">
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-sm sm:text-base font-extrabold text-[#141416]">
-                  {formatINR(price)}
+            {/* Top Badges */}
+            <div className="absolute left-2.5 top-2.5 flex flex-col gap-1 z-10">
+              {pct && (
+                <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-[#C59B27] text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
+                  {pct}% OFF
                 </span>
-                {compareAt && compareAt > price && (
-                  <span className="text-xs text-[#787C87] line-through">{formatINR(compareAt)}</span>
-                )}
+              )}
+              {isNew && !pct && (
+                <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase bg-[#141416] text-white shadow-sm">
+                  New
+                </span>
+              )}
+              {!inStock && (
+                <span className="rounded-lg bg-[#141416]/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+                  Sold Out
+                </span>
+              )}
+            </div>
+
+            {/* Wishlist Heart Top Right */}
+            <button
+              onClick={handleWishlistToggle}
+              className={`absolute right-2.5 top-2.5 z-10 h-8 w-8 rounded-full border flex items-center justify-center backdrop-blur-md transition-all shadow-xs cursor-pointer active:scale-90 ${
+                isWishlisted
+                  ? "bg-rose-50 border-rose-300 text-rose-600 scale-110"
+                  : "bg-white/90 border-[#E7DFD5] text-[#787C87] hover:text-rose-600 hover:scale-110"
+              }`}
+              aria-label="Save to Wishlist"
+            >
+              {isWishlisted ? "❤️" : "♡"}
+            </button>
+
+            {/* Hover Size Strip Overlay */}
+            {sizes.length > 0 && (
+              <div className="absolute inset-x-2.5 bottom-14 hidden sm:flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7DFD5] shadow-md">
+                  <span className="text-[9px] font-bold uppercase text-[#787C87] mr-0.5">Sizes:</span>
+                  {sizes.slice(0, 5).map((s) => (
+                    <span key={s} className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#F4EFEA] text-[#141416]">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quick View Button Hover Overlay */}
+            <div className="absolute inset-x-2.5 bottom-2.5 hidden sm:flex opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-3 group-hover:translate-y-0 z-10">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setQuickViewOpen(true);
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7DFD5] hover:bg-[#141416] hover:text-white hover:border-[#141416] text-[#141416] font-bold text-[11px] uppercase tracking-wider shadow-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <span>👁️</span>
+                <span>Quick View</span>
+              </button>
+            </div>
+          </Link>
+
+          {/* Product Details Info Area */}
+          <div className="mt-3 flex flex-1 flex-col justify-between space-y-2.5 px-1">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between gap-1 text-[11px] text-[#787C87]">
+                <span className="font-semibold uppercase tracking-wider truncate text-[#C59B27]">
+                  {product.brand || "Atelier Edition"}
+                </span>
+                <span className="flex items-center gap-0.5 shrink-0 font-bold text-[#141416]">
+                  <span className="text-[#C59B27]">★</span>
+                  <span>{ratingVal}</span>
+                  <span className="text-[9px] text-[#787C87]">({reviewsCount})</span>
+                </span>
               </div>
 
+              <Link href={`/products/${product.slug}`} prefetch={true} className="block group/title">
+                <h3 className="font-display text-sm font-bold text-[#141416] group-hover/title:text-[#C59B27] transition-colors line-clamp-2 leading-snug">
+                  {product.name}
+                </h3>
+              </Link>
+            </div>
+
+            {/* Pricing Section */}
+            <div className="pt-1.5 border-t border-[#E7DFD5]/60 flex flex-wrap items-baseline gap-2">
+              <span className="font-mono text-base font-black text-[#141416]">
+                {formatINR(price)}
+              </span>
+              {compareAt && compareAt > price && (
+                <span className="font-mono text-xs text-[#787C87] line-through">
+                  {formatINR(compareAt)}
+                </span>
+              )}
               {pct && (
                 <span className="text-[11px] font-extrabold text-[#C59B27]">
                   {pct}% off
@@ -239,7 +231,7 @@ export default function ProductCard({ product }: { product: CardProduct }) {
             </div>
           </div>
         </div>
-      </div>
+      </ScrollBounceCard>
 
       {/* Quick View Modal */}
       <QuickViewModal
