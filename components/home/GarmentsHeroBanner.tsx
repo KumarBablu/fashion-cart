@@ -28,22 +28,22 @@ const DEFAULT_GARMENT_SLIDES: GarmentBannerSlide[] = [
   {
     id: "silk-sarees",
     tag: "🥻 Heritage Atelier 2026",
-    title: "Timeless Elegance &",
+    title: "Timeless Elegance in",
     titleHighlight: "Pure Mulberry Silks.",
     description:
-      "Handwoven Varanasi zari weaves, micro-velvet kurtis, and royal Anarkalis tailored for grand celebrations.",
+      "Handwoven Varanasi zari weaves, micro-velvet kurtis, and royal Anarkalis masterfully tailored for grand celebrations and discerning distinction.",
     pills: [
       { name: "🥻 Silk Sarees", href: "/shop?category=women-kurtis" },
       { name: "👗 Velvet Kurtis", href: "/shop?category=women-kurtis" },
       { name: "👑 Anarkali Sets", href: "/shop?category=women-dresses" },
       { name: "✨ Bridal Dupattas", href: "/shop?category=women-kurtis" },
     ],
-    primaryBtnText: "Explore Silks →",
+    primaryBtnText: "Explore Signature Silks →",
     primaryBtnHref: "/shop",
     conciergeMsg: "Hi Fashion Cart Stylist, I would like Mulberry Silk & Couture recommendations!",
     bgImageUrl: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1920&auto=format&fit=crop&q=90",
     lookbookBadge: "🥻 Heritage Handloom",
-    masterpieceCollection: "✦ Festive Edit 2026",
+    masterpieceCollection: "✦ Haute Festive 2026",
     masterpieceName: "Varanasi Mulberry Silk Zari Saree",
     masterpieceDescription:
       "Pure Katan silk with gold electroplated zari motifs & unstitched blouse piece.",
@@ -54,9 +54,9 @@ const DEFAULT_GARMENT_SLIDES: GarmentBannerSlide[] = [
     id: "mens-linen",
     tag: "👔 Sartorial Linen Atelier",
     title: "Sartorial Poise &",
-    titleHighlight: "100% French Linen.",
+    titleHighlight: "100% Certified French Linen.",
     description:
-      "Mandarin collar shirts, structured linen trousers, and bandhgala jackets engineered with breathable luxury.",
+      "Crisp mandarin collar shirts, structured linen trousers, and bandhgala jackets engineered with breathable luxury for effortless sophistication.",
     pills: [
       { name: "👔 Linen Shirts", href: "/shop?category=men-shirts" },
       { name: "🧥 Bandhgalas", href: "/shop?category=men-shirts" },
@@ -68,10 +68,10 @@ const DEFAULT_GARMENT_SLIDES: GarmentBannerSlide[] = [
     conciergeMsg: "Hi Fashion Cart Stylist, I am exploring tailored French Linen menswear!",
     bgImageUrl: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=1920&auto=format&fit=crop&q=90",
     lookbookBadge: "👔 Sartorial Linen",
-    masterpieceCollection: "🌟 Menswear Edit 2026",
-    masterpieceName: "Bespoke Normandy Linen Shirt",
+    masterpieceCollection: "🌟 Menswear Atelier 2026",
+    masterpieceName: "Bespoke Normandy French Linen Shirt",
     masterpieceDescription:
-      "100% organic flax with mother-of-pearl buttons & mandarin collar.",
+      "100% organic European flax, mother-of-pearl buttons with relaxed mandarin collar.",
     masterpiecePrice: "₹199 · In Stock",
     masterpieceHref: "/shop?category=men-shirts",
   },
@@ -79,9 +79,9 @@ const DEFAULT_GARMENT_SLIDES: GarmentBannerSlide[] = [
     id: "contemporary-chic",
     tag: "✨ Contemporary Chic",
     title: "Modern Poise &",
-    titleHighlight: "Liquid Satin Gowns.",
+    titleHighlight: "Liquid Satin Cocktail Edits.",
     description:
-      "Fluid drape evening gowns, tailored linen blazers, and monochromatic co-ord sets sculpted for contemporary soirees.",
+      "Fluid drape evening gowns, tailored linen blazers, and monochromatic co-ord sets sculpted for cocktail galas and contemporary soirees.",
     pills: [
       { name: "👗 Satin Gowns", href: "/shop?category=women-dresses" },
       { name: "🧥 Linen Blazers", href: "/shop?category=women-dresses" },
@@ -93,10 +93,10 @@ const DEFAULT_GARMENT_SLIDES: GarmentBannerSlide[] = [
     conciergeMsg: "Hi Fashion Cart Stylist, please share contemporary gown & co-ord options!",
     bgImageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1920&auto=format&fit=crop&q=90",
     lookbookBadge: "✨ Liquid Satin",
-    masterpieceCollection: "💫 Gala Edit 2026",
+    masterpieceCollection: "💫 Gala Edition 2026",
     masterpieceName: "Liquid Satin Draped Cocktail Gown",
     masterpieceDescription:
-      "High-lustre satin with asymmetrical cowl neckline & concealed zip.",
+      "High-lustre satin with asymmetrical cowl neckline and concealed zip closure.",
     masterpiecePrice: "₹199 · In Stock",
     masterpieceHref: "/shop?category=women-dresses",
   },
@@ -121,7 +121,7 @@ export default function GarmentsHeroBanner({
       ? heroBanners.map((b, idx) => ({
           id: b.id || `admin-hero-${idx}`,
           tag: b.badge || "✦ Exclusive Collection",
-          title: b.title || "Timeless Elegance &",
+          title: b.title || "Timeless Elegance in",
           titleHighlight: "Signature Atelier Cuts.",
           description: b.subtitle || "Discover masterfully tailored garments crafted with certified pure fabrics.",
           pills: DEFAULT_GARMENT_SLIDES[idx % DEFAULT_GARMENT_SLIDES.length].pills,
@@ -165,7 +165,7 @@ export default function GarmentsHeroBanner({
   }, [slides.length, currentSlide]);
 
   return (
-    <section className="relative min-h-[360px] sm:min-h-[400px] lg:min-h-[440px] text-white overflow-hidden border-b border-[#E7DFD5] shadow-lg flex flex-col justify-between">
+    <section className="relative min-h-[500px] sm:min-h-[560px] lg:min-h-[620px] text-white overflow-hidden border-b border-[#E7DFD5] shadow-2xl flex flex-col justify-between">
       {/* 🌟 1. Full-Bleed Background Image with continuous cross-fade */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#141416]">
         {slides.map((s, idx) => (
@@ -193,63 +193,63 @@ export default function GarmentsHeroBanner({
       </div>
 
       {/* 👑 2. Foreground Content Overlay with Silky Smooth Cross-Fade */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-9 w-full grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         
         {/* Left Headline & Masterpiece Summary (Stacked Layer Cross-Fade Animation) */}
-        <div className="lg:col-span-7 relative min-h-[220px] sm:min-h-[230px] flex items-center">
+        <div className="lg:col-span-7 relative min-h-[280px] sm:min-h-[300px] flex items-center">
           {slides.map((s, idx) => {
             const isActive = currentSlide === idx;
             return (
               <div
                 key={s.id}
-                className={`w-full space-y-3 sm:space-y-3.5 transition-all duration-700 ease-in-out ${
+                className={`w-full space-y-4 sm:space-y-5 transition-all duration-700 ease-in-out ${
                   isActive
                     ? "opacity-100 translate-y-0 relative z-10"
                     : "opacity-0 translate-y-2 pointer-events-none absolute inset-0 z-0"
                 }`}
               >
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-[#C59B27]/40 bg-[#141416]/75 text-[9px] font-bold uppercase tracking-widest text-[#F3E5AB] backdrop-blur-md">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#C59B27] animate-pulse" />
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#C59B27]/50 bg-[#141416]/80 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-[#F3E5AB] backdrop-blur-md shadow-md">
+                  <span className="w-2 h-2 rounded-full bg-[#C59B27] animate-pulse" />
                   <span>{s.tag}</span>
                 </div>
 
-                <div className="space-y-1.5">
-                  <h1 className="font-display text-xl sm:text-2xl lg:text-[1.85rem] font-semibold tracking-tight text-white leading-tight [text-shadow:_0_2px_10px_rgba(0,0,0,0.8)]">
-                    {s.title}{" "}
-                    <span className="italic font-serif font-normal text-[#C59B27]">
+                <div className="space-y-2 sm:space-y-2.5">
+                  <h1 className="font-display text-2xl sm:text-4xl lg:text-[3.15rem] font-bold tracking-tight text-white leading-[1.1] [text-shadow:_0_2px_14px_rgba(0,0,0,0.85)]">
+                    {s.title} <br />
+                    <span className="italic font-serif font-normal text-[#C59B27] [text-shadow:_0_2px_14px_rgba(0,0,0,0.7)]">
                       {s.titleHighlight}
                     </span>
                   </h1>
-                  <p className="text-xs sm:text-[13px] text-[#FAF8F5]/85 max-w-lg leading-relaxed line-clamp-2 [text-shadow:_0_1px_6px_rgba(0,0,0,0.7)]">
+                  <p className="text-xs sm:text-sm lg:text-base text-[#FAF8F5]/90 max-w-xl leading-relaxed [text-shadow:_0_1px_8px_rgba(0,0,0,0.75)]">
                     {s.description}
                   </p>
                 </div>
 
-                {/* Compact Category Pills */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                {/* Quick Category Pills with Glow */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
                   {s.pills.map((pill) => (
                     <Link
                       key={pill.name}
                       href={pill.href}
                       prefetch={true}
-                      className="px-2.5 py-0.5 rounded-full border border-[#C59B27]/40 bg-[#141416]/65 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] text-[10px] font-semibold transition-all duration-200 shadow-2xs active:scale-95 cursor-pointer"
+                      className="px-3 py-1 rounded-full border border-[#C59B27]/50 bg-[#141416]/70 backdrop-blur-md hover:bg-[#C59B27] text-[#FAF8F5] hover:text-[#141416] text-xs font-semibold transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
                     >
                       {pill.name}
                     </Link>
                   ))}
                 </div>
 
-                {/* Compact Standard Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                {/* Action Buttons */}
+                <div className="flex flex-wrap items-center gap-3 pt-2">
                   <Link
                     href={s.primaryBtnHref}
                     prefetch={true}
-                    className="px-5 py-2 rounded-full font-bold text-[11px] uppercase tracking-wider bg-[#C59B27] text-[#141416] hover:bg-[#F3E5AB] active:scale-95 transition-all duration-200 shadow-[0_2px_14px_rgba(197,155,39,0.35)] cursor-pointer"
+                    className="px-7 py-3 rounded-full font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-[#141416] hover:bg-[#F3E5AB] active:scale-95 transition-all duration-200 shadow-[0_4px_24px_rgba(197,155,39,0.45)] cursor-pointer"
                   >
                     Explore Collection →
                   </Link>
                   <WhatsAppConciergeButton
-                    className="px-3.5 py-2 rounded-full text-[11px] font-medium text-[#F3E5AB] border border-[#C59B27]/40 bg-[#141416]/75 backdrop-blur-md hover:bg-[#25262B] active:scale-95 transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
+                    className="px-5 py-3 rounded-full text-xs font-semibold text-[#F3E5AB] border border-[#C59B27]/50 bg-[#141416]/80 backdrop-blur-md hover:bg-[#25262B] active:scale-95 transition-all duration-200 shadow-md flex items-center gap-2 cursor-pointer"
                     customMessage={s.conciergeMsg}
                   >
                     <span>💬</span> WhatsApp Stylist
@@ -257,25 +257,25 @@ export default function GarmentsHeroBanner({
                 </div>
 
                 {/* Minimalist Single-Line Luxury Trust Strip */}
-                <div className="pt-2.5 border-t border-white/15 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#FAF8F5]/90 font-medium">
-                  <span className="flex items-center gap-1">✦ 100% Pure Silks</span>
-                  <span className="flex items-center gap-1">✦ Free Express Dispatch (24h)</span>
-                  <span className="flex items-center gap-1">✦ Certified Quality</span>
-                  <span className="flex items-center gap-1 text-white font-semibold">✦ 4.9 ★ (3,500+ Reviews)</span>
+                <div className="pt-3 border-t border-white/15 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-[#FAF8F5]/95 font-medium">
+                  <span className="flex items-center gap-1.5">✦ 100% Pure Silks</span>
+                  <span className="flex items-center gap-1.5">✦ Free Express Dispatch (24h)</span>
+                  <span className="flex items-center gap-1.5">✦ Certified Quality</span>
+                  <span className="flex items-center gap-1.5 text-white font-semibold">✦ 4.9 ★ (3,500+ Reviews)</span>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Right Glassmorphic Floating Masterpiece Spotlight Card (Borderless & Slightly Larger Size) */}
-        <div className="lg:col-span-5 relative hidden lg:flex justify-end items-center min-h-[260px]">
+        {/* Right Glassmorphic Floating Masterpiece Spotlight Card (Lavish, Borderless & Prominently Sized) */}
+        <div className="lg:col-span-5 relative hidden lg:flex justify-end items-center min-h-[340px]">
           {slides.map((s, idx) => {
             const isActive = currentSlide === idx;
             return (
               <div
                 key={s.id}
-                className={`w-full max-w-[340px] transition-all duration-700 ease-in-out ${
+                className={`w-full max-w-[390px] transition-all duration-700 ease-in-out ${
                   isActive
                     ? "opacity-100 scale-100 relative z-10 pointer-events-auto"
                     : "opacity-0 scale-95 pointer-events-none absolute right-0 z-0"
@@ -284,49 +284,49 @@ export default function GarmentsHeroBanner({
                 <Link
                   href={s.masterpieceHref}
                   prefetch={true}
-                  className="block w-full rounded-2xl overflow-hidden backdrop-blur-xl bg-[#141416]/50 border-0 shadow-[0_20px_50px_rgba(0,0,0,0.65)] p-4 space-y-3 transition-all group cursor-pointer"
+                  className="block w-full rounded-3xl overflow-hidden backdrop-blur-xl bg-[#141416]/55 border-0 shadow-[0_25px_60px_rgba(0,0,0,0.7)] p-5 space-y-3.5 transition-all group cursor-pointer"
                 >
                   {/* Top Badge */}
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#C59B27]/20 text-[9px] font-bold uppercase tracking-wider text-[#F3E5AB]">
+                    <span className="px-3 py-1 rounded-full bg-[#C59B27]/20 text-[10px] font-bold uppercase tracking-wider text-[#F3E5AB]">
                       {s.lookbookBadge}
                     </span>
-                    <span className="text-[9.5px] font-mono font-semibold text-[#F3E5AB]/80">
+                    <span className="text-[11px] font-mono font-semibold text-[#F3E5AB]/85">
                       ✦ {idx + 1} / {slides.length}
                     </span>
                   </div>
 
-                  {/* Thumbnail Preview (Clean Borderless Image) */}
-                  <div className="relative h-44 sm:h-48 w-full rounded-xl overflow-hidden shadow-md">
+                  {/* Thumbnail Preview (Prominent, High-Res Borderless Viewport) */}
+                  <div className="relative h-52 sm:h-56 w-full rounded-2xl overflow-hidden shadow-lg">
                     <Image
                       src={s.bgImageUrl}
                       alt={s.masterpieceName}
                       fill
-                      sizes="340px"
+                      sizes="420px"
                       className="object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/85 via-transparent to-transparent" />
                   </div>
 
                   {/* Details */}
-                  <div className="space-y-0.5 text-white">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-[#C59B27] block">
+                  <div className="space-y-1 text-white">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#C59B27] block">
                       {s.masterpieceCollection}
                     </span>
-                    <h3 className="font-display text-sm font-semibold text-[#F3E5AB] group-hover:text-white transition-colors line-clamp-1">
+                    <h3 className="font-display text-base sm:text-lg font-semibold text-[#F3E5AB] group-hover:text-white transition-colors line-clamp-1">
                       {s.masterpieceName}
                     </h3>
-                    <p className="text-[11px] text-[#FAF8F5]/80 leading-snug line-clamp-1">
+                    <p className="text-xs text-[#FAF8F5]/85 leading-snug line-clamp-2">
                       {s.masterpieceDescription}
                     </p>
                   </div>
 
                   {/* Price & Action */}
-                  <div className="pt-2 flex items-center justify-between border-t border-white/10">
-                    <span className="font-mono font-bold text-xs text-[#F3E5AB]">
+                  <div className="pt-2.5 flex items-center justify-between border-t border-white/10">
+                    <span className="font-mono font-bold text-sm text-[#F3E5AB]">
                       {s.masterpiecePrice}
                     </span>
-                    <span className="px-3 py-1.5 rounded-full text-[10.5px] font-semibold text-[#141416] bg-[#C59B27] group-hover:bg-[#F3E5AB] transition-colors shadow-2xs">
+                    <span className="px-4 py-2 rounded-full text-xs font-bold text-[#141416] bg-[#C59B27] group-hover:bg-[#F3E5AB] transition-colors shadow-sm">
                       View Details →
                     </span>
                   </div>
@@ -340,19 +340,19 @@ export default function GarmentsHeroBanner({
       </div>
 
       {/* 👑 3. Slide Navigation Controls & Frequency Progress Indicators (Grouped, Non-Overlapping) */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-3.5 flex items-center justify-between w-full">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-5 flex items-center justify-between w-full">
         {/* Left Side: Animated Progress Bar + Mini Arrow Buttons Grouped Cleanly */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3.5">
           {/* Progress Indicators */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {slides.map((s, idx) => (
               <button
                 key={s.id}
                 onClick={() => setCurrentSlide(idx)}
-                className={`relative h-1 rounded-full overflow-hidden transition-all duration-300 cursor-pointer ${
+                className={`relative h-1.5 rounded-full overflow-hidden transition-all duration-300 cursor-pointer ${
                   currentSlide === idx
-                    ? "w-8 bg-white/20"
-                    : "w-2.5 bg-white/30 hover:bg-white/60"
+                    ? "w-10 bg-white/20"
+                    : "w-3 bg-white/30 hover:bg-white/60"
                 }`}
                 aria-label={`Go to slide ${idx + 1}`}
               >
@@ -370,24 +370,24 @@ export default function GarmentsHeroBanner({
           </div>
 
           {/* Mini Chevron Controls (Safely positioned away from bottom-right floating widget) */}
-          <div className="flex items-center gap-1 pl-1">
+          <div className="flex items-center gap-1.5 pl-1">
             <button
               onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
-              className="w-5.5 h-5.5 rounded-full bg-black/40 backdrop-blur-md hover:bg-[#C59B27] text-white/80 hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
+              className="w-6 h-6 rounded-full bg-black/40 backdrop-blur-md hover:bg-[#C59B27] text-white/80 hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
               aria-label="Previous Slide"
               title="Previous Slide"
             >
-              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
               onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-              className="w-5.5 h-5.5 rounded-full bg-black/40 backdrop-blur-md hover:bg-[#C59B27] text-white/80 hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
+              className="w-6 h-6 rounded-full bg-black/40 backdrop-blur-md hover:bg-[#C59B27] text-white/80 hover:text-[#141416] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
               aria-label="Next Slide"
               title="Next Slide"
             >
-              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -395,8 +395,8 @@ export default function GarmentsHeroBanner({
         </div>
 
         {/* Right side has zero elements, guaranteeing NO overlap with the floating WhatsApp button! */}
-        <div className="hidden sm:block text-[10px] text-white/40 tracking-wider uppercase font-mono pr-14">
-          Atelier Collection
+        <div className="hidden sm:block text-[11px] text-white/40 tracking-widest uppercase font-mono pr-16">
+          Fashion Cart Atelier
         </div>
       </div>
 
