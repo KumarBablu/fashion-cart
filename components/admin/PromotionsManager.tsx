@@ -61,6 +61,10 @@ export default function PromotionsManager() {
   const [activeTab, setActiveTab] = useState<"OCCASIONS" | "HERO" | "PROMOTIONS">("OCCASIONS");
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const [promotions, setPromotions] = useState<PromotionItem[]>([]);
+  const [storeProducts, setStoreProducts] = useState<any[]>([]);
+  const [showProductPicker, setShowProductPicker] = useState(false);
+  const [showPromoProductPicker, setShowPromoProductPicker] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   const { success, error } = useToast();
@@ -69,9 +73,10 @@ export default function PromotionsManager() {
     const currentStore = storeToLoad || activeStore;
     setLoading(true);
     try {
-      const [bRes, pRes] = await Promise.all([
+      const [bRes, pRes, prodRes] = await Promise.all([
         fetch(`/api/admin/banners?store=${currentStore}`),
         fetch(`/api/admin/promotions?store=${currentStore}`),
+        fetch(`/api/products?store=${currentStore}&pageSize=100`),
       ]);
 
       if (bRes.ok) {
@@ -81,6 +86,10 @@ export default function PromotionsManager() {
       if (pRes.ok) {
         const pData = await pRes.json();
         setPromotions(pData.promotions || []);
+      }
+      if (prodRes.ok) {
+        const prodData = await prodRes.json();
+        setStoreProducts(prodData.products || []);
       }
     } catch {
       error("Network error while loading marketing settings");
@@ -146,7 +155,25 @@ export default function PromotionsManager() {
   const occasions = banners.filter((b) => b.position === "OCCASION");
   const heroes = banners.filter((b) => b.position === "HERO");
 
-  // ===================== BANNER ACTIONS (Occasion & Hero) =====================
+  function handleSelectProductForBanner(product: any) {
+    const price = product.variants?.[0]?.price
+      ? `₹${Number(product.variants[0].price).toLocaleString("en-IN")}`
+      : "";
+    const img = product.images?.[0]?.imageUrl || "";
+    const storeQuery = activeStore === "jewellery" ? "?store=jewellery" : "";
+
+    setBannerForm((prev) => ({
+      ...prev,
+      title: product.name,
+      subtitle: product.description ? product.description.slice(0, 120) : `${price} · In Stock · Certified Luxury`,
+      badge: product.category?.name || "👑 Featured Drop",
+      imageUrl: img,
+      linkUrl: `/products/${product.slug}${storeQuery}`,
+      buttonText: activeStore === "jewellery" ? "View Featured Jewellery →" : "Explore Collection →",
+    }));
+    setShowProductPicker(false);
+    success("Product Selected 🎉", `Auto-filled banner with "${product.name}"`);
+  }
 
   function openCreateBannerModal(position: "OCCASION" | "HERO") {
     setEditingBanner(null);
@@ -243,6 +270,26 @@ export default function PromotionsManager() {
   }
 
   // ===================== PROMOTION ACTIONS =====================
+
+  function handleSelectProductForPromo(product: any) {
+    const price = product.variants?.[0]?.price
+      ? `₹${Number(product.variants[0].price).toLocaleString("en-IN")}`
+      : "";
+    const img = product.images?.[0]?.imageUrl || "";
+    const storeQuery = activeStore === "jewellery" ? "?store=jewellery" : "";
+
+    setPromoForm((prev) => ({
+      ...prev,
+      title: product.name,
+      subtitle: product.description ? product.description.slice(0, 120) : `${price} · In Stock · Certified Luxury`,
+      badgeText: product.category?.name || "SPECIAL OFFER",
+      imageUrl: img,
+      ctaUrl: `/products/${product.slug}${storeQuery}`,
+      ctaText: "Shop Product →",
+    }));
+    setShowPromoProductPicker(false);
+    success("Product Selected 🎉", `Auto-filled promotion with "${product.name}"`);
+  }
 
   function openCreatePromoModal() {
     setEditingPromo(null);
@@ -832,6 +879,106 @@ export default function PromotionsManager() {
             </div>
 
             <form onSubmit={handleSaveBanner} className="space-y-4">
+              {/* 🛍️ 1-Click Product Picker */}
+              <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 space-y-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🛍️</span>
+                    <div>
+                      <p className="text-xs font-bold text-amber-950">Choose from Store Product Listings</p>
+                      <p className="text-[10.5px] text-amber-800/80">1-click auto-fill title, image, price & direct link</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowProductPicker(!showProductPicker)}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#C59B27] hover:bg-[#B0881E] text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <span>{showProductPicker ? "▲ Hide Products" : "▼ Pick Product (" + storeProducts.length + ")"}</span>
+                  </button>
+                </div>
+
+                {/* Collapsible Product Selector Grid */}
+                {showProductPicker && (
+                  <div className="pt-2 border-t border-amber-200/60 space-y-2 animate-in fade-in duration-200">
+                    <input
+                      type="text"
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      placeholder={`Search ${activeStore === "jewellery" ? "Jewellery" : "Garments"} catalog by name or category...`}
+                      className="w-full px-3 py-1.5 rounded-lg border border-amber-300 bg-white text-xs placeholder:text-slate-400 focus:outline-hidden focus:border-[#C59B27]"
+                    />
+
+                    <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                      {storeProducts
+                        .filter((p) => {
+                          if (!productSearch) return true;
+                          const q = productSearch.toLowerCase();
+                          return (
+                            p.name?.toLowerCase().includes(q) ||
+                            p.category?.name?.toLowerCase().includes(q)
+                          );
+                        })
+                        .slice(0, 30)
+                        .map((prod) => {
+                          const img = prod.images?.[0]?.imageUrl || "";
+                          const price = prod.variants?.[0]?.price
+                            ? `₹${Number(prod.variants[0].price).toLocaleString("en-IN")}`
+                            : "";
+
+                          return (
+                            <button
+                              key={prod.id}
+                              type="button"
+                              onClick={() => handleSelectProductForBanner(prod)}
+                              className="w-full p-2 rounded-xl bg-white hover:bg-amber-100/60 border border-amber-200/60 transition-all flex items-center gap-3 text-left group cursor-pointer shadow-2xs"
+                            >
+                              <div className="relative h-10 w-10 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                                {img ? (
+                                  <Image
+                                    src={img}
+                                    alt={prod.name}
+                                    fill
+                                    sizes="40px"
+                                    unoptimized
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="h-full w-full flex items-center justify-center text-[9px] text-slate-400">
+                                    No img
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  {prod.category?.name && (
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#C59B27]">
+                                      {prod.category.name}
+                                    </span>
+                                  )}
+                                  {price && (
+                                    <span className="text-[10px] font-mono font-bold text-slate-700">
+                                      · {price}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs font-semibold text-slate-900 truncate group-hover:text-[#C59B27]">
+                                  {prod.name}
+                                </p>
+                              </div>
+
+                              <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-100 group-hover:bg-[#C59B27] group-hover:text-white text-amber-900 shrink-0 transition-colors">
+                                Select →
+                              </span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Type / Position Indicator */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
@@ -1068,6 +1215,106 @@ export default function PromotionsManager() {
             </div>
 
             <form onSubmit={handleSavePromo} className="space-y-4">
+              {/* 🛍️ 1-Click Product Picker for Promos */}
+              <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 space-y-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🛍️</span>
+                    <div>
+                      <p className="text-xs font-bold text-amber-950">Choose from Store Product Listings</p>
+                      <p className="text-[10.5px] text-amber-800/80">Auto-fill offer title, photo & direct link</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPromoProductPicker(!showPromoProductPicker)}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#C59B27] hover:bg-[#B0881E] text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <span>{showPromoProductPicker ? "▲ Hide Products" : "▼ Pick Product (" + storeProducts.length + ")"}</span>
+                  </button>
+                </div>
+
+                {/* Collapsible Product Selector Grid */}
+                {showPromoProductPicker && (
+                  <div className="pt-2 border-t border-amber-200/60 space-y-2 animate-in fade-in duration-200">
+                    <input
+                      type="text"
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      placeholder={`Search ${activeStore === "jewellery" ? "Jewellery" : "Garments"} catalog by name or category...`}
+                      className="w-full px-3 py-1.5 rounded-lg border border-amber-300 bg-white text-xs placeholder:text-slate-400 focus:outline-hidden focus:border-[#C59B27]"
+                    />
+
+                    <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                      {storeProducts
+                        .filter((p) => {
+                          if (!productSearch) return true;
+                          const q = productSearch.toLowerCase();
+                          return (
+                            p.name?.toLowerCase().includes(q) ||
+                            p.category?.name?.toLowerCase().includes(q)
+                          );
+                        })
+                        .slice(0, 30)
+                        .map((prod) => {
+                          const img = prod.images?.[0]?.imageUrl || "";
+                          const price = prod.variants?.[0]?.price
+                            ? `₹${Number(prod.variants[0].price).toLocaleString("en-IN")}`
+                            : "";
+
+                          return (
+                            <button
+                              key={prod.id}
+                              type="button"
+                              onClick={() => handleSelectProductForPromo(prod)}
+                              className="w-full p-2 rounded-xl bg-white hover:bg-amber-100/60 border border-amber-200/60 transition-all flex items-center gap-3 text-left group cursor-pointer shadow-2xs"
+                            >
+                              <div className="relative h-10 w-10 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                                {img ? (
+                                  <Image
+                                    src={img}
+                                    alt={prod.name}
+                                    fill
+                                    sizes="40px"
+                                    unoptimized
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="h-full w-full flex items-center justify-center text-[9px] text-slate-400">
+                                    No img
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  {prod.category?.name && (
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#C59B27]">
+                                      {prod.category.name}
+                                    </span>
+                                  )}
+                                  {price && (
+                                    <span className="text-[10px] font-mono font-bold text-slate-700">
+                                      · {price}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs font-semibold text-slate-900 truncate group-hover:text-[#C59B27]">
+                                  {prod.name}
+                                </p>
+                              </div>
+
+                              <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-100 group-hover:bg-[#C59B27] group-hover:text-white text-amber-900 shrink-0 transition-colors">
+                                Select →
+                              </span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
