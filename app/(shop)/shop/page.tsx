@@ -6,8 +6,9 @@ import ProductCard from "@/components/products/ProductCard";
 import ShopFilters from "@/components/products/ShopFilters";
 import Link from "next/link";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import ScrollReveal from "@/components/ui/ScrollReveal";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const PAGE_SIZE = 24;
 
@@ -244,11 +245,13 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <ScrollReveal direction="up" distance={24}>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </ScrollReveal>
           )}
 
           {/* Pagination */}
@@ -263,7 +266,8 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
                   <Link
                     key={p}
                     href={`/shop?${qs}`}
-                    className={`w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all ${
+                    prefetch={true}
+                    className={`w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
                       isActive
                         ? "text-white shadow-sm"
                         : "border text-dim hover:border-black"

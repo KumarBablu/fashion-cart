@@ -186,7 +186,8 @@ export default function HeaderClient({
         {/* Wishlist Button */}
         <Link
           href="/account/wishlist"
-          className="relative w-10 h-10 rounded-full border border-[#E7DFD5] bg-white hover:border-[#C59B27] text-[#141416] hover:text-[#C59B27] active:scale-95 transition-all shadow-2xs flex items-center justify-center group shrink-0"
+          prefetch={true}
+          className="relative w-10 h-10 rounded-full border border-[#E7DFD5] bg-white hover:border-[#C59B27] text-[#141416] hover:text-[#C59B27] active:scale-95 transition-all shadow-2xs flex items-center justify-center group shrink-0 cursor-pointer"
           aria-label="View Wishlist"
         >
           <WishlistIcon />
@@ -215,7 +216,8 @@ export default function HeaderClient({
         {hasActiveSession ? (
           <Link
             href="/account"
-            className="flex items-center gap-1.5 h-10 px-2.5 sm:px-3.5 rounded-full border border-[#C59B27]/40 bg-[#FBF4E2] hover:bg-[#F4EFEA] text-[#141416] active:scale-95 transition-all shadow-2xs group shrink-0"
+            prefetch={true}
+            className="flex items-center gap-1.5 h-10 px-2.5 sm:px-3.5 rounded-full border border-[#C59B27]/40 bg-[#FBF4E2] hover:bg-[#F4EFEA] text-[#141416] active:scale-95 transition-all shadow-2xs group shrink-0 cursor-pointer"
             title="My Account & Orders"
           >
             <span className="w-5 h-5 rounded-full bg-[#141416] text-[#C59B27] flex items-center justify-center text-[10px] font-bold font-mono">
@@ -228,7 +230,8 @@ export default function HeaderClient({
         ) : (
           <Link
             href="/login"
-            className="hidden sm:flex items-center gap-1.5 h-10 px-3.5 rounded-full border border-[#E7DFD5] bg-white hover:border-[#C59B27] hover:text-[#C59B27] text-[#141416] font-bold text-xs active:scale-95 transition-all shadow-2xs shrink-0"
+            prefetch={true}
+            className="hidden sm:flex items-center gap-1.5 h-10 px-3.5 rounded-full border border-[#E7DFD5] bg-white hover:border-[#C59B27] hover:text-[#C59B27] text-[#141416] font-bold text-xs active:scale-95 transition-all shadow-2xs shrink-0 cursor-pointer"
           >
             <span>Sign In</span>
           </Link>

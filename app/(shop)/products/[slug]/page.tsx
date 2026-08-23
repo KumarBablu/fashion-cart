@@ -7,8 +7,9 @@ import { getCurrentAdmin } from "@/lib/auth/session";
 import ProductCard from "@/components/products/ProductCard";
 import ProductDetailClient from "@/components/products/ProductDetailClient";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import ScrollReveal from "@/components/ui/ScrollReveal";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -187,26 +188,29 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
       {/* Related Products Carousel / Grid */}
       {relatedSerialized.length > 0 && (
-        <section className="pt-10 border-t" style={{ borderColor: "var(--fc-border)" }}>
-          <div className="flex items-baseline justify-between mb-6">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-accent">✦ Complete the Look</span>
-              <h2 className="font-display text-2xl font-bold mt-1">You May Also Admire</h2>
+        <ScrollReveal direction="up" distance={28}>
+          <section className="pt-10 border-t" style={{ borderColor: "var(--fc-border)" }}>
+            <div className="flex items-baseline justify-between mb-6">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-accent">✦ Complete the Look</span>
+                <h2 className="font-display text-2xl font-bold mt-1">You May Also Admire</h2>
+              </div>
+              <Link
+                href={directCategory ? `/shop?store=${activeStore}&category=${directCategory.slug}` : `/shop?store=${activeStore}`}
+                prefetch={true}
+                className="text-xs font-bold hover:underline"
+                style={{ color: "var(--fc-accent)" }}
+              >
+                Explore Collection →
+              </Link>
             </div>
-            <Link
-              href={directCategory ? `/shop?store=${activeStore}&category=${directCategory.slug}` : `/shop?store=${activeStore}`}
-              className="text-xs font-bold hover:underline"
-              style={{ color: "var(--fc-accent)" }}
-            >
-              Explore Collection →
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
-            {relatedSerialized.map((p) => (
-              <ProductCard key={p.id} product={p as any} />
-            ))}
-          </div>
-        </section>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
+              {relatedSerialized.map((p) => (
+                <ProductCard key={p.id} product={p as any} />
+              ))}
+            </div>
+          </section>
+        </ScrollReveal>
       )}
     </div>
   );

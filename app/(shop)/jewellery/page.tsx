@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { getStoresControl } from "@/lib/stores";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
+import ScrollReveal from "@/components/ui/ScrollReveal";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = {
   title: "Imperial Fine & Artificial Jewellery | Fashion Cart",
@@ -288,220 +289,231 @@ export default async function JewelleryHomePage() {
       </section>
 
       {/* 2. Top Jewellery Categories Row */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FDF4D8] text-[#8C6B08] text-[11px] font-bold uppercase tracking-[0.2em] border border-[#D4AF37]/30">
-            👑 Curated Collections
-          </span>
-          <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#061A14] tracking-tight">
-            Explore Jewellery Categories
-          </h2>
-          <p className="text-xs sm:text-sm text-[#787C87]">
-            From magnificent bridal sets to lightweight daily essentials.
-          </p>
-        </div>
+      <ScrollReveal direction="up" distance={28}>
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FDF4D8] text-[#8C6B08] text-[11px] font-bold uppercase tracking-[0.2em] border border-[#D4AF37]/30">
+              👑 Curated Collections
+            </span>
+            <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#061A14] tracking-tight">
+              Explore Jewellery Categories
+            </h2>
+            <p className="text-xs sm:text-sm text-[#787C87]">
+              From magnificent bridal sets to lightweight daily essentials.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-          {displayCategories.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/shop?store=jewellery&category=${cat.slug}`}
-              prefetch={true}
-              className="group relative rounded-3xl overflow-hidden bg-white border border-[#E7DFD5] hover:border-[#C59B27] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center p-4 space-y-3 cursor-pointer active:scale-95"
-            >
-              <div className="relative h-32 sm:h-36 w-full rounded-2xl overflow-hidden bg-[#FAF8F5] border border-[#E7DFD5]/50">
-                <Image
-                  src={cat.imageUrl || "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop&q=80"}
-                  alt={cat.name}
-                  fill
-                  sizes="(max-width: 640px) 50vw, 20vw"
-                  className="object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-              <div>
-                <h3 className="font-display text-sm font-bold text-[#061A14] group-hover:text-[#C59B27] transition-colors leading-snug">
-                  {cat.name}
-                </h3>
-                <span className="text-[10px] font-bold text-[#787C87] group-hover:text-[#C59B27] uppercase tracking-wider block mt-0.5">
-                  Explore →
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+            {displayCategories.map((cat, idx) => (
+              <Link
+                key={cat.id}
+                href={`/shop?store=jewellery&category=${cat.slug}`}
+                prefetch={true}
+                className="group relative rounded-3xl overflow-hidden bg-white border border-[#E7DFD5] hover:border-[#C59B27] shadow-sm hover:shadow-2xl transition-all duration-400 flex flex-col items-center text-center p-4 space-y-3 cursor-pointer active:scale-95 luxury-card-hover animate-luxury-up"
+                style={{ animationDelay: `${idx * 40}ms` }}
+              >
+                <div className="relative h-32 sm:h-36 w-full rounded-2xl overflow-hidden bg-[#FAF8F5] border border-[#E7DFD5]/50">
+                  <Image
+                    src={cat.imageUrl || "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop&q=80"}
+                    alt={cat.name}
+                    fill
+                    sizes="(max-width: 640px) 50vw, 20vw"
+                    className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <div>
+                  <h3 className="font-display text-sm font-bold text-[#061A14] group-hover:text-[#C59B27] transition-colors leading-snug">
+                    {cat.name}
+                  </h3>
+                  <span className="text-[10px] font-bold text-[#787C87] group-hover:text-[#C59B27] uppercase tracking-wider block mt-0.5">
+                    Explore →
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </ScrollReveal>
 
       {/* 3. Occasion & Style Showcases */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] text-[#C59B27] text-[11px] font-bold uppercase tracking-[0.2em] border border-[#E7DFD5]">
-            ✨ Bespoke Edits
-          </span>
-          <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#061A14] tracking-tight">
-            Curated by Occasion
-          </h2>
-          <p className="text-xs sm:text-sm text-[#787C87]">
-            Find the quintessential ornaments for weddings, festivals, and cocktail soirees.
-          </p>
-        </div>
+      <ScrollReveal direction="up" distance={28}>
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] text-[#C59B27] text-[11px] font-bold uppercase tracking-[0.2em] border border-[#E7DFD5]">
+              ✨ Bespoke Edits
+            </span>
+            <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#061A14] tracking-tight">
+              Curated by Occasion
+            </h2>
+            <p className="text-xs sm:text-sm text-[#787C87]">
+              Find the quintessential ornaments for weddings, festivals, and cocktail soirees.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {jewelleryOccasions.map((occ) => (
-            <div
-              key={occ.title}
-              className="group relative rounded-3xl overflow-hidden bg-white border border-[#E7DFD5] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
-            >
-              <div className="relative h-60 w-full overflow-hidden bg-[#FAF8F5]">
-                <Image
-                  src={occ.image}
-                  alt={occ.title}
-                  fill
-                  sizes="(max-width: 640px) 100vw, 25vw"
-                  className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
-                />
-                <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-[#061A14]/85 text-[#F3E5AB] text-[10px] font-extrabold uppercase tracking-widest backdrop-blur-xs border border-[#D4AF37]/40 shadow-xs">
-                  {occ.tag}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {jewelleryOccasions.map((occ, idx) => (
+              <div
+                key={occ.title}
+                className="group relative rounded-3xl overflow-hidden bg-white border border-[#E7DFD5] shadow-sm hover:shadow-2xl transition-all duration-400 flex flex-col luxury-card-hover animate-luxury-up"
+                style={{ animationDelay: `${idx * 50}ms` }}
+              >
+                <div className="relative h-60 w-full overflow-hidden bg-[#FAF8F5]">
+                  <Image
+                    src={occ.image}
+                    alt={occ.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, 25vw"
+                    className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-[#061A14]/85 text-[#F3E5AB] text-[10px] font-extrabold uppercase tracking-widest backdrop-blur-xs border border-[#D4AF37]/40 shadow-xs">
+                    {occ.tag}
+                  </div>
+                </div>
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="font-display text-base font-bold text-[#061A14] leading-snug">
+                      {occ.title}
+                    </h3>
+                    <p className="text-xs text-[#787C87] leading-relaxed">
+                      {occ.subtitle}
+                    </p>
+                  </div>
+                  <Link
+                    href={occ.href}
+                    prefetch={true}
+                    className="w-full py-2.5 rounded-full text-center text-xs font-extrabold uppercase tracking-wider text-[#061A14] bg-[#FAF8F5] group-hover:bg-[#C59B27] group-hover:text-white border border-[#E7DFD5] group-hover:border-[#C59B27] transition-all duration-200 active:scale-95 cursor-pointer block"
+                  >
+                    {occ.buttonText} →
+                  </Link>
                 </div>
               </div>
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                <div className="space-y-1">
-                  <h3 className="font-display text-base font-bold text-[#061A14] leading-snug">
-                    {occ.title}
-                  </h3>
-                  <p className="text-xs text-[#787C87] leading-relaxed">
-                    {occ.subtitle}
-                  </p>
-                </div>
-                <Link
-                  href={occ.href}
-                  prefetch={true}
-                  className="w-full py-2.5 rounded-full text-center text-xs font-extrabold uppercase tracking-wider text-[#061A14] bg-[#FAF8F5] group-hover:bg-[#C59B27] group-hover:text-white border border-[#E7DFD5] group-hover:border-[#C59B27] transition-all duration-200 active:scale-95 cursor-pointer block"
-                >
-                  {occ.buttonText} →
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      </ScrollReveal>
 
       {/* 4. Latest Jewellery Arrivals Showcase */}
       {allProducts.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <span className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-[#C59B27] block">
-                💎 Pure Opulence
-              </span>
-              <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#061A14] tracking-tight mt-1">
-                New Jewellery Arrivals
-              </h2>
+        <ScrollReveal direction="up" distance={28}>
+          <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <span className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-[#C59B27] block">
+                  💎 Pure Opulence
+                </span>
+                <h2 className="font-display text-2xl sm:text-4xl font-bold text-[#061A14] tracking-tight mt-1">
+                  New Jewellery Arrivals
+                </h2>
+              </div>
+              <Link
+                href="/shop?store=jewellery"
+                prefetch={true}
+                className="text-xs font-bold text-[#C59B27] hover:underline uppercase tracking-wider flex items-center gap-1 shrink-0"
+              >
+                <span>Explore Complete Collection</span>
+                <span>→</span>
+              </Link>
             </div>
-            <Link
-              href="/shop?store=jewellery"
-              prefetch={true}
-              className="text-xs font-bold text-[#C59B27] hover:underline uppercase tracking-wider flex items-center gap-1 shrink-0"
-            >
-              <span>Explore Complete Collection</span>
-              <span>→</span>
-            </Link>
-          </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {allProducts.slice(0, 8).map((prod) => {
-              const cheapest = prod.variants?.[0];
-              const price = cheapest ? Number(cheapest.price) : 0;
-              const compareAt = cheapest?.compareAtPrice ? Number(cheapest.compareAtPrice) : null;
-              const imgUrl = prod.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop&q=80";
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {allProducts.slice(0, 8).map((prod, idx) => {
+                const cheapest = prod.variants?.[0];
+                const price = cheapest ? Number(cheapest.price) : 0;
+                const compareAt = cheapest?.compareAtPrice ? Number(cheapest.compareAtPrice) : null;
+                const imgUrl = prod.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop&q=80";
 
-              return (
-                <Link
-                  key={prod.id}
-                  href={`/products/${prod.slug}`}
-                  prefetch={true}
-                  className="group rounded-3xl overflow-hidden bg-white border border-[#E7DFD5] hover:border-[#C59B27] shadow-2xs hover:shadow-xl transition-all duration-300 flex flex-col cursor-pointer active:scale-[0.98]"
-                >
-                  <div className="relative h-56 sm:h-64 w-full bg-[#FAF8F5] overflow-hidden">
-                    <Image
-                      src={imgUrl}
-                      alt={prod.name}
-                      fill
-                      sizes="(max-width: 640px) 50vw, 25vw"
-                      className="object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
-                    />
-                    <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-[#061A14]/85 text-[#F3E5AB] text-[9px] font-extrabold uppercase tracking-widest border border-[#D4AF37]/30">
-                      24K Micro-Plated
-                    </div>
-                  </div>
-
-                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                    <div className="space-y-1">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-[#C59B27] block truncate">
-                        {prod.category?.name || "Fine Jewellery"}
-                      </span>
-                      <h4 className="text-xs sm:text-sm font-bold text-[#061A14] group-hover:text-[#C59B27] transition-colors line-clamp-2 leading-snug">
-                        {prod.name}
-                      </h4>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-1 border-t border-[#E7DFD5]/50">
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="font-mono text-sm sm:text-base font-black text-[#061A14]">
-                          ₹{price.toLocaleString("en-IN")}
-                        </span>
-                        {compareAt && compareAt > price && (
-                          <span className="font-mono text-xs text-[#787C87] line-through">
-                            ₹{compareAt.toLocaleString("en-IN")}
-                          </span>
-                        )}
+                return (
+                  <Link
+                    key={prod.id}
+                    href={`/products/${prod.slug}?store=jewellery`}
+                    prefetch={true}
+                    className="group rounded-3xl overflow-hidden bg-white border border-[#E7DFD5] hover:border-[#C59B27] shadow-2xs hover:shadow-2xl transition-all duration-400 flex flex-col cursor-pointer active:scale-[0.98] luxury-card-hover animate-luxury-up"
+                    style={{ animationDelay: `${idx * 40}ms` }}
+                  >
+                    <div className="relative h-56 sm:h-64 w-full bg-[#FAF8F5] overflow-hidden">
+                      <Image
+                        src={imgUrl}
+                        alt={prod.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                        className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                      />
+                      <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-[#061A14]/85 text-[#F3E5AB] text-[9px] font-extrabold uppercase tracking-widest border border-[#D4AF37]/30">
+                        24K Micro-Plated
                       </div>
-                      <span className="text-xs font-bold text-[#C59B27] group-hover:translate-x-0.5 transition-transform">
-                        View →
-                      </span>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                      <div className="space-y-1">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-[#C59B27] block truncate">
+                          {prod.category?.name || "Fine Jewellery"}
+                        </span>
+                        <h4 className="text-xs sm:text-sm font-bold text-[#061A14] group-hover:text-[#C59B27] transition-colors line-clamp-2 leading-snug">
+                          {prod.name}
+                        </h4>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-[#E7DFD5]/50">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="font-mono text-sm sm:text-base font-black text-[#061A14]">
+                            ₹{price.toLocaleString("en-IN")}
+                          </span>
+                          {compareAt && compareAt > price && (
+                            <span className="font-mono text-xs text-[#787C87] line-through">
+                              ₹{compareAt.toLocaleString("en-IN")}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs font-bold text-[#C59B27] group-hover:translate-x-0.5 transition-transform">
+                          View →
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        </ScrollReveal>
       )}
 
       {/* 5. Jewellery Care & Authenticity Seal */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-[#061A14] border border-[#D4AF37]/40 p-8 sm:p-12 text-white grid grid-cols-1 md:grid-cols-3 gap-8 shadow-xl">
-          <div className="space-y-2 text-center md:text-left">
-            <div className="w-12 h-12 rounded-2xl bg-[#0D2C22] border border-[#D4AF37]/40 flex items-center justify-center text-xl text-[#F3E5AB] mx-auto md:mx-0 shadow-inner">
-              ✨
+      <ScrollReveal direction="up" distance={28}>
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-3xl bg-[#061A14] border border-[#D4AF37]/40 p-8 sm:p-12 text-white grid grid-cols-1 md:grid-cols-3 gap-8 shadow-xl luxury-card-hover">
+            <div className="space-y-2 text-center md:text-left">
+              <div className="w-12 h-12 rounded-2xl bg-[#0D2C22] border border-[#D4AF37]/40 flex items-center justify-center text-xl text-[#F3E5AB] mx-auto md:mx-0 shadow-inner">
+                ✨
+              </div>
+              <h4 className="font-display text-lg font-bold text-[#F3E5AB]">24K Micro-Plating</h4>
+              <p className="text-xs text-[#FAF8F5]/80 leading-relaxed">
+                Electrophoretic protective layer ensures vibrant golden lustre resistant to sweat and oxidation.
+              </p>
             </div>
-            <h4 className="font-display text-lg font-bold text-[#F3E5AB]">24K Micro-Plating</h4>
-            <p className="text-xs text-[#FAF8F5]/80 leading-relaxed">
-              Electrophoretic protective layer ensures vibrant golden lustre resistant to sweat and oxidation.
-            </p>
-          </div>
 
-          <div className="space-y-2 text-center md:text-left">
-            <div className="w-12 h-12 rounded-2xl bg-[#0D2C22] border border-[#D4AF37]/40 flex items-center justify-center text-xl text-[#F3E5AB] mx-auto md:mx-0 shadow-inner">
-              🛡️
+            <div className="space-y-2 text-center md:text-left">
+              <div className="w-12 h-12 rounded-2xl bg-[#0D2C22] border border-[#D4AF37]/40 flex items-center justify-center text-xl text-[#F3E5AB] mx-auto md:mx-0 shadow-inner">
+                🛡️
+              </div>
+              <h4 className="font-display text-lg font-bold text-[#F3E5AB]">Hypoallergenic Alloy</h4>
+              <p className="text-xs text-[#FAF8F5]/80 leading-relaxed">
+                100% skin-safe, nickel-free, and lead-free copper-brass base engineered for comfortable all-day wear.
+              </p>
             </div>
-            <h4 className="font-display text-lg font-bold text-[#F3E5AB]">Hypoallergenic Alloy</h4>
-            <p className="text-xs text-[#FAF8F5]/80 leading-relaxed">
-              100% skin-safe, nickel-free, and lead-free copper-brass base engineered for comfortable all-day wear.
-            </p>
-          </div>
 
-          <div className="space-y-2 text-center md:text-left">
-            <div className="w-12 h-12 rounded-2xl bg-[#0D2C22] border border-[#D4AF37]/40 flex items-center justify-center text-xl text-[#F3E5AB] mx-auto md:mx-0 shadow-inner">
-              📦
+            <div className="space-y-2 text-center md:text-left">
+              <div className="w-12 h-12 rounded-2xl bg-[#0D2C22] border border-[#D4AF37]/40 flex items-center justify-center text-xl text-[#F3E5AB] mx-auto md:mx-0 shadow-inner">
+                📦
+              </div>
+              <h4 className="font-display text-lg font-bold text-[#F3E5AB]">Atelier Gift Box</h4>
+              <p className="text-xs text-[#FAF8F5]/80 leading-relaxed">
+                Delivered in cushioned velvet casing with zip-lock anti-tarnish storage pouches for eternal care.
+              </p>
             </div>
-            <h4 className="font-display text-lg font-bold text-[#F3E5AB]">Atelier Gift Box</h4>
-            <p className="text-xs text-[#FAF8F5]/80 leading-relaxed">
-              Delivered in cushioned velvet casing with zip-lock anti-tarnish storage pouches for eternal care.
-            </p>
           </div>
-        </div>
-      </section>
+        </section>
+      </ScrollReveal>
 
     </div>
   );

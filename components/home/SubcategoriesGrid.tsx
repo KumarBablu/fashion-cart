@@ -213,13 +213,15 @@ export default function SubcategoriesGrid({
 
       {/* Visual Subcategories Cards Grid (Matching Shop by Occasion layout) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filteredSubcategories.map((sub) => {
+        {filteredSubcategories.map((sub, idx) => {
           const meta = getSubcategoryMeta(sub.slug, sub.imageUrl, sub.parentName);
           return (
             <Link
               key={sub.id}
               href={`/shop?category=${sub.slug}`}
-              className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[4/5] flex flex-col justify-end p-6 bg-[#141416] shadow-md transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
+              prefetch={true}
+              className="group relative rounded-3xl overflow-hidden border border-[#E7DFD5] aspect-[4/5] flex flex-col justify-end p-6 bg-[#141416] shadow-md transition-all duration-400 hover:shadow-2xl hover:-translate-y-2 luxury-card-hover animate-luxury-up cursor-pointer"
+              style={{ animationDelay: `${idx * 40}ms` }}
             >
               <Image
                 src={meta.image}
@@ -227,7 +229,7 @@ export default function SubcategoriesGrid({
                 fill
                 sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                 unoptimized
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/95 via-[#141416]/40 to-transparent" />
 

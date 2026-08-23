@@ -3,8 +3,6 @@ import { prisma } from "@/lib/db";
 import HeaderClient from "./HeaderClient";
 import AnnouncementBar from "@/components/ui/AnnouncementBar";
 
-export const dynamic = "force-dynamic";
-
 export default async function Header() {
   const [user, categories] = await Promise.all([
     getCurrentUser(),

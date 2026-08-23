@@ -79,15 +79,16 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
       {isGarmentsActive && (
         <Link
           href="/garments"
+          prefetch={true}
           onClick={() => {
             setActiveStore("garments");
             sessionStorage.setItem("fc_active_store", "garments");
             document.cookie = "fc_store=garments; path=/; max-age=31536000; SameSite=Lax";
             window.dispatchEvent(new CustomEvent("cart-updated"));
           }}
-          className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full transition-all duration-200 ${
+          className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 active:scale-95 cursor-pointer ${
             !isJewellery
-              ? "bg-[#141416] text-[#FFFFFF] shadow-sm font-bold"
+              ? "bg-[#141416] text-[#FFFFFF] shadow-sm font-bold scale-[1.02]"
               : "text-[#D4AF37] hover:text-[#FFFFFF] hover:bg-[#0D2C22]"
           }`}
         >
@@ -99,15 +100,16 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
       {isJewelleryActive && (
         <Link
           href="/jewellery"
+          prefetch={true}
           onClick={() => {
             setActiveStore("jewellery");
             sessionStorage.setItem("fc_active_store", "jewellery");
             document.cookie = "fc_store=jewellery; path=/; max-age=31536000; SameSite=Lax";
             window.dispatchEvent(new CustomEvent("cart-updated"));
           }}
-          className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full transition-all duration-200 ${
+          className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 active:scale-95 cursor-pointer ${
             isJewellery
-              ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#061A14] shadow-sm font-extrabold"
+              ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#061A14] shadow-sm font-extrabold scale-[1.02]"
               : "text-[#4B4E56] hover:text-[#141416] hover:bg-[#F4EFEA]"
           }`}
         >

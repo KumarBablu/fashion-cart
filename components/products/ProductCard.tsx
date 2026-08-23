@@ -104,13 +104,14 @@ export default function ProductCard({ product }: { product: CardProduct }) {
   return (
     <>
       <div
-        className="group relative flex flex-col rounded-3xl bg-white border border-[#E7DFD5] p-3 transition-all duration-300 hover:border-[#C59B27] hover:shadow-xl hover:-translate-y-1.5"
+        className="group relative flex flex-col rounded-3xl bg-white border border-[#E7DFD5] p-3 transition-all duration-300 hover:border-[#C59B27] hover:shadow-2xl hover:-translate-y-1.5 luxury-card-hover"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Product Image Canvas */}
         <Link
           href={`/products/${product.slug}`}
+          prefetch={true}
           className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-[#F4EFEA] block"
         >
           <Image
@@ -119,13 +120,13 @@ export default function ProductCard({ product }: { product: CardProduct }) {
             fill
             unoptimized
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
           />
 
           {/* Top Badges */}
           <div className="absolute left-2.5 top-2.5 flex flex-col gap-1 z-10">
             {pct && (
-              <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-[#C59B27] text-white shadow-sm">
+              <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-[#C59B27] text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
                 {pct}% OFF
               </span>
             )}
@@ -144,7 +145,7 @@ export default function ProductCard({ product }: { product: CardProduct }) {
           {/* Wishlist Heart Top Right */}
           <button
             onClick={handleWishlistToggle}
-            className={`absolute right-2.5 top-2.5 z-10 h-8 w-8 rounded-full border flex items-center justify-center backdrop-blur-md transition-all shadow-xs ${
+            className={`absolute right-2.5 top-2.5 z-10 h-8 w-8 rounded-full border flex items-center justify-center backdrop-blur-md transition-all shadow-xs cursor-pointer active:scale-90 ${
               isWishlisted
                 ? "bg-rose-50 border-rose-300 text-rose-600 scale-110"
                 : "bg-white/90 border-[#E7DFD5] text-[#787C87] hover:text-rose-600 hover:scale-110"
@@ -156,7 +157,7 @@ export default function ProductCard({ product }: { product: CardProduct }) {
 
           {/* Hover Size Strip Overlay */}
           {sizes.length > 0 && (
-            <div className="absolute inset-x-2.5 bottom-12 hidden sm:flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+            <div className="absolute inset-x-2.5 bottom-14 hidden sm:flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
               <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7DFD5] shadow-md">
                 <span className="text-[9px] font-bold uppercase text-[#787C87] mr-0.5">Sizes:</span>
                 {sizes.slice(0, 5).map((s) => (
@@ -169,14 +170,14 @@ export default function ProductCard({ product }: { product: CardProduct }) {
           )}
 
           {/* Quick View Button Hover Overlay */}
-          <div className="absolute inset-x-2.5 bottom-2.5 hidden sm:flex opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+          <div className="absolute inset-x-2.5 bottom-2.5 hidden sm:flex opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-3 group-hover:translate-y-0 z-10">
             <button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setQuickViewOpen(true);
               }}
-              className="w-full py-2.5 rounded-xl text-[11px] font-extrabold uppercase tracking-wider shadow-lg bg-[#C59B27] hover:bg-[#B0881E] text-white transition-colors flex items-center justify-center gap-1"
+              className="w-full py-2.5 rounded-xl text-[11px] font-extrabold uppercase tracking-wider shadow-lg bg-[#C59B27] hover:bg-[#B0881E] text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 cursor-pointer"
             >
               <span>👁️</span> Quick View
             </button>
@@ -195,7 +196,7 @@ export default function ProductCard({ product }: { product: CardProduct }) {
               </span>
             </div>
 
-            <Link href={`/products/${product.slug}`} className="block mt-0.5">
+            <Link href={`/products/${product.slug}`} prefetch={true} className="block mt-0.5">
               <h3
                 className="text-xs sm:text-sm font-semibold text-[#141416] truncate hover:text-[#C59B27] transition-colors"
                 title={product.name}

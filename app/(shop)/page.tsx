@@ -2,8 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getStoresControl } from "@/lib/stores";
+import ScrollReveal from "@/components/ui/ScrollReveal";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = {
   title: "Fashion Cart — The Private Luxury Portals | Couture Garments & Imperial Jewels",
@@ -86,7 +87,8 @@ export default async function StoreGatewayLandingPage() {
               ==================================================================== */}
           <Link
             href="/garments"
-            className="group relative rounded-3xl overflow-hidden border-2 border-[#E7DFD5] hover:border-[#C59B27] bg-white shadow-xl hover:shadow-[0_25px_60px_rgba(20,20,22,0.18)] transition-all duration-500 flex flex-col justify-between cursor-pointer transform hover:-translate-y-2 focus:outline-none focus:ring-2 focus:ring-[#C59B27]"
+            prefetch={true}
+            className="group relative rounded-3xl overflow-hidden border-2 border-[#E7DFD5] hover:border-[#C59B27] bg-white shadow-xl hover:shadow-[0_25px_60px_rgba(20,20,22,0.18)] transition-all duration-500 flex flex-col justify-between cursor-pointer transform hover:-translate-y-2 focus:outline-none focus:ring-2 focus:ring-[#C59B27] luxury-card-hover animate-luxury-up"
             aria-label="Enter Haute Couture Garments Boutique"
           >
             {/* Visual Header with Micro-Zoom */}
@@ -176,7 +178,9 @@ export default async function StoreGatewayLandingPage() {
               ==================================================================== */}
           <Link
             href="/jewellery"
-            className="group relative rounded-3xl overflow-hidden border-2 border-[#D4AF37]/50 hover:border-[#D4AF37] bg-[#FCFAF6] shadow-xl hover:shadow-[0_25px_60px_rgba(6,26,20,0.22)] transition-all duration-500 flex flex-col justify-between cursor-pointer transform hover:-translate-y-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+            prefetch={true}
+            className="group relative rounded-3xl overflow-hidden border-2 border-[#D4AF37]/50 hover:border-[#D4AF37] bg-[#FCFAF6] shadow-xl hover:shadow-[0_25px_60px_rgba(6,26,20,0.22)] transition-all duration-500 flex flex-col justify-between cursor-pointer transform hover:-translate-y-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] luxury-card-hover animate-luxury-up"
+            style={{ animationDelay: "100ms" }}
             aria-label="Enter Imperial Fine Jewellery Atelier"
           >
             {/* Visual Header with Micro-Zoom */}

@@ -10,8 +10,6 @@ import BackToTopButton from "@/components/navigation/BackToTopButton";
 import { getCurrentUser } from "@/lib/auth/session";
 import { Suspense } from "react";
 
-export const dynamic = "force-dynamic";
-
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
 
