@@ -102,7 +102,7 @@ const DEFAULT_GARMENT_SLIDES: GarmentBannerSlide[] = [
   },
 ];
 
-const AUTO_CHANGE_INTERVAL_MS = 4500;
+const AUTO_CHANGE_INTERVAL_MS = 6500;
 
 export default function GarmentsHeroBanner({
   products = [],

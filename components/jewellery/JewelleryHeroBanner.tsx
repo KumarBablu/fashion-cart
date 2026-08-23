@@ -102,7 +102,7 @@ const DEFAULT_JEWELLERY_SLIDES: JewelleryBannerSlide[] = [
   },
 ];
 
-const AUTO_CHANGE_INTERVAL_MS = 4500;
+const AUTO_CHANGE_INTERVAL_MS = 6500;
 
 export default function JewelleryHeroBanner({ products = [] }: { products?: any[] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
