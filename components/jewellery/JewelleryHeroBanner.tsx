@@ -309,54 +309,64 @@ export default function JewelleryHeroBanner({ products = [] }: { products?: any[
 
       </div>
 
-      {/* 👑 3. Slide Navigation Controls & Frequency Progress Indicators */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-3 flex items-center justify-between w-full">
-        {/* Animated Slide Progress Indicators */}
-        <div className="flex items-center gap-1.5">
-          {slides.map((s, idx) => (
+      {/* 👑 3. Slide Navigation Controls & Frequency Progress Indicators (Grouped, Non-Overlapping) */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-3.5 flex items-center justify-between w-full">
+        {/* Left Side: Animated Progress Bar + Mini Arrow Buttons Grouped Cleanly */}
+        <div className="flex items-center gap-3">
+          {/* Progress Indicators */}
+          <div className="flex items-center gap-1.5">
+            {slides.map((s, idx) => (
+              <button
+                key={s.id}
+                onClick={() => setCurrentSlide(idx)}
+                className={`relative h-1 rounded-full overflow-hidden transition-all duration-300 cursor-pointer ${
+                  currentSlide === idx
+                    ? "w-8 bg-white/20"
+                    : "w-2.5 bg-white/30 hover:bg-white/60"
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              >
+                {currentSlide === idx && (
+                  <div
+                    key={`progress-${currentSlide}-${idx}`}
+                    className="absolute inset-0 bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7]"
+                    style={{
+                      animation: `carouselProgress ${AUTO_CHANGE_INTERVAL_MS}ms linear forwards`,
+                    }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Mini Chevron Controls (Safely positioned away from bottom-right floating widget) */}
+          <div className="flex items-center gap-1 pl-1">
             <button
-              key={s.id}
-              onClick={() => setCurrentSlide(idx)}
-              className={`relative h-1 rounded-full overflow-hidden transition-all duration-300 cursor-pointer ${
-                currentSlide === idx
-                  ? "w-8 bg-white/20"
-                  : "w-2.5 bg-white/30 hover:bg-white/60"
-              }`}
-              aria-label={`Go to slide ${idx + 1}`}
+              onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
+              className="w-5.5 h-5.5 rounded-full bg-black/40 backdrop-blur-md hover:bg-[#D4AF37] text-white/80 hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
+              aria-label="Previous Slide"
+              title="Previous Slide"
             >
-              {currentSlide === idx && (
-                <div
-                  key={`progress-${currentSlide}-${idx}`}
-                  className="absolute inset-0 bg-gradient-to-r from-[#F3E5AB] via-[#D4AF37] to-[#FFF8E7]"
-                  style={{
-                    animation: `carouselProgress ${AUTO_CHANGE_INTERVAL_MS}ms linear forwards`,
-                  }}
-                />
-              )}
+              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
-          ))}
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
+              className="w-5.5 h-5.5 rounded-full bg-black/40 backdrop-blur-md hover:bg-[#D4AF37] text-white/80 hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
+              aria-label="Next Slide"
+              title="Next Slide"
+            >
+              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        {/* Next / Prev Navigation Buttons */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() =>
-              setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
-            }
-            className="w-7 h-7 rounded-full bg-[#061A14]/75 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 text-[10px]"
-            aria-label="Previous Slide"
-          >
-            ←
-          </button>
-          <button
-            onClick={() =>
-              setCurrentSlide((prev) => (prev + 1) % slides.length)
-            }
-            className="w-7 h-7 rounded-full bg-[#061A14]/75 backdrop-blur-md hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#061A14] flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90 text-[10px]"
-            aria-label="Next Slide"
-          >
-            →
-          </button>
+        {/* Right side has zero elements, guaranteeing NO overlap with the floating WhatsApp button! */}
+        <div className="hidden sm:block text-[10px] text-white/40 tracking-wider uppercase font-mono pr-14">
+          Imperial Atelier
         </div>
       </div>
 
