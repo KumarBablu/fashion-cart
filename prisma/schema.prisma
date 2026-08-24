@@ -489,21 +489,25 @@ model OrderItem {
 // ============================================================
 
 model Payment {
-  id              String        @id @default(cuid())
-  orderId         String        @unique
-  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  method          PaymentMethod @default(MANUAL_UPI)
-  amount          Decimal       @db.Decimal(10, 2)
-  status          PaymentStatus @default(PAYMENT_PENDING)
-  utrNumber       String?       @unique
-  screenshotPath  String?
-  submittedAt     DateTime?
-  verifiedAt      DateTime?
-  verifiedById    String?
-  verifiedBy      User?         @relation("VerifiedBy", fields: [verifiedById], references: [id])
-  rejectionReason String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                String        @id @default(cuid())
+  orderId           String        @unique
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method            PaymentMethod @default(MANUAL_UPI)
+  amount            Decimal       @db.Decimal(10, 2)
+  status            PaymentStatus @default(PAYMENT_PENDING)
+  utrNumber         String?       @unique
+  gatewayName       String?       // e.g. "Razorpay", "Manual UPI", "Cash on Delivery"
+  paymentChannel    String?       // e.g. "UPI", "CARD", "NETBANKING", "WALLET", "PAYLATER"
+  instrumentDetails String?       // e.g. "Google Pay (user@okaxis)", "Visa Debit •••• 4111", "Bank of Baroda Netbanking"
+  paymentMetadata   Json?         // Full gateway raw payment JSON object
+  screenshotPath    String?
+  submittedAt       DateTime?
+  verifiedAt        DateTime?
+  verifiedById      String?
+  verifiedBy        User?         @relation("VerifiedBy", fields: [verifiedById], references: [id])
+  rejectionReason   String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([status])
 }

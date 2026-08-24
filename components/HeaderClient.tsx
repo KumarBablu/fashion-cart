@@ -47,15 +47,11 @@ export default function HeaderClient({
   function getActiveStore(): "garments" | "jewellery" {
     if (typeof window === "undefined") return "garments";
     const path = window.location.pathname;
-    if (path.startsWith("/jewellery") || window.location.search.includes("store=jewellery")) return "jewellery";
-    if (
-      path.startsWith("/garments") ||
-      path === "/" ||
-      (path === "/shop" && !window.location.search.includes("store=jewellery")) ||
-      (path === "/categories" && !window.location.search.includes("store=jewellery"))
-    ) {
-      return "garments";
-    }
+    const search = window.location.search;
+
+    if (search.includes("store=jewellery") || path.startsWith("/jewellery")) return "jewellery";
+    if (search.includes("store=garments") || path.startsWith("/garments") || path === "/") return "garments";
+
     const orderStore = document.querySelector("[data-order-store]")?.getAttribute("data-order-store");
     if (orderStore === "jewellery") return "jewellery";
     if (orderStore === "garments") return "garments";
@@ -63,6 +59,10 @@ export default function HeaderClient({
     const prodStore = document.querySelector("[data-product-store]")?.getAttribute("data-product-store");
     if (prodStore === "jewellery") return "jewellery";
     if (prodStore === "garments") return "garments";
+
+    const cookieMatch = document.cookie.match(/(?:^|;\s*)fc_store=([^;]+)/);
+    if (cookieMatch && cookieMatch[1] === "jewellery") return "jewellery";
+    if (cookieMatch && cookieMatch[1] === "garments") return "garments";
 
     const saved = sessionStorage.getItem("fc_active_store");
     if (saved === "jewellery") return "jewellery";

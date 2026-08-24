@@ -67,6 +67,9 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ status: "already_confirmed" });
         }
 
+        const { parseRazorpayPaymentInstrument } = await import("@/lib/payments/razorpay");
+        const parsed = parseRazorpayPaymentInstrument(paymentEntity);
+
         await db.$transaction(async (tx) => {
           if (order.payment) {
             await tx.payment.update({
@@ -75,6 +78,10 @@ export async function POST(req: NextRequest) {
                 status: "VERIFIED",
                 utrNumber: razorpayPaymentId || order.payment.utrNumber,
                 method: "ONLINE_GATEWAY",
+                gatewayName: parsed.gatewayName,
+                paymentChannel: parsed.paymentChannel,
+                instrumentDetails: parsed.instrumentDetails,
+                paymentMetadata: paymentEntity ? (paymentEntity as any) : undefined,
                 verifiedAt: new Date(),
                 rejectionReason: null,
               },
@@ -87,6 +94,10 @@ export async function POST(req: NextRequest) {
                 method: "ONLINE_GATEWAY",
                 status: "VERIFIED",
                 utrNumber: razorpayPaymentId,
+                gatewayName: parsed.gatewayName,
+                paymentChannel: parsed.paymentChannel,
+                instrumentDetails: parsed.instrumentDetails,
+                paymentMetadata: paymentEntity ? (paymentEntity as any) : undefined,
                 verifiedAt: new Date(),
               },
             });
@@ -96,7 +107,7 @@ export async function POST(req: NextRequest) {
             where: { id: order.id },
             data: {
               status: "CONFIRMED",
-              paymentMethod: "ONLINE_GATEWAY",
+              paymentMethod: `ONLINE_GATEWAY (${parsed.gatewayName} · ${parsed.paymentChannel})`,
             },
           });
 

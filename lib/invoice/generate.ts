@@ -185,11 +185,14 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   page.drawText("Invoice & Dispatch Details:", { x: rightColX, y: currentY, size: 8.5, font: fontBold, color: textDark });
   page.drawText(`Invoice No: ${invoiceNumber}`, { x: rightColX, y: currentY - 14, size: 8.5, font: fontBold, color: brandDark });
   page.drawText(`Invoice Date: ${new Date(order.createdAt).toLocaleDateString("en-IN")}`, { x: rightColX, y: currentY - 26, size: 7.5, font: fontRegular, color: textDark });
-  page.drawText(`Order ID: #${order.orderNumber}`, { x: rightColX, y: currentY - 37, size: 7.5, font: fontBold, color: goldAccent });
-  page.drawText(`Payment Method: ${order.paymentMethod.replace(/_/g, " ")}${order.payment?.utrNumber ? ` (UTR: ${order.payment.utrNumber})` : ""}`, {
+  const paymentChannelText = order.payment?.instrumentDetails
+    ? `${order.payment.gatewayName || "Razorpay"} ${order.payment.paymentChannel || ""} (${order.payment.instrumentDetails})`
+    : order.paymentMethod.replace(/_/g, " ");
+
+  page.drawText(`Payment: ${paymentChannelText}`, {
     x: rightColX,
     y: currentY - 49,
-    size: 7.5,
+    size: 7,
     font: fontRegular,
     color: textDark,
   });

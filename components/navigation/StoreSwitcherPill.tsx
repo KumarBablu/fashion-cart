@@ -34,51 +34,39 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
       .catch(() => {});
   }, [pathname]);
 
-  // Synchronize active store based on route, query params, DOM attributes, and custom events
-  useEffect(() => {
     function resolveStore(): "garments" | "jewellery" {
-      // 1. Explicit jewellery routes
-      if (pathname.startsWith("/jewellery") || searchParams?.get("store") === "jewellery") {
-        return "jewellery";
-      }
+      // 1. Explicit URL query parameter takes top priority
+      const storeParam = searchParams?.get("store");
+      if (storeParam === "jewellery") return "jewellery";
+      if (storeParam === "garments") return "garments";
 
-      // 2. Explicit garments routes & storefront home
-      if (
-        pathname.startsWith("/garments") ||
-        pathname === "/" ||
-        (pathname === "/shop" && searchParams?.get("store") !== "jewellery") ||
-        (pathname === "/categories" && searchParams?.get("store") !== "jewellery")
-      ) {
-        return "garments";
-      }
+      // 2. Explicit storefront routes
+      if (pathname.startsWith("/jewellery")) return "jewellery";
+      if (pathname.startsWith("/garments") || pathname === "/") return "garments";
 
       // 3. Product pages: inspect DOM store marker
       if (pathname.startsWith("/products")) {
-        const prodStore = document.querySelector("[data-product-store]")?.getAttribute("data-product-store");
+        const prodStore = typeof document !== "undefined" ? document.querySelector("[data-product-store]")?.getAttribute("data-product-store") : null;
         if (prodStore === "jewellery") return "jewellery";
         if (prodStore === "garments") return "garments";
-        if (document.querySelector(".theme-jewellery")) return "jewellery";
-        return "garments";
+        if (typeof document !== "undefined" && document.querySelector(".theme-jewellery")) return "jewellery";
       }
 
       // 4. Order Details pages: inspect order store marker
       if (pathname.startsWith("/account/orders")) {
-        const orderStore = document.querySelector("[data-order-store]")?.getAttribute("data-order-store");
+        const orderStore = typeof document !== "undefined" ? document.querySelector("[data-order-store]")?.getAttribute("data-order-store") : null;
         if (orderStore === "jewellery") return "jewellery";
         if (orderStore === "garments") return "garments";
-        return "garments";
       }
 
-      // 5. Checkout pages
-      if (pathname.startsWith("/checkout")) {
-        const checkoutStore = searchParams?.get("store");
-        if (checkoutStore === "jewellery") return "jewellery";
-        return "garments";
-      }
+      // 5. Cross-store pages (/cart, /checkout, /account, /shop, etc.): respect cookie & sessionStorage
+      const cookieMatch = typeof document !== "undefined" ? document.cookie.match(/(?:^|;\s*)fc_store=([^;]+)/) : null;
+      if (cookieMatch && cookieMatch[1] === "jewellery") return "jewellery";
+      if (cookieMatch && cookieMatch[1] === "garments") return "garments";
 
-      // Default fallback
       const saved = typeof window !== "undefined" ? sessionStorage.getItem("fc_active_store") : null;
-      return saved === "jewellery" ? "jewellery" : "garments";
+      if (saved === "jewellery") return "jewellery";
+      return "garments";
     }
 
     const currentStore = resolveStore();

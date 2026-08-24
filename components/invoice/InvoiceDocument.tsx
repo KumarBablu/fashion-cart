@@ -51,6 +51,9 @@ type InvoiceProps = {
       id: string;
       status: string;
       utrNumber?: string | null;
+      gatewayName?: string | null;
+      paymentChannel?: string | null;
+      instrumentDetails?: string | null;
       submittedAt?: string | Date | null;
     } | null;
     invoice?: {
@@ -255,9 +258,23 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
             </div>
             <div className="space-y-1 text-slate-600 text-[11px]">
               <p className="flex justify-between">
-                <span>Payment Method:</span>
-                <span className="font-bold text-slate-900">{order.paymentMethod.replace(/_/g, " ")}</span>
+                <span>Gateway &amp; Method:</span>
+                <span className="font-bold text-slate-900">
+                  {order.payment?.gatewayName || (order.paymentMethod.includes("ONLINE") ? "Razorpay" : order.paymentMethod.replace(/_/g, " "))}
+                </span>
               </p>
+              {order.payment?.paymentChannel && (
+                <p className="flex justify-between">
+                  <span>Channel / Mode:</span>
+                  <span className="font-semibold text-slate-900">{order.payment.paymentChannel}</span>
+                </p>
+              )}
+              {order.payment?.instrumentDetails && (
+                <p className="flex justify-between">
+                  <span>Instrument / App:</span>
+                  <span className="font-semibold text-slate-900">{order.payment.instrumentDetails}</span>
+                </p>
+              )}
               <p className="flex justify-between">
                 <span>Payment Status:</span>
                 <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.2 rounded border border-emerald-200">
@@ -266,7 +283,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
               </p>
               {order.payment?.utrNumber && (
                 <p className="flex justify-between">
-                  <span>Bank UTR / Transaction Ref:</span>
+                  <span>Transaction ID / Ref:</span>
                   <span className="font-mono font-bold text-slate-900">{order.payment.utrNumber}</span>
                 </p>
               )}

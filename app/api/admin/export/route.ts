@@ -405,6 +405,116 @@ export async function GET(req: NextRequest) {
         });
       }
 
+      case "payments": {
+        const payments = await db.payment.findMany({
+          orderBy: { createdAt: "desc" },
+          include: {
+            order: {
+              include: { user: true },
+            },
+          },
+        });
+
+        const headers = [
+          "PaymentID",
+          "OrderNumber",
+          "CustomerName",
+          "CustomerEmail",
+          "CustomerPhone",
+          "Amount",
+          "Currency",
+          "Gateway",
+          "PaymentChannel",
+          "InstrumentDetails",
+          "UTR_TransactionRef",
+          "PaymentStatus",
+          "VerifiedAt",
+          "SubmittedAt",
+          "CreatedAt",
+        ];
+
+        const rows = payments.map((p) => [
+          p.id,
+          p.order?.orderNumber || "",
+          p.order?.user?.name || "",
+          p.order?.user?.email || "",
+          p.order?.user?.phone || "",
+          Number(p.amount),
+          "INR",
+          p.gatewayName || (p.method === "ONLINE_GATEWAY" ? "Razorpay" : p.method.replace(/_/g, " ")),
+          p.paymentChannel || (p.method === "ONLINE_GATEWAY" ? "ONLINE_GATEWAY" : p.method),
+          p.instrumentDetails || "",
+          p.utrNumber || "",
+          p.status,
+          p.verifiedAt ? new Date(p.verifiedAt).toISOString() : "",
+          p.submittedAt ? new Date(p.submittedAt).toISOString() : "",
+          new Date(p.createdAt).toISOString(),
+        ]);
+
+        const csv = convertToCsv(headers, rows);
+        return new NextResponse(csv, {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": `attachment; filename="fashion-cart-${activeStore}-payments-${timestamp}.csv"`,
+          },
+        });
+      }
+
+      case "orders": {
+        const orders = await db.order.findMany({
+          orderBy: { createdAt: "desc" },
+          include: {
+            user: true,
+            payment: true,
+            items: true,
+          },
+        });
+
+        const headers = [
+          "OrderNumber",
+          "CustomerName",
+          "CustomerEmail",
+          "CustomerPhone",
+          "OrderStatus",
+          "PaymentGateway",
+          "PaymentChannel",
+          "InstrumentDetails",
+          "TransactionRef",
+          "Subtotal",
+          "Discount",
+          "DeliveryCharge",
+          "TotalAmount",
+          "ItemCount",
+          "CreatedAt",
+        ];
+
+        const rows = orders.map((o) => [
+          o.orderNumber,
+          o.user?.name || "",
+          o.user?.email || "",
+          o.user?.phone || "",
+          o.status,
+          o.payment?.gatewayName || (o.paymentMethod.includes("ONLINE") ? "Razorpay" : o.paymentMethod),
+          o.payment?.paymentChannel || "",
+          o.payment?.instrumentDetails || "",
+          o.payment?.utrNumber || "",
+          Number(o.subtotal),
+          Number(o.discount),
+          Number(o.deliveryCharge),
+          Number(o.total),
+          o.items.reduce((s, i) => s + i.quantity, 0),
+          new Date(o.createdAt).toISOString(),
+        ]);
+
+        const csv = convertToCsv(headers, rows);
+        return new NextResponse(csv, {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": `attachment; filename="fashion-cart-${activeStore}-orders-${timestamp}.csv"`,
+          },
+        });
+      }
+
       default: {
         return NextResponse.json({ error: `Unknown export type: ${type}` }, { status: 400 });
       }

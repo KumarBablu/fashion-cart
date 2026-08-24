@@ -234,3 +234,116 @@ export async function fetchRazorpayPayment(paymentId: string): Promise<RazorpayP
 
   return data as RazorpayPaymentDetails;
 }
+
+const INDIAN_BANK_NAMES: Record<string, string> = {
+  SBIN: "State Bank of India",
+  HDFC: "HDFC Bank",
+  ICIC: "ICICI Bank",
+  UTIB: "Axis Bank",
+  BARB_R: "Bank of Baroda",
+  PUNB_R: "Punjab National Bank",
+  CNRB: "Canara Bank",
+  KKBK: "Kotak Mahindra Bank",
+  UBIN: "Union Bank of India",
+  IDFB: "IDFC FIRST Bank",
+  YESB: "Yes Bank",
+  INDB: "IndusInd Bank",
+  MAHB: "Bank of Maharashtra",
+  IOBA: "Indian Overseas Bank",
+  CBIN: "Central Bank of India",
+  VIJB: "Vijaya Bank",
+  SYNB: "Syndicate Bank",
+  ANDB: "Andhra Bank",
+  CORP: "Corporation Bank",
+  ALLA: "Allahabad Bank",
+  ORBC: "Oriental Bank of Commerce",
+};
+
+/**
+ * Parses and formats gateway, payment channel, and specific instrument details
+ * (UPI App / ID, Card network & last 4 digits, Netbanking Bank name, Wallet, etc.)
+ */
+export function parseRazorpayPaymentInstrument(payment: any): {
+  gatewayName: string;
+  paymentChannel: string;
+  instrumentDetails: string;
+} {
+  const gatewayName = "Razorpay";
+  if (!payment) {
+    return {
+      gatewayName,
+      paymentChannel: "ONLINE_GATEWAY",
+      instrumentDetails: "Razorpay Gateway",
+    };
+  }
+
+  const method = String(payment.method || "").toLowerCase();
+
+  if (method === "upi") {
+    const vpa = payment.vpa || "";
+    let app = "UPI";
+    const vpaLower = vpa.toLowerCase();
+    if (vpaLower.includes("okhdfcbank") || vpaLower.includes("okaxis") || vpaLower.includes("okicici") || vpaLower.includes("oksbi")) {
+      app = "Google Pay";
+    } else if (vpaLower.includes("ybl") || vpaLower.includes("ibl") || vpaLower.includes("axl")) {
+      app = "PhonePe";
+    } else if (vpaLower.includes("paytm")) {
+      app = "Paytm UPI";
+    } else if (vpaLower.includes("apl")) {
+      app = "Amazon Pay UPI";
+    } else if (vpaLower.includes("cred")) {
+      app = "CRED UPI";
+    }
+    return {
+      gatewayName,
+      paymentChannel: "UPI",
+      instrumentDetails: vpa ? `${app} (${vpa})` : "UPI App",
+    };
+  }
+
+  if (method === "card") {
+    const card = payment.card || {};
+    const network = card.network || "Card";
+    const type = card.type ? card.type.toUpperCase() : "CARD";
+    const last4 = card.last4 ? `•••• ${card.last4}` : "";
+    const issuer = card.issuer ? `(${card.issuer})` : "";
+    return {
+      gatewayName,
+      paymentChannel: `${network} ${type}`,
+      instrumentDetails: `${network} Card ${last4} ${issuer}`.trim(),
+    };
+  }
+
+  if (method === "netbanking") {
+    const bankCode = String(payment.bank || "").toUpperCase();
+    const bankName = INDIAN_BANK_NAMES[bankCode] || bankCode || "Netbanking";
+    return {
+      gatewayName,
+      paymentChannel: "NETBANKING",
+      instrumentDetails: bankName,
+    };
+  }
+
+  if (method === "wallet") {
+    const wallet = payment.wallet || "Wallet";
+    return {
+      gatewayName,
+      paymentChannel: "WALLET",
+      instrumentDetails: `${wallet.toUpperCase()} Digital Wallet`,
+    };
+  }
+
+  if (method === "paylater") {
+    return {
+      gatewayName,
+      paymentChannel: "PAY LATER",
+      instrumentDetails: "Razorpay Pay Later",
+    };
+  }
+
+  return {
+    gatewayName,
+    paymentChannel: method ? method.toUpperCase() : "ONLINE_GATEWAY",
+    instrumentDetails: payment.description || "Razorpay Online Payment",
+  };
+}

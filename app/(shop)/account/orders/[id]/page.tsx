@@ -275,17 +275,35 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <h3 className="font-display text-base font-bold mb-3">Payment Information</h3>
           <div className="space-y-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-dim">Payment Method</span>
-              <span className="font-semibold">{order.paymentMethod.replace(/_/g, " ")}</span>
+              <span className="text-dim">Gateway &amp; Method</span>
+              <span className="font-semibold text-primary">
+                {order.payment?.gatewayName || (order.paymentMethod.includes("ONLINE") ? "Razorpay" : order.paymentMethod.replace(/_/g, " "))}
+              </span>
             </div>
+            {order.payment?.paymentChannel && (
+              <div className="flex justify-between">
+                <span className="text-dim">Payment Channel</span>
+                <span className="font-semibold">{order.payment.paymentChannel}</span>
+              </div>
+            )}
+            {order.payment?.instrumentDetails && (
+              <div className="flex justify-between">
+                <span className="text-dim">Instrument / Details</span>
+                <span className="font-semibold">{order.payment.instrumentDetails}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-dim">Payment Status</span>
-              <span className="font-semibold">{order.payment?.status?.replace(/_/g, " ") ?? "PENDING"}</span>
+              <span className={`font-semibold ${order.payment?.status === "VERIFIED" ? "text-emerald-600 dark:text-emerald-400" : ""}`}>
+                {order.payment?.status === "VERIFIED" ? "✓ Verified & Paid" : order.payment?.status?.replace(/_/g, " ") ?? "PENDING"}
+              </span>
             </div>
             {order.payment?.utrNumber && (
               <div className="flex justify-between">
-                <span className="text-dim">UTR / Ref Number</span>
-                <span className="font-mono font-semibold">{order.payment.utrNumber}</span>
+                <span className="text-dim">Transaction / Ref ID</span>
+                <span className="font-mono font-semibold bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded text-[11px]">
+                  {order.payment.utrNumber}
+                </span>
               </div>
             )}
             {order.payment?.verifiedAt && (

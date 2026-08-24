@@ -102,8 +102,21 @@ export default async function AdminOrdersPage({
                 </td>
                 <td className="px-4 py-3 text-ink-soft">{new Date(o.createdAt).toLocaleDateString("en-IN")}</td>
                 <td className="px-4 py-3 font-mono font-bold">{formatINR(o.total)}</td>
-                <td className="px-4 py-3 text-ink-soft">
-                  <span className="text-xs font-mono">{o.payment?.status.replace(/_/g, " ")}</span>
+                <td className="px-4 py-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-max ${
+                      o.payment?.status === "VERIFIED"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        : "bg-amber-50 text-amber-700 border border-amber-200"
+                    }`}>
+                      {o.payment?.method === "ONLINE_GATEWAY" ? "⚡ Razorpay" : o.payment?.method === "MANUAL_UPI" ? "📱 UPI" : "💵 COD"} · {o.payment?.status.replace(/_/g, " ") || "PENDING"}
+                    </span>
+                    {o.payment?.instrumentDetails && (
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        {o.payment.instrumentDetails}
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${

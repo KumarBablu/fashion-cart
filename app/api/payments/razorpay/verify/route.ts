@@ -73,7 +73,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
 
-    // 3. Mark payment as VERIFIED and order as CONFIRMED atomically
+    // 3. Fetch full payment details from Razorpay to capture channel (UPI/Card/Netbanking) & instrument details
+    let rzpPaymentObj: any = null;
+    let gatewayName = "Razorpay";
+    let paymentChannel = "ONLINE_GATEWAY";
+    let instrumentDetails = "Razorpay Gateway";
+
+    try {
+      const { fetchRazorpayPayment, parseRazorpayPaymentInstrument } = await import("@/lib/payments/razorpay");
+      rzpPaymentObj = await fetchRazorpayPayment(razorpayPaymentId);
+      const parsed = parseRazorpayPaymentInstrument(rzpPaymentObj);
+      gatewayName = parsed.gatewayName;
+      paymentChannel = parsed.paymentChannel;
+      instrumentDetails = parsed.instrumentDetails;
+    } catch (e) {
+      console.warn("Could not fetch extended Razorpay payment details:", e);
+    }
+
+    // 4. Mark payment as VERIFIED and order as CONFIRMED atomically
     await db.$transaction(async (tx) => {
       if (order.payment) {
         await tx.payment.update({
@@ -82,6 +99,10 @@ export async function POST(req: NextRequest) {
             status: "VERIFIED",
             utrNumber: razorpayPaymentId,
             method: "ONLINE_GATEWAY",
+            gatewayName,
+            paymentChannel,
+            instrumentDetails,
+            paymentMetadata: rzpPaymentObj ? (rzpPaymentObj as any) : undefined,
             verifiedAt: new Date(),
             rejectionReason: null,
           },
@@ -94,6 +115,10 @@ export async function POST(req: NextRequest) {
             method: "ONLINE_GATEWAY",
             status: "VERIFIED",
             utrNumber: razorpayPaymentId,
+            gatewayName,
+            paymentChannel,
+            instrumentDetails,
+            paymentMetadata: rzpPaymentObj ? (rzpPaymentObj as any) : undefined,
             verifiedAt: new Date(),
           },
         });
@@ -103,7 +128,7 @@ export async function POST(req: NextRequest) {
         where: { id: order.id },
         data: {
           status: "CONFIRMED",
-          paymentMethod: "ONLINE_GATEWAY",
+          paymentMethod: `ONLINE_GATEWAY (${gatewayName} · ${paymentChannel})`,
         },
       });
 

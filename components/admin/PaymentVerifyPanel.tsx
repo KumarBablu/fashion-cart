@@ -11,6 +11,9 @@ type Payment = {
   status: string;
   amount: number;
   utrNumber: string | null;
+  gatewayName?: string | null;
+  paymentChannel?: string | null;
+  instrumentDetails?: string | null;
   screenshotPath: string | null;
   submittedAt: string | null;
   rejectionReason: string | null;
@@ -108,6 +111,9 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="text-xs space-y-2">
           <Row label="Amount Payable" value={formatINR(payment.amount)} />
+          <Row label="Payment Gateway" value={payment.gatewayName || "Razorpay"} />
+          {payment.paymentChannel && <Row label="Payment Channel" value={payment.paymentChannel} />}
+          {payment.instrumentDetails && <Row label="Instrument / App" value={payment.instrumentDetails} />}
           <Row label="UTR / Ref No" value={payment.utrNumber ?? "—"} isMono />
           <div className="flex justify-between items-center py-1">
             <span className="text-dim">Payment Status</span>
@@ -123,7 +129,7 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
               {currentStatus.replace(/_/g, " ")}
             </span>
           </div>
-          <Row label="Submitted" value={payment.submittedAt ? new Date(payment.submittedAt).toLocaleString("en-IN") : "—"} />
+          <Row label="Submitted / Paid" value={payment.submittedAt ? new Date(payment.submittedAt).toLocaleString("en-IN") : "—"} />
           {rejectionReason && <Row label="Rejection reason" value={rejectionReason} isDanger />}
 
           {/* Quick Invoice & Label Action Links */}
