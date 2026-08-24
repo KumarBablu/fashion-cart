@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
@@ -21,6 +21,13 @@ export default function OrderDetailActions({
   const [cancelling, setCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("Changed mind / ordered by mistake");
+
+  useEffect(() => {
+    const store = isJewellery ? "jewellery" : "garments";
+    sessionStorage.setItem("fc_active_store", store);
+    document.cookie = `fc_store=${store}; path=/; max-age=31536000; SameSite=Lax`;
+    window.dispatchEvent(new CustomEvent("store-switched", { detail: { store } }));
+  }, [isJewellery]);
 
   const cancellable = ["PENDING_PAYMENT", "PAYMENT_REVIEW", "CONFIRMED", "PROCESSING"].includes(status);
 

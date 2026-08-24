@@ -80,6 +80,13 @@ export default function ProductDetailClient({
   const [isHoverZooming, setIsHoverZooming] = useState(false);
   const [zoomCoords, setZoomCoords] = useState({ x: 50, y: 50 });
 
+  useEffect(() => {
+    const store = isJewelleryItem ? "jewellery" : "garments";
+    sessionStorage.setItem("fc_active_store", store);
+    document.cookie = `fc_store=${store}; path=/; max-age=31536000; SameSite=Lax`;
+    window.dispatchEvent(new CustomEvent("store-switched", { detail: { store } }));
+  }, [isJewelleryItem]);
+
   function handleImageHoverMove(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -294,7 +301,10 @@ export default function ProductDetailClient({
   }
 
   return (
-    <div className="space-y-12">
+    <div
+      className={`space-y-12 ${isJewelleryItem ? "theme-jewellery" : "theme-garments"}`}
+      data-product-store={isJewelleryItem ? "jewellery" : "garments"}
+    >
       {/* 2-Column Product Layout */}
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 items-start">
         

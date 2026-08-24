@@ -80,10 +80,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   };
 
   const isPaid = order.payment?.status === "VERIFIED" || order.status === "CONFIRMED" || order.status === "DELIVERED";
-  const isJewelleryOrder = order.orderNumber.startsWith("FC-JW");
+  const hasJewelleryItems = order.items.some(
+    (i) =>
+      i.product?.categoryPath?.toLowerCase().includes("jewel") ||
+      i.product?.fabric?.toLowerCase().includes("alloy") ||
+      i.product?.fabric?.toLowerCase().includes("brass") ||
+      Boolean((i.product?.specifications as any)?.plating) ||
+      Boolean((i.product?.specifications as any)?.gem_type)
+  );
+  const isJewelleryOrder = order.orderNumber.startsWith("FC-JW") || hasJewelleryItems;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-order-store={isJewelleryOrder ? "jewellery" : "garments"}>
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
         <div>

@@ -47,10 +47,23 @@ export default function HeaderClient({
   function getActiveStore(): "garments" | "jewellery" {
     if (typeof window === "undefined") return "garments";
     const path = window.location.pathname;
-    if (path.startsWith("/jewellery")) return "jewellery";
-    if (path.startsWith("/garments")) return "garments";
-    const match = document.cookie.match(/(?:^|;\s*)fc_store=([^;]+)/);
-    if (match && match[1] === "jewellery") return "jewellery";
+    if (path.startsWith("/jewellery") || window.location.search.includes("store=jewellery")) return "jewellery";
+    if (
+      path.startsWith("/garments") ||
+      path === "/" ||
+      (path === "/shop" && !window.location.search.includes("store=jewellery")) ||
+      (path === "/categories" && !window.location.search.includes("store=jewellery"))
+    ) {
+      return "garments";
+    }
+    const orderStore = document.querySelector("[data-order-store]")?.getAttribute("data-order-store");
+    if (orderStore === "jewellery") return "jewellery";
+    if (orderStore === "garments") return "garments";
+
+    const prodStore = document.querySelector("[data-product-store]")?.getAttribute("data-product-store");
+    if (prodStore === "jewellery") return "jewellery";
+    if (prodStore === "garments") return "garments";
+
     const saved = sessionStorage.getItem("fc_active_store");
     if (saved === "jewellery") return "jewellery";
     return "garments";
@@ -89,12 +102,19 @@ export default function HeaderClient({
 
     const handleCartUpdate = () => refreshCartCount();
     const handleWishlistUpdate = () => refreshWishlistCount();
+    const handleStoreSwitched = () => {
+      refreshCartCount();
+      refreshWishlistCount();
+    };
+
     window.addEventListener("cart-updated", handleCartUpdate);
     window.addEventListener("wishlist-updated", handleWishlistUpdate);
+    window.addEventListener("store-switched", handleStoreSwitched);
 
     return () => {
       window.removeEventListener("cart-updated", handleCartUpdate);
       window.removeEventListener("wishlist-updated", handleWishlistUpdate);
+      window.removeEventListener("store-switched", handleStoreSwitched);
     };
   }, [hasActiveSession]);
 

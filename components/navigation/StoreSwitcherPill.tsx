@@ -34,29 +34,72 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
       .catch(() => {});
   }, [pathname]);
 
+  // Synchronize active store based on route, query params, DOM attributes, and custom events
   useEffect(() => {
-    if (pathname.startsWith("/jewellery") || searchParams?.get("store") === "jewellery") {
-      setActiveStore("jewellery");
-      sessionStorage.setItem("fc_active_store", "jewellery");
-    } else if (pathname.startsWith("/garments") || (pathname === "/shop" && !searchParams?.get("store"))) {
-      setActiveStore("garments");
-      sessionStorage.setItem("fc_active_store", "garments");
-    } else if (pathname.startsWith("/products")) {
-      const isThemeJewellery = document.querySelector(".theme-jewellery") !== null;
-      if (isThemeJewellery) {
-        setActiveStore("jewellery");
-        sessionStorage.setItem("fc_active_store", "jewellery");
-      } else {
-        const saved = sessionStorage.getItem("fc_active_store");
-        if (saved === "jewellery") setActiveStore("jewellery");
-        else setActiveStore("garments");
+    function resolveStore(): "garments" | "jewellery" {
+      // 1. Explicit jewellery routes
+      if (pathname.startsWith("/jewellery") || searchParams?.get("store") === "jewellery") {
+        return "jewellery";
       }
-    } else {
-      const saved = sessionStorage.getItem("fc_active_store");
-      if (saved === "jewellery") setActiveStore("jewellery");
-      else setActiveStore("garments");
+
+      // 2. Explicit garments routes & storefront home
+      if (
+        pathname.startsWith("/garments") ||
+        pathname === "/" ||
+        (pathname === "/shop" && searchParams?.get("store") !== "jewellery") ||
+        (pathname === "/categories" && searchParams?.get("store") !== "jewellery")
+      ) {
+        return "garments";
+      }
+
+      // 3. Product pages: inspect DOM store marker
+      if (pathname.startsWith("/products")) {
+        const prodStore = document.querySelector("[data-product-store]")?.getAttribute("data-product-store");
+        if (prodStore === "jewellery") return "jewellery";
+        if (prodStore === "garments") return "garments";
+        if (document.querySelector(".theme-jewellery")) return "jewellery";
+        return "garments";
+      }
+
+      // 4. Order Details pages: inspect order store marker
+      if (pathname.startsWith("/account/orders")) {
+        const orderStore = document.querySelector("[data-order-store]")?.getAttribute("data-order-store");
+        if (orderStore === "jewellery") return "jewellery";
+        if (orderStore === "garments") return "garments";
+        return "garments";
+      }
+
+      // 5. Checkout pages
+      if (pathname.startsWith("/checkout")) {
+        const checkoutStore = searchParams?.get("store");
+        if (checkoutStore === "jewellery") return "jewellery";
+        return "garments";
+      }
+
+      // Default fallback
+      const saved = typeof window !== "undefined" ? sessionStorage.getItem("fc_active_store") : null;
+      return saved === "jewellery" ? "jewellery" : "garments";
+    }
+
+    const currentStore = resolveStore();
+    setActiveStore(currentStore);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("fc_active_store", currentStore);
+      document.cookie = `fc_store=${currentStore}; path=/; max-age=31536000; SameSite=Lax`;
     }
   }, [pathname, searchParams]);
+
+  // Listen to custom store-switched events from client components
+  useEffect(() => {
+    const handleStoreSwitched = (e: Event) => {
+      const customEvent = e as CustomEvent<{ store: "garments" | "jewellery" }>;
+      if (customEvent.detail?.store) {
+        setActiveStore(customEvent.detail.store);
+      }
+    };
+    window.addEventListener("store-switched", handleStoreSwitched);
+    return () => window.removeEventListener("store-switched", handleStoreSwitched);
+  }, []);
 
   const isJewellery = activeStore === "jewellery";
   const isGarmentsActive = storeStatuses.garments.isActive;
@@ -84,6 +127,7 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
             setActiveStore("garments");
             sessionStorage.setItem("fc_active_store", "garments");
             document.cookie = "fc_store=garments; path=/; max-age=31536000; SameSite=Lax";
+            window.dispatchEvent(new CustomEvent("store-switched", { detail: { store: "garments" } }));
             window.dispatchEvent(new CustomEvent("cart-updated"));
           }}
           className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 active:scale-95 cursor-pointer ${
@@ -105,6 +149,7 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
             setActiveStore("jewellery");
             sessionStorage.setItem("fc_active_store", "jewellery");
             document.cookie = "fc_store=jewellery; path=/; max-age=31536000; SameSite=Lax";
+            window.dispatchEvent(new CustomEvent("store-switched", { detail: { store: "jewellery" } }));
             window.dispatchEvent(new CustomEvent("cart-updated"));
           }}
           className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 active:scale-95 cursor-pointer ${
