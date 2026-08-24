@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   experimental: {
-    cpus: 4,
+    cpus: 1,
   },
   images: {
     formats: ["image/avif", "image/webp"],
