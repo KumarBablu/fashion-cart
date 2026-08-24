@@ -2,8 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 
 export const metadata = {
-  title: "About Fashion Cart — Premium Outlet & Fine Apparel",
-  description: "Discover the heritage of Fashion Cart — blending timeless Indian craftsmanship with modern architectural silhouettes, certified pure fabrics, and premium everyday fashion.",
+  title: "About Fashion CART — Premium Outlet & Fine Apparel",
+  description: "Discover the heritage of Fashion CART — blending timeless Indian craftsmanship with modern architectural silhouettes, certified pure fabrics, and premium everyday fashion.",
 };
 
 export default function AboutPage() {
@@ -13,7 +13,7 @@ export default function AboutPage() {
       <section className="relative bg-gradient-to-b from-[#F4EFEA] via-[#FAF8F5] to-[#F4EFEA] border-b border-[#E7DFD5] py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FBF4E2] border border-[#C59B27]/40 text-xs font-bold uppercase tracking-widest text-[#8E6C0C]">
-            <span>✦ The Fashion Cart Heritage</span>
+            <span>✦ The Fashion CART Heritage</span>
           </div>
 
           <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight text-[#141416] leading-tight">
@@ -22,7 +22,7 @@ export default function AboutPage() {
           </h1>
 
           <p className="text-sm sm:text-base text-[#4B4E56] max-w-2xl mx-auto leading-relaxed">
-            Born out of a deep reverence for fine textiles and precision tailoring, Fashion Cart bridges the heritage of Indian master weavers with contemporary global silhouettes.
+            Born out of a deep reverence for fine textiles and precision tailoring, Fashion CART bridges the heritage of Indian master weavers with contemporary global silhouettes.
           </p>
         </div>
       </section>
@@ -36,7 +36,7 @@ export default function AboutPage() {
               Where Ancient Loom Artistry Meets Modern Design
             </h2>
             <p className="text-xs sm:text-sm text-[#4B4E56] leading-relaxed">
-              Founded with the vision to make authentic artisanal luxury accessible without unnecessary markups, Fashion Cart collaborates directly with certified master weavers in Varanasi, Chanderi, Surat, and Jaipur.
+              Founded with the vision to make authentic artisanal luxury accessible without unnecessary markups, Fashion CART collaborates directly with certified master weavers in Varanasi, Chanderi, Surat, and Jaipur.
             </p>
             <p className="text-xs sm:text-sm text-[#4B4E56] leading-relaxed">
               Every garment in our catalog—from hand-embroidered velvet kurta sets to breathable 100% French linen shirts—is crafted with obsessive attention to seam strength, drape, and skin-friendly softness.

@@ -169,7 +169,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
               </div>
               <div>
                 <span className="font-display text-2xl font-black text-[#C59B27] tracking-tight leading-none block">
-                  {business?.businessName || "Fashion Cart"}
+                  {business?.businessName || "Fashion CART"}
                 </span>
                 <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-white/90">
                   Premium Outlet &amp; Fine Apparel

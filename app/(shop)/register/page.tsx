@@ -63,7 +63,7 @@ export default function RegisterPage() {
         sessionStorage.removeItem("fc_promo_banner_dismissed");
       }
 
-      success("Account Created! 🎉", `Welcome to Fashion Cart, ${name.trim()}!`);
+      success("Account Created! 🎉", `Welcome to Fashion CART, ${name.trim()}!`);
       window.location.href = "/";
     } catch {
       setError("Network error while creating your account.");
@@ -74,7 +74,7 @@ export default function RegisterPage() {
   return (
     <AuthCard
       title="Create Account"
-      subtitle="Join Fashion Cart for express checkout, order tracking, and VIP member drops"
+      subtitle="Join Fashion CART for express checkout, order tracking, and VIP member drops"
     >
       <div className="space-y-5">
         <form onSubmit={onSubmit} className="space-y-4">

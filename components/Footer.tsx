@@ -69,7 +69,7 @@ export default function Footer() {
               </div>
               <div className="flex flex-col">
                 <span className="font-display font-black text-xl tracking-tight text-white leading-none">
-                  Fashion Cart
+                  Fashion CART
                 </span>
                 <span className="text-[9px] uppercase tracking-[0.25em] font-semibold text-[#C59B27] leading-tight mt-0.5">
                   Premium Outlet
@@ -145,7 +145,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/60">
-          <p>© {new Date().getFullYear()} Fashion Cart Premium Outlet. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Fashion CART. All rights reserved.</p>
           <div className="flex flex-wrap items-center gap-4">
             <Link href="/about" className="hover:text-[#C59B27] font-semibold transition-colors">About Us</Link>
             <Link href="/contact" className="hover:text-[#C59B27] transition-colors">Contact</Link>

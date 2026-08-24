@@ -125,7 +125,7 @@ export default function MenuDrawer({
               </div>
               <div className="flex flex-col justify-center">
                 <h2 className="font-display text-base sm:text-lg font-black text-[#141416] tracking-tight leading-none">
-                  Fashion Cart
+                  Fashion CART
                 </h2>
                 <p className="text-[9px] text-[#C59B27] uppercase tracking-[0.22em] font-bold mt-0.5 leading-none">
                   Premium Outlet

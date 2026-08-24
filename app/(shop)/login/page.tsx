@@ -173,7 +173,7 @@ export default function LoginPage() {
   return (
     <AuthCard
       title="Welcome Back"
-      subtitle="Sign in to your Fashion Cart account with your email or mobile number"
+      subtitle="Sign in to your Fashion CART account with your email or mobile number"
     >
       <Suspense fallback={<div className="text-xs text-dim text-center py-6">Loading sign in portal…</div>}>
         <LoginForm />

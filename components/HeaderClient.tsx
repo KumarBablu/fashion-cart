@@ -163,7 +163,7 @@ export default function HeaderClient({
           </div>
           <div className="flex flex-col justify-center">
             <span className="font-display font-black text-base sm:text-lg lg:text-xl tracking-tight text-[#141416] leading-none">
-              Fashion Cart
+              Fashion CART
             </span>
             <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.24em] font-bold text-[#C59B27] leading-none mt-0.5 sm:mt-1">
               Premium Outlet

@@ -105,7 +105,7 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   });
 
   // Company Branding on Banner
-  page.drawText(business?.businessName || "Fashion Cart", {
+  page.drawText(business?.businessName || "Fashion CART", {
     x: 52,
     y: headerBoxY + 54,
     size: 22,
