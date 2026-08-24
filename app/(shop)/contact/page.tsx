@@ -121,6 +121,29 @@ export default function ContactPage() {
             </div>
           </div>
 
+          {/* Grievance Redressal Desk (Mandatory under Consumer Protection E-Commerce Rules, 2020) */}
+          <div
+            className="p-6 rounded-3xl border space-y-2 card-theme"
+            style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">⚖️</span>
+              <p className="font-bold text-xs uppercase tracking-wider text-primary">Grievance Redressal Officer</p>
+            </div>
+            <p className="text-xs text-dim leading-relaxed">
+              In accordance with the Information Technology Act 2000 and Consumer Protection (E-Commerce) Rules 2020:
+            </p>
+            <div className="text-[11px] text-dim space-y-1 pt-1 bg-black/5 dark:bg-white/5 p-3 rounded-xl">
+              <p><strong>Designation:</strong> Head of Grievance Redressal &amp; Compliance</p>
+              <p><strong>Entity:</strong> Fashion Cart</p>
+              <p><strong>Address:</strong> Sonar Toli, Siwan, Bihar - 841226, India</p>
+              <p><strong>Email:</strong> <a href="mailto:Fashioncart.support@gmail.com" className="text-primary underline">Fashioncart.support@gmail.com</a></p>
+              <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold pt-0.5">
+                ✓ Acknowledgment within 48 hours · Resolution within 30 days
+              </p>
+            </div>
+          </div>
+
           <div
             className="p-6 rounded-3xl border space-y-2 card-theme"
             style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}

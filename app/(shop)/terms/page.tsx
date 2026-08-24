@@ -53,28 +53,54 @@ export default function TermsPage() {
 
         <section className="space-y-3">
           <h2 className="font-display text-lg font-bold text-[#141416]">
-            4. Order Placement &amp; Payment Verification
+            4. Order Placement, Payment Methods &amp; Verification
           </h2>
           <p>
-            Orders placed via UPI QR Scan require valid UTR / transaction ID confirmation or manual screenshot verification. We reserve the right to reject orders that submit falsified or unverified payment references.
+            We support multiple secure payment methods for your convenience:
+          </p>
+          <ul className="list-disc pl-5 space-y-1.5 text-xs">
+            <li><strong>Instant Online Payments:</strong> Processed through RBI-authorized, 256-bit SSL encrypted payment gateways supporting UPI (Google Pay, PhonePe, Paytm, CRED), Credit/Debit Cards, NetBanking, and Wallets.</li>
+            <li><strong>Manual UPI QR Scan:</strong> Direct merchant UPI transfers verified via transaction UTR numbers or payment screenshots.</li>
+            <li><strong>Cash on Delivery (COD):</strong> Available across serviceable pincodes in India. Payment must be handed over in full to the courier personnel before opening parcel packaging.</li>
+          </ul>
+          <p className="text-xs text-[#787C87]">
+            We reserve the right to decline or cancel any order if fraudulent activity, unpaid status, or incorrect contact details are detected.
           </p>
         </section>
 
         <section className="space-y-3">
           <h2 className="font-display text-lg font-bold text-[#141416]">
-            5. Intellectual Property Rights
+            5. User Accounts &amp; Security
           </h2>
           <p>
-            All branding, logos, trademarks, high-resolution garment imagery, lookbook photographs, and design system elements on this website are the exclusive intellectual property of Fashion Cart. Unauthorized commercial reproduction, web scraping, or resale is strictly prohibited.
+            You are responsible for maintaining the confidentiality of your account credentials and password. You agree to notify us immediately of any unauthorized access to your account. Users must be at least 18 years of age or access the website under the supervision of a parent or legal guardian.
           </p>
         </section>
 
         <section className="space-y-3">
           <h2 className="font-display text-lg font-bold text-[#141416]">
-            6. Governing Law &amp; Jurisdiction
+            6. Intellectual Property Rights
           </h2>
           <p>
-            These Terms shall be governed by and construed in accordance with the laws of the Republic of India. Any disputes arising in connection with orders or website usage shall be subject to the exclusive jurisdiction of the competent courts in Siwan, Bihar.
+            All branding, logos, trademarks, high-resolution garment &amp; jewelry imagery, lookbook photographs, software, and design system elements on this website are the exclusive intellectual property of Fashion Cart. Unauthorized commercial reproduction, web scraping, framing, or unauthorized redistribution is strictly prohibited and subject to legal action under Indian copyright laws.
+          </p>
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="font-display text-lg font-bold text-[#141416]">
+            7. Limitation of Liability
+          </h2>
+          <p>
+            To the maximum extent permitted by applicable Indian law, Fashion Cart shall not be liable for any indirect, incidental, or consequential damages resulting from the use or inability to use this website, courier transit delays beyond reasonable control (force majeure), or natural calamities. In any event, our total aggregate liability shall not exceed the amount actually paid by you for the specific product in dispute.
+          </p>
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="font-display text-lg font-bold text-[#141416]">
+            8. Governing Law &amp; Dispute Resolution
+          </h2>
+          <p>
+            These Terms of Service and any separate agreements shall be governed by and construed in accordance with the laws of the Republic of India. Any disputes arising out of or in connection with orders or website usage shall be subject to the exclusive jurisdiction of the competent courts situated in <strong>Siwan, Bihar, India</strong>.
           </p>
         </section>
       </div>
@@ -82,7 +108,7 @@ export default function TermsPage() {
       {/* Support Box */}
       <div className="p-6 rounded-2xl border border-[#E7DFD5] bg-[#F4EFEA] flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <p className="font-bold text-sm text-[#141416]">Have legal or partnership questions?</p>
+          <p className="font-bold text-sm text-[#141416]">Have legal, regulatory, or merchant compliance questions?</p>
           <p className="text-xs text-[#787C87]">Contact our legal compliance team at Fashioncart.support@gmail.com</p>
         </div>
         <Link

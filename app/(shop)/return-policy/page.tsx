@@ -113,19 +113,33 @@ export default function ReturnPolicyPage() {
 
         <section className="space-y-3">
           <h2 className="font-display text-lg font-bold text-[#141416]">
-            5. How to Initiate a Return or Size Exchange
+            5. Order Cancellation Policy
           </h2>
           <p>
-            You can initiate a return in two easy ways:
+            We offer full flexibility to cancel orders with zero penalty:
+          </p>
+          <ul className="list-disc pl-5 space-y-1.5 text-xs">
+            <li><strong>Cancellation Prior to Dispatch:</strong> You can cancel your order at any time before it has been dispatched from our warehouse directly from your <Link href="/account" className="text-[#C59B27] font-bold hover:underline">My Account Dashboard</Link> or by contacting customer support. A 100% full refund is credited immediately to your original payment method.</li>
+            <li><strong>Cancellation Post Dispatch:</strong> If your parcel has already been handed over to the courier partner, you can simply decline the parcel upon delivery. Once marked as &quot;Return to Origin (RTO)&quot;, your refund will be processed promptly.</li>
+            <li><strong>Cancellation Fee:</strong> Fashion Cart charges <strong>₹0 (Zero) cancellation fees</strong> on all eligible orders.</li>
+          </ul>
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="font-display text-lg font-bold text-[#141416]">
+            6. How to Initiate a Return, Exchange, or Cancellation
+          </h2>
+          <p>
+            You can initiate a request in two easy ways:
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
             <div className="p-4 rounded-xl border border-[#E7DFD5] bg-[#FAF8F5] space-y-2">
-              <p className="font-bold text-xs text-[#141416]">Option A: Online Account</p>
-              <p className="text-xs text-[#787C87]">Navigate to your Orders tab in <Link href="/account" className="text-[#C59B27] underline">My Account</Link>, click on the delivered order, and select &quot;Request Exchange / Return&quot;.</p>
+              <p className="font-bold text-xs text-[#141416]">Option A: Online Account Dashboard</p>
+              <p className="text-xs text-[#787C87]">Navigate to your Orders tab in <Link href="/account" className="text-[#C59B27] underline">My Account</Link>, select your order, and click &quot;Request Exchange / Return&quot; or &quot;Cancel Order&quot;.</p>
             </div>
             <div className="p-4 rounded-xl border border-[#E7DFD5] bg-[#FAF8F5] space-y-2">
-              <p className="font-bold text-xs text-[#141416]">Option B: 1-Click WhatsApp Desk</p>
-              <p className="text-xs text-[#787C87]">Send your Order Number and photos to our dedicated returns desk on WhatsApp at <a href="https://wa.me/919771039201" className="text-[#C59B27] font-bold underline">+91 9771039201</a>.</p>
+              <p className="font-bold text-xs text-[#141416]">Option B: 1-Click WhatsApp Support</p>
+              <p className="text-xs text-[#787C87]">Send your Order Number and request directly to our dedicated customer support team on WhatsApp at <a href="https://wa.me/919771039201" className="text-[#C59B27] font-bold underline">+91 9771039201</a>.</p>
             </div>
           </div>
         </section>
