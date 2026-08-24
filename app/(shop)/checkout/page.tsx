@@ -220,6 +220,37 @@ export default function CheckoutPage() {
     setCouponInput("");
   }
 
+  // Dynamic loading states
+  const [paymentLoadingStage, setPaymentLoadingStage] = useState<"CONNECTING" | "VERIFYING" | null>(null);
+
+  /**
+   * Safe asynchronous loader for Razorpay Checkout JS SDK
+   */
+  async function ensureRazorpaySDK(): Promise<boolean> {
+    if (typeof window === "undefined") return false;
+    if ((window as unknown as { Razorpay: unknown }).Razorpay) return true;
+
+    return new Promise((resolve) => {
+      const existing = document.getElementById("razorpay-checkout-script");
+      if (existing) {
+        existing.addEventListener("load", () => resolve(true), { once: true });
+        existing.addEventListener("error", () => resolve(false), { once: true });
+        setTimeout(() => resolve(Boolean((window as unknown as { Razorpay: unknown }).Razorpay)), 3000);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.id = "razorpay-checkout-script";
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+
+      setTimeout(() => resolve(Boolean((window as unknown as { Razorpay: unknown }).Razorpay)), 5000);
+    });
+  }
+
   /**
    * Razorpay Online Payment Flow with Real-Time Cryptographic Verification
    */
@@ -230,35 +261,41 @@ export default function CheckoutPage() {
     }
 
     setSubmitting(true);
+    setPaymentLoadingStage("CONNECTING");
     setError(null);
 
     try {
-      // 1. Create Razorpay order on our Next.js backend
-      const res = await fetch("/api/payments/razorpay/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          addressId: selectedAddress,
-          couponCode: appliedCoupon?.code || undefined,
-          customerNotes: customerNotes.trim() || undefined,
-          store,
-          variantId: isDirectBuy && directVariantId ? directVariantId : undefined,
-          quantity: isDirectBuy ? directQuantity : undefined,
+      // 1. Ensure Razorpay SDK is ready and initiate order creation concurrently
+      const [sdkLoaded, res] = await Promise.all([
+        ensureRazorpaySDK(),
+        fetch("/api/payments/razorpay/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            addressId: selectedAddress,
+            couponCode: appliedCoupon?.code || undefined,
+            customerNotes: customerNotes.trim() || undefined,
+            store,
+            variantId: isDirectBuy && directVariantId ? directVariantId : undefined,
+            quantity: isDirectBuy ? directQuantity : undefined,
+          }),
         }),
-      });
+      ]);
 
       const data = await res.json();
       if (!res.ok || !data.success) {
         setError(data.error || "Could not initialize payment gateway.");
         setSubmitting(false);
+        setPaymentLoadingStage(null);
         return;
       }
 
-      // Check if Razorpay script is loaded
+      // Check if Razorpay SDK is available
       const RazorpayWindow = (window as unknown as { Razorpay: any }).Razorpay;
-      if (!RazorpayWindow) {
-        setError("Payment gateway is loading. Please try again in 3 seconds.");
+      if (!sdkLoaded || !RazorpayWindow) {
+        setError("Payment gateway library took longer than expected to load. Please try again.");
         setSubmitting(false);
+        setPaymentLoadingStage(null);
         return;
       }
 
@@ -287,6 +324,7 @@ export default function CheckoutPage() {
         modal: {
           ondismiss: function () {
             setSubmitting(false);
+            setPaymentLoadingStage(null);
           },
         },
         handler: async function (response: {
@@ -295,6 +333,7 @@ export default function CheckoutPage() {
           razorpay_signature: string;
         }) {
           // 3. Auto-verify HMAC signature on backend
+          setPaymentLoadingStage("VERIFYING");
           try {
             const verifyRes = await fetch("/api/payments/razorpay/verify", {
               method: "POST",
@@ -334,14 +373,18 @@ export default function CheckoutPage() {
       const razorpayInstance = new RazorpayWindow(options);
       razorpayInstance.on("payment.failed", function (failResponse: any) {
         setSubmitting(false);
+        setPaymentLoadingStage(null);
         const reason = failResponse?.error?.description || "Payment was not completed.";
         setError(`Payment failed: ${reason}`);
       });
 
+      // Dismiss loading overlay as modal opens
+      setPaymentLoadingStage(null);
       razorpayInstance.open();
     } catch {
-      setError("Network error while starting online payment.");
+      setError("Network error while connecting to payment gateway. Please check your connection.");
       setSubmitting(false);
+      setPaymentLoadingStage(null);
     }
   }
 
@@ -860,6 +903,41 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {/* Luxury Secure Gateway Loading Overlay */}
+      {paymentLoadingStage && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl border border-[#E7DFD5] animate-in zoom-in-95 duration-200">
+            <div className="relative w-14 h-14 mx-auto flex items-center justify-center">
+              <div
+                className="w-14 h-14 border-3 rounded-full animate-spin"
+                style={{
+                  borderColor: store === "jewellery" ? "#C59B27" : "#0C3B2E",
+                  borderTopColor: "transparent",
+                }}
+              />
+              <span className="absolute text-lg">🔒</span>
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="font-display font-bold text-base text-[#141416] dark:text-white">
+                {paymentLoadingStage === "VERIFYING"
+                  ? "Verifying Payment & Invoicing…"
+                  : "Connecting Secure Gateway…"}
+              </h3>
+              <p className="text-xs text-[#787C87] leading-relaxed">
+                {paymentLoadingStage === "VERIFYING"
+                  ? "Payment received! Auto-confirming your order and preparing your tax invoice. Please do not refresh."
+                  : "Please wait a moment while we initialize your encrypted Razorpay checkout session…"}
+              </p>
+            </div>
+
+            <div className="pt-2 flex items-center justify-center gap-2 text-[10px] text-emerald-800 dark:text-emerald-300 font-semibold bg-emerald-50 dark:bg-emerald-950/40 py-2 px-4 rounded-full border border-emerald-200 dark:border-emerald-800">
+              <span>🛡️ 256-Bit SSL Encrypted Handshake</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
