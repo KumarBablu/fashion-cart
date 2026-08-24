@@ -8,46 +8,37 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
 
-  let store: "garments" | "jewellery" = "garments";
-  let order = await getDb("garments").order.findFirst({
-    where: { id, userId: user.id },
-    include: {
-      items: {
-        include: {
-          product: {
-            include: {
-              images: { orderBy: { sortOrder: "asc" } },
-            },
-          },
-        },
-      },
-      payment: true,
-      invoice: true,
-      address: true,
-    },
-  });
-
-  if (!order) {
-    order = await getDb("jewellery").order.findFirst({
-      where: { id, userId: user.id },
+  const orderInclude = {
+    items: {
       include: {
-        items: {
+        product: {
           include: {
-            product: {
-              include: {
-                images: { orderBy: { sortOrder: "asc" } },
-              },
-            },
+            images: { orderBy: { sortOrder: "asc" as const } },
           },
         },
-        payment: true,
-        invoice: true,
-        address: true,
       },
-    });
-    if (order) {
-      store = "jewellery";
-    }
+    },
+    payment: true,
+    invoice: true,
+    address: true,
+  };
+
+  const [garmentsOrder, jewelleryOrder] = await Promise.all([
+    getDb("garments").order.findFirst({
+      where: { id, userId: user.id },
+      include: orderInclude,
+    }).catch(() => null),
+    getDb("jewellery").order.findFirst({
+      where: { id, userId: user.id },
+      include: orderInclude,
+    }).catch(() => null),
+  ]);
+
+  let store: "garments" | "jewellery" = "garments";
+  let order = garmentsOrder;
+  if (!order && jewelleryOrder) {
+    order = jewelleryOrder;
+    store = "jewellery";
   }
 
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });

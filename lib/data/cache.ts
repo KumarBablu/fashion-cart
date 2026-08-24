@@ -228,31 +228,33 @@ export const getCachedHomeProducts = (store: string = "garments") => {
 // ============================================================================
 
 const fetchProductBySlug = async (slug: string, hintStore?: string) => {
-  const storesToTry = hintStore
-    ? [hintStore, hintStore === "jewellery" ? "garments" : "jewellery"]
-    : ["garments", "jewellery"];
+  const [garmentsProduct, jewelleryProduct] = await Promise.all([
+    getDb("garments").product.findFirst({
+      where: { slug },
+      include: {
+        images: { orderBy: { sortOrder: "asc" } },
+        variants: { where: { isActive: true }, orderBy: [{ colour: "asc" }, { size: "asc" }] },
+        category: { include: { parent: true } },
+      },
+    }).catch(() => null),
+    getDb("jewellery").product.findFirst({
+      where: { slug },
+      include: {
+        images: { orderBy: { sortOrder: "asc" } },
+        variants: { where: { isActive: true }, orderBy: [{ colour: "asc" }, { size: "asc" }] },
+        category: { include: { parent: true } },
+      },
+    }).catch(() => null),
+  ]);
 
-  for (const store of storesToTry) {
-    try {
-      const db = getDb(store);
-      const product = await db.product.findFirst({
-        where: { slug },
-        include: {
-          images: { orderBy: { sortOrder: "asc" } },
-          variants: { where: { isActive: true }, orderBy: [{ colour: "asc" }, { size: "asc" }] },
-          category: { include: { parent: true } },
-        },
-      });
-
-      if (product) {
-        return {
-          product,
-          store: store as "garments" | "jewellery",
-        };
-      }
-    } catch {
-      // Continue searching next store
-    }
+  if (hintStore === "jewellery" && jewelleryProduct) {
+    return { product: jewelleryProduct, store: "jewellery" as const };
+  }
+  if (garmentsProduct) {
+    return { product: garmentsProduct, store: "garments" as const };
+  }
+  if (jewelleryProduct) {
+    return { product: jewelleryProduct, store: "jewellery" as const };
   }
   return null;
 };

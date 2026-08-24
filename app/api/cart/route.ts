@@ -107,18 +107,30 @@ export async function POST(req: NextRequest) {
   const cookieStore = req.cookies.get("fc_store")?.value;
   const explicitStore = body?.store || sp.get("store") || cookieStore;
 
-  // 1. Locate product variant in requested store DB first, then fallback to other
+  // 1. Locate product variant with selective fields in requested store or parallel fallback
   let store: "garments" | "jewellery" = explicitStore === "jewellery" ? "jewellery" : "garments";
   let variant = await getDb(store).productVariant.findUnique({
     where: { id: parsed.data.variantId },
-    include: { product: true },
+    select: {
+      id: true,
+      productId: true,
+      isActive: true,
+      stockQuantity: true,
+      product: { select: { id: true, status: true } },
+    },
   });
 
   if (!variant) {
     const otherStore = store === "jewellery" ? "garments" : "jewellery";
     const altVariant = await getDb(otherStore).productVariant.findUnique({
       where: { id: parsed.data.variantId },
-      include: { product: true },
+      select: {
+        id: true,
+        productId: true,
+        isActive: true,
+        stockQuantity: true,
+        product: { select: { id: true, status: true } },
+      },
     });
     if (altVariant) {
       variant = altVariant;
@@ -138,7 +150,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. Synchronize user SSO record to target store
-  const targetUser = await getStoreUser(store, req);
+  const targetUser = store === "garments" ? user : await getStoreUser(store, req);
   if (!targetUser) {
     return NextResponse.json({ error: "User session synchronization failed." }, { status: 500 });
   }
@@ -149,10 +161,12 @@ export async function POST(req: NextRequest) {
     where: { userId: targetUser.id },
     update: {},
     create: { userId: targetUser.id },
+    select: { id: true },
   });
 
   const existingItem = await db.cartItem.findUnique({
     where: { cartId_variantId: { cartId: cart.id, variantId: variant.id } },
+    select: { quantity: true },
   });
 
   const desiredQty = (existingItem?.quantity ?? 0) + parsed.data.quantity;
