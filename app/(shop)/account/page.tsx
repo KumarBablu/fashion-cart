@@ -144,6 +144,14 @@ export default async function OrdersPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {!isPaid && order.status === "PENDING_PAYMENT" && (
+                      <Link
+                        href={`/checkout/${order.id}/payment${isJewelleryOrder ? "?store=jewellery" : ""}`}
+                        className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] transition-all shadow-xs"
+                      >
+                        Pay Now 💳
+                      </Link>
+                    )}
                     {isPaid && (
                       <a
                         href={`/api/invoices/${order.id}`}

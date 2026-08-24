@@ -116,45 +116,78 @@ export default function OrderTracking({
     month: "short",
   });
 
+  const isPendingPaymentAction = status === "PENDING_PAYMENT";
+  const isUnderReview = status === "PAYMENT_REVIEW";
+
   return (
     <div className="space-y-6">
-      {/* Flipkart-style Delivery Banner */}
-      <div
-        className="p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-        style={{
-          backgroundColor: isDelivered ? "rgba(34, 197, 94, 0.1)" : "var(--fc-bg)",
-          borderColor: isDelivered ? "rgba(34, 197, 94, 0.3)" : "var(--fc-border)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">{isDelivered ? "🎉" : "🚚"}</span>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-primary">
-              {isDelivered ? "Successfully Delivered" : "Expected Delivery Date"}
-            </p>
-            <p className="text-sm font-bold mt-0.5" style={{ color: "var(--fc-text)" }}>
-              {isDelivered ? "Delivered to your address" : `Arriving by ${formattedEstDate}`}
-            </p>
+      {/* Dynamic Status / Delivery Banner */}
+      {isPendingPaymentAction ? (
+        <div className="p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-500/10 border-amber-500/30">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">⏳</span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                Action Required · Payment Incomplete
+              </p>
+              <p className="text-sm font-bold mt-0.5" style={{ color: "var(--fc-text)" }}>
+                Payment has not been completed yet. Please complete payment to confirm your order and initiate shipment.
+              </p>
+            </div>
           </div>
         </div>
-
-        {trackingNumber && (
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
-              AWB: {trackingNumber}
-            </span>
-            <a
-              href={`https://www.google.com/search?q=${encodeURIComponent(`${carrierName || "Courier"} tracking ${trackingNumber}`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-xs"
-              style={{ backgroundColor: "var(--fc-primary)" }}
-            >
-              Track Live ↗
-            </a>
+      ) : isUnderReview ? (
+        <div className="p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-sky-500/10 border-sky-500/30">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔍</span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                Payment Verification in Progress
+              </p>
+              <p className="text-sm font-bold mt-0.5" style={{ color: "var(--fc-text)" }}>
+                Your payment proof is being verified by our billing desk. Delivery fulfillment will begin once confirmed.
+              </p>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div
+          className="p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+          style={{
+            backgroundColor: isDelivered ? "rgba(34, 197, 94, 0.1)" : "var(--fc-bg)",
+            borderColor: isDelivered ? "rgba(34, 197, 94, 0.3)" : "var(--fc-border)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{isDelivered ? "🎉" : "🚚"}</span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-primary">
+                {isDelivered ? "Successfully Delivered" : "Expected Delivery Date"}
+              </p>
+              <p className="text-sm font-bold mt-0.5" style={{ color: "var(--fc-text)" }}>
+                {isDelivered ? "Delivered to your address" : `Arriving by ${formattedEstDate}`}
+              </p>
+            </div>
+          </div>
+
+          {trackingNumber && (
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
+                AWB: {trackingNumber}
+              </span>
+              <a
+                href={`https://www.google.com/search?q=${encodeURIComponent(`${carrierName || "Courier"} tracking ${trackingNumber}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-xs"
+                style={{ backgroundColor: "var(--fc-primary)" }}
+              >
+                Track Live ↗
+              </a>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Flipkart-Style Vertical / Stepper Timeline */}
       <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-300 dark:before:bg-slate-700">

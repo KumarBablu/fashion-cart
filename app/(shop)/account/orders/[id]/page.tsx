@@ -131,6 +131,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           orderId={order.id}
           status={order.status}
           isPaid={isPaid}
+          isJewellery={isJewelleryOrder}
         />
       </div>
 

@@ -9,10 +9,12 @@ export default function OrderDetailActions({
   orderId,
   status,
   isPaid,
+  isJewellery = false,
 }: {
   orderId: string;
   status: string;
   isPaid: boolean;
+  isJewellery?: boolean;
 }) {
   const router = useRouter();
   const { success, error } = useToast();
@@ -49,6 +51,16 @@ export default function OrderDetailActions({
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
+        {/* Complete Payment Button for Pending Orders */}
+        {!isPaid && status === "PENDING_PAYMENT" && (
+          <a
+            href={`/checkout/${orderId}/payment${isJewellery ? "?store=jewellery" : ""}`}
+            className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#C59B27] text-white hover:bg-[#B0881E] transition-all shadow-md flex items-center gap-1.5"
+          >
+            <span>💳</span> Complete Payment Now
+          </a>
+        )}
+
         {/* Invoice Actions */}
         {isPaid ? (
           <div className="flex items-center gap-2">
