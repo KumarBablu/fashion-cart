@@ -197,7 +197,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                       </p>
                     )}
                     <p className="text-xs text-dim mt-0.5">
-                      SKU: <span className="font-mono">{item.skuSnapshot}</span> · {item.colourSnapshot} / {item.sizeSnapshot} · Qty: {item.quantity}
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">{item.colourSnapshot}</span> · <span className="font-semibold text-slate-700 dark:text-slate-300">Size: {item.sizeSnapshot}</span> · Qty: {item.quantity}
                     </p>
                   </div>
                 </div>

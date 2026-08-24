@@ -235,9 +235,9 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
     borderWidth: 1,
   });
 
-  page.drawText("GARMENT DESCRIPTION", { x: 44, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
+  page.drawText("PRODUCT DESCRIPTION", { x: 44, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
   page.drawText("HSN", { x: 225, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
-  page.drawText("SKU / VARIANT", { x: 275, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
+  page.drawText("COLOUR / SIZE", { x: 275, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
   page.drawText("QTY", { x: 375, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
   page.drawText("UNIT PRICE", { x: 415, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
   page.drawText("TOTAL (INR)", { x: 488, y: currentY - 11, size: 7.5, font: fontBold, color: textDark });
@@ -248,7 +248,7 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   for (const item of order.items) {
     page.drawText(item.productNameSnapshot.slice(0, 32), { x: 44, y: currentY, size: 7.5, font: fontBold, color: textDark });
     page.drawText("6204.19", { x: 225, y: currentY, size: 7, font: fontRegular, color: textMuted });
-    page.drawText(`${item.skuSnapshot.slice(0, 14)} (${item.sizeSnapshot})`, { x: 275, y: currentY, size: 7, font: fontRegular, color: textMuted });
+    page.drawText(`${item.colourSnapshot} (${item.sizeSnapshot})`.slice(0, 18), { x: 275, y: currentY, size: 7, font: fontRegular, color: textMuted });
     page.drawText(`${item.quantity}`, { x: 382, y: currentY, size: 7.5, font: fontRegular, color: textDark });
     page.drawText(`INR ${Number(item.unitPrice).toLocaleString("en-IN")}`, { x: 415, y: currentY, size: 7.5, font: fontRegular, color: textDark });
     page.drawText(`INR ${Number(item.total).toLocaleString("en-IN")}`, { x: 488, y: currentY, size: 7.5, font: fontBold, color: textDark });

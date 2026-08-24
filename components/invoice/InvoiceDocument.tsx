@@ -309,9 +309,9 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
             <thead>
               <tr className="bg-slate-100 text-slate-800 text-[10px] font-extrabold uppercase tracking-wider border-b border-slate-200">
                 <th className="py-2.5 px-3 w-8 text-center">#</th>
-                <th className="py-2.5 px-4">Garment Description</th>
+                <th className="py-2.5 px-4">Product Description</th>
                 <th className="py-2.5 px-3 text-center">HSN Code</th>
-                <th className="py-2.5 px-3 text-center">SKU / Variant</th>
+                <th className="py-2.5 px-3 text-center">Colour / Size</th>
                 <th className="py-2.5 px-3 text-center">Qty</th>
                 <th className="py-2.5 px-4 text-right">Unit Price</th>
                 <th className="py-2.5 px-4 text-right">Amount (INR)</th>
@@ -330,9 +330,9 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
                   <td className="py-3 px-3 text-center font-mono text-[11px] text-slate-600">
                     6204.19
                   </td>
-                  <td className="py-3 px-3 text-center font-mono text-[11px] text-slate-700">
-                    <span className="font-bold">{item.skuSnapshot}</span>
-                    <span className="block text-[10px] text-slate-500">Size: {item.sizeSnapshot}</span>
+                  <td className="py-3 px-3 text-center text-[11px] text-slate-700">
+                    <span className="font-bold text-slate-900">{item.colourSnapshot}</span>
+                    <span className="block text-[10px] text-slate-500 font-medium">Size: {item.sizeSnapshot}</span>
                   </td>
                   <td className="py-3 px-3 text-center font-bold text-slate-900 text-sm">
                     {item.quantity}
