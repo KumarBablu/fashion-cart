@@ -141,34 +141,66 @@ export default function DynamicUpiQr({
   return (
     <div className="space-y-5">
       
-      {/* 1. Custom Luxury Payment Method Dropdown */}
-      <div className="space-y-1.5 text-left" ref={dropdownRef}>
-        <span className="block text-[11px] font-black uppercase tracking-wider text-[#141416] dark:text-white">
-          Payment Method
-        </span>
+      {/* 1. Custom Luxury Payment Method Dropdown & Quick Selector Pills */}
+      <div className="space-y-2.5 text-left" ref={dropdownRef}>
+        <div className="flex items-center justify-between">
+          <span className="block text-[11px] font-black uppercase tracking-wider text-[#141416] dark:text-white">
+            Choose Payment Mode
+          </span>
+          <span className="text-[10px] text-[#787C87]">
+            Active: <strong className="text-[#C59B27] font-bold">{activeMethodObj.label}</strong>
+          </span>
+        </div>
 
-        <div className="relative">
-          {/* Main Dropdown Trigger Button */}
+        {/* Horizontal Quick Switcher Pills for Instant 1-Click Access */}
+        <div className="grid grid-cols-3 gap-2 p-1 rounded-2xl bg-white dark:bg-neutral-800 border border-[#E7DFD5] shadow-xs">
+          {PAYMENT_METHODS.map((method) => {
+            const isSelected = method.id === selectedMethod;
+            return (
+              <button
+                key={method.id}
+                type="button"
+                onClick={() => {
+                  setSelectedMethod(method.id);
+                  setDropdownOpen(false);
+                }}
+                className={`py-2 px-2 rounded-xl text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
+                  isSelected
+                    ? "bg-[#141416] text-[#C59B27] shadow-sm ring-1 ring-[#C59B27]/40"
+                    : "hover:bg-[#FAF8F5] dark:hover:bg-neutral-700 text-[#141416] dark:text-white"
+                }`}
+              >
+                <span className="text-base">{method.icon}</span>
+                <span className={`text-[11px] font-bold truncate max-w-full ${isSelected ? "text-[#C59B27]" : ""}`}>
+                  {method.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Dropdown Menu (Accessible on Mobile / Compressed screens) */}
+        <div className="relative pt-1">
           <button
             type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="w-full flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border border-[#D9D0C5] dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-xs hover:border-[#C59B27] transition-all cursor-pointer text-left"
+            className="w-full flex items-center justify-between p-3 rounded-xl border border-[#D9D0C5] dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-xs hover:border-[#C59B27] transition-all cursor-pointer text-left"
           >
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="text-xl shrink-0">{activeMethodObj.icon}</span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="text-lg shrink-0">{activeMethodObj.icon}</span>
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-extrabold text-[#141416] dark:text-white">
+                <p className="text-xs font-extrabold text-[#141416] dark:text-white">
                   {activeMethodObj.label}
                 </p>
-                <p className="text-[10px] sm:text-[11px] text-[#787C87] truncate">
+                <p className="text-[10px] text-[#787C87] truncate">
                   {activeMethodObj.subtitle}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <span className="text-[10px] font-bold text-[#C59B27] bg-[#FAF6EE] dark:bg-neutral-900 px-2 py-0.5 rounded-lg border border-[#E7D6A8]/50">
-                Change
+                Switch
               </span>
               <svg
                 width="14"

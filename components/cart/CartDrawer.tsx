@@ -42,10 +42,12 @@ export default function CartDrawer({
   function getActiveStore(): "garments" | "jewellery" {
     if (typeof window === "undefined") return "garments";
     const path = window.location.pathname;
-    if (path.startsWith("/jewellery")) return "jewellery";
-    if (path.startsWith("/garments")) return "garments";
+    const search = window.location.search;
+    if (search.includes("store=jewellery") || path.startsWith("/jewellery")) return "jewellery";
+    if (search.includes("store=garments") || path.startsWith("/garments") || path === "/") return "garments";
     const match = document.cookie.match(/(?:^|;\s*)fc_store=([^;]+)/);
     if (match && match[1] === "jewellery") return "jewellery";
+    if (match && match[1] === "garments") return "garments";
     const saved = sessionStorage.getItem("fc_active_store");
     if (saved === "jewellery") return "jewellery";
     return "garments";
@@ -339,7 +341,7 @@ export default function CartDrawer({
                     >
                       {/* Product Thumbnail */}
                       <Link
-                        href={`/products/${item.product.slug}`}
+                        href={`/products/${item.product.slug}${store === "jewellery" ? "?store=jewellery" : ""}`}
                         onClick={onClose}
                         className="relative h-24 w-20 shrink-0 rounded-2xl overflow-hidden bg-[#F4EFEA] border border-[#E7DFD5] group shadow-2xs block"
                       >
@@ -353,7 +355,7 @@ export default function CartDrawer({
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-[10px] text-[#787C87]">
-                            Garment
+                            {store === "jewellery" ? "Jewellery" : "Garment"}
                           </div>
                         )}
                       </Link>
@@ -362,7 +364,7 @@ export default function CartDrawer({
                       <div className="flex-1 min-w-0 space-y-1.5">
                         <div className="flex justify-between items-start gap-2">
                           <Link
-                            href={`/products/${item.product.slug}`}
+                            href={`/products/${item.product.slug}${store === "jewellery" ? "?store=jewellery" : ""}`}
                             onClick={onClose}
                             className="text-xs font-bold text-[#141416] hover:text-[#C59B27] transition-colors line-clamp-2 leading-snug"
                           >

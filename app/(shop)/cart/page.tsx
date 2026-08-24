@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatINR } from "@/lib/format";
@@ -19,6 +19,7 @@ export default function CartPage() {
   const [items, setItems] = useState<CartItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loggedOut, setLoggedOut] = useState(false);
+  const [store, setStore] = useState<"garments" | "jewellery">("garments");
   const { success, error: toastError } = useToast();
 
   // Coupon state
@@ -32,19 +33,38 @@ export default function CartPage() {
 
   const FREE_SHIPPING_THRESHOLD = 999;
 
-  async function load() {
-    const res = await fetch("/api/cart");
-    if (res.status === 401) {
-      setLoggedOut(true);
-      return;
-    }
-    const data = await res.json();
-    setItems(data.cart?.items || []);
+  function getActiveStore(): "garments" | "jewellery" {
+    if (typeof window === "undefined") return "garments";
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeParam = urlParams.get("store");
+    if (storeParam === "jewellery") return "jewellery";
+    if (storeParam === "garments") return "garments";
+    const match = document.cookie.match(/(?:^|;\s*)fc_store=([^;]+)/);
+    if (match && match[1] === "jewellery") return "jewellery";
+    const saved = sessionStorage.getItem("fc_active_store");
+    if (saved === "jewellery") return "jewellery";
+    return "garments";
   }
+
+  const load = useCallback(async () => {
+    const active = getActiveStore();
+    setStore(active);
+    try {
+      const res = await fetch(`/api/cart?store=${active}`);
+      if (res.status === 401) {
+        setLoggedOut(true);
+        return;
+      }
+      const data = await res.json();
+      setItems(data.cart?.items || []);
+    } catch {
+      setError("Unable to load shopping cart.");
+    }
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   async function updateQty(id: string, quantity: number) {
     setError(null);
@@ -82,7 +102,7 @@ export default function CartPage() {
       const res = await fetch("/api/coupons/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: codeToApply.trim(), subtotal }),
+        body: JSON.stringify({ code: codeToApply.trim(), subtotal, store }),
       });
 
       const data = await res.json();
@@ -106,6 +126,7 @@ export default function CartPage() {
   }
 
   if (loggedOut) {
+    const nextUrl = `/cart${store === "jewellery" ? "?store=jewellery" : ""}`;
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center animate-luxury-up">
         <div
@@ -134,8 +155,10 @@ export default function CartPage() {
 
           <div className="space-y-3 pt-2 max-w-xs mx-auto">
             <Link
-              href="/login?next=/cart"
-              className="w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block text-white bg-[#141416] hover:bg-[#25262B] transition-all shadow-lg active:scale-95 cursor-pointer luxury-card-hover"
+              href={`/login?next=${encodeURIComponent(nextUrl)}`}
+              className={`w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider text-center block text-white transition-all shadow-lg active:scale-95 cursor-pointer luxury-card-hover ${
+                store === "jewellery" ? "gold-jewellery-btn" : "bg-[#141416] hover:bg-[#25262B]"
+              }`}
               style={{
                 border: "1px solid rgba(197, 155, 39, 0.4)",
               }}
@@ -179,18 +202,21 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-lg px-4 py-24 text-center">
-        <div className="p-8 rounded-3xl border space-y-4" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
-          <div className="text-5xl">🛍️</div>
+        <div className="p-8 rounded-3xl border space-y-4 shadow-sm" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
+          <div className="text-5xl">{store === "jewellery" ? "💎" : "🛍️"}</div>
           <h1 className="font-display text-2xl font-bold">Your Bag is Empty</h1>
           <p className="text-xs text-dim max-w-xs mx-auto">
-            Discover curated shirts, kurtis, and everyday essentials.
+            {store === "jewellery"
+              ? "Discover handcrafted 24K micro-plated Kundan, temple jewellery, and solitaires."
+              : "Discover curated shirts, kurtis, silk sarees, and everyday essentials."}
           </p>
           <Link
-            href="/shop"
-            className="inline-block rounded-full px-8 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-md"
-            style={{ backgroundColor: "var(--fc-primary)" }}
+            href={store === "jewellery" ? "/jewellery" : "/garments"}
+            className={`inline-block rounded-full px-8 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all active:scale-95 ${
+              store === "jewellery" ? "gold-jewellery-btn" : "bg-[#141416] hover:bg-[#25262B]"
+            }`}
           >
-            Explore Collection →
+            {store === "jewellery" ? "Explore Fine Jewellery →" : "Explore Garments →"}
           </Link>
         </div>
       </div>
@@ -201,8 +227,8 @@ export default function CartPage() {
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       <Breadcrumbs
         items={[
-          { label: "Home", href: "/" },
-          { label: "Shop", href: "/shop" },
+          { label: store === "jewellery" ? "Jewellery" : "Home", href: store === "jewellery" ? "/jewellery" : "/" },
+          { label: store === "jewellery" ? "Fine Jewellery" : "Garments", href: store === "jewellery" ? "/shop?store=jewellery" : "/shop" },
           { label: "Shopping Bag" },
         ]}
       />
@@ -219,11 +245,23 @@ export default function CartPage() {
             />
           </div>
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#0C3B2E]">Shopping Cart</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#0C3B2E]">
+                {store === "jewellery" ? "Jewellery Shopping Bag" : "Shopping Cart"}
+              </h1>
+              {store === "jewellery" && (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-[#D4AF37]/15 text-[#8E6C0C] border border-[#D4AF37]/30">
+                  👑 Fine Jewels
+                </span>
+              )}
+            </div>
             <p className="text-xs text-[#5B7A6F] mt-0.5">{items.reduce((s, i) => s + i.quantity, 0)} items in your shopping bag</p>
           </div>
         </div>
-        <Link href="/shop" className="text-xs font-bold text-[#0C3B2E] hover:text-[#BB8A52] hover:underline">
+        <Link
+          href={store === "jewellery" ? "/jewellery" : "/garments"}
+          className="text-xs font-bold text-[#0C3B2E] hover:text-[#BB8A52] hover:underline"
+        >
           ← Continue Shopping
         </Link>
       </div>
@@ -269,7 +307,10 @@ export default function CartPage() {
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start">
-                      <Link href={`/products/${item.product.slug}`} className="font-semibold text-sm hover:text-primary transition-colors">
+                      <Link
+                        href={`/products/${item.product.slug}${store === "jewellery" ? "?store=jewellery" : ""}`}
+                        className="font-semibold text-sm hover:text-primary transition-colors"
+                      >
                         {item.product.name}
                       </Link>
                       <span className="font-bold text-sm">
@@ -285,21 +326,21 @@ export default function CartPage() {
                   <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center border rounded-lg overflow-hidden text-xs" style={{ borderColor: "var(--fc-border)" }}>
                       <button
-                        className="px-2.5 py-1 hover:bg-black/5 dark:hover:bg-white/10 font-bold"
+                        className="px-2.5 py-1 hover:bg-black/5 dark:hover:bg-white/10 font-bold cursor-pointer"
                         onClick={() => updateQty(item.id, Math.max(1, item.quantity - 1))}
                       >
                         −
                       </button>
                       <span className="w-8 text-center font-bold">{item.quantity}</span>
                       <button
-                        className="px-2.5 py-1 hover:bg-black/5 dark:hover:bg-white/10 font-bold"
+                        className="px-2.5 py-1 hover:bg-black/5 dark:hover:bg-white/10 font-bold cursor-pointer"
                         onClick={() => updateQty(item.id, Math.min(item.variant.stockQuantity, item.quantity + 1))}
                       >
                         +
                       </button>
                     </div>
 
-                    <button onClick={() => remove(item.id)} className="text-xs text-dim hover:text-rose-500 transition-colors">
+                    <button onClick={() => remove(item.id)} className="text-xs text-dim hover:text-rose-500 transition-colors cursor-pointer">
                       ✕ Remove
                     </button>
                   </div>
@@ -388,10 +429,11 @@ export default function CartPage() {
             </div>
 
             <Link
-              href="/checkout"
-              className="block w-full py-4 rounded-full font-bold text-center text-xs uppercase tracking-wider text-white shadow-xl transition-all hover:brightness-105 active:scale-95 cursor-pointer luxury-card-hover"
+              href={`/checkout${store === "jewellery" ? "?store=jewellery" : ""}`}
+              className={`block w-full py-4 rounded-full font-bold text-center text-xs uppercase tracking-wider text-white shadow-xl transition-all hover:brightness-105 active:scale-95 cursor-pointer luxury-card-hover ${
+                store === "jewellery" ? "gold-jewellery-btn" : "bg-[#141416] hover:bg-[#25262B]"
+              }`}
               style={{
-                background: "linear-gradient(135deg, #141416 0%, #25262B 100%)",
                 border: "1px solid rgba(197, 155, 39, 0.4)",
               }}
             >
@@ -403,7 +445,7 @@ export default function CartPage() {
               <div className="flex items-center gap-1.5">
                 <span>🛡️</span> 100% Genuine
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span>🔄</span> 7-Day Easy Returns
               </div>
               <div className="flex items-center gap-1.5">

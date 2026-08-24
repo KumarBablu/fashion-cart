@@ -97,6 +97,7 @@ export default function CheckoutPage() {
     if (storeParam === "garments") return "garments";
     const match = document.cookie.match(/(?:^|;\s*)fc_store=([^;]+)/);
     if (match && match[1] === "jewellery") return "jewellery";
+    if (match && match[1] === "garments") return "garments";
     const saved = sessionStorage.getItem("fc_active_store");
     if (saved === "jewellery") return "jewellery";
     return "garments";
@@ -355,7 +356,7 @@ export default function CheckoutPage() {
                 "Payment Verified! 🎉",
                 `Order #${data.orderNumber} placed & confirmed successfully.`
               );
-              router.push(`/account/orders/${data.orderId}`);
+              router.push(`/account/orders/${data.orderId}${store === "jewellery" ? "?store=jewellery" : ""}`);
             } else {
               toastError(
                 "Verification Notice",
@@ -430,7 +431,7 @@ export default function CheckoutPage() {
           "Order Confirmed! 🚚",
           `Order #${data.order.orderNumber} placed successfully.`
         );
-        router.push(`/account/orders/${data.order.id}`);
+        router.push(`/account/orders/${data.order.id}${store === "jewellery" ? "?store=jewellery" : ""}`);
       }
     } catch {
       setError("Network error while placing order.");
@@ -584,102 +585,174 @@ export default function CheckoutPage() {
             <div className="space-y-3">
               {/* Option 1: Instant Online Payment (Razorpay) */}
               <label
-                className={`flex items-start gap-3.5 p-4 rounded-xl border cursor-pointer transition-all ${
+                className={`flex flex-col gap-3 p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all ${
                   paymentMethod === "ONLINE_GATEWAY"
-                    ? "border-emerald-600 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-xs ring-1 ring-emerald-600"
-                    : "opacity-80 hover:opacity-100"
+                    ? "border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-md ring-2 ring-emerald-600/30"
+                    : "opacity-80 hover:opacity-100 hover:border-[#D9D0C5]"
                 }`}
                 style={{
                   backgroundColor: paymentMethod === "ONLINE_GATEWAY" ? undefined : "var(--fc-bg)",
                   borderColor: paymentMethod === "ONLINE_GATEWAY" ? undefined : "var(--fc-border)",
                 }}
               >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  checked={paymentMethod === "ONLINE_GATEWAY"}
-                  onChange={() => setPaymentMethod("ONLINE_GATEWAY")}
-                  className="mt-1"
-                />
-                <div className="flex-1 text-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-sm text-[#0C3B2E] dark:text-emerald-300 flex items-center gap-1.5">
-                      <span>⚡ Instant Online Payment</span>
-                      <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">
-                        Auto-Confirmed
-                      </span>
+                <div className="flex items-start gap-3.5">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === "ONLINE_GATEWAY"}
+                    onChange={() => setPaymentMethod("ONLINE_GATEWAY")}
+                    className="mt-1"
+                  />
+                  <div className="flex-1 text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-sm text-[#0C3B2E] dark:text-emerald-300 flex items-center gap-1.5">
+                        <span>⚡ Instant Online Payment</span>
+                        <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded-md">
+                          Auto-Confirmed
+                        </span>
+                      </p>
+                    </div>
+                    <p className="text-dim leading-relaxed">
+                      Pay securely via UPI (GPay, PhonePe, Paytm), Cards, NetBanking &amp; Wallets with instant auto-verification.
                     </p>
                   </div>
-                  <p className="text-dim leading-relaxed">
-                    Pay securely via <strong>UPI (GPay, PhonePe, Paytm, CRED)</strong>, Credit/Debit Cards, NetBanking & Wallets. Instant verification & immediate dispatch queue.
-                  </p>
-                  <div className="pt-1.5 flex flex-wrap items-center gap-2 text-[10px] font-semibold text-[#0C3B2E] dark:text-emerald-400">
-                    <span className="px-2 py-0.5 rounded-md bg-[#0C3B2E]/10 dark:bg-emerald-900/40 font-mono">GPay / PhonePe</span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#0C3B2E]/10 dark:bg-emerald-900/40 font-mono">Cards & NetBanking</span>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">✓ Instant Invoice</span>
-                  </div>
                 </div>
+
+                {/* Progressive Disclosure: Associated Details when Selected */}
+                {paymentMethod === "ONLINE_GATEWAY" && (
+                  <div className="pt-3 border-t border-emerald-200/80 dark:border-emerald-800/60 space-y-2.5 animate-in fade-in duration-200">
+                    <p className="text-[11px] font-bold text-[#0C3B2E] dark:text-emerald-300">
+                      Available Payment Channels:
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                      <div className="p-2 rounded-xl bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-emerald-800/80 text-center">
+                        <span className="text-base block mb-0.5">⚡</span>
+                        <span className="font-bold text-[#141416] dark:text-white block">UPI Apps</span>
+                        <span className="text-[10px] text-dim">GPay, PhonePe, Paytm</span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-emerald-800/80 text-center">
+                        <span className="text-base block mb-0.5">💳</span>
+                        <span className="font-bold text-[#141416] dark:text-white block">Cards</span>
+                        <span className="text-[10px] text-dim">Debit &amp; Credit</span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-emerald-800/80 text-center">
+                        <span className="text-base block mb-0.5">🏛️</span>
+                        <span className="font-bold text-[#141416] dark:text-white block">NetBanking</span>
+                        <span className="text-[10px] text-dim">50+ Top Banks</span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-emerald-800/80 text-center">
+                        <span className="text-base block mb-0.5">👛</span>
+                        <span className="font-bold text-[#141416] dark:text-white block">Wallets</span>
+                        <span className="text-[10px] text-dim">Paytm, Mobikwik</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300">
+                      <span>✓ Zero Wait Verification</span>
+                      <span>•</span>
+                      <span>✓ Instant Downloadable Tax Invoice</span>
+                      <span>•</span>
+                      <span>✓ 256-Bit SSL Handshake</span>
+                    </div>
+                  </div>
+                )}
               </label>
 
               {/* Option 2: Manual UPI QR & Screenshot */}
               <label
-                className={`flex items-start gap-3.5 p-4 rounded-xl border cursor-pointer transition-all ${
+                className={`flex flex-col gap-3 p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all ${
                   paymentMethod === "MANUAL_UPI"
-                    ? "border-primary bg-[#F2EFE8] dark:bg-neutral-800 shadow-xs ring-1 ring-primary"
-                    : "opacity-80 hover:opacity-100"
+                    ? "border-primary bg-[#F2EFE8] dark:bg-neutral-800 shadow-md ring-2 ring-primary/30"
+                    : "opacity-80 hover:opacity-100 hover:border-[#D9D0C5]"
                 }`}
                 style={{
                   backgroundColor: paymentMethod === "MANUAL_UPI" ? undefined : "var(--fc-bg)",
                   borderColor: paymentMethod === "MANUAL_UPI" ? undefined : "var(--fc-border)",
                 }}
               >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  checked={paymentMethod === "MANUAL_UPI"}
-                  onChange={() => setPaymentMethod("MANUAL_UPI")}
-                  className="mt-1"
-                />
-                <div className="flex-1 text-xs space-y-1">
-                  <p className="font-bold text-sm text-[#0C3B2E] dark:text-white flex items-center gap-1.5">
-                    <span>📲 Manual UPI QR Scan & Pay</span>
-                    <span className="text-[10px] font-bold bg-[#FFBA00]/30 text-[#0C3B2E] px-2 py-0.5 rounded-md">
-                      0% Fee
-                    </span>
-                  </p>
-                  <p className="text-dim leading-relaxed">
-                    Scan our boutique QR on the next screen, pay with any UPI app, and attach your screenshot or UTR number.
-                  </p>
+                <div className="flex items-start gap-3.5">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === "MANUAL_UPI"}
+                    onChange={() => setPaymentMethod("MANUAL_UPI")}
+                    className="mt-1"
+                  />
+                  <div className="flex-1 text-xs space-y-1">
+                    <p className="font-bold text-sm text-[#0C3B2E] dark:text-white flex items-center gap-1.5">
+                      <span>📲 Manual UPI QR Scan &amp; Pay</span>
+                      <span className="text-[10px] font-bold bg-[#FFBA00]/30 text-[#0C3B2E] px-2 py-0.5 rounded-md">
+                        0% Fee
+                      </span>
+                    </p>
+                    <p className="text-dim leading-relaxed">
+                      Scan our boutique QR on the next screen, pay with any UPI app, and attach your screenshot or UTR number.
+                    </p>
+                  </div>
                 </div>
+
+                {/* Progressive Disclosure for Manual UPI */}
+                {paymentMethod === "MANUAL_UPI" && (
+                  <div className="pt-3 border-t border-[#D9D0C5] dark:border-neutral-700 space-y-2 animate-in fade-in duration-200">
+                    <p className="text-[11px] font-bold text-[#141416] dark:text-white">
+                      How Manual Verification Works:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-[#E7DFD5] dark:border-neutral-700">
+                        <span className="font-bold text-primary block">1. Scan &amp; Pay</span>
+                        <span className="text-[10px] text-dim">Scan dynamic QR code with any UPI app</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-[#E7DFD5] dark:border-neutral-700">
+                        <span className="font-bold text-primary block">2. Attach Proof</span>
+                        <span className="text-[10px] text-dim">Upload payment screenshot or 12-digit UTR</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-[#E7DFD5] dark:border-neutral-700">
+                        <span className="font-bold text-primary block">3. Staff Approval</span>
+                        <span className="text-[10px] text-dim">Verified by boutique staff for dispatch</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </label>
 
               {/* Option 3: Cash on Delivery (COD) */}
               <label
-                className={`flex items-start gap-3.5 p-4 rounded-xl border cursor-pointer transition-all ${
+                className={`flex flex-col gap-3 p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all ${
                   paymentMethod === "COD"
-                    ? "border-primary bg-[#F2EFE8] dark:bg-neutral-800 shadow-xs ring-1 ring-primary"
-                    : "opacity-80 hover:opacity-100"
+                    ? "border-primary bg-[#F2EFE8] dark:bg-neutral-800 shadow-md ring-2 ring-primary/30"
+                    : "opacity-80 hover:opacity-100 hover:border-[#D9D0C5]"
                 }`}
                 style={{
                   backgroundColor: paymentMethod === "COD" ? undefined : "var(--fc-bg)",
                   borderColor: paymentMethod === "COD" ? undefined : "var(--fc-border)",
                 }}
               >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  checked={paymentMethod === "COD"}
-                  onChange={() => setPaymentMethod("COD")}
-                  className="mt-1"
-                />
-                <div className="flex-1 text-xs space-y-1">
-                  <p className="font-bold text-sm text-[#0C3B2E] dark:text-white">
-                    🚚 Cash on Delivery (COD)
-                  </p>
-                  <p className="text-dim leading-relaxed">
-                    Pay in cash or UPI directly to the delivery partner when your parcel arrives.
-                  </p>
+                <div className="flex items-start gap-3.5">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === "COD"}
+                    onChange={() => setPaymentMethod("COD")}
+                    className="mt-1"
+                  />
+                  <div className="flex-1 text-xs space-y-1">
+                    <p className="font-bold text-sm text-[#0C3B2E] dark:text-white">
+                      🚚 Cash on Delivery (COD)
+                    </p>
+                    <p className="text-dim leading-relaxed">
+                      Pay in cash or UPI directly to the delivery partner when your parcel arrives at your doorstep.
+                    </p>
+                  </div>
                 </div>
+
+                {/* Progressive Disclosure for COD */}
+                {paymentMethod === "COD" && (
+                  <div className="pt-3 border-t border-[#D9D0C5] dark:border-neutral-700 space-y-1.5 text-[11px] animate-in fade-in duration-200">
+                    <p className="font-bold text-[#141416] dark:text-white flex items-center gap-1.5">
+                      <span>🛡️ Doorstep Verification:</span>
+                      <span className="font-normal text-dim">Open parcel check enabled before accepting.</span>
+                    </p>
+                  </div>
+                )}
               </label>
             </div>
 

@@ -34,6 +34,8 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
       .catch(() => {});
   }, [pathname]);
 
+  // Synchronize active store based on route, query params, DOM attributes, and custom events
+  useEffect(() => {
     function resolveStore(): "garments" | "jewellery" {
       // 1. Explicit URL query parameter takes top priority
       const storeParam = searchParams?.get("store");
@@ -113,10 +115,12 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
           prefetch={true}
           onClick={() => {
             setActiveStore("garments");
-            sessionStorage.setItem("fc_active_store", "garments");
-            document.cookie = "fc_store=garments; path=/; max-age=31536000; SameSite=Lax";
-            window.dispatchEvent(new CustomEvent("store-switched", { detail: { store: "garments" } }));
-            window.dispatchEvent(new CustomEvent("cart-updated"));
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("fc_active_store", "garments");
+              document.cookie = "fc_store=garments; path=/; max-age=31536000; SameSite=Lax";
+              window.dispatchEvent(new CustomEvent("store-switched", { detail: { store: "garments" } }));
+              window.dispatchEvent(new CustomEvent("cart-updated"));
+            }
           }}
           className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 active:scale-95 cursor-pointer ${
             !isJewellery
@@ -135,10 +139,12 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
           prefetch={true}
           onClick={() => {
             setActiveStore("jewellery");
-            sessionStorage.setItem("fc_active_store", "jewellery");
-            document.cookie = "fc_store=jewellery; path=/; max-age=31536000; SameSite=Lax";
-            window.dispatchEvent(new CustomEvent("store-switched", { detail: { store: "jewellery" } }));
-            window.dispatchEvent(new CustomEvent("cart-updated"));
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("fc_active_store", "jewellery");
+              document.cookie = "fc_store=jewellery; path=/; max-age=31536000; SameSite=Lax";
+              window.dispatchEvent(new CustomEvent("store-switched", { detail: { store: "jewellery" } }));
+              window.dispatchEvent(new CustomEvent("cart-updated"));
+            }
           }}
           className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 active:scale-95 cursor-pointer ${
             isJewellery
