@@ -148,9 +148,16 @@ export default function QuickViewModal({
       return;
     }
 
-    setAdding(true);
     const isJewel = (product as any)?.productId?.startsWith("FC-JW") || (product as any)?.department === "Jewellery" || (typeof window !== "undefined" && (window.location.pathname.startsWith("/jewellery") || window.location.search.includes("store=jewellery")));
     const currentStore = isJewel ? "jewellery" : "garments";
+
+    if (goToCheckout) {
+      onClose();
+      router.push(`/checkout?direct=true&variantId=${selectedVariant.id}&quantity=${quantity}&store=${currentStore}`);
+      return;
+    }
+
+    setAdding(true);
     try {
       const res = await fetch(`/api/cart?store=${currentStore}`, {
         method: "POST",
@@ -167,9 +174,6 @@ export default function QuickViewModal({
         success("Added to Cart! 🛍️", `${product?.name} (${colour}/${size})`);
         window.dispatchEvent(new CustomEvent("cart-updated"));
         onClose();
-        if (goToCheckout) {
-          router.push(`/checkout${currentStore === "jewellery" ? "?store=jewellery" : ""}`);
-        }
       } else {
         const data = await res.json();
         error("Could not add", data.error || "Please try again.");

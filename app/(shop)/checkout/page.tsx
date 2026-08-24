@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { formatINR } from "@/lib/format";
@@ -22,8 +22,27 @@ type Address = {
 type CartItem = {
   id: string;
   quantity: number;
-  product: { name: string; slug: string };
-  variant: { colour: string; size: string; price: string | number };
+  product: {
+    name: string;
+    slug: string;
+    brand?: string | null;
+    images?: { imageUrl: string; altText?: string | null }[];
+  };
+  variant: {
+    id?: string;
+    colour: string;
+    size: string;
+    price: string | number;
+    compareAtPrice?: string | number | null;
+  };
+};
+
+type PaymentSettings = {
+  qrCodePath?: string | null;
+  upiId?: string | null;
+  payeeName?: string | null;
+  codEnabled?: boolean;
+  codFee?: number;
 };
 
 const emptyForm = {
@@ -49,6 +68,12 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [store, setStore] = useState<"garments" | "jewellery">("garments");
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings | null>(null);
+
+  // Direct Buy Now state (when user clicks "Buy Now" on single product)
+  const [isDirectBuy, setIsDirectBuy] = useState(false);
+  const [directVariantId, setDirectVariantId] = useState<string | null>(null);
+  const [directQuantity, setDirectQuantity] = useState<number>(1);
 
   // Coupon state
   const [couponInput, setCouponInput] = useState("");
@@ -60,8 +85,8 @@ export default function CheckoutPage() {
   } | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
 
-  // Payment method state
-  const [paymentMethod, setPaymentMethod] = useState<"MANUAL_UPI" | "COD" | "ONLINE_GATEWAY">("MANUAL_UPI");
+  // Payment method state — default to ONLINE_GATEWAY (Razorpay) for instant automated checkout
+  const [paymentMethod, setPaymentMethod] = useState<"ONLINE_GATEWAY" | "MANUAL_UPI" | "COD">("ONLINE_GATEWAY");
   const [customerNotes, setCustomerNotes] = useState("");
 
   function getActiveStore(): "garments" | "jewellery" {
@@ -77,16 +102,36 @@ export default function CheckoutPage() {
     return "garments";
   }
 
-  async function loadAll() {
+  const loadAll = useCallback(async () => {
     const activeStore = getActiveStore();
     setStore(activeStore);
+
+    let direct = false;
+    let varId: string | null = null;
+    let qty = 1;
+
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      direct = urlParams.get("direct") === "true";
+      varId = urlParams.get("variantId");
+      qty = Math.max(1, parseInt(urlParams.get("quantity") || "1", 10));
+      setIsDirectBuy(direct);
+      setDirectVariantId(varId);
+      setDirectQuantity(qty);
+    }
+
     try {
+      const cartUrl = direct && varId
+        ? `/api/cart?direct=true&variantId=${varId}&quantity=${qty}&store=${activeStore}`
+        : `/api/cart?store=${activeStore}`;
+
       const [addrRes, cartRes] = await Promise.all([
         fetch("/api/addresses"),
-        fetch(`/api/cart?store=${activeStore}`)
+        fetch(cartUrl),
       ]);
       if (addrRes.status === 401) {
-        router.push(`/login?next=${encodeURIComponent(`/checkout${activeStore === "jewellery" ? "?store=jewellery" : ""}`)}`);
+        const nextUrl = window.location.pathname + window.location.search;
+        router.push(`/login?next=${encodeURIComponent(nextUrl)}`);
         return;
       }
       const addrData = await addrRes.json();
@@ -100,10 +145,21 @@ export default function CheckoutPage() {
     } catch {
       setError("Unable to load checkout details.");
     }
-  }
+  }, [router]);
 
   useEffect(() => {
     loadAll();
+  }, [loadAll]);
+
+  // Load Razorpay script dynamically
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (document.getElementById("razorpay-checkout-script")) return;
+    const script = document.createElement("script");
+    script.id = "razorpay-checkout-script";
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
   }, []);
 
   async function saveAddress(e: React.FormEvent) {
@@ -126,7 +182,9 @@ export default function CheckoutPage() {
   }
 
   const subtotal = items.reduce((sum, i) => sum + Number(i.variant.price) * i.quantity, 0);
-  const deliveryCharge = subtotal >= 999 || subtotal === 0 ? 0 : 49;
+  const baseDeliveryCharge = subtotal >= 999 || subtotal === 0 ? 0 : 49;
+  const codFee = paymentMethod === "COD" && paymentSettings?.codFee ? Number(paymentSettings.codFee) : 0;
+  const deliveryCharge = baseDeliveryCharge + codFee;
   const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
   const total = Math.max(0, subtotal - discount + deliveryCharge);
 
@@ -162,7 +220,135 @@ export default function CheckoutPage() {
     setCouponInput("");
   }
 
-  async function placeOrder() {
+  /**
+   * Razorpay Online Payment Flow with Real-Time Cryptographic Verification
+   */
+  async function handleRazorpayPayment() {
+    if (!selectedAddress) {
+      setError("Please select a delivery address.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      // 1. Create Razorpay order on our Next.js backend
+      const res = await fetch("/api/payments/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          addressId: selectedAddress,
+          couponCode: appliedCoupon?.code || undefined,
+          customerNotes: customerNotes.trim() || undefined,
+          store,
+          variantId: isDirectBuy && directVariantId ? directVariantId : undefined,
+          quantity: isDirectBuy ? directQuantity : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setError(data.error || "Could not initialize payment gateway.");
+        setSubmitting(false);
+        return;
+      }
+
+      // Check if Razorpay script is loaded
+      const RazorpayWindow = (window as unknown as { Razorpay: any }).Razorpay;
+      if (!RazorpayWindow) {
+        setError("Payment gateway is loading. Please try again in 3 seconds.");
+        setSubmitting(false);
+        return;
+      }
+
+      // 2. Open official Razorpay modal
+      const options = {
+        key: data.keyId,
+        amount: data.amount,
+        currency: data.currency || "INR",
+        name: store === "jewellery" ? "Fashion Cart Jewellery" : "Fashion Cart",
+        description: `Order #${data.orderNumber}`,
+        image: "/fashion-cart-logo-transparent.svg",
+        order_id: data.razorpayOrderId,
+        prefill: {
+          name: data.customer?.name || "",
+          email: data.customer?.email || "",
+          contact: data.customer?.phone || "",
+        },
+        notes: {
+          orderId: data.orderId,
+          orderNumber: data.orderNumber,
+          store,
+        },
+        theme: {
+          color: store === "jewellery" ? "#C59B27" : "#0C3B2E",
+        },
+        modal: {
+          ondismiss: function () {
+            setSubmitting(false);
+          },
+        },
+        handler: async function (response: {
+          razorpay_payment_id: string;
+          razorpay_order_id: string;
+          razorpay_signature: string;
+        }) {
+          // 3. Auto-verify HMAC signature on backend
+          try {
+            const verifyRes = await fetch("/api/payments/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: data.orderId,
+                store,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (verifyRes.ok && verifyData.success) {
+              window.dispatchEvent(new CustomEvent("cart-updated"));
+              success(
+                "Payment Verified! 🎉",
+                `Order #${data.orderNumber} placed & confirmed successfully.`
+              );
+              router.push(`/account/orders/${data.orderId}`);
+            } else {
+              toastError(
+                "Verification Notice",
+                verifyData.error || "Payment received. Verification in progress."
+              );
+              router.push(`/checkout/${data.orderId}/payment${store === "jewellery" ? "?store=jewellery" : ""}`);
+            }
+          } catch {
+            toastError("Payment Recorded", "Payment completed. Verifying order...");
+            router.push(`/checkout/${data.orderId}/payment${store === "jewellery" ? "?store=jewellery" : ""}`);
+          }
+        },
+      };
+
+      const razorpayInstance = new RazorpayWindow(options);
+      razorpayInstance.on("payment.failed", function (failResponse: any) {
+        setSubmitting(false);
+        const reason = failResponse?.error?.description || "Payment was not completed.";
+        setError(`Payment failed: ${reason}`);
+      });
+
+      razorpayInstance.open();
+    } catch {
+      setError("Network error while starting online payment.");
+      setSubmitting(false);
+    }
+  }
+
+  /**
+   * Manual UPI / COD Order Flow
+   */
+  async function placeStandardOrder() {
     if (!selectedAddress) {
       setError("Please select a delivery address.");
       return;
@@ -180,6 +366,8 @@ export default function CheckoutPage() {
           paymentMethod,
           customerNotes: customerNotes.trim() || undefined,
           store,
+          variantId: isDirectBuy && directVariantId ? directVariantId : undefined,
+          quantity: isDirectBuy ? directQuantity : undefined,
         }),
       });
 
@@ -196,7 +384,7 @@ export default function CheckoutPage() {
         router.push(`/checkout/${data.order.id}/payment${store === "jewellery" ? "?store=jewellery" : ""}`);
       } else {
         success(
-          paymentMethod === "COD" ? "Order Confirmed! 🚚" : "Payment Verified! 🎉",
+          "Order Confirmed! 🚚",
           `Order #${data.order.orderNumber} placed successfully.`
         );
         router.push(`/account/orders/${data.order.id}`);
@@ -204,6 +392,14 @@ export default function CheckoutPage() {
     } catch {
       setError("Network error while placing order.");
       setSubmitting(false);
+    }
+  }
+
+  function handleOrderSubmit() {
+    if (paymentMethod === "ONLINE_GATEWAY") {
+      handleRazorpayPayment();
+    } else {
+      placeStandardOrder();
     }
   }
 
@@ -268,7 +464,7 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setShowForm(true)}
-                  className="text-xs font-bold text-primary hover:underline"
+                  className="text-xs font-bold text-primary hover:underline cursor-pointer"
                 >
                   + Add New Address
                 </button>
@@ -316,10 +512,10 @@ export default function CheckoutPage() {
                 <Input label="PIN code *" value={form.pinCode} onChange={(v) => setForm({ ...form, pinCode: v })} required />
                 <Input label="Landmark" value={form.landmark} onChange={(v) => setForm({ ...form, landmark: v })} />
                 <div className="sm:col-span-2 flex gap-3 pt-2">
-                  <button type="submit" className="px-5 py-2 rounded-full text-xs font-bold uppercase text-white" style={{ backgroundColor: "var(--fc-primary)" }}>
+                  <button type="submit" className="px-5 py-2 rounded-full text-xs font-bold uppercase text-white cursor-pointer" style={{ backgroundColor: "var(--fc-primary)" }}>
                     Save Address
                   </button>
-                  <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 rounded-full border text-xs text-dim" style={{ borderColor: "var(--fc-border)" }}>
+                  <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 rounded-full border text-xs text-dim cursor-pointer" style={{ borderColor: "var(--fc-border)" }}>
                     Cancel
                   </button>
                 </div>
@@ -329,26 +525,119 @@ export default function CheckoutPage() {
 
           {/* 2. Payment Method Selector */}
           <section
-            className="p-6 rounded-2xl border space-y-4"
+            className="p-6 rounded-2xl border space-y-4 shadow-sm"
             style={{
               backgroundColor: "var(--fc-surface)",
               borderColor: "var(--fc-border)",
             }}
           >
-            <h2 className="font-display text-lg font-bold">2. Payment Method</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold">2. Payment Method</h2>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                🔒 256-Bit SSL Encrypted
+              </span>
+            </div>
 
-            <div className="p-4 rounded-xl border border-[#0C3B2E] bg-[#F2EFE8] flex items-start gap-3.5">
-              <div className="text-2xl mt-0.5">📲</div>
-              <div>
-                <p className="font-bold text-sm text-[#0C3B2E]">Official UPI QR Scan & Pay (GPay / PhonePe / Paytm / BHIM)</p>
-                <p className="text-xs text-[#5B7A6F] mt-1 leading-relaxed">
-                  Fast & 100% verified payment. On the next step, scan our boutique QR code, complete payment, and upload your screenshot or UTR number.
-                </p>
-                <div className="mt-2.5 flex items-center gap-2 text-[11px] font-bold text-[#0C3B2E]">
-                  <span className="px-2 py-0.5 rounded-md bg-[#FFBA00]/30 text-[#0C3B2E]">⚡ 0% Gateway Fee</span>
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">🔒 100% Verified</span>
+            <div className="space-y-3">
+              {/* Option 1: Instant Online Payment (Razorpay) */}
+              <label
+                className={`flex items-start gap-3.5 p-4 rounded-xl border cursor-pointer transition-all ${
+                  paymentMethod === "ONLINE_GATEWAY"
+                    ? "border-emerald-600 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-xs ring-1 ring-emerald-600"
+                    : "opacity-80 hover:opacity-100"
+                }`}
+                style={{
+                  backgroundColor: paymentMethod === "ONLINE_GATEWAY" ? undefined : "var(--fc-bg)",
+                  borderColor: paymentMethod === "ONLINE_GATEWAY" ? undefined : "var(--fc-border)",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  checked={paymentMethod === "ONLINE_GATEWAY"}
+                  onChange={() => setPaymentMethod("ONLINE_GATEWAY")}
+                  className="mt-1"
+                />
+                <div className="flex-1 text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-sm text-[#0C3B2E] dark:text-emerald-300 flex items-center gap-1.5">
+                      <span>⚡ Instant Online Payment</span>
+                      <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">
+                        Auto-Confirmed
+                      </span>
+                    </p>
+                  </div>
+                  <p className="text-dim leading-relaxed">
+                    Pay securely via <strong>UPI (GPay, PhonePe, Paytm, CRED)</strong>, Credit/Debit Cards, NetBanking & Wallets. Instant verification & immediate dispatch queue.
+                  </p>
+                  <div className="pt-1.5 flex flex-wrap items-center gap-2 text-[10px] font-semibold text-[#0C3B2E] dark:text-emerald-400">
+                    <span className="px-2 py-0.5 rounded-md bg-[#0C3B2E]/10 dark:bg-emerald-900/40 font-mono">GPay / PhonePe</span>
+                    <span className="px-2 py-0.5 rounded-md bg-[#0C3B2E]/10 dark:bg-emerald-900/40 font-mono">Cards & NetBanking</span>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">✓ Instant Invoice</span>
+                  </div>
                 </div>
-              </div>
+              </label>
+
+              {/* Option 2: Manual UPI QR & Screenshot */}
+              <label
+                className={`flex items-start gap-3.5 p-4 rounded-xl border cursor-pointer transition-all ${
+                  paymentMethod === "MANUAL_UPI"
+                    ? "border-primary bg-[#F2EFE8] dark:bg-neutral-800 shadow-xs ring-1 ring-primary"
+                    : "opacity-80 hover:opacity-100"
+                }`}
+                style={{
+                  backgroundColor: paymentMethod === "MANUAL_UPI" ? undefined : "var(--fc-bg)",
+                  borderColor: paymentMethod === "MANUAL_UPI" ? undefined : "var(--fc-border)",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  checked={paymentMethod === "MANUAL_UPI"}
+                  onChange={() => setPaymentMethod("MANUAL_UPI")}
+                  className="mt-1"
+                />
+                <div className="flex-1 text-xs space-y-1">
+                  <p className="font-bold text-sm text-[#0C3B2E] dark:text-white flex items-center gap-1.5">
+                    <span>📲 Manual UPI QR Scan & Pay</span>
+                    <span className="text-[10px] font-bold bg-[#FFBA00]/30 text-[#0C3B2E] px-2 py-0.5 rounded-md">
+                      0% Fee
+                    </span>
+                  </p>
+                  <p className="text-dim leading-relaxed">
+                    Scan our boutique QR on the next screen, pay with any UPI app, and attach your screenshot or UTR number.
+                  </p>
+                </div>
+              </label>
+
+              {/* Option 3: Cash on Delivery (COD) */}
+              <label
+                className={`flex items-start gap-3.5 p-4 rounded-xl border cursor-pointer transition-all ${
+                  paymentMethod === "COD"
+                    ? "border-primary bg-[#F2EFE8] dark:bg-neutral-800 shadow-xs ring-1 ring-primary"
+                    : "opacity-80 hover:opacity-100"
+                }`}
+                style={{
+                  backgroundColor: paymentMethod === "COD" ? undefined : "var(--fc-bg)",
+                  borderColor: paymentMethod === "COD" ? undefined : "var(--fc-border)",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  checked={paymentMethod === "COD"}
+                  onChange={() => setPaymentMethod("COD")}
+                  className="mt-1"
+                />
+                <div className="flex-1 text-xs space-y-1">
+                  <p className="font-bold text-sm text-[#0C3B2E] dark:text-white">
+                    🚚 Cash on Delivery (COD)
+                  </p>
+                  <p className="text-dim leading-relaxed">
+                    Pay in cash or UPI directly to the delivery partner when your parcel arrives.
+                  </p>
+                </div>
+              </label>
             </div>
 
             {/* Customer Notes */}
@@ -394,7 +683,7 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={handleRemoveCoupon}
-                  className="text-xs text-rose-500 font-bold hover:underline"
+                  className="text-xs text-rose-500 font-bold hover:underline cursor-pointer"
                 >
                   Remove
                 </button>
@@ -432,17 +721,74 @@ export default function CheckoutPage() {
               borderColor: "var(--fc-border)",
             }}
           >
-            <h3 className="font-display text-base font-bold">Order Breakdown</h3>
+            <div className="flex items-center justify-between pb-1 border-b" style={{ borderColor: "var(--fc-border)" }}>
+              <div>
+                <h3 className="font-display text-base font-bold text-[#141416] dark:text-white">Order Breakdown</h3>
+                <p className="text-[11px] text-dim">
+                  {isDirectBuy ? "Direct Express Checkout (Single Product)" : "Shopping Bag Checkout"}
+                </p>
+              </div>
+              <span
+                className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full border shadow-2xs ${
+                  isDirectBuy
+                    ? "bg-[#FBF4E2] text-[#8E6C0C] border-[#C59B27]/40"
+                    : "bg-[#0C3B2E]/10 text-[#0C3B2E] dark:bg-emerald-950/40 dark:text-emerald-300 border-[#0C3B2E]/20"
+                }`}
+              >
+                {isDirectBuy ? "⚡ Direct Buy" : `🛍️ ${items.length} ${items.length === 1 ? "Item" : "Items"}`}
+              </span>
+            </div>
 
-            <div className="divide-y max-h-56 overflow-y-auto text-xs" style={{ borderColor: "var(--fc-border)" }}>
-              {items.map((i) => (
-                <div key={i.id} className="flex justify-between py-2">
-                  <span className="truncate max-w-[200px]">
-                    {i.product.name} ({i.variant.colour}/{i.variant.size}) × {i.quantity}
-                  </span>
-                  <span className="font-semibold">{formatINR(Number(i.variant.price) * i.quantity)}</span>
-                </div>
-              ))}
+            <div className="divide-y max-h-72 overflow-y-auto space-y-3 pt-1 pr-1" style={{ borderColor: "var(--fc-border)" }}>
+              {items.map((i) => {
+                const img = i.product.images?.[0]?.imageUrl || "/fashion-cart-logo-transparent.svg";
+                const unitPrice = Number(i.variant.price);
+                const compareAt = i.variant.compareAtPrice ? Number(i.variant.compareAtPrice) : null;
+                return (
+                  <div key={i.id} className="flex gap-3 pt-3 items-center first:pt-0">
+                    <div className="relative h-16 w-13 rounded-xl overflow-hidden bg-[#F4EFEA] border border-[#E7DFD5] shrink-0 shadow-2xs">
+                      <Image
+                        src={img}
+                        alt={i.product.name}
+                        fill
+                        sizes="52px"
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {i.product.brand && (
+                        <p className="text-[9px] font-extrabold uppercase tracking-wider text-[#C59B27] truncate">
+                          {i.product.brand}
+                        </p>
+                      )}
+                      <p className="font-bold text-xs text-[#141416] dark:text-white truncate" title={i.product.name}>
+                        {i.product.name}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FAF8F5] dark:bg-neutral-800 border border-[#E7DFD5] dark:border-neutral-700 text-[#141416] dark:text-neutral-200">
+                          {i.variant.colour}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FAF8F5] dark:bg-neutral-800 border border-[#E7DFD5] dark:border-neutral-700 text-[#141416] dark:text-neutral-200">
+                          Size: {i.variant.size}
+                        </span>
+                        <span className="text-[10px] font-bold text-dim bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-md">
+                          Qty: {i.quantity}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-mono font-bold text-xs text-[#141416] dark:text-white">
+                        {formatINR(unitPrice * i.quantity)}
+                      </p>
+                      {compareAt && compareAt > unitPrice && (
+                        <p className="text-[10px] text-dim line-through">
+                          {formatINR(compareAt * i.quantity)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="border-t pt-3 space-y-2 text-xs" style={{ borderColor: "var(--fc-border)" }}>
@@ -458,33 +804,59 @@ export default function CheckoutPage() {
               )}
               <div className="flex justify-between text-dim">
                 <span>Shipping & Delivery</span>
-                <span>{deliveryCharge === 0 ? "FREE" : formatINR(deliveryCharge)}</span>
+                <span>{baseDeliveryCharge === 0 ? "FREE" : formatINR(baseDeliveryCharge)}</span>
               </div>
+              {codFee > 0 && (
+                <div className="flex justify-between text-dim">
+                  <span>COD Handling Fee</span>
+                  <span>{formatINR(codFee)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-base font-bold pt-3 border-t" style={{ borderColor: "var(--fc-border)" }}>
                 <span>Final Payable</span>
                 <span className="text-primary text-lg">{formatINR(total)}</span>
               </div>
             </div>
 
-            {error && <p className="text-xs text-rose-500 font-semibold">{error}</p>}
+            {error && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold">
+                ⚠️ {error}
+              </div>
+            )}
 
             <button
               disabled={!selectedAddress || items.length === 0 || submitting}
-              onClick={placeOrder}
+              onClick={handleOrderSubmit}
               className={`w-full py-4 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-xl transition-all hover:brightness-105 active:scale-95 disabled:opacity-50 cursor-pointer luxury-card-hover ${
                 store === "jewellery" ? "gold-jewellery-btn" : "gold-btn"
               }`}
               style={{
-                background: "linear-gradient(135deg, #141416 0%, #25262B 100%)",
+                background:
+                  paymentMethod === "ONLINE_GATEWAY"
+                    ? "linear-gradient(135deg, #0C3B2E 0%, #175443 100%)"
+                    : "linear-gradient(135deg, #141416 0%, #25262B 100%)",
                 border: "1px solid rgba(197, 155, 39, 0.4)",
               }}
             >
-              {submitting
-                ? "Processing Order…"
-                : paymentMethod === "MANUAL_UPI"
-                ? "Proceed to UPI Payment →"
-                : "Place Order & Confirm →"}
+              {submitting ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Connecting Payment Gateway…
+                </span>
+              ) : paymentMethod === "ONLINE_GATEWAY" ? (
+                `⚡ Pay ${formatINR(total)} via Razorpay →`
+              ) : paymentMethod === "MANUAL_UPI" ? (
+                "Proceed to UPI QR Scan →"
+              ) : (
+                "Place Order (Cash on Delivery) →"
+              )}
             </button>
+
+            <div className="flex items-center justify-center gap-4 text-[10px] text-dim pt-1 font-semibold">
+              <span>🛡️ 100% Buyer Protection</span>
+              <span>•</span>
+              <span>⚡ Instant Auto-Verification</span>
+            </div>
           </div>
         </div>
       </div>

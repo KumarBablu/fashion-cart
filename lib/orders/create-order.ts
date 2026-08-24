@@ -37,43 +37,130 @@ export async function createOrder(
     paymentMethod?: "MANUAL_UPI" | "COD" | "ONLINE_GATEWAY";
     customerNotes?: string;
     store?: "garments" | "jewellery";
+    variantId?: string;
+    quantity?: number;
   }
 ) {
   const paymentMethod = options?.paymentMethod || "MANUAL_UPI";
+  const isDirectBuy = Boolean(options?.variantId);
 
-  // 1. Fetch user's cart from garments and jewellery databases
-  const [garmentsCart, jewelleryCart] = await Promise.all([
-    getDb("garments").cart.findUnique({
-      where: { userId },
-      include: { items: { include: { product: true, variant: true } } },
-    }),
-    getDb("jewellery").cart.findUnique({
-      where: { userId },
-      include: { items: { include: { product: true, variant: true } } },
-    }),
-  ]);
+  let store: "garments" | "jewellery" = options?.store || "garments";
+  let lineItems: Array<{
+    productId: string;
+    variantId: string;
+    productNameSnapshot: string;
+    colourSnapshot: string;
+    sizeSnapshot: string;
+    skuSnapshot: string;
+    unitPrice: Prisma.Decimal;
+    quantity: number;
+    total: Prisma.Decimal;
+  }> = [];
 
-  const garmentsItems = garmentsCart?.items || [];
-  const jewelleryItems = jewelleryCart?.items || [];
+  let activeCart: any = null;
 
-  // Determine active store for this order
-  let store: "garments" | "jewellery" = options?.store || (jewelleryItems.length > 0 ? "jewellery" : "garments");
-  let activeCart = store === "jewellery" ? jewelleryCart : garmentsCart;
-  let cartItems = activeCart?.items || [];
+  if (isDirectBuy) {
+    const buyQty = Math.max(1, Number(options?.quantity) || 1);
+    let directVariant = await getDb(store).productVariant.findUnique({
+      where: { id: options!.variantId },
+      include: { product: true },
+    });
 
-  if (cartItems.length === 0) {
-    // If chosen store cart is empty, check other store as fallback
-    const altStore = store === "jewellery" ? "garments" : "jewellery";
-    const altCart = altStore === "jewellery" ? jewelleryCart : garmentsCart;
-    if (altCart && altCart.items.length > 0) {
-      store = altStore;
-      activeCart = altCart;
-      cartItems = altCart.items;
+    if (!directVariant) {
+      const otherStore = store === "jewellery" ? "garments" : "jewellery";
+      directVariant = await getDb(otherStore).productVariant.findUnique({
+        where: { id: options!.variantId },
+        include: { product: true },
+      });
+      if (directVariant) {
+        store = otherStore;
+      }
     }
-  }
 
-  if (cartItems.length === 0) {
-    throw new CheckoutError("CART_EMPTY", "Your cart is empty.");
+    if (!directVariant || !directVariant.isActive || directVariant.product.status !== "ACTIVE") {
+      throw new CheckoutError("OUT_OF_STOCK", "This product is no longer available.");
+    }
+
+    if (directVariant.stockQuantity < buyQty) {
+      throw new CheckoutError("OUT_OF_STOCK", `Only ${directVariant.stockQuantity} items in stock for this size/colour.`);
+    }
+
+    const unitPrice = new Prisma.Decimal(directVariant.price);
+    lineItems = [
+      {
+        productId: directVariant.productId,
+        variantId: directVariant.id,
+        productNameSnapshot: directVariant.product.name,
+        colourSnapshot: directVariant.colour,
+        sizeSnapshot: directVariant.size,
+        skuSnapshot: directVariant.sku || directVariant.id,
+        unitPrice,
+        quantity: buyQty,
+        total: unitPrice.mul(buyQty),
+      },
+    ];
+  } else {
+    // 1. Fetch user's cart from garments and jewellery databases
+    const [garmentsCart, jewelleryCart] = await Promise.all([
+      getDb("garments").cart.findUnique({
+        where: { userId },
+        include: { items: { include: { product: true, variant: true } } },
+      }),
+      getDb("jewellery").cart.findUnique({
+        where: { userId },
+        include: { items: { include: { product: true, variant: true } } },
+      }),
+    ]);
+
+    const garmentsItems = garmentsCart?.items || [];
+    const jewelleryItems = jewelleryCart?.items || [];
+
+    // Determine active store for this order
+    store = options?.store || (jewelleryItems.length > 0 ? "jewellery" : "garments");
+    activeCart = store === "jewellery" ? jewelleryCart : garmentsCart;
+    let cartItems = activeCart?.items || [];
+
+    if (cartItems.length === 0) {
+      // If chosen store cart is empty, check other store as fallback
+      const altStore = store === "jewellery" ? "garments" : "jewellery";
+      const altCart = altStore === "jewellery" ? jewelleryCart : garmentsCart;
+      if (altCart && altCart.items.length > 0) {
+        store = altStore;
+        activeCart = altCart;
+        cartItems = altCart.items;
+      }
+    }
+
+    if (cartItems.length === 0) {
+      throw new CheckoutError("CART_EMPTY", "Your cart is empty.");
+    }
+
+    // Check stock availability upfront
+    for (const item of cartItems) {
+      if (!item.variant.isActive || item.variant.stockQuantity < item.quantity) {
+        throw new CheckoutError(
+          "OUT_OF_STOCK",
+          `Item "${item.product.name} (${item.variant.colour}/${item.variant.size})" has insufficient stock.`
+        );
+      }
+    }
+
+    // Prepare line items
+    lineItems = cartItems.map((item: any) => {
+      const unitPrice = new Prisma.Decimal(item.variant.price);
+      const total = unitPrice.mul(item.quantity);
+      return {
+        productId: item.productId,
+        variantId: item.variantId,
+        productNameSnapshot: item.product.name,
+        colourSnapshot: item.variant.colour,
+        sizeSnapshot: item.variant.size,
+        skuSnapshot: item.variant.sku || item.variant.id,
+        unitPrice,
+        quantity: item.quantity,
+        total,
+      };
+    });
   }
 
   const db = getDb(store);
@@ -126,33 +213,6 @@ export async function createOrder(
   if (!address) {
     throw new CheckoutError("ADDRESS_NOT_FOUND", "Delivery address not found.");
   }
-
-  // Check stock availability upfront
-  for (const item of cartItems) {
-    if (!item.variant.isActive || item.variant.stockQuantity < item.quantity) {
-      throw new CheckoutError(
-        "OUT_OF_STOCK",
-        `Item "${item.product.name} (${item.variant.colour}/${item.variant.size})" has insufficient stock.`
-      );
-    }
-  }
-
-  // Prepare line items
-  const lineItems = cartItems.map((item) => {
-    const unitPrice = item.variant.price;
-    const total = unitPrice.mul(item.quantity);
-    return {
-      productId: item.productId,
-      variantId: item.variantId,
-      productNameSnapshot: item.product.name,
-      colourSnapshot: item.variant.colour,
-      sizeSnapshot: item.variant.size,
-      skuSnapshot: item.variant.sku,
-      unitPrice,
-      quantity: item.quantity,
-      total,
-    };
-  });
 
   const subtotal = lineItems.reduce((sum, item) => sum.add(item.total), new Prisma.Decimal(0));
 
@@ -217,16 +277,11 @@ export async function createOrder(
 
   // Status mapping based on payment method
   const initialOrderStatus =
-    paymentMethod === "ONLINE_GATEWAY"
-      ? "CONFIRMED"
-      : paymentMethod === "COD"
+    paymentMethod === "COD"
       ? "CONFIRMED"
       : "PENDING_PAYMENT";
 
-  const initialPaymentStatus =
-    paymentMethod === "ONLINE_GATEWAY"
-      ? "VERIFIED"
-      : "PAYMENT_PENDING";
+  const initialPaymentStatus = "PAYMENT_PENDING";
 
   try {
     const order = await db.$transaction(async (tx) => {
@@ -285,13 +340,12 @@ export async function createOrder(
           method: paymentMethod === "COD" ? "COD" : paymentMethod === "ONLINE_GATEWAY" ? "ONLINE_GATEWAY" : "MANUAL_UPI",
           amount: total,
           status: initialPaymentStatus,
-          verifiedAt: initialPaymentStatus === "VERIFIED" ? new Date() : null,
+          verifiedAt: null,
         },
       });
 
-      // Clear the user's cart ONLY if payment is immediately confirmed (COD / ONLINE_GATEWAY).
-      // For MANUAL_UPI, items stay in cart until payment proof is uploaded or verified, allowing customer to manage cart.
-      if (paymentMethod === "COD" || paymentMethod === "ONLINE_GATEWAY") {
+      // Clear the user's cart immediately for COD full-cart checkouts (not direct buy)
+      if (!isDirectBuy && paymentMethod === "COD") {
         if (activeCart?.id) {
           await tx.cartItem.deleteMany({ where: { cartId: activeCart.id } });
         }

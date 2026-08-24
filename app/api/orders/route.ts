@@ -49,6 +49,8 @@ export async function POST(req: NextRequest) {
       paymentMethod: parsed.data.paymentMethod,
       customerNotes: parsed.data.customerNotes,
       store,
+      variantId: parsed.data.variantId,
+      quantity: parsed.data.quantity,
     });
 
     const settings = await getDb(store).paymentSettings.findFirst({ where: { isActive: true } }).catch(() => null);

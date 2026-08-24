@@ -75,15 +75,127 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
   const [showUtrHelper, setShowUtrHelper] = useState(false);
   const [paymentAttemptResult, setPaymentAttemptResult] = useState<"SUCCESS" | "FAILED" | "RETURNED_UNPAID" | null>(null);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
+  const [submittingRazorpay, setSubmittingRazorpay] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const uploadFormRef = useRef<HTMLFormElement | null>(null);
   const searchParams = useSearchParams();
-  const { success } = useToast();
+  const { success, error: toastError } = useToast();
 
   useEffect(() => {
     params.then(({ orderId }) => setOrderId(orderId));
   }, [params]);
+
+  // Load Razorpay script dynamically
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (document.getElementById("razorpay-checkout-script")) return;
+    const script = document.createElement("script");
+    script.id = "razorpay-checkout-script";
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
+  async function payWithRazorpay() {
+    if (!orderId || !data) return;
+    setSubmittingRazorpay(true);
+    setError(null);
+
+    const activeStore = searchParams.get("store") === "jewellery" ? "jewellery" : "garments";
+
+    try {
+      const res = await fetch("/api/payments/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          existingOrderId: orderId,
+          store: activeStore,
+        }),
+      });
+
+      const rzpData = await res.json();
+      if (!res.ok || !rzpData.success) {
+        toastError("Gateway Error", rzpData.error || "Could not launch Razorpay.");
+        setSubmittingRazorpay(false);
+        return;
+      }
+
+      const RazorpayWindow = (window as unknown as { Razorpay: any }).Razorpay;
+      if (!RazorpayWindow) {
+        toastError("Loading", "Payment gateway is initializing. Please try again.");
+        setSubmittingRazorpay(false);
+        return;
+      }
+
+      const options = {
+        key: rzpData.keyId,
+        amount: rzpData.amount,
+        currency: rzpData.currency || "INR",
+        name: activeStore === "jewellery" ? "Fashion Cart Jewellery" : "Fashion Cart",
+        description: `Order #${rzpData.orderNumber}`,
+        image: "/fashion-cart-logo-transparent.svg",
+        order_id: rzpData.razorpayOrderId,
+        prefill: {
+          name: rzpData.customer?.name || "",
+          email: rzpData.customer?.email || "",
+          contact: rzpData.customer?.phone || "",
+        },
+        theme: {
+          color: activeStore === "jewellery" ? "#C59B27" : "#0C3B2E",
+        },
+        modal: {
+          ondismiss: function () {
+            setSubmittingRazorpay(false);
+          },
+        },
+        handler: async function (response: {
+          razorpay_payment_id: string;
+          razorpay_order_id: string;
+          razorpay_signature: string;
+        }) {
+          try {
+            const verifyRes = await fetch("/api/payments/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId,
+                store: rzpData.store,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+            setSubmittingRazorpay(false);
+
+            if (verifyRes.ok && verifyData.success) {
+              success("Payment Verified! 🎉", "Your order has been officially confirmed.");
+              fetch(`/api/orders/${orderId}`).then((r) => r.json()).then(setData);
+            } else {
+              toastError("Verification Issue", verifyData.error || "Payment verification pending.");
+            }
+          } catch {
+            setSubmittingRazorpay(false);
+            toastError("Payment Recorded", "Payment completed. Verifying status...");
+          }
+        },
+      };
+
+      const razorpayInstance = new RazorpayWindow(options);
+      razorpayInstance.on("payment.failed", function (failResponse: any) {
+        setSubmittingRazorpay(false);
+        const reason = failResponse?.error?.description || "Payment was not completed.";
+        setError(`Payment failed: ${reason}`);
+      });
+
+      razorpayInstance.open();
+    } catch {
+      setError("Network error connecting to payment gateway.");
+      setSubmittingRazorpay(false);
+    }
+  }
 
   // Initial load
   useEffect(() => {
@@ -543,6 +655,38 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
             </p>
           </div>
         )}
+
+        {/* 2C. INSTANT ONLINE PAYMENT (RAZORPAY) AUTO-VERIFY ALTERNATIVE */}
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-[#0C3B2E] to-[#175443] text-white space-y-3.5 shadow-lg border border-[#C59B27]/40 text-left">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">⚡</span>
+              <div>
+                <p className="font-bold text-sm text-[#FBF4E2]">Instant Auto-Verification (Razorpay)</p>
+                <p className="text-[11px] text-[#A8C7BC]">Skip screenshot upload! Instant approval via UPI, Cards & NetBanking.</p>
+              </div>
+            </div>
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-[#FFBA00] text-[#0C3B2E]">
+              Zero Wait
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={payWithRazorpay}
+            disabled={submittingRazorpay}
+            className="w-full py-3.5 px-6 rounded-full font-bold text-xs uppercase tracking-wider bg-white text-[#0C3B2E] hover:bg-[#FAF8F5] hover:scale-[1.01] active:scale-[0.99] transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+          >
+            {submittingRazorpay ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-[#0C3B2E] border-t-transparent rounded-full animate-spin" />
+                <span>Connecting Gateway…</span>
+              </>
+            ) : (
+              <span>⚡ Pay {formatINR(amount)} Instantly with Razorpay →</span>
+            )}
+          </button>
+        </div>
 
         {/* 3. DYNAMIC PAYMENT METHOD DESK WITH CUSTOM DROPDOWN */}
         <DynamicUpiQr

@@ -20,6 +20,100 @@ export async function GET(req: NextRequest) {
   const requestedStore = sp.get("store") || (refererIsJewellery ? "jewellery" : cookieStore) || "garments";
   const store = requestedStore === "jewellery" ? "jewellery" : "garments";
 
+  const isDirect = sp.get("direct") === "true";
+  const directVariantId = sp.get("variantId");
+  const directQuantity = Math.max(1, parseInt(sp.get("quantity") || "1", 10));
+
+  if (isDirect && directVariantId) {
+    let variant = await getDb(store).productVariant.findUnique({
+      where: { id: directVariantId },
+      select: {
+        id: true,
+        productId: true,
+        colour: true,
+        size: true,
+        price: true,
+        compareAtPrice: true,
+        stockQuantity: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            brand: true,
+            fabric: true,
+            images: {
+              take: 1,
+              orderBy: { sortOrder: "asc" },
+              select: { id: true, imageUrl: true, altText: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!variant) {
+      const otherStore = store === "jewellery" ? "garments" : "jewellery";
+      variant = await getDb(otherStore).productVariant.findUnique({
+        where: { id: directVariantId },
+        select: {
+          id: true,
+          productId: true,
+          colour: true,
+          size: true,
+          price: true,
+          compareAtPrice: true,
+          stockQuantity: true,
+          product: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              brand: true,
+              fabric: true,
+              images: {
+                take: 1,
+                orderBy: { sortOrder: "asc" },
+                select: { id: true, imageUrl: true, altText: true },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    if (!variant) {
+      return NextResponse.json({ error: "Product variant not found" }, { status: 404 });
+    }
+
+    const price = Number(variant.price);
+    const item = {
+      id: `direct-${variant.id}`,
+      cartId: `direct-cart`,
+      productId: variant.productId,
+      variantId: variant.id,
+      quantity: directQuantity,
+      store,
+      product: variant.product,
+      variant: {
+        ...variant,
+        price,
+        compareAtPrice: variant.compareAtPrice ? Number(variant.compareAtPrice) : null,
+      },
+    };
+
+    return NextResponse.json({
+      cart: {
+        id: `direct-cart-${user.id}`,
+        userId: user.id,
+        store,
+        isDirect: true,
+        items: [item],
+      },
+      subtotal: price * directQuantity,
+    });
+  }
+
   try {
     const db = getDb(store);
     const cart = await db.cart.findUnique({

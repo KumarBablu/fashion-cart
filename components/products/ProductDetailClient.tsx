@@ -191,9 +191,16 @@ export default function ProductDetailClient({
       return;
     }
 
-    setAdding(true);
     const isJewel = (product as any).productId?.startsWith("FC-JW") || (product as any).department === "Jewellery" || (typeof window !== "undefined" && (window.location.pathname.startsWith("/jewellery") || window.location.search.includes("store=jewellery")));
     const currentStore = isJewel ? "jewellery" : "garments";
+
+    if (redirectToCheckout) {
+      // Instant direct single-product checkout (does not bundle or mutate persistent cart)
+      router.push(`/checkout?direct=true&variantId=${selected.id}&quantity=${quantity}&store=${currentStore}`);
+      return;
+    }
+
+    setAdding(true);
     try {
       const res = await fetch(`/api/cart?store=${currentStore}`, {
         method: "POST",
@@ -209,9 +216,6 @@ export default function ProductDetailClient({
       if (res.ok) {
         success("Added to Bag! 🛍️", `${product.name} (${colour}/${size})`);
         window.dispatchEvent(new CustomEvent("cart-updated"));
-        if (redirectToCheckout) {
-          router.push(`/checkout${currentStore === "jewellery" ? "?store=jewellery" : ""}`);
-        }
       } else {
         const data = await res.json();
         error("Error", data.error || "Could not add to cart.");

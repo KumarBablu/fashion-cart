@@ -55,6 +55,9 @@ export const checkoutSchema = z.object({
   couponCode: z.string().optional(),
   paymentMethod: z.enum(["MANUAL_UPI", "COD", "ONLINE_GATEWAY"]).default("MANUAL_UPI"),
   customerNotes: z.string().max(500).optional(),
+  variantId: z.string().optional(),
+  quantity: z.number().int().positive().optional(),
+  store: z.enum(["garments", "jewellery"]).optional(),
 });
 
 export const utrSubmissionSchema = z.object({
