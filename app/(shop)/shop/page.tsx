@@ -131,7 +131,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     brand: p.brand,
     fabric: p.fabric,
     status: p.status,
-    createdAt: p.createdAt.toISOString(),
+    createdAt: typeof p.createdAt === "string" ? p.createdAt : p.createdAt?.toISOString?.() || String(p.createdAt || ""),
     averageRating: Number(p.averageRating || 4.8),
     totalReviews: Number(p.totalReviews || 12),
     images: p.images.map((img) => ({

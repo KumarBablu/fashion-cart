@@ -79,39 +79,41 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   const serialized = {
     ...product,
+    createdAt: typeof product.createdAt === "string" ? product.createdAt : product.createdAt?.toISOString?.() || String(product.createdAt || ""),
+    updatedAt: typeof product.updatedAt === "string" ? product.updatedAt : product.updatedAt?.toISOString?.() || String(product.updatedAt || ""),
     averageRating: Number(product.averageRating || 4.8),
     totalReviews: Number(product.totalReviews || 12),
-    variants: product.variants.map((v) => ({
+    variants: (product.variants || []).map((v) => ({
       ...v,
       price: Number(v.price),
       compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
       discountPercent: v.discountPercent ? Number(v.discountPercent) : null,
-      stockQuantity: Number(v.stockQuantity),
+      stockQuantity: Number(v.stockQuantity || 0),
     })),
   };
 
-  const relatedSerialized = related.map((p) => ({
+  const relatedSerialized = (related || []).map((p) => ({
     id: p.id,
     slug: p.slug,
     name: p.name,
     brand: p.brand,
     fabric: p.fabric,
     status: p.status,
-    createdAt: p.createdAt.toISOString(),
+    createdAt: typeof p.createdAt === "string" ? p.createdAt : p.createdAt?.toISOString?.() || String(p.createdAt || ""),
     averageRating: Number(p.averageRating || 4.8),
     totalReviews: Number(p.totalReviews || 12),
-    images: p.images.map((img) => ({
+    images: (p.images || []).map((img) => ({
       imageUrl: img.imageUrl,
       altText: img.altText,
     })),
-    variants: p.variants.map((v) => ({
+    variants: (p.variants || []).map((v) => ({
       id: v.id,
       colour: v.colour,
       size: v.size,
       price: Number(v.price),
       compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
       discountPercent: v.discountPercent ? Number(v.discountPercent) : null,
-      stockQuantity: Number(v.stockQuantity),
+      stockQuantity: Number(v.stockQuantity || 0),
     })),
   }));
 
