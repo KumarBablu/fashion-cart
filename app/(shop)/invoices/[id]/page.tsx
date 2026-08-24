@@ -13,8 +13,10 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const user = await getCurrentUser();
   const admin = await getCurrentAdmin();
 
-  // Find order by ID or order number or invoice number
-  const order = await prisma.order.findFirst({
+  // Find order in garments or jewellery DB
+  const { getDb } = await import("@/lib/db");
+  let store: "garments" | "jewellery" = "garments";
+  let order = await getDb("garments").order.findFirst({
     where: {
       OR: [
         { id },
@@ -29,6 +31,25 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
       invoice: true,
     },
   });
+
+  if (!order) {
+    order = await getDb("jewellery").order.findFirst({
+      where: {
+        OR: [
+          { id },
+          { orderNumber: id },
+          { invoice: { invoiceNumber: id } },
+        ],
+      },
+      include: {
+        items: true,
+        user: { select: { name: true, email: true, phone: true } },
+        payment: true,
+        invoice: true,
+      },
+    });
+    if (order) store = "jewellery";
+  }
 
   if (!order) notFound();
 
@@ -51,7 +72,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const business = await prisma.businessSettings.findFirst();
+  const business = await getDb(store).businessSettings.findFirst();
   const isUserAdmin = Boolean(admin || (user && user.role === "ADMIN"));
 
   return (

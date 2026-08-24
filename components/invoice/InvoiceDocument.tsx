@@ -77,7 +77,16 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
     year: "numeric",
   });
 
-  const verificationUrl = `https://fashion-cart-5p7k.vercel.app/invoices/${order.id}`;
+  const cleanGstin =
+    business?.gstin && !business.gstin.startsWith("STORE_CTRL:") && business.gstin.length <= 25
+      ? business.gstin
+      : "10AABCU9603R1ZM";
+
+  const appBase =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_APP_URL || "https://fashioncartstore.vercel.app";
+  const verificationUrl = `${appBase}/invoices/${order.id}`;
 
   useEffect(() => {
     QRCode.toDataURL(verificationUrl, {
@@ -169,7 +178,7 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
               {business?.businessAddress || "Sonar Toli, City: Siwan, State: Bihar, PIN: 841226"}
             </p>
             <p className="text-[10px] text-white/80 font-medium">
-              GSTIN: <span className="font-mono font-bold text-[#C59B27]">{business?.gstin || "10AABCU9603R1ZM"}</span> · State: Bihar (10)
+              GSTIN: <span className="font-mono font-bold text-[#C59B27]">{cleanGstin}</span> · State: Bihar (10)
             </p>
             <p className="text-[10px] text-white/70">
               Support: {business?.email || "Fashioncart.support@gmail.com"} · Contact: {business?.phone || "+91 97710 39201"}

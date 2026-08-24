@@ -80,8 +80,15 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
     pinCode: string;
   };
 
+  // Sanitize GSTIN (protect against internal store control strings)
+  const cleanGstin =
+    business?.gstin && !business.gstin.startsWith("STORE_CTRL:") && business.gstin.length <= 25
+      ? business.gstin
+      : "10AABCU9603R1ZM";
+
   // Generate and embed high-resolution QR code
-  const verificationUrl = `https://fashion-cart-5p7k.vercel.app/invoices/${order.id}`;
+  const appBase = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://fashioncartstore.vercel.app";
+  const verificationUrl = `${appBase}/invoices/${order.id}`;
   const qrPngBuffer = await generateQrPngBuffer(verificationUrl, 240);
   const qrImage = await pdfDoc.embedPng(qrPngBuffer);
 
@@ -158,7 +165,7 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   page.drawText(business?.businessName || "Fashion Cart", { x: 36, y: currentY - 14, size: 9, font: fontBold, color: goldAccent });
   page.drawText("Sonar Toli, City: Siwan", { x: 36, y: currentY - 26, size: 7.5, font: fontRegular, color: textMuted });
   page.drawText("State: Bihar, PIN: 841226", { x: 36, y: currentY - 37, size: 7.5, font: fontRegular, color: textMuted });
-  page.drawText(`GSTIN: ${business?.gstin || "10AABCU9603R1ZM"} - State: Bihar (10)`, {
+  page.drawText(`GSTIN: ${cleanGstin} · State: Bihar (10)`, {
     x: 36,
     y: currentY - 49,
     size: 7.5,
