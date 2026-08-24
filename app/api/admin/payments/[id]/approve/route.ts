@@ -56,6 +56,26 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       data: { status: "CONFIRMED" },
     });
 
+    // Clear purchased items from user's cart in this store
+    const fullOrderWithItems = await tx.order.findUnique({
+      where: { id: payment.orderId },
+      include: { items: true },
+    });
+    if (fullOrderWithItems?.userId) {
+      const userCart = await tx.cart.findUnique({ where: { userId: fullOrderWithItems.userId } });
+      const purchasedVariantIds = fullOrderWithItems.items
+        .map((i) => i.variantId)
+        .filter((id): id is string => Boolean(id));
+      if (userCart && purchasedVariantIds.length > 0) {
+        await tx.cartItem.deleteMany({
+          where: {
+            cartId: userCart.id,
+            variantId: { in: purchasedVariantIds },
+          },
+        });
+      }
+    }
+
     return verifiedPayment;
   });
 

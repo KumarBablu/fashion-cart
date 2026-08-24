@@ -201,12 +201,6 @@ export default function ProductDetailClient({
     const isJewel = (product as any).productId?.startsWith("FC-JW") || (product as any).department === "Jewellery" || (typeof window !== "undefined" && (window.location.pathname.startsWith("/jewellery") || window.location.search.includes("store=jewellery")));
     const currentStore = isJewel ? "jewellery" : "garments";
 
-    if (redirectToCheckout) {
-      // Instant direct single-product checkout (does not bundle or mutate persistent cart)
-      router.push(`/checkout?direct=true&variantId=${selected.id}&quantity=${quantity}&store=${currentStore}`);
-      return;
-    }
-
     setAdding(true);
     try {
       const res = await fetch(`/api/cart?store=${currentStore}`, {
@@ -216,18 +210,34 @@ export default function ProductDetailClient({
       });
 
       if (res.status === 401) {
-        router.push(`/login?next=/products/${product.slug}`);
+        const nextTarget = redirectToCheckout
+          ? `/checkout?direct=true&variantId=${selected.id}&quantity=${quantity}&store=${currentStore}`
+          : `/products/${product.slug}${currentStore === "jewellery" ? "?store=jewellery" : ""}`;
+        router.push(`/login?next=${encodeURIComponent(nextTarget)}`);
         return;
       }
 
       if (res.ok) {
-        success("Added to Bag! 🛍️", `${product.name} (${colour}/${size})`);
         window.dispatchEvent(new CustomEvent("cart-updated"));
+        if (redirectToCheckout) {
+          router.push(`/checkout?direct=true&variantId=${selected.id}&quantity=${quantity}&store=${currentStore}`);
+          return;
+        }
+        success("Added to Bag! 🛍️", `${product.name} (${colour}/${size})`);
       } else {
         const data = await res.json();
+        if (redirectToCheckout) {
+          // If item already in cart or stock warning, still proceed to checkout
+          router.push(`/checkout?direct=true&variantId=${selected.id}&quantity=${quantity}&store=${currentStore}`);
+          return;
+        }
         error("Error", data.error || "Could not add to cart.");
       }
     } catch {
+      if (redirectToCheckout) {
+        router.push(`/checkout?direct=true&variantId=${selected.id}&quantity=${quantity}&store=${currentStore}`);
+        return;
+      }
       error("Network error", "Unable to reach server.");
     } finally {
       setAdding(false);

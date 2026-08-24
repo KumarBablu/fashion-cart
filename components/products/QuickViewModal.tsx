@@ -151,12 +151,6 @@ export default function QuickViewModal({
     const isJewel = (product as any)?.productId?.startsWith("FC-JW") || (product as any)?.department === "Jewellery" || (typeof window !== "undefined" && (window.location.pathname.startsWith("/jewellery") || window.location.search.includes("store=jewellery")));
     const currentStore = isJewel ? "jewellery" : "garments";
 
-    if (goToCheckout) {
-      onClose();
-      router.push(`/checkout?direct=true&variantId=${selectedVariant.id}&quantity=${quantity}&store=${currentStore}`);
-      return;
-    }
-
     setAdding(true);
     try {
       const res = await fetch(`/api/cart?store=${currentStore}`, {
@@ -166,19 +160,38 @@ export default function QuickViewModal({
       });
 
       if (res.status === 401) {
-        router.push(`/login?next=/products/${product?.slug}`);
+        onClose();
+        const nextTarget = goToCheckout
+          ? `/checkout?direct=true&variantId=${selectedVariant.id}&quantity=${quantity}&store=${currentStore}`
+          : `/products/${product?.slug}${currentStore === "jewellery" ? "?store=jewellery" : ""}`;
+        router.push(`/login?next=${encodeURIComponent(nextTarget)}`);
         return;
       }
 
       if (res.ok) {
-        success("Added to Cart! 🛍️", `${product?.name} (${colour}/${size})`);
         window.dispatchEvent(new CustomEvent("cart-updated"));
+        if (goToCheckout) {
+          onClose();
+          router.push(`/checkout?direct=true&variantId=${selectedVariant.id}&quantity=${quantity}&store=${currentStore}`);
+          return;
+        }
+        success("Added to Cart! 🛍️", `${product?.name} (${colour}/${size})`);
         onClose();
       } else {
         const data = await res.json();
+        if (goToCheckout) {
+          onClose();
+          router.push(`/checkout?direct=true&variantId=${selectedVariant.id}&quantity=${quantity}&store=${currentStore}`);
+          return;
+        }
         error("Could not add", data.error || "Please try again.");
       }
     } catch {
+      if (goToCheckout) {
+        onClose();
+        router.push(`/checkout?direct=true&variantId=${selectedVariant.id}&quantity=${quantity}&store=${currentStore}`);
+        return;
+      }
       error("Network Error", "Unable to connect to server.");
     } finally {
       setAdding(false);

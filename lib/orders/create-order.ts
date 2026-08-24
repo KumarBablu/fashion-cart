@@ -344,10 +344,21 @@ export async function createOrder(
         },
       });
 
-      // Clear the user's cart immediately for COD full-cart checkouts (not direct buy)
-      if (!isDirectBuy && paymentMethod === "COD") {
-        if (activeCart?.id) {
-          await tx.cartItem.deleteMany({ where: { cartId: activeCart.id } });
+      // Clear purchased items from user's cart immediately for COD orders
+      if (paymentMethod === "COD") {
+        const purchasedVariantIds = lineItems
+          .map((i) => i.variantId)
+          .filter((id): id is string => Boolean(id));
+        if (purchasedVariantIds.length > 0) {
+          const userCart = await tx.cart.findUnique({ where: { userId } });
+          if (userCart) {
+            await tx.cartItem.deleteMany({
+              where: {
+                cartId: userCart.id,
+                variantId: { in: purchasedVariantIds },
+              },
+            });
+          }
         }
       }
 

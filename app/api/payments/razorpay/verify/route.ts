@@ -113,10 +113,23 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Clear customer's active cart in this store
+      // Clear purchased items from customer's active cart in this store
+      const orderWithItems = await tx.order.findUnique({
+        where: { id: order.id },
+        include: { items: true },
+      });
+      const purchasedVariantIds = (orderWithItems?.items || [])
+        .map((i) => i.variantId)
+        .filter((id): id is string => Boolean(id));
+
       const userCart = await tx.cart.findUnique({ where: { userId: user.id } });
-      if (userCart) {
-        await tx.cartItem.deleteMany({ where: { cartId: userCart.id } });
+      if (userCart && purchasedVariantIds.length > 0) {
+        await tx.cartItem.deleteMany({
+          where: {
+            cartId: userCart.id,
+            variantId: { in: purchasedVariantIds },
+          },
+        });
       }
     });
 
