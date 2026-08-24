@@ -89,27 +89,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 });
   }
 
-  // 1. Determine if product is in Garments or Jewellery database
-  let store: "garments" | "jewellery" = "garments";
-  let product = await getDb("garments").product.findUnique({
-    where: { id: parsed.data.productId },
-  });
-
-  if (!product) {
-    product = await getDb("jewellery").product.findUnique({
+  // 1. Locate product in parallel across stores
+  const [garmentsProduct, jewelleryProduct] = await Promise.all([
+    getDb("garments").product.findUnique({
       where: { id: parsed.data.productId },
-    });
-    if (product) {
-      store = "jewellery";
-    }
-  }
+      select: { id: true },
+    }).catch(() => null),
+    getDb("jewellery").product.findUnique({
+      where: { id: parsed.data.productId },
+      select: { id: true },
+    }).catch(() => null),
+  ]);
 
-  if (!product) {
+  let store: "garments" | "jewellery" = "garments";
+  if (garmentsProduct) {
+    store = "garments";
+  } else if (jewelleryProduct) {
+    store = "jewellery";
+  } else {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  // Sync user record to target store DB
-  const targetUser = await getStoreUser(store);
+  // Sync user record to target store DB if jewellery
+  const targetUser = store === "garments" ? user : await getStoreUser(store, req);
   if (!targetUser) {
     return NextResponse.json({ error: "User session sync failed" }, { status: 500 });
   }

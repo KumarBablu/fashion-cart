@@ -71,11 +71,12 @@ export default function HeaderClient({
 
   function refreshCartCount() {
     if (!isLoggedIn) return;
-    const store = getActiveStore();
-    fetch(`/api/cart?store=${store}`)
+    fetch(`/api/cart?all=true`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data?.cart?.items) {
+        if (data?.totalCount !== undefined) {
+          setCartCount(data.totalCount);
+        } else if (data?.cart?.items) {
           setCartCount(data.cart.items.reduce((n: number, i: { quantity: number }) => n + i.quantity, 0));
         }
       })

@@ -960,7 +960,7 @@ export default function CheckoutPage() {
                   Connecting Payment Gateway…
                 </span>
               ) : paymentMethod === "ONLINE_GATEWAY" ? (
-                `⚡ Pay ${formatINR(total)} via Razorpay →`
+                `⚡ Pay ${formatINR(total)} Securely Online →`
               ) : paymentMethod === "MANUAL_UPI" ? (
                 "Proceed to UPI QR Scan →"
               ) : (

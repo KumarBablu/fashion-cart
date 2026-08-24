@@ -114,6 +114,85 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  const fetchAll = sp.get("all") === "true";
+  if (fetchAll) {
+    const itemSelect = {
+      id: true,
+      cartId: true,
+      productId: true,
+      variantId: true,
+      quantity: true,
+      product: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          brand: true,
+          fabric: true,
+          images: {
+            take: 1,
+            orderBy: { sortOrder: "asc" as const },
+            select: { id: true, imageUrl: true, altText: true },
+          },
+        },
+      },
+      variant: {
+        select: {
+          id: true,
+          colour: true,
+          size: true,
+          price: true,
+          compareAtPrice: true,
+          stockQuantity: true,
+        },
+      },
+    };
+
+    try {
+      const [garmentsCart, jewelleryCart] = await Promise.all([
+        getDb("garments").cart.findUnique({
+          where: { userId: user.id },
+          select: { id: true, userId: true, items: { select: itemSelect } },
+        }).catch(() => null),
+        getDb("jewellery").cart.findUnique({
+          where: { userId: user.id },
+          select: { id: true, userId: true, items: { select: itemSelect } },
+        }).catch(() => null),
+      ]);
+
+      const garmentsItems = (garmentsCart?.items || []).map((i) => ({
+        ...i,
+        store: "garments" as const,
+        variant: { ...i.variant, price: Number(i.variant.price), compareAtPrice: i.variant.compareAtPrice ? Number(i.variant.compareAtPrice) : null },
+      }));
+      const jewelleryItems = (jewelleryCart?.items || []).map((i) => ({
+        ...i,
+        store: "jewellery" as const,
+        variant: { ...i.variant, price: Number(i.variant.price), compareAtPrice: i.variant.compareAtPrice ? Number(i.variant.compareAtPrice) : null },
+      }));
+
+      const activeStoreItems = store === "jewellery" ? jewelleryItems : garmentsItems;
+      const allItems = [...garmentsItems, ...jewelleryItems];
+      const totalCount = allItems.reduce((n, i) => n + i.quantity, 0);
+
+      return NextResponse.json({
+        cart: {
+          id: `cart-all-${user.id}`,
+          userId: user.id,
+          store,
+          items: activeStoreItems,
+          allItems,
+        },
+        totalCount,
+        garmentsCount: garmentsItems.reduce((n, i) => n + i.quantity, 0),
+        jewelleryCount: jewelleryItems.reduce((n, i) => n + i.quantity, 0),
+        subtotal: activeStoreItems.reduce((sum, item) => sum + Number(item.variant.price) * item.quantity, 0),
+      });
+    } catch {
+      return NextResponse.json({ error: "Failed to load carts" }, { status: 500 });
+    }
+  }
+
   try {
     const db = getDb(store);
     const cart = await db.cart.findUnique({

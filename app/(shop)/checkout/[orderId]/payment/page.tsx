@@ -699,13 +699,13 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
           </div>
         )}
 
-        {/* 2C. INSTANT ONLINE PAYMENT (RAZORPAY) AUTO-VERIFY ALTERNATIVE */}
+        {/* 2C. INSTANT ONLINE PAYMENT AUTO-VERIFY ALTERNATIVE */}
         <div className="p-5 rounded-3xl bg-gradient-to-br from-[#0C3B2E] to-[#175443] text-white space-y-3.5 shadow-lg border border-[#C59B27]/40 text-left">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <span className="text-xl">⚡</span>
               <div>
-                <p className="font-bold text-sm text-[#FBF4E2]">Instant Auto-Verification (Razorpay)</p>
+                <p className="font-bold text-sm text-[#FBF4E2]">Instant Auto-Verification (UPI / Cards)</p>
                 <p className="text-[11px] text-[#A8C7BC]">Skip screenshot upload! Instant approval via UPI, Cards & NetBanking.</p>
               </div>
             </div>
@@ -726,7 +726,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
                 <span>Connecting Gateway…</span>
               </>
             ) : (
-              <span>⚡ Pay {formatINR(amount)} Instantly with Razorpay →</span>
+              <span>⚡ Pay {formatINR(amount)} Securely Online →</span>
             )}
           </button>
         </div>
@@ -877,7 +877,7 @@ export default function PaymentPage({ params }: { params: Promise<{ orderId: str
               <p className="text-xs text-[#787C87] leading-relaxed">
                 {paymentLoadingStage === "VERIFYING"
                   ? "Payment received! Auto-confirming your order and preparing your tax invoice. Please do not refresh."
-                  : "Please wait a moment while we initialize your encrypted Razorpay checkout session…"}
+                  : "Please wait a moment while we initialize your secure encrypted checkout session…"}
               </p>
             </div>
 

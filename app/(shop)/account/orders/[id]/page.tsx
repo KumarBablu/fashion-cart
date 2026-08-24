@@ -277,7 +277,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <div className="flex justify-between">
               <span className="text-dim">Gateway &amp; Method</span>
               <span className="font-semibold text-primary">
-                {order.payment?.gatewayName || (order.paymentMethod.includes("ONLINE") ? "Razorpay" : order.paymentMethod.replace(/_/g, " "))}
+                {order.payment?.gatewayName === "Razorpay" ? "Online Payment" : (order.payment?.gatewayName || (order.paymentMethod.includes("ONLINE") ? "Online Payment" : order.paymentMethod.replace(/_/g, " ")))}
               </span>
             </div>
             {order.payment?.paymentChannel && (
