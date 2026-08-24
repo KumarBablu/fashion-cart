@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { getStoresControl } from "@/lib/stores";
+import { getCachedFilterFacets } from "@/lib/data/cache";
 import { Prisma } from "@prisma/client";
 import ProductCard from "@/components/products/ProductCard";
 import ShopFilters from "@/components/products/ShopFilters";
@@ -80,42 +81,48 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     },
   };
 
-  const [items, total, categories, allSizes, allColours] = await Promise.all([
+  const [items, total, facets] = await Promise.all([
     db.product.findMany({
       where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      include: {
-        images: { take: 2, orderBy: { sortOrder: "asc" } },
-        variants: { where: { isActive: true } },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        brand: true,
+        fabric: true,
+        status: true,
+        createdAt: true,
+        averageRating: true,
+        totalReviews: true,
+        images: {
+          take: 2,
+          orderBy: { sortOrder: "asc" },
+          select: { imageUrl: true, altText: true },
+        },
+        variants: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            colour: true,
+            size: true,
+            price: true,
+            compareAtPrice: true,
+            discountPercent: true,
+            stockQuantity: true,
+          },
+        },
       },
     }),
     db.product.count({ where }),
-    db.category.findMany({
-      where: {
-        isActive: true,
-        OR: [
-          { products: { some: { status: "ACTIVE" } } },
-          { children: { some: { isActive: true, products: { some: { status: "ACTIVE" } } } } },
-        ],
-      },
-      select: { id: true, name: true, slug: true, parentId: true },
-      orderBy: { sortOrder: "asc" },
-    }),
-    db.productVariant.findMany({
-      where: { isActive: true },
-      distinct: ["size"],
-      select: { size: true },
-      take: 20,
-    }),
-    db.productVariant.findMany({
-      where: { isActive: true },
-      distinct: ["colour"],
-      select: { colour: true },
-      take: 20,
-    }),
+    getCachedFilterFacets(store),
   ]);
+
+  const categories = facets.categories;
+  const allSizes = facets.sizes.map((s) => ({ size: s }));
+  const allColours = facets.colours.map((c) => ({ colour: c }));
 
   let products = items.map((p) => ({
     id: p.id,

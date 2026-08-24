@@ -9,26 +9,54 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const wishlistSelect = {
+    id: true,
+    userId: true,
+    items: {
+      select: {
+        id: true,
+        wishlistId: true,
+        productId: true,
+        variantId: true,
+        createdAt: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            brand: true,
+            fabric: true,
+            status: true,
+            images: {
+              take: 1,
+              orderBy: { sortOrder: "asc" as const },
+              select: { id: true, imageUrl: true, altText: true },
+            },
+            variants: {
+              where: { isActive: true },
+              select: {
+                id: true,
+                colour: true,
+                size: true,
+                price: true,
+                compareAtPrice: true,
+                stockQuantity: true,
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
   const [garmentsWishlist, jewelleryWishlist] = await Promise.all([
     getDb("garments").wishlist.findUnique({
       where: { userId: user.id },
-      include: {
-        items: {
-          include: {
-            product: { include: { images: { take: 1, orderBy: { sortOrder: "asc" } }, variants: true } },
-          },
-        },
-      },
+      select: wishlistSelect,
     }).catch(() => null),
     getDb("jewellery").wishlist.findUnique({
       where: { userId: user.id },
-      include: {
-        items: {
-          include: {
-            product: { include: { images: { take: 1, orderBy: { sortOrder: "asc" } }, variants: true } },
-          },
-        },
-      },
+      select: wishlistSelect,
     }).catch(() => null),
   ]);
 

@@ -1,32 +1,13 @@
 import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
-import { prisma } from "@/lib/db";
+import { getCachedCategories } from "@/lib/data/cache";
 import HeaderClient from "./HeaderClient";
 import PromotionBanner from "@/components/promotions/PromotionBanner";
 
 export default async function Header() {
   const [user, categories] = await Promise.all([
     getCurrentUser(),
-    prisma.category.findMany({
-      where: {
-        isActive: true,
-        parentId: null,
-        OR: [
-          { products: { some: { status: "ACTIVE" } } },
-          { children: { some: { isActive: true, products: { some: { status: "ACTIVE" } } } } },
-        ],
-      },
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      include: {
-        children: {
-          where: {
-            isActive: true,
-            products: { some: { status: "ACTIVE" } },
-          },
-          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-        },
-      },
-    }),
+    getCachedCategories("garments"),
   ]);
 
   return (

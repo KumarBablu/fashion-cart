@@ -80,11 +80,12 @@ export default function QuickViewModal({
   }
 
   useEffect(() => {
+    if (!isOpen) return;
     refreshCartState();
     const handleCartUpdate = () => refreshCartState();
     window.addEventListener("cart-updated", handleCartUpdate);
     return () => window.removeEventListener("cart-updated", handleCartUpdate);
-  }, []);
+  }, [isOpen]);
 
   // Initialize selected colour & size when product loads
   if (product && !colour && product.variants.length > 0) {

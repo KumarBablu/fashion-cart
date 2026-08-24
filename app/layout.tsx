@@ -1,10 +1,25 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import NavigationProgress from "@/components/providers/NavigationProgress";
 import LuxuryClickEffects from "@/components/providers/LuxuryClickEffects";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+  weight: ["400", "600", "700", "800"],
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
+});
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
@@ -59,18 +74,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className="h-full antialiased overflow-x-hidden">
+    <html lang="en" suppressHydrationWarning className={`h-full antialiased overflow-x-hidden ${fraunces.variable} ${plusJakartaSans.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
-      <body className="min-h-full flex flex-col transition-colors duration-300 overflow-x-hidden w-full max-w-full">
+      <body className="min-h-full flex flex-col transition-colors duration-300 overflow-x-hidden w-full max-w-full font-sans">
         <ThemeProvider>
           <ToastProvider>
             <Suspense fallback={null}>

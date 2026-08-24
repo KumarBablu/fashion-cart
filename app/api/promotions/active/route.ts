@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { PromotionPlacement } from "@prisma/client";
+import { getCachedPromotions } from "@/lib/data/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -10,51 +9,46 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const placementParam = searchParams.get("placement");
     const storeParam = searchParams.get("store") || req.cookies.get("fc_store")?.value || "garments";
-    const db = getDb(storeParam === "jewellery" ? "jewellery" : "garments");
+    const store = storeParam === "jewellery" ? "jewellery" : "garments";
 
-    const user = await getCurrentUser();
+    const [allPromotions, user] = await Promise.all([
+      getCachedPromotions(store),
+      getCurrentUser(req),
+    ]);
+
     const isLoggedIn = !!user;
-
     const now = new Date();
 
-    const whereClause: any = {
-      isActive: true,
-      AND: [
-        {
-          OR: [
-            { startDate: null, endDate: null },
-            { startDate: { lte: now }, endDate: null },
-            { startDate: null, endDate: { gte: now } },
-            { startDate: { lte: now }, endDate: { gte: now } },
-          ],
-        },
-      ],
-    };
+    const filtered = allPromotions.filter((promo) => {
+      if (!promo.isActive) return false;
 
-    if (placementParam && Object.values(PromotionPlacement).includes(placementParam as PromotionPlacement)) {
-      whereClause.placement = placementParam as PromotionPlacement;
-    }
+      // Placement filter
+      if (placementParam && promo.placement !== placementParam) {
+        return false;
+      }
 
-    // Audience event filtering (Guest vs Logged-In Customer)
-    if (isLoggedIn) {
-      whereClause.AND.push({
-        OR: [
-          { showOnLogin: true },
-          { AND: [{ showOnGuest: true }, { showOnLogin: true }] },
-        ],
-      });
-    } else {
-      whereClause.AND.push({
-        showOnGuest: true,
-      });
-    }
+      // Date range filter
+      if (promo.startDate && new Date(promo.startDate) > now) return false;
+      if (promo.endDate && new Date(promo.endDate) < now) return false;
 
-    const promotions = await db.promotion.findMany({
-      where: whereClause,
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      // Audience filter
+      if (isLoggedIn) {
+        if (!promo.showOnLogin && !promo.showOnGuest) return false;
+      } else {
+        if (!promo.showOnGuest) return false;
+      }
+
+      return true;
     });
 
-    return NextResponse.json({ promotions });
+    return NextResponse.json(
+      { promotions: filtered },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching active promotions:", error);
     return NextResponse.json({ promotions: [] });

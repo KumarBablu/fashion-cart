@@ -128,7 +128,6 @@ export default function CategoryShowcase({
                 src={activeDepartment.imageUrl || activeDepartment.bannerImage}
                 alt={activeDepartment.name}
                 fill
-                unoptimized
                 sizes="100vw"
                 className="object-cover object-center"
               />
@@ -175,7 +174,6 @@ export default function CategoryShowcase({
                       src={activeDepartment.imageUrl || activeDepartment.bannerImage}
                       alt={activeDepartment.name}
                       fill
-                      unoptimized
                       sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
@@ -213,7 +211,6 @@ export default function CategoryShowcase({
                           src={subImg}
                           alt={sub.name}
                           fill
-                          unoptimized
                           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                           className="object-cover transition-transform duration-700 group-hover:scale-105"
                         />
@@ -296,7 +293,6 @@ export default function CategoryShowcase({
                   src={dept.imageUrl || dept.bannerImage}
                   alt={dept.name}
                   fill
-                  unoptimized
                   sizes="(min-width: 1024px) 25vw, 50vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />

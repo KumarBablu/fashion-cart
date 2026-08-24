@@ -1,4 +1,6 @@
 import { getDb } from "./db";
+import { getCachedStoresControl } from "./data/cache";
+import { revalidateTag } from "next/cache";
 
 export type StoreControl = {
   id: "garments" | "jewellery";
@@ -28,20 +30,7 @@ export const DEFAULT_STORES_CONTROL: AllStoresControl = {
 };
 
 export async function getStoresControl(): Promise<AllStoresControl> {
-  try {
-    const settings = await getDb("garments").businessSettings.findFirst();
-    if (settings && settings.gstin && settings.gstin.startsWith("STORE_CTRL:")) {
-      const rawJson = settings.gstin.replace("STORE_CTRL:", "");
-      const parsed = JSON.parse(rawJson);
-      return {
-        garments: { ...DEFAULT_STORES_CONTROL.garments, ...parsed.garments },
-        jewellery: { ...DEFAULT_STORES_CONTROL.jewellery, ...parsed.jewellery },
-      };
-    }
-  } catch (err) {
-    console.warn("[getStoresControl] fallback to default:", err);
-  }
-  return DEFAULT_STORES_CONTROL;
+  return getCachedStoresControl();
 }
 
 export async function saveStoresControl(data: Partial<AllStoresControl>): Promise<AllStoresControl> {
@@ -91,5 +80,13 @@ export async function saveStoresControl(data: Partial<AllStoresControl>): Promis
     })(),
   ]);
 
+  try {
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/", "layout");
+  } catch {
+    // ignore outside request context
+  }
+
   return updated;
 }
+

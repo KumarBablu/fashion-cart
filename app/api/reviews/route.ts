@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb, prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { z } from "zod";
 
@@ -22,18 +22,65 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const productId = searchParams.get("productId");
+    const storeParam = searchParams.get("store") || "garments";
+    const store = storeParam === "jewellery" ? "jewellery" : "garments";
 
     if (!productId) {
       return NextResponse.json({ error: "Product ID required" }, { status: 400 });
     }
 
-    const reviews = await prisma.review.findMany({
+    const db = getDb(store);
+    let reviews = await db.review.findMany({
       where: { productId, status: "APPROVED" },
       orderBy: { createdAt: "desc" },
-      include: {
+      select: {
+        id: true,
+        rating: true,
+        title: true,
+        comment: true,
+        fitRating: true,
+        qualityRating: true,
+        colorAccuracy: true,
+        comfortRating: true,
+        valueRating: true,
+        sizePurchased: true,
+        occasionWorn: true,
+        recommend: true,
+        isVerifiedBuyer: true,
+        createdAt: true,
         user: { select: { name: true } },
       },
     });
+
+    if (reviews.length === 0 && store === "garments") {
+      // Fallback check in jewellery database
+      try {
+        const altReviews = await getDb("jewellery").review.findMany({
+          where: { productId, status: "APPROVED" },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            rating: true,
+            title: true,
+            comment: true,
+            fitRating: true,
+            qualityRating: true,
+            colorAccuracy: true,
+            comfortRating: true,
+            valueRating: true,
+            sizePurchased: true,
+            occasionWorn: true,
+            recommend: true,
+            isVerifiedBuyer: true,
+            createdAt: true,
+            user: { select: { name: true } },
+          },
+        });
+        if (altReviews.length > 0) {
+          reviews = altReviews;
+        }
+      } catch {}
+    }
 
     // Compute aggregated survey scorecard
     const totalReviews = reviews.length;
@@ -74,7 +121,14 @@ export async function GET(req: NextRequest) {
       },
     };
 
-    return NextResponse.json({ reviews, surveySummary });
+    return NextResponse.json(
+      { reviews, surveySummary },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal error";
     return NextResponse.json({ error: message }, { status: 500 });

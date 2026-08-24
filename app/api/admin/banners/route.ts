@@ -129,6 +129,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    try {
+      const { revalidatePath } = await import("next/cache");
+      revalidatePath("/", "layout");
+    } catch {}
+
     return NextResponse.json({
       success: true,
       banner: created,

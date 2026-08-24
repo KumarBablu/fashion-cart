@@ -24,11 +24,40 @@ export async function GET(req: NextRequest) {
     const db = getDb(store);
     const cart = await db.cart.findUnique({
       where: { userId: user.id },
-      include: {
+      select: {
+        id: true,
+        userId: true,
         items: {
-          include: {
-            product: { include: { images: { take: 1, orderBy: { sortOrder: "asc" } } } },
-            variant: true,
+          select: {
+            id: true,
+            cartId: true,
+            productId: true,
+            variantId: true,
+            quantity: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                brand: true,
+                fabric: true,
+                images: {
+                  take: 1,
+                  orderBy: { sortOrder: "asc" },
+                  select: { id: true, imageUrl: true, altText: true },
+                },
+              },
+            },
+            variant: {
+              select: {
+                id: true,
+                colour: true,
+                size: true,
+                price: true,
+                compareAtPrice: true,
+                stockQuantity: true,
+              },
+            },
           },
         },
       },

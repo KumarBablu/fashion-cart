@@ -1,14 +1,19 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
 import { getStoresControl } from "@/lib/stores";
+import {
+  getCachedHomeProducts,
+  getCachedCategories,
+  getCachedPromotions,
+  getCachedBanners,
+} from "@/lib/data/cache";
 import SubcategoriesGrid from "@/components/home/SubcategoriesGrid";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 import ScrollReveal, { ScrollRevealGroup } from "@/components/ui/ScrollReveal";
 import GarmentsHeroBanner from "@/components/home/GarmentsHeroBanner";
 
-export const revalidate = 60;
+export const revalidate = 120;
 
 export default async function HomePage() {
   const storesControl = await getStoresControl();
@@ -16,53 +21,10 @@ export default async function HomePage() {
     redirect("/jewellery");
   }
   const [allProducts, rootCategories, promotions, banners] = await Promise.all([
-    prisma.product.findMany({
-      where: {
-        status: "ACTIVE",
-        category: {
-          isActive: true,
-          OR: [
-            { parentId: null },
-            { parent: { isActive: true } },
-          ],
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      include: {
-        images: { orderBy: { sortOrder: "asc" } },
-        variants: { where: { isActive: true } },
-        category: true,
-      },
-    }),
-    prisma.category.findMany({
-      where: {
-        isActive: true,
-        parentId: null,
-        OR: [
-          { products: { some: { status: "ACTIVE" } } },
-          { children: { some: { isActive: true, products: { some: { status: "ACTIVE" } } } } },
-        ],
-      },
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      include: {
-        children: {
-          where: {
-            isActive: true,
-            products: { some: { status: "ACTIVE" } },
-          },
-          select: { id: true, name: true, slug: true, imageUrl: true },
-        },
-      },
-    }),
-    prisma.promotion.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-    }),
-    prisma.banner.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-    }),
+    getCachedHomeProducts("garments"),
+    getCachedCategories("garments"),
+    getCachedPromotions("garments"),
+    getCachedBanners("garments"),
   ]);
 
   // Find custom hero promotion or admin configured hero banner
@@ -249,7 +211,6 @@ export default async function HomePage() {
                   alt={dept.name}
                   fill
                   sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                  unoptimized
                   className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/95 via-[#141416]/40 to-transparent" />
@@ -321,7 +282,6 @@ export default async function HomePage() {
                 alt={occ.title}
                 fill
                 sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                unoptimized
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#141416]/90 via-[#141416]/30 to-transparent" />

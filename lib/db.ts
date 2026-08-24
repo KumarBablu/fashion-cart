@@ -22,10 +22,13 @@ function optimizeDbUrl(url?: string): string | undefined {
         parsed.searchParams.set("pgbouncer", "true");
       }
       if (!parsed.searchParams.has("connection_limit")) {
-        parsed.searchParams.set("connection_limit", "15");
+        parsed.searchParams.set("connection_limit", "10");
       }
       if (!parsed.searchParams.has("pool_timeout")) {
-        parsed.searchParams.set("pool_timeout", "30");
+        parsed.searchParams.set("pool_timeout", "20");
+      }
+      if (!parsed.searchParams.has("connect_timeout")) {
+        parsed.searchParams.set("connect_timeout", "15");
       }
       return parsed.toString();
     }

@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
-import MenuDrawer from "@/components/navigation/MenuDrawer";
-import CartDrawer from "@/components/cart/CartDrawer";
-import SearchModal from "@/components/search/SearchModal";
 import StoreSwitcherPill from "@/components/navigation/StoreSwitcherPill";
+
+// Dynamically import heavy drawers/modals so initial page load bundle is lean
+const MenuDrawer = dynamic(() => import("@/components/navigation/MenuDrawer"), { ssr: false });
+const CartDrawer = dynamic(() => import("@/components/cart/CartDrawer"), { ssr: false });
+const SearchModal = dynamic(() => import("@/components/search/SearchModal"), { ssr: false });
 
 interface HeaderCategory {
   id: string;
@@ -35,26 +38,10 @@ export default function HeaderClient({
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [cartCount, setCartCount] = useState<number>(0);
   const [wishlistCount, setWishlistCount] = useState<number>(0);
-  const [hasActiveSession, setHasActiveSession] = useState<boolean>(false);
+  const [hasActiveSession, setHasActiveSession] = useState<boolean>(isLoggedIn);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => {
-        if (r.ok) {
-          setHasActiveSession(true);
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem("fc_user_session", "active");
-          }
-        } else {
-          setHasActiveSession(false);
-          if (typeof window !== "undefined") {
-            sessionStorage.removeItem("fc_user_session");
-          }
-        }
-      })
-      .catch(() => {
-        setHasActiveSession(false);
-      });
+    setHasActiveSession(isLoggedIn);
   }, [isLoggedIn]);
 
   function getActiveStore(): "garments" | "jewellery" {

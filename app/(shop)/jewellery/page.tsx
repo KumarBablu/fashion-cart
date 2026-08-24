@@ -1,13 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { getDb } from "@/lib/db";
 import { getStoresControl } from "@/lib/stores";
+import {
+  getCachedHomeProducts,
+  getCachedCategories,
+  getCachedBanners,
+} from "@/lib/data/cache";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 import ScrollReveal, { ScrollRevealGroup } from "@/components/ui/ScrollReveal";
 import JewelleryHeroBanner from "@/components/jewellery/JewelleryHeroBanner";
 
-export const revalidate = 60;
+export const revalidate = 120;
 
 export const metadata = {
   title: "Imperial Fine & Artificial Jewellery | Fashion Cart",
@@ -20,38 +24,15 @@ export default async function JewelleryHomePage() {
     redirect("/garments");
   }
 
-  const jewelleryDb = getDb("jewellery");
-
   let allProducts: any[] = [];
   let rootCategories: any[] = [];
   let banners: any[] = [];
 
   try {
     const [dbProducts, dbCategories, dbBanners] = await Promise.all([
-      jewelleryDb.product.findMany({
-        where: { status: "ACTIVE" },
-        orderBy: { createdAt: "desc" },
-        take: 16,
-        include: {
-          images: { orderBy: { sortOrder: "asc" } },
-          variants: { where: { isActive: true } },
-          category: true,
-        },
-      }),
-      jewelleryDb.category.findMany({
-        where: { isActive: true, parentId: null },
-        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-        include: {
-          children: {
-            where: { isActive: true },
-            select: { id: true, name: true, slug: true, imageUrl: true },
-          },
-        },
-      }),
-      jewelleryDb.banner.findMany({
-        where: { isActive: true },
-        orderBy: { sortOrder: "asc" },
-      }),
+      getCachedHomeProducts("jewellery"),
+      getCachedCategories("jewellery"),
+      getCachedBanners("jewellery"),
     ]);
 
     allProducts = dbProducts;

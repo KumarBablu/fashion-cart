@@ -1,3 +1,4 @@
+import { cache } from "react";
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
@@ -60,8 +61,8 @@ export async function getRawSessionToken(req?: NextRequest): Promise<string | un
   }
 }
 
-/** Resolves the current request's session to a User from either database. */
-export async function getCurrentUser(req?: NextRequest): Promise<User | null> {
+/** Resolves the current request's session to a User from either database. Memoized per request. */
+export const getCurrentUser = cache(async (req?: NextRequest): Promise<User | null> => {
   const rawToken = await getRawSessionToken(req);
   if (!rawToken) return null;
 
@@ -88,7 +89,7 @@ export async function getCurrentUser(req?: NextRequest): Promise<User | null> {
   }
 
   return session.user;
-}
+});
 
 /**
  * Unified SSO helper: Resolves the authenticated user and automatically synchronizes
@@ -142,8 +143,8 @@ export async function destroyCurrentSession(req?: NextRequest) {
   await clearSessionCookie();
 }
 
-/** Throws-free helper: returns the user only if they are an active admin. */
-export async function getCurrentAdmin(req?: NextRequest): Promise<User | null> {
+/** Throws-free helper: returns the user only if they are an active admin. Memoized per request. */
+export const getCurrentAdmin = cache(async (req?: NextRequest): Promise<User | null> => {
   const user = await getCurrentUser(req);
   if (!user) return null;
   const isSuperAdminEmail =
@@ -152,4 +153,4 @@ export async function getCurrentAdmin(req?: NextRequest): Promise<User | null> {
 
   if (user.role !== "ADMIN" && !isSuperAdminEmail) return null;
   return user;
-}
+});

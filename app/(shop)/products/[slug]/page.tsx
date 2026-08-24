@@ -1,44 +1,30 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { getDb } from "@/lib/db";
 import { getStoresControl } from "@/lib/stores";
 import { getCurrentAdmin } from "@/lib/auth/session";
+import {
+  getMemoizedProductBySlug,
+  getCachedRelatedProducts,
+} from "@/lib/data/cache";
 import ProductCard from "@/components/products/ProductCard";
 import ProductDetailClient from "@/components/products/ProductDetailClient";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  
-  // Try garments DB first, then jewellery DB
-  let product = await getDb("garments").product.findFirst({
-    where: { slug },
-    include: {
-      images: { orderBy: { sortOrder: "asc" } },
-      category: true,
-    },
-  });
+  const result = await getMemoizedProductBySlug(slug);
 
-  if (!product) {
-    product = await getDb("jewellery").product.findFirst({
-      where: { slug },
-      include: {
-        images: { orderBy: { sortOrder: "asc" } },
-        category: true,
-      },
-    });
-  }
-
-  if (!product) {
+  if (!result || !result.product) {
     return {
       title: "Product Not Found | Fashion Cart",
     };
   }
 
+  const product = result.product;
   const primaryImage = product.images[0]?.imageUrl || "/og-image.png";
 
   return {
@@ -65,37 +51,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const admin = await getCurrentAdmin();
+  const [admin, result, storesControl] = await Promise.all([
+    getCurrentAdmin(),
+    getMemoizedProductBySlug(slug),
+    getStoresControl(),
+  ]);
 
-  // Try finding in garments, fallback to jewellery
-  let activeStore: "garments" | "jewellery" = "garments";
-  let db = getDb(activeStore);
+  if (!result || !result.product) notFound();
 
-  let product = await db.product.findFirst({
-    where: { slug },
-    include: {
-      images: { orderBy: { sortOrder: "asc" } },
-      variants: { where: { isActive: true }, orderBy: [{ colour: "asc" }, { size: "asc" }] },
-      category: { include: { parent: true } },
-    },
-  });
+  const { product, store: activeStore } = result;
 
-  if (!product) {
-    activeStore = "jewellery";
-    db = getDb(activeStore);
-    product = await db.product.findFirst({
-      where: { slug },
-      include: {
-        images: { orderBy: { sortOrder: "asc" } },
-        variants: { where: { isActive: true }, orderBy: [{ colour: "asc" }, { size: "asc" }] },
-        category: { include: { parent: true } },
-      },
-    });
-  }
-
-  if (!product) notFound();
-
-  const storesControl = await getStoresControl();
   const isStoreActive = storesControl[activeStore].isActive;
   if (!isStoreActive && !admin) {
     redirect("/shop");
@@ -110,22 +75,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
-  const related = await db.product.findMany({
-    where: {
-      categoryId: product.categoryId,
-      status: "ACTIVE",
-      id: { not: product.id },
-      category: {
-        isActive: true,
-        OR: [
-          { parentId: null },
-          { parent: { isActive: true } },
-        ],
-      },
-    },
-    take: 4,
-    include: { images: { take: 2, orderBy: { sortOrder: "asc" } }, variants: { where: { isActive: true } } },
-  });
+  const related = await getCachedRelatedProducts(product.categoryId, product.id, activeStore);
 
   const serialized = {
     ...product,

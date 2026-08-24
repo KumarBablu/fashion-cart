@@ -1,16 +1,18 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { formatINR, discountPercent } from "@/lib/format";
 import { useToast } from "@/components/providers/ToastProvider";
-import SizeGuideModal from "./SizeGuideModal";
-import ProductReviews from "./ProductReviews";
-import RecentlyViewed from "./RecentlyViewed";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
-import ProductImageLightbox from "./ProductImageLightbox";
 import { normalizeImageUrl } from "@/lib/utils/imageUrl";
+
+const SizeGuideModal = dynamic(() => import("./SizeGuideModal"), { ssr: false });
+const ProductReviews = dynamic(() => import("./ProductReviews"), { ssr: true });
+const RecentlyViewed = dynamic(() => import("./RecentlyViewed"), { ssr: false });
+const ProductImageLightbox = dynamic(() => import("./ProductImageLightbox"), { ssr: false });
 
 type Variant = {
   id: string;
@@ -308,7 +310,6 @@ export default function ProductDetailClient({
                   src={displayImages[activeImage].imageUrl}
                   alt={displayImages[activeImage].altText ?? product.name}
                   fill
-                  unoptimized
                   sizes="(min-width: 1024px) 42vw, 100vw"
                   className="object-cover"
                   priority
@@ -391,7 +392,7 @@ export default function ProductDetailClient({
                   }`}
                   aria-label={`View look ${i + 1}`}
                 >
-                  <Image src={img.imageUrl} alt="" fill unoptimized className="object-cover" />
+                  <Image src={img.imageUrl} alt="" fill sizes="64px" className="object-cover" />
                   {i === activeImage && (
                     <div className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-[#C59B27] ring-1 ring-white" />
                   )}
@@ -865,22 +866,26 @@ export default function ProductDetailClient({
       {/* Small Compact Mini Recently Viewed Rail */}
       <RecentlyViewed currentSlug={product.slug} />
 
-      {/* Size Guide Modal */}
-      <SizeGuideModal
-        isOpen={sizeGuideOpen}
-        onClose={() => setSizeGuideOpen(false)}
-        category={product.brand || (isJewelleryItem ? "Fine Jewellery" : "Apparel")}
-        isJewellery={isJewelleryItem}
-      />
+      {/* Size Guide Modal - only mounted on demand */}
+      {sizeGuideOpen && (
+        <SizeGuideModal
+          isOpen={sizeGuideOpen}
+          onClose={() => setSizeGuideOpen(false)}
+          category={product.brand || (isJewelleryItem ? "Fine Jewellery" : "Apparel")}
+          isJewellery={isJewelleryItem}
+        />
+      )}
 
-      {/* High-Definition Image Lightbox Preview Modal */}
-      <ProductImageLightbox
-        isOpen={lightboxOpen}
-        images={displayImages}
-        initialIndex={activeImage}
-        productName={product.name}
-        onClose={() => setLightboxOpen(false)}
-      />
+      {/* High-Definition Image Lightbox Preview Modal - only mounted on demand */}
+      {lightboxOpen && (
+        <ProductImageLightbox
+          isOpen={lightboxOpen}
+          images={displayImages}
+          initialIndex={activeImage}
+          productName={product.name}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </div>
   );
 }
