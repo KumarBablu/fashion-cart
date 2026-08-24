@@ -60,8 +60,14 @@ export async function GET() {
     }).catch(() => null),
   ]);
 
-  const garmentsItems = garmentsWishlist?.items || [];
-  const jewelleryItems = jewelleryWishlist?.items || [];
+  const garmentsItems = (garmentsWishlist?.items || []).map((item) => ({
+    ...item,
+    store: "garments" as const,
+  }));
+  const jewelleryItems = (jewelleryWishlist?.items || []).map((item) => ({
+    ...item,
+    store: "jewellery" as const,
+  }));
   const allItems = [...garmentsItems, ...jewelleryItems];
 
   return NextResponse.json({
