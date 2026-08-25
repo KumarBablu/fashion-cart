@@ -189,8 +189,8 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
   page.drawText(`Invoice No: ${invoiceNumber}`, { x: rightColX, y: currentY - 14, size: 8.5, font: fontBold, color: brandDark });
   page.drawText(`Invoice Date: ${new Date(order.createdAt).toLocaleDateString("en-IN")}`, { x: rightColX, y: currentY - 26, size: 7.5, font: fontRegular, color: textDark });
   const paymentChannelText = order.payment?.instrumentDetails
-    ? `${order.payment.gatewayName || "Razorpay"} ${order.payment.paymentChannel || ""} (${order.payment.instrumentDetails})`
-    : order.paymentMethod.replace(/_/g, " ");
+    ? `${order.payment.paymentChannel || "Online"} · ${order.payment.instrumentDetails}`
+    : (order.paymentMethod.includes("ONLINE") ? "Instant Online Payment" : order.paymentMethod.replace(/_/g, " "));
 
   page.drawText(`Payment: ${paymentChannelText}`, {
     x: rightColX,

@@ -258,9 +258,9 @@ export default function InvoiceDocument({ order, business }: InvoiceProps) {
             </div>
             <div className="space-y-1 text-slate-600 text-[11px]">
               <p className="flex justify-between">
-                <span>Gateway &amp; Method:</span>
+                <span>Payment Method:</span>
                 <span className="font-bold text-slate-900">
-                  {order.payment?.gatewayName || (order.paymentMethod.includes("ONLINE") ? "Razorpay" : order.paymentMethod.replace(/_/g, " "))}
+                  {order.payment?.paymentChannel ? `Online (${order.payment.paymentChannel})` : (order.paymentMethod.includes("ONLINE") ? "Instant Online Payment" : order.paymentMethod.replace(/_/g, " "))}
                 </span>
               </p>
               {order.payment?.paymentChannel && (

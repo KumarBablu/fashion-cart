@@ -244,6 +244,54 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         </div>
       </div>
 
+      {/* Cancellation & Refund Audit Box (if cancelled) */}
+      {(order.cancelledAt || order.cancelReason || order.payment?.refundId) && (
+        <div className="p-6 rounded-2xl border border-rose-300 dark:border-rose-900 bg-rose-50/60 dark:bg-rose-950/30 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🚫</span>
+              <h2 className="font-display text-base font-bold text-rose-900 dark:text-rose-200">
+                Order Cancellation &amp; Refund Audit
+              </h2>
+            </div>
+            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-rose-200 text-rose-900 dark:bg-rose-900 dark:text-rose-100 uppercase font-mono">
+              {order.cancellationStatus || "CANCELLED"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="space-y-1">
+              <p className="text-dim">Cancellation Reason:</p>
+              <p className="font-semibold text-rose-800 dark:text-rose-300">
+                {order.cancelReason || "Cancelled by customer"}
+              </p>
+              {order.cancellationNotes && (
+                <p className="text-[11px] text-dim italic">
+                  Note: &quot;{order.cancellationNotes}&quot;
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1 sm:border-l sm:pl-3" style={{ borderColor: "rgba(244, 63, 94, 0.3)" }}>
+              <p className="text-dim">Refund Status:</p>
+              <p className="font-bold text-emerald-700 dark:text-emerald-400">
+                {order.payment?.refundStatus ? `✓ ${order.payment.refundStatus}` : "N/A (Zero Charge)"}
+              </p>
+              {order.payment?.refundId && (
+                <p className="text-[11px] font-mono text-dim">
+                  Refund ID: <strong className="text-[#141416] dark:text-white">{order.payment.refundId}</strong>
+                </p>
+              )}
+              {order.payment?.refundArn && (
+                <p className="text-[11px] font-mono text-primary">
+                  Bank ARN: <strong>{order.payment.refundArn}</strong>
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Address & Payment Row */}
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="p-6 rounded-2xl border space-y-2" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>

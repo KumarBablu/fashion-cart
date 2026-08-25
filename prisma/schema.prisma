@@ -450,7 +450,10 @@ model Order {
   customerNotes          String?
   adminNotes             String?
   cancelledAt            DateTime?
+  cancelRequestedAt      DateTime?
   cancelReason           String?
+  cancellationStatus     String?     // REQUESTED, APPROVED, REJECTED, COMPLETED
+  cancellationNotes      String?
   createdAt              DateTime    @default(now())
   updatedAt              DateTime    @updatedAt
 
@@ -496,10 +499,18 @@ model Payment {
   amount            Decimal       @db.Decimal(10, 2)
   status            PaymentStatus @default(PAYMENT_PENDING)
   utrNumber         String?       @unique
-  gatewayName       String?       // e.g. "Razorpay", "Manual UPI", "Cash on Delivery"
+  gatewayName       String?       // e.g. "Instant Online Gateway", "Manual UPI", "Cash on Delivery"
   paymentChannel    String?       // e.g. "UPI", "CARD", "NETBANKING", "WALLET", "PAYLATER"
   instrumentDetails String?       // e.g. "Google Pay (user@okaxis)", "Visa Debit •••• 4111", "Bank of Baroda Netbanking"
   paymentMetadata   Json?         // Full gateway raw payment JSON object
+  refundId          String?       // Gateway refund ID (e.g. rfnd_xxx)
+  refundStatus      String?       // INITIATED, PROCESSED, FAILED
+  refundAmount      Decimal?      @db.Decimal(10, 2)
+  refundArn         String?       // Bank Acquirer Reference Number / RRN
+  refundSpeed       String?       // normal, instant, optimum
+  refundNotes       String?
+  refundCreatedAt   DateTime?
+  refundCompletedAt DateTime?
   screenshotPath    String?
   submittedAt       DateTime?
   verifiedAt        DateTime?

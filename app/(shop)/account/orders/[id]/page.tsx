@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { formatINR } from "@/lib/format";
 import OrderTracking from "@/components/account/OrderTracking";
 import OrderDetailActions from "@/components/account/OrderDetailActions";
+import CancellationTracking from "@/components/orders/CancellationTracking";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   };
 
   const isPaid = order.payment?.status === "VERIFIED" || order.status === "CONFIRMED" || order.status === "DELIVERED";
+  const isCancelled = order.status === "CANCELLED" || order.status === "REFUND_PENDING" || order.status === "REFUNDED";
+
   const hasJewelleryItems = order.items.some(
     (i) =>
       i.product?.categoryPath?.toLowerCase().includes("jewel") ||
@@ -102,17 +105,17 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               style={{
                 backgroundColor: order.status === "DELIVERED" || order.status === "CONFIRMED"
                   ? "rgba(34, 197, 94, 0.15)"
-                  : order.status === "CANCELLED"
+                  : isCancelled
                   ? "rgba(244, 63, 94, 0.15)"
                   : "var(--fc-badge-bg)",
                 color: order.status === "DELIVERED" || order.status === "CONFIRMED"
                   ? "#22c55e"
-                  : order.status === "CANCELLED"
+                  : isCancelled
                   ? "#f43f5e"
                   : "var(--fc-badge-fg)",
               }}
             >
-              {order.status.replace(/_/g, " ")}
+              {order.status === "REFUND_PENDING" ? "REFUND IN TRANSIT" : order.status.replace(/_/g, " ")}
             </span>
             <span
               className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider"
@@ -137,27 +140,59 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
         <OrderDetailActions
           orderId={order.id}
+          orderNumber={order.orderNumber}
           status={order.status}
           isPaid={isPaid}
+          total={Number(order.total)}
+          paymentMethod={order.paymentMethod}
           isJewellery={isJewelleryOrder}
         />
       </div>
 
-      {/* Visual Tracking Timeline */}
-      <div className="p-6 rounded-2xl border shadow-sm" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display text-base font-bold">Delivery &amp; Fulfillment Progress</h3>
-          <span className="text-xs text-dim">Order #{order.orderNumber}</span>
-        </div>
-        <OrderTracking
-          status={order.status}
-          createdAt={order.createdAt}
-          carrierName={order.carrierName}
-          trackingNumber={order.trackingNumber}
-          paymentMethod={order.paymentMethod}
+      {/* Dynamic Lifecycle Tracking (Order Fulfillment vs Cancellation & Refund) */}
+      {isCancelled ? (
+        <CancellationTracking
+          orderNumber={order.orderNumber}
           total={Number(order.total)}
+          paymentMethod={order.paymentMethod}
+          cancelledAt={order.cancelledAt || order.cancelRequestedAt}
+          cancelReason={order.cancelReason}
+          cancellationNotes={order.cancellationNotes}
+          payment={
+            order.payment
+              ? {
+                  status: order.payment.status,
+                  gatewayName: order.payment.gatewayName,
+                  paymentChannel: order.payment.paymentChannel,
+                  instrumentDetails: order.payment.instrumentDetails,
+                  utrNumber: order.payment.utrNumber,
+                  refundId: order.payment.refundId,
+                  refundStatus: order.payment.refundStatus,
+                  refundAmount: order.payment.refundAmount ? Number(order.payment.refundAmount) : null,
+                  refundArn: order.payment.refundArn,
+                  refundSpeed: order.payment.refundSpeed,
+                  refundCreatedAt: order.payment.refundCreatedAt?.toISOString() ?? null,
+                  refundCompletedAt: order.payment.refundCompletedAt?.toISOString() ?? null,
+                }
+              : null
+          }
         />
-      </div>
+      ) : (
+        <div className="p-6 rounded-2xl border shadow-sm" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display text-base font-bold">Delivery &amp; Fulfillment Progress</h3>
+            <span className="text-xs text-dim">Order #{order.orderNumber}</span>
+          </div>
+          <OrderTracking
+            status={order.status}
+            createdAt={order.createdAt}
+            carrierName={order.carrierName}
+            trackingNumber={order.trackingNumber}
+            paymentMethod={order.paymentMethod}
+            total={Number(order.total)}
+          />
+        </div>
+      )}
 
       {/* Ordered Items Table with Re-direct link to product */}
       <div className="p-6 rounded-2xl border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
@@ -240,7 +275,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </div>
           )}
           <div className="flex justify-between text-dim">
-            <span>Delivery & Shipping</span>
+            <span>Delivery &amp; Shipping</span>
             <span>{Number(order.deliveryCharge) === 0 ? "FREE" : formatINR(order.deliveryCharge)}</span>
           </div>
           <div className="flex justify-between text-dim">
@@ -272,12 +307,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </div>
 
         <div className="p-6 rounded-2xl border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
-          <h3 className="font-display text-base font-bold mb-3">Payment Information</h3>
+          <h3 className="font-display text-base font-bold mb-3">Payment &amp; Billing Summary</h3>
           <div className="space-y-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-dim">Gateway &amp; Method</span>
+              <span className="text-dim">Payment Method</span>
               <span className="font-semibold text-primary">
-                {order.payment?.gatewayName === "Razorpay" ? "Online Payment" : (order.payment?.gatewayName || (order.paymentMethod.includes("ONLINE") ? "Online Payment" : order.paymentMethod.replace(/_/g, " ")))}
+                {order.paymentMethod === "ONLINE_GATEWAY" || order.paymentMethod.includes("ONLINE")
+                  ? "Instant Online Payment"
+                  : order.paymentMethod.replace(/_/g, " ")}
               </span>
             </div>
             {order.payment?.paymentChannel && (
@@ -294,13 +331,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             )}
             <div className="flex justify-between">
               <span className="text-dim">Payment Status</span>
-              <span className={`font-semibold ${order.payment?.status === "VERIFIED" ? "text-emerald-600 dark:text-emerald-400" : ""}`}>
-                {order.payment?.status === "VERIFIED" ? "✓ Verified & Paid" : order.payment?.status?.replace(/_/g, " ") ?? "PENDING"}
+              <span className={`font-semibold ${isCancelled ? "text-rose-600 dark:text-rose-400" : order.payment?.status === "VERIFIED" ? "text-emerald-600 dark:text-emerald-400" : ""}`}>
+                {isCancelled
+                  ? order.status === "REFUND_PENDING"
+                    ? "Refund In Transit"
+                    : "Cancelled & Closed"
+                  : order.payment?.status === "VERIFIED"
+                  ? "✓ Verified & Paid"
+                  : order.payment?.status?.replace(/_/g, " ") ?? "PENDING"}
               </span>
             </div>
             {order.payment?.utrNumber && (
               <div className="flex justify-between">
-                <span className="text-dim">Transaction / Ref ID</span>
+                <span className="text-dim">Transaction ID / Ref</span>
                 <span className="font-mono font-semibold bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded text-[11px]">
                   {order.payment.utrNumber}
                 </span>
@@ -308,7 +351,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             )}
             {order.payment?.verifiedAt && (
               <div className="flex justify-between">
-                <span className="text-dim">Verified At</span>
+                <span className="text-dim">Payment Timestamp</span>
                 <span>{new Date(order.payment.verifiedAt).toLocaleDateString("en-IN")}</span>
               </div>
             )}

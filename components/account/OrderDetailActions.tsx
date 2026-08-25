@@ -4,23 +4,28 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/providers/ToastProvider";
 import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
+import CancelOrderModal from "@/components/orders/CancelOrderModal";
 
 export default function OrderDetailActions({
   orderId,
+  orderNumber,
   status,
   isPaid,
+  total,
+  paymentMethod,
   isJewellery = false,
 }: {
   orderId: string;
+  orderNumber: string;
   status: string;
   isPaid: boolean;
+  total: number;
+  paymentMethod: string;
   isJewellery?: boolean;
 }) {
   const router = useRouter();
-  const { success, error } = useToast();
-  const [cancelling, setCancelling] = useState(false);
+  const { success } = useToast();
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancelReason, setCancelReason] = useState("Changed mind / ordered by mistake");
 
   useEffect(() => {
     const store = isJewellery ? "jewellery" : "garments";
@@ -30,30 +35,6 @@ export default function OrderDetailActions({
   }, [isJewellery]);
 
   const cancellable = ["PENDING_PAYMENT", "PAYMENT_REVIEW", "CONFIRMED", "PROCESSING"].includes(status);
-
-  async function handleCancelOrder() {
-    setCancelling(true);
-    try {
-      const res = await fetch(`/api/orders/${orderId}/cancel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: cancelReason }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        success("Order Cancelled", "Your order has been cancelled and stock has been restored.");
-        setShowCancelModal(false);
-        router.refresh();
-      } else {
-        error("Cancellation Failed", data.error || "Could not cancel order.");
-      }
-    } catch {
-      error("Error", "Network connection failed.");
-    } finally {
-      setCancelling(false);
-    }
-  }
 
   return (
     <>
@@ -89,18 +70,18 @@ export default function OrderDetailActions({
         ) : null}
 
         <WhatsAppConciergeButton
-          orderNumber={orderId}
-          customMessage={`Hello Fashion Cart Support! I need assistance with my Order Reference #${orderId}.`}
+          orderNumber={orderNumber}
+          customMessage={`Hello Fashion Cart Support! I need assistance with my Order Reference #${orderNumber}.`}
           className="px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm flex items-center gap-1 cursor-pointer"
         >
-          <span>💬</span> WhatsApp Support
+          <span>💬</span> WhatsApp Concierge
         </WhatsAppConciergeButton>
 
         {/* Cancel Order Button */}
         {cancellable && (
           <button
             onClick={() => setShowCancelModal(true)}
-            className="px-4 py-2 rounded-full border text-xs font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors"
+            className="px-4 py-2 rounded-full border text-xs font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
             style={{ borderColor: "rgba(244, 63, 94, 0.3)" }}
           >
             ✕ Cancel Order
@@ -108,69 +89,20 @@ export default function OrderDetailActions({
         )}
       </div>
 
-      {/* Cancel Confirmation Modal */}
-      {showCancelModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto p-4 flex items-center justify-center animate-in fade-in duration-200">
-          <div
-            onClick={() => setShowCancelModal(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs"
-          />
-
-          <div
-            className="relative w-full max-w-md p-6 rounded-2xl border shadow-2xl z-10 animate-in zoom-in-95 duration-200 space-y-4"
-            style={{
-              backgroundColor: "var(--fc-surface)",
-              borderColor: "var(--fc-border)",
-              color: "var(--fc-text)",
-            }}
-          >
-            <h3 className="font-display text-lg font-bold">Cancel Order</h3>
-            <p className="text-xs text-dim">
-              Are you sure you want to cancel this order? Reserved items will be released back to stock.
-            </p>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-dim mb-1">
-                Reason for cancellation
-              </label>
-              <select
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border text-xs outline-none"
-                style={{
-                  backgroundColor: "var(--fc-bg)",
-                  borderColor: "var(--fc-border)",
-                }}
-              >
-                <option value="Changed mind / ordered by mistake">Changed mind / ordered by mistake</option>
-                <option value="Need to change shipping address">Need to change shipping address</option>
-                <option value="Found a better price elsewhere">Found a better price elsewhere</option>
-                <option value="Ordered incorrect size or colour">Ordered incorrect size or colour</option>
-                <option value="Other">Other reason</option>
-              </select>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowCancelModal(false)}
-                className="px-4 py-2 rounded-xl border text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5"
-                style={{ borderColor: "var(--fc-border)" }}
-              >
-                Keep Order
-              </button>
-              <button
-                type="button"
-                disabled={cancelling}
-                onClick={handleCancelOrder}
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
-              >
-                {cancelling ? "Cancelling…" : "Confirm Cancel"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Enhanced Cancellation Modal with Refund Destination Breakdown */}
+      <CancelOrderModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onSuccess={() => {
+          success("Order Cancelled", "Your order has been cancelled and stock returned to inventory.");
+          router.refresh();
+        }}
+        orderId={orderId}
+        orderNumber={orderNumber}
+        total={total}
+        paymentMethod={paymentMethod}
+        isPrepaid={isPaid}
+      />
     </>
   );
 }
