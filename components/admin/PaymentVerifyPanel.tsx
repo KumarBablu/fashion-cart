@@ -115,6 +115,18 @@ export default function PaymentVerifyPanel({ payment }: { payment: Payment }) {
           {payment.paymentChannel && <Row label="Payment Channel" value={payment.paymentChannel} />}
           {payment.instrumentDetails && <Row label="Instrument / App" value={payment.instrumentDetails} />}
           <Row label="UTR / Ref No" value={payment.utrNumber ?? "—"} isMono />
+          {payment.utrNumber?.startsWith("pay_") && (
+            <div className="py-1">
+              <a
+                href={`https://dashboard.razorpay.com/app/payments/${payment.utrNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0C3B2E] text-white hover:bg-[#144E3E] transition-all shadow-xs"
+              >
+                <span>⚡</span> Open in Razorpay Dashboard ↗
+              </a>
+            </div>
+          )}
           <div className="flex justify-between items-center py-1">
             <span className="text-dim">Payment Status</span>
             <span

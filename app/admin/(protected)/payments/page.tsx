@@ -109,9 +109,22 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-700">
                     {p.utrNumber ? (
-                      <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-[11px]">
-                        {p.utrNumber}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-[11px]">
+                          {p.utrNumber}
+                        </span>
+                        {p.utrNumber.startsWith("pay_") && (
+                          <a
+                            href={`https://dashboard.razorpay.com/app/payments/${p.utrNumber}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:text-emerald-700 font-bold text-xs"
+                            title="View in Razorpay Dashboard"
+                          >
+                            ↗
+                          </a>
+                        )}
+                      </div>
                     ) : (
                       "—"
                     )}

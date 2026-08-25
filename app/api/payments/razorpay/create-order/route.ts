@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     if (body?.existingOrderId) {
       order = await db.order.findFirst({
         where: { id: body.existingOrderId, userId: user.id },
-        include: { payment: true },
+        include: { payment: true, items: true, user: true },
       });
 
       if (!order) {
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         const altStore = store === "jewellery" ? "garments" : "jewellery";
         order = await getDb(altStore).order.findFirst({
           where: { id: body.existingOrderId, userId: user.id },
-          include: { payment: true },
+          include: { payment: true, items: true, user: true },
         });
       }
 
@@ -68,21 +68,46 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Fetch full order with items for rich metadata
+    const fullOrder = await db.order.findUnique({
+      where: { id: order.id },
+      include: { items: true, user: true },
+    });
+
     const totalAmount = Number(order.total);
     if (totalAmount <= 0) {
       return NextResponse.json({ error: "Invalid payable order amount." }, { status: 400 });
     }
 
-    // Create official order on Razorpay servers
+    const addressSnapshot = (fullOrder?.shippingAddressSnapshot || order.shippingAddressSnapshot) as Record<string, string> | null;
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "https://fashioncartstore.vercel.app";
+
+    // Format rich items summary for the Razorpay transaction dashboard
+    const itemsSummary = fullOrder?.items?.length
+      ? fullOrder.items
+          .map((it) => `${it.productNameSnapshot} (${it.sizeSnapshot || "Std"}) × ${it.quantity}`)
+          .join(", ")
+          .slice(0, 240)
+      : "Boutique Items";
+
+    // Create official order on Razorpay servers with comprehensive metadata
     const rzpOrder = await createRazorpayOrder({
       amountInRupees: totalAmount,
-      receipt: order.orderNumber,
+      receipt: order.orderNumber.slice(0, 40),
       currency: "INR",
       notes: {
-        orderId: order.id,
         orderNumber: order.orderNumber,
-        userId: user.id,
-        store,
+        store: store === "jewellery" ? "Jewellery Atelier" : "Garments Boutique",
+        customerName: (addressSnapshot?.fullName || user.name || "Customer").slice(0, 50),
+        customerPhone: (addressSnapshot?.mobileNumber || user.phone || "").slice(0, 20),
+        customerEmail: user.email.slice(0, 50),
+        deliveryCity: (addressSnapshot?.city || "").slice(0, 40),
+        deliveryState: (addressSnapshot?.state || "").slice(0, 40),
+        pinCode: (addressSnapshot?.pinCode || "").slice(0, 10),
+        itemsSummary,
+        itemCount: String(fullOrder?.items?.length || 1),
+        adminOrderUrl: `${appUrl}/admin/orders/${order.id}`,
+        invoiceRef: `INV-${order.orderNumber}`,
       },
     });
 
@@ -90,12 +115,15 @@ export async function POST(req: NextRequest) {
     await db.payment.updateMany({
       where: { orderId: order.id },
       data: {
-        paymentMetadata: { razorpayOrderId: rzpOrder.id },
+        paymentMetadata: {
+          razorpayOrderId: rzpOrder.id,
+          orderNumber: order.orderNumber,
+          store,
+        },
       },
     });
 
     const { keyId } = getRazorpayCredentials();
-    const addressSnapshot = order.shippingAddressSnapshot as Record<string, string> | null;
 
     return NextResponse.json({
       success: true,
