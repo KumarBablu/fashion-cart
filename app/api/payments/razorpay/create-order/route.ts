@@ -86,6 +86,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Save Razorpay order ID to payment record for integrity verification
+    await db.payment.updateMany({
+      where: { orderId: order.id },
+      data: {
+        paymentMetadata: { razorpayOrderId: rzpOrder.id },
+      },
+    });
+
     const { keyId } = getRazorpayCredentials();
     const addressSnapshot = order.shippingAddressSnapshot as Record<string, string> | null;
 

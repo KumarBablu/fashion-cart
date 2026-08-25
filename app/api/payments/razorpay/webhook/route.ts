@@ -67,6 +67,34 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ status: "already_confirmed" });
         }
 
+        // Validate payment amount in integer paise against trusted server-side order.total
+        const expectedPaise = Math.round(Number(order.total) * 100);
+        const paidPaise = Number(paymentEntity?.amount);
+        if (!paidPaise || paidPaise !== expectedPaise) {
+          console.error("[Razorpay Webhook] Amount mismatch:", {
+            paidPaise,
+            expectedPaise,
+            orderId: order.id,
+          });
+          return NextResponse.json(
+            { error: "Payment amount mismatch with internal order total." },
+            { status: 400 }
+          );
+        }
+
+        // Validate currency
+        if (paymentEntity?.currency && paymentEntity.currency.toUpperCase() !== "INR") {
+          return NextResponse.json({ error: "Invalid payment currency." }, { status: 400 });
+        }
+
+        // Validate payment status
+        if (paymentEntity?.status && paymentEntity.status !== "captured" && paymentEntity.status !== "authorized") {
+          return NextResponse.json(
+            { error: `Payment not captured. Status: ${paymentEntity.status}` },
+            { status: 400 }
+          );
+        }
+
         const { parseRazorpayPaymentInstrument } = await import("@/lib/payments/razorpay");
         const parsed = parseRazorpayPaymentInstrument(paymentEntity);
 

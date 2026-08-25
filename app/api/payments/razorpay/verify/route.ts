@@ -73,7 +73,60 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
 
-    // 3. Mark payment as VERIFIED and order as CONFIRMED atomically in <15ms
+    if (order.status === "CONFIRMED" && order.payment?.status === "VERIFIED") {
+      return NextResponse.json({
+        success: true,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        paymentId: razorpayPaymentId,
+        status: "CONFIRMED",
+      });
+    }
+
+    // 3. Synchronously verify payment directly against Razorpay API
+    let rzpPaymentObj = null;
+    let parsedInstrument = {
+      gatewayName: "Razorpay",
+      paymentChannel: "ONLINE_GATEWAY",
+      instrumentDetails: "Instant Verification",
+    };
+
+    try {
+      const { fetchRazorpayPayment, parseRazorpayPaymentInstrument } = await import("@/lib/payments/razorpay");
+      rzpPaymentObj = await fetchRazorpayPayment(razorpayPaymentId);
+      parsedInstrument = parseRazorpayPaymentInstrument(rzpPaymentObj);
+
+      // Validate payment belongs to this Razorpay order
+      if (rzpPaymentObj.order_id && rzpPaymentObj.order_id !== razorpayOrderId) {
+        return NextResponse.json(
+          { error: "Payment verification failed: Razorpay order ID mismatch." },
+          { status: 400 }
+        );
+      }
+
+      // Validate payment amount in paise matches order total
+      const expectedPaise = Math.round(Number(order.total) * 100);
+      if (rzpPaymentObj.amount !== expectedPaise) {
+        console.error("Payment amount mismatch:", { paidPaise: rzpPaymentObj.amount, expectedPaise, orderId });
+        return NextResponse.json(
+          { error: "Payment amount does not match order payable total." },
+          { status: 400 }
+        );
+      }
+
+      // Validate payment status is authorized or captured
+      if (rzpPaymentObj.status !== "captured" && rzpPaymentObj.status !== "authorized") {
+        return NextResponse.json(
+          { error: `Payment not completed. Status is '${rzpPaymentObj.status}'.` },
+          { status: 400 }
+        );
+      }
+    } catch (fetchErr: any) {
+      console.warn("Direct Razorpay payment check warning:", fetchErr?.message);
+      // If network check to Razorpay fails, signature was already cryptographically verified above
+    }
+
+    // 4. Mark payment as VERIFIED and order as CONFIRMED atomically
     await db.$transaction(async (tx) => {
       if (order.payment) {
         await tx.payment.update({
@@ -82,9 +135,10 @@ export async function POST(req: NextRequest) {
             status: "VERIFIED",
             utrNumber: razorpayPaymentId,
             method: "ONLINE_GATEWAY",
-            gatewayName: "Online Payment",
-            paymentChannel: "ONLINE_GATEWAY",
-            instrumentDetails: "Instant Verification",
+            gatewayName: parsedInstrument.gatewayName,
+            paymentChannel: parsedInstrument.paymentChannel,
+            instrumentDetails: parsedInstrument.instrumentDetails,
+            paymentMetadata: rzpPaymentObj ? (rzpPaymentObj as any) : undefined,
             verifiedAt: new Date(),
             rejectionReason: null,
           },
@@ -97,9 +151,10 @@ export async function POST(req: NextRequest) {
             method: "ONLINE_GATEWAY",
             status: "VERIFIED",
             utrNumber: razorpayPaymentId,
-            gatewayName: "Online Payment",
-            paymentChannel: "ONLINE_GATEWAY",
-            instrumentDetails: "Instant Verification",
+            gatewayName: parsedInstrument.gatewayName,
+            paymentChannel: parsedInstrument.paymentChannel,
+            instrumentDetails: parsedInstrument.instrumentDetails,
+            paymentMetadata: rzpPaymentObj ? (rzpPaymentObj as any) : undefined,
             verifiedAt: new Date(),
           },
         });
@@ -109,7 +164,7 @@ export async function POST(req: NextRequest) {
         where: { id: order.id },
         data: {
           status: "CONFIRMED",
-          paymentMethod: "ONLINE_GATEWAY (Instant Online Payment)",
+          paymentMethod: `ONLINE_GATEWAY (${parsedInstrument.gatewayName} · ${parsedInstrument.paymentChannel})`,
         },
       });
 
@@ -133,26 +188,9 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // 4. Background tasks: Extended instrument fetch, PDF Tax Invoice generation and Customer Notifications
+    // 5. Background tasks: PDF Tax Invoice generation and Customer Notifications
     void (async () => {
       try {
-        // Asynchronously fetch extended payment instrument details from gateway
-        try {
-          const { fetchRazorpayPayment, parseRazorpayPaymentInstrument } = await import("@/lib/payments/razorpay");
-          const rzpPaymentObj = await fetchRazorpayPayment(razorpayPaymentId);
-          const parsed = parseRazorpayPaymentInstrument(rzpPaymentObj);
-          await db.payment.updateMany({
-            where: { orderId: order.id },
-            data: {
-              gatewayName: parsed.gatewayName,
-              paymentChannel: parsed.paymentChannel,
-              instrumentDetails: parsed.instrumentDetails,
-              paymentMetadata: rzpPaymentObj as any,
-            },
-          });
-        } catch {
-          // Non-blocking
-        }
         const fullOrder = await db.order.findUnique({
           where: { id: order.id },
           include: { user: true, items: true, payment: true },

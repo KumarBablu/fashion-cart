@@ -32,6 +32,12 @@ export async function POST(req: NextRequest) {
     const name = payload.name?.trim() || email.split("@")[0] || "Customer";
     const emailVerified = payload.email_verified === "true" || payload.email_verified === true;
 
+    // Validate token audience against configured Google Client ID if present
+    const expectedAudience = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (expectedAudience && payload.aud && payload.aud !== expectedAudience) {
+      return NextResponse.json({ error: "Google authorization token audience mismatch." }, { status: 401 });
+    }
+
     if (!email || !emailVerified) {
       return NextResponse.json({ error: "Google account email is unverified or unavailable." }, { status: 400 });
     }
@@ -41,14 +47,11 @@ export async function POST(req: NextRequest) {
       where: { email },
     });
 
-    const isSuperAdminEmail =
-      email === "bablusoni2825@gmail.com" || email === "admin@fashioncart.shop";
-
     if (!user) {
       // Auto-register customer with high-entropy random password
       const randomPassword = crypto.randomBytes(24).toString("base64");
       const passwordHash = await hashPassword(randomPassword);
-      const userRole = isSuperAdminEmail ? "ADMIN" : "CUSTOMER";
+      const userRole = "CUSTOMER";
       const standardId = await generateStandardUserId(userRole);
 
       user = await prisma.user.create({
@@ -74,13 +77,6 @@ export async function POST(req: NextRequest) {
       if (!user.isActive) {
         return NextResponse.json({ error: "This account has been deactivated. Please contact concierge support." }, { status: 403 });
       }
-
-      if (isSuperAdminEmail && user.role !== "ADMIN") {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { role: "ADMIN" },
-        });
-      }
     }
 
     // Create session & set secure cookie
@@ -104,7 +100,7 @@ export async function POST(req: NextRequest) {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: isSuperAdminEmail ? "ADMIN" : user.role,
+        role: user.role,
       },
     });
   } catch (err) {

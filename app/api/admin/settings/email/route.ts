@@ -21,7 +21,14 @@ export async function GET() {
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const settings = await prisma.emailSettings.findFirst();
-  return NextResponse.json({ settings });
+  const maskedSettings = settings
+    ? {
+        ...settings,
+        smtpPassword: settings.smtpPassword ? "••••••••" : null,
+      }
+    : null;
+
+  return NextResponse.json({ settings: maskedSettings });
 }
 
 export async function POST(req: NextRequest) {
@@ -37,6 +44,10 @@ export async function POST(req: NextRequest) {
   const { smtpHost, smtpPort, smtpUser, smtpPassword, smtpSecure, fromEmail, fromName, notifyAdminEmail, sendTestTo } = parsed.data;
 
   const existing = await prisma.emailSettings.findFirst();
+  const resolvedPassword =
+    smtpPassword && smtpPassword !== "••••••••"
+      ? smtpPassword
+      : existing?.smtpPassword || null;
 
   const settings = existing
     ? await prisma.emailSettings.update({
@@ -45,7 +56,7 @@ export async function POST(req: NextRequest) {
           smtpHost: smtpHost || null,
           smtpPort: smtpPort || 587,
           smtpUser: smtpUser || null,
-          smtpPassword: smtpPassword || null,
+          smtpPassword: resolvedPassword,
           smtpSecure,
           fromEmail,
           fromName,
@@ -57,7 +68,7 @@ export async function POST(req: NextRequest) {
           smtpHost: smtpHost || null,
           smtpPort: smtpPort || 587,
           smtpUser: smtpUser || null,
-          smtpPassword: smtpPassword || null,
+          smtpPassword: resolvedPassword,
           smtpSecure,
           fromEmail,
           fromName,

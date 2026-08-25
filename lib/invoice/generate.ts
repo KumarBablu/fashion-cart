@@ -86,9 +86,12 @@ export async function generateInvoiceBufferForOrder(orderId: string): Promise<{
       ? business.gstin
       : "10AABCU9603R1ZM";
 
-  // Generate and embed high-resolution QR code
+  // Generate and embed high-resolution QR code with cryptographic signature token
+  const crypto = await import("crypto");
+  const secret = process.env.SESSION_SECRET || "fashion-cart-invoice-auth-secret";
+  const sigToken = crypto.createHmac("sha256", secret).update(`${order.id}:${order.orderNumber}`).digest("hex");
   const appBase = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://fashioncartstore.vercel.app";
-  const verificationUrl = `${appBase}/invoices/${order.id}`;
+  const verificationUrl = `${appBase}/invoices/${order.id}?sig=${sigToken}`;
   const qrPngBuffer = await generateQrPngBuffer(verificationUrl, 240);
   const qrImage = await pdfDoc.embedPng(qrPngBuffer);
 

@@ -37,7 +37,7 @@ async function getEmailTransport() {
   const host = settings?.smtpHost || process.env.SMTP_HOST || "smtp.gmail.com";
   const port = settings?.smtpPort || (process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465);
   const user = settings?.smtpUser || process.env.SMTP_USER || "Fashioncart.support@gmail.com";
-  const rawPass = settings?.smtpPassword || process.env.SMTP_PASS || "dlpy ilmox lksr fdx";
+  const rawPass = settings?.smtpPassword || process.env.SMTP_PASS;
   const pass = rawPass ? rawPass.replace(/\s+/g, "") : undefined;
   const secure = settings?.smtpSecure ?? (port === 465);
   const fromEmail = settings?.fromEmail || user || "Fashioncart.support@gmail.com";

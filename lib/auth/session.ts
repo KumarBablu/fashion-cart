@@ -146,11 +146,6 @@ export async function destroyCurrentSession(req?: NextRequest) {
 /** Throws-free helper: returns the user only if they are an active admin. Memoized per request. */
 export const getCurrentAdmin = cache(async (req?: NextRequest): Promise<User | null> => {
   const user = await getCurrentUser(req);
-  if (!user) return null;
-  const isSuperAdminEmail =
-    user.email.toLowerCase() === "bablusoni2825@gmail.com" ||
-    user.email.toLowerCase() === "admin@fashioncart.shop";
-
-  if (user.role !== "ADMIN" && !isSuperAdminEmail) return null;
+  if (!user || user.role !== "ADMIN" || !user.isActive) return null;
   return user;
 });

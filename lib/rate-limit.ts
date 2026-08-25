@@ -9,9 +9,24 @@
 
 type Bucket = { count: number; resetAt: number };
 const buckets = new Map<string, Bucket>();
+const MAX_BUCKETS = 10000;
+
+function cleanupExpiredBuckets(now: number) {
+  if (buckets.size < 500) return;
+  for (const [k, v] of buckets.entries()) {
+    if (v.resetAt < now) {
+      buckets.delete(k);
+    }
+  }
+}
 
 export function rateLimit(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now();
+  
+  if (buckets.size > MAX_BUCKETS) {
+    cleanupExpiredBuckets(now);
+  }
+
   const bucket = buckets.get(key);
 
   if (!bucket || bucket.resetAt < now) {

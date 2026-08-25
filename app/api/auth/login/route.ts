@@ -44,13 +44,12 @@ export async function POST(req: NextRequest) {
   } else {
     // Treat as phone number (or alphanumeric username fallback)
     const phoneDigits = rawId.replace(/\D/g, "").slice(-10);
-    if (phoneDigits.length >= 7) {
+    if (phoneDigits.length === 10) {
       user = await prisma.user.findFirst({
         where: {
           OR: [
             { phone: phoneDigits },
             { phone: `+91${phoneDigits}` },
-            { phone: { contains: phoneDigits } },
             { email: rawId.toLowerCase() },
           ],
         },
@@ -81,18 +80,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email/mobile number or password." }, { status: 401 });
   }
 
-  const isSuperAdminEmail =
-    user.email.toLowerCase() === "bablusoni2825@gmail.com" ||
-    user.email.toLowerCase() === "admin@fashioncart.shop";
-
-  const effectiveRole = isSuperAdminEmail ? "ADMIN" : user.role;
-
-  if (isSuperAdminEmail && user.role !== "ADMIN") {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { role: "ADMIN" },
-    });
-  }
+  const effectiveRole = user.role;
 
   const userAgent = req.headers.get("user-agent");
   const { rawToken, expiresAt } = await createSession(user.id, userAgent);

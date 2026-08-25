@@ -10,7 +10,22 @@ const contactSchema = z.object({
   message: z.string().trim().min(10, "Please enter your message (at least 10 characters)"),
 });
 
+import { rateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export async function POST(req: NextRequest) {
+  if (!rateLimit(clientKeyFromRequest(req, "contact"), 5, 15 * 60 * 1000)) {
+    return NextResponse.json({ error: "Too many contact messages sent. Please try again later." }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = contactSchema.safeParse(body);
   if (!parsed.success) {
@@ -20,8 +35,12 @@ export async function POST(req: NextRequest) {
   const { name, email, subject, orderNumber, message } = parsed.data;
   const fullSubject = orderNumber ? `[Order #${orderNumber}] ${subject}` : subject;
 
+  const safeName = escapeHtml(name);
+  const safeSubject = escapeHtml(fullSubject);
+  const safeMessage = escapeHtml(message);
+
   // 1. Notify Admin/Store Owner asynchronously
-  sendContactInquiryEmail(name, email, fullSubject, message).catch((err) => {
+  sendContactInquiryEmail(safeName, email, fullSubject, message).catch((err) => {
     console.error("Admin contact inquiry email failed:", err);
   });
 
@@ -29,10 +48,10 @@ export async function POST(req: NextRequest) {
   const ackHtml = `
     <div style="font-family: sans-serif; color: #f3f4f6; background-color: #14171d; padding: 24px; border-radius: 12px;">
       <h2 style="color: #fbbf24; margin-top: 0;">We have received your message! ✉️</h2>
-      <p>Hello ${name},</p>
-      <p>Thank you for reaching out to Fashion Cart. Our customer care team has received your inquiry regarding <strong>"${fullSubject}"</strong> and will get back to you within 24 hours.</p>
+      <p>Hello ${safeName},</p>
+      <p>Thank you for reaching out to Fashion Cart. Our customer care team has received your inquiry regarding <strong>"${safeSubject}"</strong> and will get back to you within 24 hours.</p>
       <div style="background-color: #1b2029; padding: 16px; border-radius: 8px; border: 1px solid #282f3d; margin: 16px 0;">
-        <p style="margin: 0; font-size: 13px; color: #d1d5db;"><strong>Your Message:</strong><br />${message}</p>
+        <p style="margin: 0; font-size: 13px; color: #d1d5db;"><strong>Your Message:</strong><br />${safeMessage}</p>
       </div>
       <p style="font-size: 12px; color: #9ca3af;">Warm regards,<br />Fashion Cart Support Team</p>
     </div>

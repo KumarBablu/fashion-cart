@@ -5,8 +5,13 @@ import { getCurrentAdmin } from "@/lib/auth/session";
 function convertToCsv(headers: string[], rows: (string | number | boolean | null | undefined)[][]): string {
   const escapeCsv = (val: string | number | boolean | null | undefined) => {
     if (val === null || val === undefined) return '""';
-    const str = String(val).replace(/"/g, '""');
-    return `"${str}"`;
+    let str = String(val);
+    // Neutralize spreadsheet formula injection characters (=, +, -, @, tab, cr)
+    if (/^[=+\-@\t\r]/.test(str)) {
+      str = `'${str}`;
+    }
+    const escaped = str.replace(/"/g, '""');
+    return `"${escaped}"`;
   };
 
   const headerLine = headers.map(escapeCsv).join(",");

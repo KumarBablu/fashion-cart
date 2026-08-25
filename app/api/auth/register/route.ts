@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
         OR: [
           { phone: cleanPhone },
           { phone: `+91${cleanPhone}` },
-          { phone: { contains: cleanPhone } },
         ],
       },
     });

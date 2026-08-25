@@ -29,13 +29,12 @@ export async function POST(req: NextRequest) {
     });
   } else {
     const digits = raw.replace(/\D/g, "").slice(-10);
-    if (digits.length >= 7) {
+    if (digits.length === 10) {
       user = await prisma.user.findFirst({
         where: {
           OR: [
             { phone: digits },
             { phone: `+91${digits}` },
-            { phone: { contains: digits } },
             { email: raw.toLowerCase() },
           ],
         },
@@ -47,41 +46,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // If user does not exist in database, return clear actionable error
-  if (!user || !user.isActive) {
-    return NextResponse.json(
-      {
-        error: `No registered account found matching "${raw}". Please check your email or mobile number, or sign up for a new account.`,
-      },
-      { status: 404 }
-    );
+  // If active user exists, dispatch password reset email
+  if (user && user.isActive) {
+    const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "https://fashion-cart-5p7k.vercel.app";
+    const { token, code: recoveryCode } = generatePasswordResetToken(user);
+    const resetUrl = `${origin}/reset-password?token=${token}`;
+
+    sendPasswordResetEmail(
+      { name: user.name, email: user.email },
+      resetUrl,
+      recoveryCode
+    ).catch((err) => {
+      console.error("Password reset email dispatch failed:", err);
+    });
   }
 
-  const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "https://fashion-cart-5p7k.vercel.app";
-  const { token, code: recoveryCode } = generatePasswordResetToken(user);
-  const resetUrl = `${origin}/reset-password?token=${token}`;
-
-  // Dispatch Password Reset Email to actual customer inbox
-  await sendPasswordResetEmail(
-    { name: user.name, email: user.email },
-    resetUrl,
-    recoveryCode
-  ).catch((err) => {
-    console.error("Password reset email dispatch failed:", err);
-  });
-
-  // Mask email for privacy display: b***i@gmail.com
-  const emailParts = user.email.split("@");
-  const local = emailParts[0];
-  const domain = emailParts[1];
-  const maskedLocal = local.length > 2 ? `${local[0]}***${local[local.length - 1]}` : `${local[0]}***`;
-  const emailMasked = `${maskedLocal}@${domain}`;
-
+  // Uniform generic response to prevent account and name enumeration
   return NextResponse.json({
     success: true,
-    message: `Verification code and recovery link dispatched to ${emailMasked}.`,
-    emailMasked,
-    name: user.name,
-    token, // Provided so the user can enter the 6-digit code on the next screen directly
+    message: "If an active account exists with the provided email or mobile number, password reset instructions have been dispatched.",
   });
 }

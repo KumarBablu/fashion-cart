@@ -1,16 +1,15 @@
 import crypto from "crypto";
 import { prisma } from "@/lib/db";
 
-const RESET_SECRET = process.env.SESSION_SECRET || "fashion-cart-reset-secret-key-2026";
+const RESET_SECRET = process.env.SESSION_SECRET || process.env.JWT_SECRET || "fc-auth-security-salt-v1";
 const TOKEN_TTL_MINUTES = 20;
 
 /**
  * Creates a cryptographically secure, tamper-proof password reset token.
- * Incorporates the user's current passwordHash and a 6-digit code into the HMAC key
- * so that both the link and 6-digit OTP code are verified and invalidated immediately once used.
+ * Uses crypto.randomInt for high-entropy 6-digit OTP code and binds to current passwordHash.
  */
 export function generatePasswordResetToken(user: { id: string; email: string; passwordHash: string }) {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const code = crypto.randomInt(100000, 1000000).toString();
   const expiresAt = Date.now() + TOKEN_TTL_MINUTES * 60 * 1000;
   const payload = `${user.id}:${user.email}:${expiresAt}:${code}`;
   const hmacKey = `${RESET_SECRET}:${user.passwordHash}`;
@@ -20,21 +19,20 @@ export function generatePasswordResetToken(user: { id: string; email: string; pa
 }
 
 /**
- * Generates a 6-digit numeric recovery verification code.
+ * Generates a cryptographically secure 6-digit numeric recovery verification code.
  */
-export function generateRecoveryCode(_email?: string) {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+export function generateRecoveryCode(_email?: string): string {
+  return crypto.randomInt(100000, 1000000).toString();
 }
 
 /**
- * Verifies a password reset token and 6-digit recovery code.
+ * Verifies a password reset token and optional 6-digit recovery code using constant-time comparison.
  */
 export async function verifyPasswordResetToken(token: string, enteredCode?: string) {
   try {
     const decoded = Buffer.from(token, "base64url").toString("utf-8");
     const parts = decoded.split(":");
     
-    // Support legacy (4 parts) or code-enabled (5 parts)
     let userId: string, email: string, expiresAtStr: string, expectedCode: string | undefined, signature: string;
     
     if (parts.length === 5) {
@@ -54,9 +52,11 @@ export async function verifyPasswordResetToken(token: string, enteredCode?: stri
       return { valid: false, error: "Password reset link has expired (valid for 20 mins). Please request a new one." };
     }
 
-    // If a code was embedded, check entered code
+    // If code verification is requested, compare constant-time
     if (expectedCode && enteredCode) {
-      if (expectedCode.trim() !== enteredCode.trim()) {
+      const expBuf = Buffer.from(expectedCode.trim());
+      const entBuf = Buffer.from(enteredCode.trim());
+      if (expBuf.length !== entBuf.length || !crypto.timingSafeEqual(expBuf, entBuf)) {
         return { valid: false, error: "Invalid 6-digit recovery code. Please check the code sent to your email." };
       }
     }
@@ -71,7 +71,10 @@ export async function verifyPasswordResetToken(token: string, enteredCode?: stri
     const hmacKey = `${RESET_SECRET}:${user.passwordHash}`;
     const expectedSignature = crypto.createHmac("sha256", hmacKey).update(payload).digest("hex");
 
-    if (signature !== expectedSignature) {
+    const sigBuf = Buffer.from(signature, "utf-8");
+    const expSigBuf = Buffer.from(expectedSignature, "utf-8");
+
+    if (sigBuf.length !== expSigBuf.length || !crypto.timingSafeEqual(sigBuf, expSigBuf)) {
       return { valid: false, error: "Invalid or already used password reset link." };
     }
 

@@ -42,9 +42,27 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       });
     }
 
-    // Authorization check: if logged in as another user, block. Otherwise allow direct order invoice download.
-    if (user && user.role !== "ADMIN" && order.userId !== user.id && !admin) {
-      return new NextResponse("You are not authorized to view this invoice", {
+    // Authorization check: User must be authenticated as the order owner or admin,
+    // or provide a valid cryptographic verification token (e.g. from printed QR code).
+    const sigToken = req.nextUrl.searchParams.get("token") || req.nextUrl.searchParams.get("sig");
+    let isSignatureValid = false;
+
+    if (sigToken) {
+      const crypto = await import("crypto");
+      const secret = process.env.SESSION_SECRET || "fashion-cart-invoice-auth-secret";
+      const expectedSig = crypto.createHmac("sha256", secret).update(`${order.id}:${order.orderNumber}`).digest("hex");
+      const sigBuf = Buffer.from(sigToken, "utf-8");
+      const expBuf = Buffer.from(expectedSig, "utf-8");
+      if (sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf)) {
+        isSignatureValid = true;
+      }
+    }
+
+    const isOwner = user && user.id === order.userId;
+    const isAuthorizedAdmin = (user && user.role === "ADMIN") || Boolean(admin);
+
+    if (!isOwner && !isAuthorizedAdmin && !isSignatureValid) {
+      return new NextResponse("You are not authorized to view this invoice. Please log in to your account.", {
         status: 403,
         headers: { "Content-Type": "text/plain" },
       });

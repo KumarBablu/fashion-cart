@@ -404,11 +404,15 @@ export async function POST(req: NextRequest) {
     const categoryCache = new Map<string, string>();
 
     const dataRows = rows.slice(1);
+    const BATCH_SIZE = 20;
 
-    await Promise.all(
-      dataRows.map(async (row, idx) => {
-        if (row.length === 0 || row.every((c) => !c)) return;
-        const r = idx + 1;
+    for (let batchStart = 0; batchStart < dataRows.length; batchStart += BATCH_SIZE) {
+      const currentBatch = dataRows.slice(batchStart, batchStart + BATCH_SIZE);
+      await Promise.all(
+        currentBatch.map(async (row, batchIdx) => {
+          const idx = batchStart + batchIdx;
+          if (row.length === 0 || row.every((c) => !c)) return;
+          const r = idx + 1;
 
         const getVal = (col: number) => (col >= 0 && col < row.length ? row[col].trim() : "");
 
@@ -730,6 +734,7 @@ export async function POST(req: NextRequest) {
         }
       })
     );
+  }
 
     return NextResponse.json({
       success: true,

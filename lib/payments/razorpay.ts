@@ -67,13 +67,14 @@ function getEnvVariable(key: string, fallback?: string): string | undefined {
  */
 export function getRazorpayCredentials() {
   const keyId =
+    process.env.RAZORPAY_KEY_ID ||
+    process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
     getEnvVariable("RAZORPAY_KEY_ID") ||
-    getEnvVariable("NEXT_PUBLIC_RAZORPAY_KEY_ID") ||
-    "rzp_test_TTddhE8oQz7yv6";
+    getEnvVariable("NEXT_PUBLIC_RAZORPAY_KEY_ID");
 
   const keySecret =
-    getEnvVariable("RAZORPAY_KEY_SECRET") ||
-    "k4VSXhfaZJYHDo2JPyZg7d7W";
+    process.env.RAZORPAY_KEY_SECRET ||
+    getEnvVariable("RAZORPAY_KEY_SECRET");
 
   if (!keyId || !keySecret) {
     throw new Error(
