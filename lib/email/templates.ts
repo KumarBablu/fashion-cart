@@ -217,24 +217,82 @@ export function orderPlacedEmailTemplate(order: OrderDataSummary) {
 
 // 5. Payment Verified & Order Confirmed Email
 export function paymentVerifiedEmailTemplate(order: OrderDataSummary, invoiceNumber?: string) {
-  const content = `
-    <h2 style="color: #0F172A; margin-top: 0;">Payment Verified! 🎉</h2>
-    <p>Hello ${order.user.name},</p>
-    <p>We have verified your payment for order <strong>#${order.orderNumber}</strong> (${formatINR(order.total)}). Your order is confirmed and being prepared for shipment.</p>
+  const addr = order.shippingAddressSnapshot;
+  const itemsHtml = (order.items || [])
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding: 10px 8px; border-bottom: 1px solid #F4EFEA;">
+          <strong style="color: #141416;">${item.productNameSnapshot}</strong><br />
+          <span style="font-size: 11px; color: #787C87;">${item.colourSnapshot || ""} · Size: ${item.sizeSnapshot || "Std"}</span>
+        </td>
+        <td style="padding: 10px 8px; border-bottom: 1px solid #F4EFEA; text-align: center; font-weight: bold; color: #141416;">${item.quantity}</td>
+        <td style="padding: 10px 8px; border-bottom: 1px solid #F4EFEA; text-align: right; font-weight: bold; color: #141416;">${formatINR(item.total)}</td>
+      </tr>
+    `
+    )
+    .join("");
 
-    <div class="card">
-      <p style="margin: 0; font-size: 13px;">
-        <strong>Invoice:</strong> ${invoiceNumber || `INV-${order.orderNumber}`}<br />
-        <strong>Payment Method:</strong> ${order.paymentMethod.replace(/_/g, " ")}<br />
-        <strong>Status:</strong> <span class="badge">CONFIRMED &amp; PROCESSING</span>
-      </p>
+  const content = `
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="display: inline-block; width: 48px; height: 48px; line-height: 48px; border-radius: 50%; background-color: #ECFDF5; color: #059669; font-size: 24px; font-weight: bold; margin-bottom: 8px;">✓</div>
+      <h2 style="color: #141416; margin: 4px 0 0 0; font-size: 22px; font-weight: 800;">Payment Confirmed</h2>
+      <p style="color: #787C87; font-size: 13px; margin: 4px 0 0 0;">Thank you, ${order.user.name}. Your order is officially confirmed!</p>
     </div>
 
-    <div style="text-align: center;">
-      <a href="${BASE_URL}/api/invoices/${order.id}" class="button">Download Official Tax Invoice PDF 📥</a>
+    <!-- Transaction Summary Card -->
+    <div class="card" style="background: #FAF8F5; border: 1px solid #E7DFD5; border-radius: 14px; padding: 18px;">
+      <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #E7DFD5; padding-bottom: 10px; margin-bottom: 10px;">
+        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #787C87;">Order Reference:</span>
+        <strong style="font-family: monospace; font-size: 13px; color: #141416;">${order.orderNumber}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px;">
+        <span style="color: #787C87;">Amount Paid:</span>
+        <strong style="color: #0C3B2E; font-size: 14px;">${formatINR(order.total)}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px;">
+        <span style="color: #787C87;">Payment Channel:</span>
+        <span style="font-weight: 600; color: #141416;">${order.paymentMethod.replace(/_/g, " ")}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12px;">
+        <span style="color: #787C87;">Tax Invoice:</span>
+        <span style="font-mono; font-weight: 700; color: #C59B27;">${invoiceNumber || `INV-${order.orderNumber}`}</span>
+      </div>
+    </div>
+
+    <!-- Items Table -->
+    <h4 style="color: #141416; margin: 20px 0 8px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Ordered Items</h4>
+    <table class="table" style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+      <thead>
+        <tr style="border-bottom: 1px solid #E7DFD5;">
+          <th style="text-align: left; font-size: 11px; text-transform: uppercase; color: #787C87; padding: 8px;">Item Description</th>
+          <th style="text-align: center; font-size: 11px; text-transform: uppercase; color: #787C87; padding: 8px;">Qty</th>
+          <th style="text-align: right; font-size: 11px; text-transform: uppercase; color: #787C87; padding: 8px;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsHtml}
+      </tbody>
+    </table>
+
+    <!-- Shipping Address -->
+    ${addr ? `
+    <div class="card" style="background: #FFFFFF; border: 1px solid #E7DFD5; border-radius: 12px; padding: 14px; margin-top: 16px;">
+      <h4 style="margin: 0 0 4px 0; color: #787C87; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Delivery Address</h4>
+      <p style="margin: 0; font-size: 12px; color: #141416; line-height: 1.5;">
+        <strong>${addr.fullName}</strong> (${addr.mobileNumber})<br />
+        ${addr.addressLine1}${addr.addressLine2 ? `, ${addr.addressLine2}` : ""}<br />
+        ${addr.city}, ${addr.state} - ${addr.pinCode}
+      </p>
+    </div>` : ""}
+
+    <!-- Action Buttons -->
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${BASE_URL}/account/orders/${order.id}" class="button" style="margin-right: 8px;">Track Order Status →</a>
+      <a href="${BASE_URL}/api/invoices/${order.id}" style="display: inline-block; padding: 12px 24px; background-color: #FAF8F5; color: #141416; text-decoration: none; border-radius: 9999px; font-weight: 700; font-size: 12px; border: 1px solid #D9D0C5;">Download Tax Invoice (PDF) 📥</a>
     </div>
   `;
-  return layout(`Payment Verified for Order #${order.orderNumber}`, content);
+  return layout(`Payment Confirmed #${order.orderNumber}`, content);
 }
 
 // 6. Order Shipped Email
@@ -276,22 +334,50 @@ export function orderDeliveredEmailTemplate(order: OrderDataSummary) {
   return layout(`Delivered: Order #${order.orderNumber}`, content);
 }
 
-// 8. Order Cancelled Email
+// 8. Order Cancelled & Refund Initiated Email
 export function orderCancelledEmailTemplate(order: OrderDataSummary, reason?: string | null) {
+  const isPrepaid = order.paymentMethod.includes("ONLINE") || order.paymentMethod.includes("GATEWAY");
+
   const content = `
-    <h2 style="color: #0F172A; margin-top: 0;">Order Cancelled</h2>
-    <p>Hello ${order.user.name},</p>
-    <p>Your order <strong>#${order.orderNumber}</strong> has been cancelled${reason ? ` (${reason})` : ""}. Any inventory reserved has been released.</p>
-
-    <div class="card">
-      <p style="margin: 0; font-size: 13px;">If you have any questions regarding payment refunds, please contact us at <a href="mailto:fashioncart.support@gmail.com" style="color: #0F172A;">fashioncart.support@gmail.com</a>.</p>
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="display: inline-block; width: 48px; height: 48px; line-height: 48px; border-radius: 50%; background-color: #FFF1F2; color: #E11D48; font-size: 22px; font-weight: bold; margin-bottom: 8px;">✕</div>
+      <h2 style="color: #141416; margin: 4px 0 0 0; font-size: 22px; font-weight: 800;">Order Cancelled</h2>
+      <p style="color: #787C87; font-size: 13px; margin: 4px 0 0 0;">Order #${order.orderNumber}</p>
     </div>
 
-    <div style="text-align: center;">
-      <a href="${BASE_URL}/shop" class="button">Explore Other Outfits →</a>
+    <p style="font-size: 13px; color: #3A3D45;">Hello ${order.user.name}, your cancellation request has been processed successfully${reason ? ` (${reason})` : ""}. Reserved items have been returned to our inventory.</p>
+
+    ${isPrepaid ? `
+    <!-- Refund Breakdown Banner -->
+    <div class="card" style="background: #FAF8F5; border: 1px solid #E7DFD5; border-radius: 14px; padding: 18px; margin: 20px 0;">
+      <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #E7DFD5; padding-bottom: 10px; margin-bottom: 10px;">
+        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #787C87;">Refund Summary:</span>
+        <strong style="color: #059669; font-size: 13px;">✓ 100% REFUND INITIATED</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px;">
+        <span style="color: #787C87;">Refund Amount:</span>
+        <strong style="color: #141416; font-size: 14px;">${formatINR(order.total)}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px;">
+        <span style="color: #787C87;">Destination:</span>
+        <span style="font-weight: 600; color: #141416;">Original Payment Source (UPI / Card)</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12px;">
+        <span style="color: #787C87;">Estimated Timeline:</span>
+        <span style="font-weight: 600; color: #0C3B2E;">Within 2–24h (UPI) or 3–5 days (Cards)</span>
+      </div>
+    </div>` : `
+    <div class="card" style="background: #FAF8F5; border: 1px solid #E7DFD5; border-radius: 12px; padding: 14px;">
+      <p style="margin: 0; font-size: 12px; color: #5A5E69;">No payment was collected for this Cash on Delivery order. You have not been charged any fee.</p>
+    </div>`}
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${BASE_URL}/account/orders/${order.id}" class="button">Track Refund Live →</a>
     </div>
+
+    <p style="font-size: 12px; color: #787C87; text-align: center;">Have a question about your refund? You can reply directly to this email or chat with our boutique concierge.</p>
   `;
-  return layout(`Order #${order.orderNumber} Cancelled`, content);
+  return layout(`Order #${order.orderNumber} Cancelled & Refund Initiated`, content);
 }
 
 // 9. Contact Us Inquiry Email
