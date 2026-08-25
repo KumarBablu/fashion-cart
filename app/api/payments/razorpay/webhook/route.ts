@@ -24,7 +24,55 @@ export async function POST(req: NextRequest) {
     const payload = JSON.parse(rawBody);
     const event = payload?.event;
 
-    // Handle payment.captured and order.paid events
+    // 1. Handle refund.processed and refund.created events
+    if (event === "refund.processed" || event === "refund.created" || event === "refund.failed") {
+      const refundEntity = payload?.payload?.refund?.entity;
+      const paymentEntity = payload?.payload?.payment?.entity;
+
+      const refundId = refundEntity?.id;
+      const paymentId = refundEntity?.payment_id || paymentEntity?.id;
+      const refundStatus = (refundEntity?.status || (event === "refund.processed" ? "PROCESSED" : "INITIATED")).toUpperCase();
+      const refundArn = refundEntity?.acquirer_data?.arn || refundEntity?.acquirer_data?.rrn || null;
+      const refundAmount = refundEntity?.amount ? Number(refundEntity.amount) / 100 : undefined;
+
+      if (paymentId) {
+        for (const storeName of ["garments", "jewellery"] as const) {
+          const db = getDb(storeName);
+          const payment = await db.payment.findFirst({
+            where: {
+              OR: [{ utrNumber: paymentId }, { refundId }],
+            },
+            include: { order: true },
+          });
+
+          if (payment) {
+            const now = new Date();
+            await db.payment.update({
+              where: { id: payment.id },
+              data: {
+                refundId: refundId || payment.refundId,
+                refundStatus,
+                refundAmount: refundAmount || payment.refundAmount,
+                refundArn: refundArn || payment.refundArn,
+                refundCompletedAt: refundStatus === "PROCESSED" ? now : payment.refundCompletedAt,
+              },
+            });
+
+            if (refundStatus === "PROCESSED" && payment.order) {
+              await db.order.update({
+                where: { id: payment.order.id },
+                data: { status: "REFUNDED" },
+              });
+            }
+            break;
+          }
+        }
+      }
+
+      return NextResponse.json({ status: "refund_updated", refundId });
+    }
+
+    // 2. Handle payment.captured and order.paid events
     if (event === "payment.captured" || event === "order.paid") {
       const paymentEntity = payload?.payload?.payment?.entity;
       const orderEntity = payload?.payload?.order?.entity;
@@ -37,7 +85,7 @@ export async function POST(req: NextRequest) {
       const orderId = notes.orderId;
       const rawStore = notes.store;
 
-      let store: "garments" | "jewellery" = rawStore === "jewellery" ? "jewellery" : "garments";
+      let store: "garments" | "jewellery" = rawStore === "jewellery" || rawStore === "Jewellery Atelier" ? "jewellery" : "garments";
       let db = getDb(store);
 
       let order = null;

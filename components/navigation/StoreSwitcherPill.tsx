@@ -37,38 +37,48 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
   // Synchronize active store based on route, query params, DOM attributes, and custom events
   useEffect(() => {
     function resolveStore(): "garments" | "jewellery" {
-      // 1. Explicit URL query parameter takes top priority
-      const storeParam = searchParams?.get("store");
-      if (storeParam === "jewellery") return "jewellery";
-      if (storeParam === "garments") return "garments";
+      // 1. Explicit jewellery routes
+      if (pathname.startsWith("/jewellery") || searchParams?.get("store") === "jewellery") {
+        return "jewellery";
+      }
 
-      // 2. Explicit storefront routes
-      if (pathname.startsWith("/jewellery")) return "jewellery";
-      if (pathname.startsWith("/garments") || pathname === "/") return "garments";
+      // 2. Explicit garments routes & storefront home
+      if (
+        pathname.startsWith("/garments") ||
+        pathname === "/" ||
+        (pathname === "/shop" && searchParams?.get("store") !== "jewellery") ||
+        (pathname === "/categories" && searchParams?.get("store") !== "jewellery")
+      ) {
+        return "garments";
+      }
 
       // 3. Product pages: inspect DOM store marker
       if (pathname.startsWith("/products")) {
-        const prodStore = typeof document !== "undefined" ? document.querySelector("[data-product-store]")?.getAttribute("data-product-store") : null;
+        const prodStore = document.querySelector("[data-product-store]")?.getAttribute("data-product-store");
         if (prodStore === "jewellery") return "jewellery";
         if (prodStore === "garments") return "garments";
-        if (typeof document !== "undefined" && document.querySelector(".theme-jewellery")) return "jewellery";
+        if (document.querySelector(".theme-jewellery")) return "jewellery";
+        return "garments";
       }
 
       // 4. Order Details pages: inspect order store marker
       if (pathname.startsWith("/account/orders")) {
-        const orderStore = typeof document !== "undefined" ? document.querySelector("[data-order-store]")?.getAttribute("data-order-store") : null;
+        const orderStore = document.querySelector("[data-order-store]")?.getAttribute("data-order-store");
         if (orderStore === "jewellery") return "jewellery";
         if (orderStore === "garments") return "garments";
+        return "garments";
       }
 
-      // 5. Cross-store pages (/cart, /checkout, /account, /shop, etc.): respect cookie & sessionStorage
-      const cookieMatch = typeof document !== "undefined" ? document.cookie.match(/(?:^|;\s*)fc_store=([^;]+)/) : null;
-      if (cookieMatch && cookieMatch[1] === "jewellery") return "jewellery";
-      if (cookieMatch && cookieMatch[1] === "garments") return "garments";
+      // 5. Checkout pages
+      if (pathname.startsWith("/checkout")) {
+        const checkoutStore = searchParams?.get("store");
+        if (checkoutStore === "jewellery") return "jewellery";
+        return "garments";
+      }
 
+      // Default fallback
       const saved = typeof window !== "undefined" ? sessionStorage.getItem("fc_active_store") : null;
-      if (saved === "jewellery") return "jewellery";
-      return "garments";
+      return saved === "jewellery" ? "jewellery" : "garments";
     }
 
     const currentStore = resolveStore();
@@ -101,10 +111,10 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
 
   return (
     <div
-      className={`inline-flex items-center p-1 rounded-full border shadow-sm backdrop-blur-md transition-all duration-300 ${
+      className={`inline-flex items-center p-1 rounded-full border shadow-2xs backdrop-blur-lg transition-all duration-300 select-none ${
         isJewellery
-          ? "bg-[#061A14]/90 border-[#D4AF37]/50 shadow-[0_2px_12px_rgba(212,175,55,0.2)]"
-          : "bg-white/90 border-[#E7DFD5] shadow-[0_2px_12px_rgba(20,20,22,0.06)]"
+          ? "bg-[#061A14]/90 border-[#D4AF37]/40 shadow-[0_2px_12px_rgba(212,175,55,0.15)]"
+          : "bg-[#FAF8F5]/90 border-[#E7DFD5] shadow-[0_2px_10px_rgba(20,20,22,0.04)]"
       } ${className}`}
       role="group"
       aria-label="Select Store"
@@ -122,10 +132,10 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
               window.dispatchEvent(new CustomEvent("cart-updated"));
             }
           }}
-          className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 active:scale-95 cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-full transition-all duration-200 cursor-pointer outline-none focus:outline-none ${
             !isJewellery
-              ? "bg-[#141416] text-[#FFFFFF] shadow-sm font-bold scale-[1.02]"
-              : "text-[#D4AF37] hover:text-[#FFFFFF] hover:bg-[#0D2C22]"
+              ? "bg-[#141416] text-[#FFFFFF] shadow-sm scale-[1.02]"
+              : "text-[#787C87] hover:text-[#141416] hover:bg-black/5"
           }`}
         >
           <span>👗</span>
@@ -146,10 +156,10 @@ export default function StoreSwitcherPill({ className = "" }: { className?: stri
               window.dispatchEvent(new CustomEvent("cart-updated"));
             }
           }}
-          className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold rounded-full transition-all duration-200 active:scale-95 cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-full transition-all duration-200 cursor-pointer outline-none focus:outline-none ${
             isJewellery
               ? "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-[#061A14] shadow-sm font-extrabold scale-[1.02]"
-              : "text-[#4B4E56] hover:text-[#141416] hover:bg-[#F4EFEA]"
+              : "text-[#787C87] hover:text-[#141416] hover:bg-black/5"
           }`}
         >
           <span>💍</span>
