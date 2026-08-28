@@ -1,10 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
-import { prisma } from "@/lib/db";
+import { getCachedDetailedCategories } from "@/lib/data/cache";
 import { formatINR } from "@/lib/format";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
-export const revalidate = 30;
+export const revalidate = 60;
 
 const DEPARTMENT_METADATA: Record<
   string,
@@ -48,48 +48,9 @@ const DEFAULT_METADATA = {
 };
 
 export default async function CategoriesPage() {
-  const categories = await prisma.category.findMany({
-    where: {
-      isActive: true,
-      parentId: null,
-      OR: [
-        { products: { some: { status: "ACTIVE" } } },
-        { children: { some: { isActive: true, products: { some: { status: "ACTIVE" } } } } },
-      ],
-    },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    include: {
-      children: {
-        where: {
-          isActive: true,
-          products: { some: { status: "ACTIVE" } },
-        },
-        orderBy: { sortOrder: "asc" },
-        include: {
-          products: {
-            where: { status: "ACTIVE" },
-            take: 3,
-            orderBy: { createdAt: "desc" },
-            include: {
-              images: { take: 1, orderBy: { sortOrder: "asc" } },
-              variants: { where: { isActive: true }, take: 1, orderBy: { price: "asc" } },
-            },
-          },
-        },
-      },
-      products: {
-        where: { status: "ACTIVE" },
-        take: 3,
-        orderBy: { createdAt: "desc" },
-        include: {
-          images: { take: 1, orderBy: { sortOrder: "asc" } },
-          variants: { where: { isActive: true }, take: 1, orderBy: { price: "asc" } },
-        },
-      },
-    },
-  });
+  const categories = await getCachedDetailedCategories("garments");
 
-  const totalCategories = categories.reduce((acc, cat) => acc + 1 + cat.children.length, 0);
+  const totalCategories = categories.reduce((acc: number, cat: any) => acc + 1 + (cat.children?.length || 0), 0);
 
   return (
     <div className="space-y-16 pb-20">
@@ -135,10 +96,10 @@ export default async function CategoriesPage() {
 
       {/* 👑 Detailed Department Showcase Sections */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-14">
-        {categories.map((cat, idx) => {
+        {categories.map((cat: any, idx: number) => {
           const meta = DEPARTMENT_METADATA[cat.slug.toLowerCase()] || DEFAULT_METADATA;
-          const allSubProducts = cat.children.flatMap((sub) => sub.products);
-          const sampleProducts = cat.products.length > 0 ? cat.products : allSubProducts;
+          const allSubProducts = (cat.children || []).flatMap((sub: any) => sub.products || []);
+          const sampleProducts = cat.products?.length > 0 ? cat.products : allSubProducts;
 
           return (
             <div
@@ -220,7 +181,7 @@ export default async function CategoriesPage() {
                       Featured Subcategories in {cat.name}:
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {cat.children.map((sub) => (
+                      {(cat.children || []).map((sub: any) => (
                         <Link
                           key={sub.id}
                           href={`/shop?category=${sub.slug}`}
@@ -259,9 +220,9 @@ export default async function CategoriesPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {sampleProducts.slice(0, 3).map((prod) => {
-                        const variant = prod.variants[0];
-                        const img = prod.images[0]?.imageUrl || "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&auto=format&fit=crop&q=80";
+                      {sampleProducts.slice(0, 3).map((prod: any) => {
+                        const variant = prod.variants?.[0];
+                        const img = prod.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&auto=format&fit=crop&q=80";
 
                         return (
                           <Link

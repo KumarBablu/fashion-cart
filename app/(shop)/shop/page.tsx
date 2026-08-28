@@ -1,8 +1,6 @@
-import { getDb } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { getStoresControl } from "@/lib/stores";
-import { getCachedFilterFacets } from "@/lib/data/cache";
-import { Prisma } from "@prisma/client";
+import { getCachedFilterFacets, getCachedShopProducts } from "@/lib/data/cache";
 import ProductCard from "@/components/products/ProductCard";
 import ShopFilters from "@/components/products/ShopFilters";
 import Link from "next/link";
@@ -27,8 +25,6 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     redirect("/shop?store=jewellery");
   }
 
-  const db = getDb(store);
-
   const q = sp.q?.trim();
   const categorySlug = sp.subcategory ?? sp.category;
   const minPrice = sp.minPrice ? Number(sp.minPrice) : undefined;
@@ -40,85 +36,25 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   const sort = sp.sort ?? "newest";
   const page = Math.max(1, Number(sp.page ?? 1));
 
-  const where: Prisma.ProductWhereInput = {
-    status: "ACTIVE",
-    category: {
-      isActive: true,
-      OR: [
-        { parentId: null },
-        { parent: { isActive: true } },
-      ],
-      ...(categorySlug
-        ? {
-            OR: [
-              { slug: categorySlug },
-              { parent: { slug: categorySlug, isActive: true } },
-            ],
-          }
-        : {}),
-    },
-    ...(q
-      ? {
-          OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { description: { contains: q, mode: "insensitive" } },
-            { brand: { contains: q, mode: "insensitive" } },
-            { category: { name: { contains: q, mode: "insensitive" } } },
-            { variants: { some: { sku: { contains: q, mode: "insensitive" } } } },
-          ],
-        }
-      : {}),
-    variants: {
-      some: {
-        isActive: true,
-        ...(minPrice !== undefined ? { price: { gte: minPrice } } : {}),
-        ...(maxPrice !== undefined ? { price: { lte: maxPrice } } : {}),
-        ...(size ? { size: { equals: size, mode: "insensitive" } } : {}),
-        ...(colour ? { colour: { contains: colour, mode: "insensitive" } } : {}),
-        ...(inStock ? { stockQuantity: { gt: 0 } } : {}),
-        ...(onSale ? { compareAtPrice: { not: null } } : {}),
-      },
-    },
-  };
-
-  const [items, total, facets] = await Promise.all([
-    db.product.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        brand: true,
-        fabric: true,
-        status: true,
-        createdAt: true,
-        averageRating: true,
-        totalReviews: true,
-        images: {
-          take: 2,
-          orderBy: { sortOrder: "asc" },
-          select: { imageUrl: true, altText: true },
-        },
-        variants: {
-          where: { isActive: true },
-          select: {
-            id: true,
-            colour: true,
-            size: true,
-            price: true,
-            compareAtPrice: true,
-            discountPercent: true,
-            stockQuantity: true,
-          },
-        },
-      },
+  const [catalogData, facets] = await Promise.all([
+    getCachedShopProducts({
+      store,
+      categorySlug,
+      q,
+      minPrice,
+      maxPrice,
+      size,
+      colour,
+      inStock,
+      onSale,
+      sort,
+      page,
+      pageSize: PAGE_SIZE,
     }),
-    db.product.count({ where }),
     getCachedFilterFacets(store),
   ]);
+
+  const { items, total } = catalogData;
 
   const categories = facets.categories;
   const allSizes = facets.sizes.map((s) => ({ size: s }));
@@ -134,11 +70,11 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     createdAt: typeof p.createdAt === "string" ? p.createdAt : p.createdAt?.toISOString?.() || String(p.createdAt || ""),
     averageRating: Number(p.averageRating || 4.8),
     totalReviews: Number(p.totalReviews || 12),
-    images: p.images.map((img) => ({
+    images: (p.images || []).map((img: any) => ({
       imageUrl: img.imageUrl,
       altText: img.altText,
     })),
-    variants: p.variants.map((v) => ({
+    variants: (p.variants || []).map((v: any) => ({
       id: v.id,
       colour: v.colour,
       size: v.size,
@@ -150,15 +86,15 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   }));
 
   if (sort === "price_asc" || sort === "price_desc") {
-    products = [...products].sort((a, b) => {
-      const pa = Math.min(...a.variants.map((v) => v.price));
-      const pb = Math.min(...b.variants.map((v) => v.price));
+    products = [...products].sort((a: any, b: any) => {
+      const pa = Math.min(...a.variants.map((v: any) => v.price));
+      const pb = Math.min(...b.variants.map((v: any) => v.price));
       return sort === "price_asc" ? pa - pb : pb - pa;
     });
   } else if (sort === "discount") {
-    products = [...products].sort((a, b) => {
-      const da = Math.max(0, ...a.variants.map((v) => (v.compareAtPrice ? v.compareAtPrice - v.price : 0)));
-      const db = Math.max(0, ...b.variants.map((v) => (v.compareAtPrice ? v.compareAtPrice - v.price : 0)));
+    products = [...products].sort((a: any, b: any) => {
+      const da = Math.max(0, ...a.variants.map((v: any) => (v.compareAtPrice ? v.compareAtPrice - v.price : 0)));
+      const db = Math.max(0, ...b.variants.map((v: any) => (v.compareAtPrice ? v.compareAtPrice - v.price : 0)));
       return db - da;
     });
   }

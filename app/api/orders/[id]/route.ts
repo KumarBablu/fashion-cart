@@ -25,11 +25,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const [garmentsOrder, jewelleryOrder] = await Promise.all([
     getDb("garments").order.findFirst({
-      where: { id, userId: user.id },
+      where: { id, user: { email: user.email } },
       include: orderInclude,
     }).catch(() => null),
     getDb("jewellery").order.findFirst({
-      where: { id, userId: user.id },
+      where: { id, user: { email: user.email } },
       include: orderInclude,
     }).catch(() => null),
   ]);

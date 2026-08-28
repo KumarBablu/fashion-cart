@@ -93,29 +93,64 @@ export const getCurrentUser = cache(async (req?: NextRequest): Promise<User | nu
 
 /**
  * Unified SSO helper: Resolves the authenticated user and automatically synchronizes
- * their profile into the target store's database (e.g. fashion-cart-jwellery) so
+ * their profile into the target store's database (e.g. jewellery) so
  * foreign keys on Cart, Orders, Reviews, and Addresses work with zero friction.
  */
 export async function getStoreUser(store: string = "garments", req?: NextRequest): Promise<User | null> {
   const masterUser = await getCurrentUser(req);
   if (!masterUser) return null;
 
-  if (store === "garments" || store === "default") {
-    return masterUser;
-  }
+  return await syncUserToStore(masterUser, store);
+}
+
+export async function syncUserToStore(masterUser: User, store: string = "garments"): Promise<User> {
+  const targetStore = store === "jewellery" ? "jewellery" : "garments";
+  const storeDb = getDb(targetStore);
 
   try {
-    const storeDb = getDb(store);
-    const syncedUser = await storeDb.user.upsert({
+    // 1. First check if user exists in target store by email
+    const existingByEmail = await storeDb.user.findUnique({
+      where: { email: masterUser.email },
+    });
+
+    if (existingByEmail) {
+      // Update profile info and return this store's user record
+      const updated = await storeDb.user.update({
+        where: { id: existingByEmail.id },
+        data: {
+          name: masterUser.name,
+          phone: masterUser.phone || existingByEmail.phone,
+          role: masterUser.role,
+          isActive: masterUser.isActive,
+          passwordHash: masterUser.passwordHash,
+        },
+      });
+      return updated;
+    }
+
+    // 2. Check if user exists in target store by ID
+    const existingById = await storeDb.user.findUnique({
       where: { id: masterUser.id },
-      update: {
-        name: masterUser.name,
-        email: masterUser.email,
-        phone: masterUser.phone,
-        role: masterUser.role,
-        isActive: masterUser.isActive,
-      },
-      create: {
+    });
+
+    if (existingById) {
+      const updated = await storeDb.user.update({
+        where: { id: masterUser.id },
+        data: {
+          name: masterUser.name,
+          email: masterUser.email,
+          phone: masterUser.phone || existingById.phone,
+          role: masterUser.role,
+          isActive: masterUser.isActive,
+          passwordHash: masterUser.passwordHash,
+        },
+      });
+      return updated;
+    }
+
+    // 3. Create user in target store DB
+    const created = await storeDb.user.create({
+      data: {
         id: masterUser.id,
         name: masterUser.name,
         email: masterUser.email,
@@ -125,9 +160,9 @@ export async function getStoreUser(store: string = "garments", req?: NextRequest
         isActive: masterUser.isActive,
       },
     });
-    return syncedUser;
+    return created;
   } catch (err) {
-    console.error(`[getStoreUser] Error syncing user to store '${store}':`, err);
+    console.error(`[syncUserToStore] Error syncing user to store '${targetStore}':`, err);
     return masterUser;
   }
 }

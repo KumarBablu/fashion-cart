@@ -5,7 +5,7 @@ import { decrementStock, InsufficientStockError } from "@/lib/inventory";
 import { generateInvoiceBufferForOrder } from "@/lib/invoice/generate";
 import { sendOrderPlacedEmail, sendPaymentVerifiedEmail } from "@/lib/email/service";
 import { sendMobileSms, formatOrderPlacedSms } from "@/lib/notifications/sms";
-import { getStoreUser } from "@/lib/auth/session";
+import { getStoreUser, syncUserToStore } from "@/lib/auth/session";
 
 export class CheckoutError extends Error {
   code: string;
@@ -165,24 +165,29 @@ export async function createOrder(
 
   const db = getDb(store);
 
-  // Ensure user exists in target store DB
-  await getStoreUser(store);
+  // Ensure user exists in target store DB and get target store user ID
+  const masterUser =
+    (await getDb("garments").user.findUnique({ where: { id: userId } }).catch(() => null)) ||
+    (await getDb("jewellery").user.findUnique({ where: { id: userId } }).catch(() => null));
+  const targetStoreUser = masterUser ? await syncUserToStore(masterUser, store) : await getStoreUser(store);
+  const effectiveUserId = targetStoreUser ? targetStoreUser.id : userId;
 
   // Load selected delivery address
   let address = await db.address.findFirst({
-    where: { id: addressId, userId },
+    where: { id: addressId, userId: effectiveUserId },
   });
 
   if (!address) {
     // If not found in target store DB, look in the other DB and sync it
     const otherStore = store === "jewellery" ? "garments" : "jewellery";
     const srcAddress = await getDb(otherStore).address.findFirst({
-      where: { id: addressId, userId },
+      where: { id: addressId },
     });
     if (srcAddress) {
       address = await db.address.upsert({
         where: { id: srcAddress.id },
         update: {
+          userId: effectiveUserId,
           fullName: srcAddress.fullName,
           mobileNumber: srcAddress.mobileNumber,
           addressLine1: srcAddress.addressLine1,
@@ -195,7 +200,7 @@ export async function createOrder(
         },
         create: {
           id: srcAddress.id,
-          userId,
+          userId: effectiveUserId,
           fullName: srcAddress.fullName,
           mobileNumber: srcAddress.mobileNumber,
           addressLine1: srcAddress.addressLine1,
@@ -288,7 +293,7 @@ export async function createOrder(
       const createdOrder = await tx.order.create({
         data: {
           orderNumber,
-          userId,
+          userId: effectiveUserId,
           status: initialOrderStatus,
           paymentMethod,
           subtotal,
@@ -300,6 +305,7 @@ export async function createOrder(
           couponCode: appliedCouponCode,
           couponDiscount: discount.gt(0) ? discount : undefined,
           customerNotes: options?.customerNotes,
+          addressId: address.id,
           shippingAddressSnapshot: {
             fullName: address.fullName,
             mobileNumber: address.mobileNumber,
@@ -350,7 +356,7 @@ export async function createOrder(
           .map((i) => i.variantId)
           .filter((id): id is string => Boolean(id));
         if (purchasedVariantIds.length > 0) {
-          const userCart = await tx.cart.findUnique({ where: { userId } });
+          const userCart = await tx.cart.findUnique({ where: { userId: effectiveUserId } });
           if (userCart) {
             await tx.cartItem.deleteMany({
               where: {

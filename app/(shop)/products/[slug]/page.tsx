@@ -83,7 +83,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     updatedAt: typeof product.updatedAt === "string" ? product.updatedAt : product.updatedAt?.toISOString?.() || String(product.updatedAt || ""),
     averageRating: Number(product.averageRating || 4.8),
     totalReviews: Number(product.totalReviews || 12),
-    variants: (product.variants || []).map((v) => ({
+    variants: (product.variants || []).map((v: any) => ({
       ...v,
       price: Number(v.price),
       compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
@@ -92,7 +92,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     })),
   };
 
-  const relatedSerialized = (related || []).map((p) => ({
+  const relatedSerialized = (related || []).map((p: any) => ({
     id: p.id,
     slug: p.slug,
     name: p.name,
@@ -102,11 +102,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     createdAt: typeof p.createdAt === "string" ? p.createdAt : p.createdAt?.toISOString?.() || String(p.createdAt || ""),
     averageRating: Number(p.averageRating || 4.8),
     totalReviews: Number(p.totalReviews || 12),
-    images: (p.images || []).map((img) => ({
+    images: (p.images || []).map((img: any) => ({
       imageUrl: img.imageUrl,
       altText: img.altText,
     })),
-    variants: (p.variants || []).map((v) => ({
+    variants: (p.variants || []).map((v: any) => ({
       id: v.id,
       colour: v.colour,
       size: v.size,

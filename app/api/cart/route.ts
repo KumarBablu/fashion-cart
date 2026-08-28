@@ -150,12 +150,12 @@ export async function GET(req: NextRequest) {
 
     try {
       const [garmentsCart, jewelleryCart] = await Promise.all([
-        getDb("garments").cart.findUnique({
-          where: { userId: user.id },
+        getDb("garments").cart.findFirst({
+          where: { user: { email: user.email } },
           select: { id: true, userId: true, items: { select: itemSelect } },
         }).catch(() => null),
-        getDb("jewellery").cart.findUnique({
-          where: { userId: user.id },
+        getDb("jewellery").cart.findFirst({
+          where: { user: { email: user.email } },
           select: { id: true, userId: true, items: { select: itemSelect } },
         }).catch(() => null),
       ]);
@@ -195,8 +195,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const db = getDb(store);
-    const cart = await db.cart.findUnique({
-      where: { userId: user.id },
+    const cart = await db.cart.findFirst({
+      where: { user: { email: user.email } },
       select: {
         id: true,
         userId: true,

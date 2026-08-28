@@ -144,7 +144,7 @@ export default async function HomePage() {
       tagline: meta.tagline,
       bannerImage: meta.bannerImage,
       badge: meta.badge,
-      subcategories: cat.children.map((child) => ({
+      subcategories: (cat.children || []).map((child: any) => ({
         id: child.id,
         name: child.name,
         slug: child.slug,
@@ -154,10 +154,10 @@ export default async function HomePage() {
   });
 
   // Flat list of all subcategories with parent details for the Subcategories Row
-  const allSubcategories = rootCategories.flatMap((cat) => {
+  const allSubcategories = rootCategories.flatMap((cat: any) => {
     const slugKey = cat.slug.toLowerCase();
     const meta = META[slugKey] || { icon: "👗" };
-    return cat.children.map((child) => ({
+    return (cat.children || []).map((child: any) => ({
       id: child.id,
       name: child.name,
       slug: child.slug,

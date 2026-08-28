@@ -58,7 +58,14 @@ export async function GET(req: NextRequest) {
     });
 
     const topLevel = categories.filter((c) => !c.parentId);
-    return NextResponse.json({ categories: topLevel });
+    return NextResponse.json(
+      { categories: topLevel },
+      {
+        headers: !admin && !includeInactive
+          ? { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" }
+          : undefined,
+      }
+    );
   } catch (error) {
     console.error("Error fetching categories:", error);
     return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 });

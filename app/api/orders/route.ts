@@ -10,12 +10,12 @@ export async function GET() {
 
   const [garmentsOrders, jewelleryOrders] = await Promise.all([
     getDb("garments").order.findMany({
-      where: { userId: user.id },
+      where: { user: { email: user.email } },
       orderBy: { createdAt: "desc" },
       include: { items: true, payment: true, invoice: true },
     }).catch(() => []),
     getDb("jewellery").order.findMany({
-      where: { userId: user.id },
+      where: { user: { email: user.email } },
       orderBy: { createdAt: "desc" },
       include: { items: true, payment: true, invoice: true },
     }).catch(() => []),

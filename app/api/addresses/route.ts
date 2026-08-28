@@ -7,18 +7,28 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const jwUser = await getStoreUser("jewellery");
+
   const [garmentsAddresses, jewelleryAddresses] = await Promise.all([
     prisma.address.findMany({
-      where: { userId: user.id },
+      where: { user: { email: user.email } },
       orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
     }),
     getDb("jewellery").address.findMany({
-      where: { userId: user.id },
+      where: { user: { email: user.email } },
       orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
     }).catch(() => []),
   ]);
 
-  const allAddresses = garmentsAddresses.length > 0 ? garmentsAddresses : jewelleryAddresses;
+  // Combine unique addresses by ID or address lines
+  const seenIds = new Set<string>();
+  const allAddresses = [];
+  for (const addr of [...garmentsAddresses, ...jewelleryAddresses]) {
+    if (!seenIds.has(addr.id)) {
+      seenIds.add(addr.id);
+      allAddresses.push(addr);
+    }
+  }
 
   return NextResponse.json({ addresses: allAddresses });
 }
@@ -34,7 +44,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Ensure user account exists in jewellery database
-  await getStoreUser("jewellery");
+  const jwUser = await getStoreUser("jewellery");
 
   const address = await prisma.$transaction(async (tx) => {
     if (parsed.data.isDefault) {
@@ -48,15 +58,20 @@ export async function POST(req: NextRequest) {
   });
 
   // Mirror address into Jewellery DB so foreign key relations on Orders never fail
-  try {
-    const jwDb = getDb("jewellery");
-    await jwDb.address.upsert({
-      where: { id: address.id },
-      update: { ...parsed.data, isDefault: address.isDefault },
-      create: { ...parsed.data, id: address.id, userId: user.id, isDefault: address.isDefault },
-    });
-  } catch (err) {
-    console.error("Address sync to jewellery db failed:", err);
+  if (jwUser) {
+    try {
+      const jwDb = getDb("jewellery");
+      if (parsed.data.isDefault) {
+        await jwDb.address.updateMany({ where: { userId: jwUser.id }, data: { isDefault: false } }).catch(() => {});
+      }
+      await jwDb.address.upsert({
+        where: { id: address.id },
+        update: { ...parsed.data, userId: jwUser.id, isDefault: address.isDefault },
+        create: { ...parsed.data, id: address.id, userId: jwUser.id, isDefault: address.isDefault },
+      });
+    } catch (err) {
+      console.error("Address sync to jewellery db failed:", err);
+    }
   }
 
   return NextResponse.json({ address }, { status: 201 });
