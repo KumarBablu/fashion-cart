@@ -13,6 +13,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const { success } = useToast();
@@ -22,6 +23,7 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setErrorCode(null);
 
     try {
       const res = await fetch("/api/auth/login", {
@@ -34,6 +36,7 @@ function LoginForm() {
 
       if (!res.ok) {
         setError(data.error ?? "Invalid email/mobile number or password.");
+        setErrorCode(data.code ?? null);
         return;
       }
 
@@ -124,8 +127,33 @@ function LoginForm() {
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-500 font-semibold">
-            {error}
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-500 font-semibold space-y-2">
+            <div className="flex items-start gap-2">
+              <span className="text-sm">⚠️</span>
+              <p className="flex-1 leading-relaxed">{error}</p>
+            </div>
+            {errorCode === "ACCOUNT_NOT_FOUND" && (
+              <div className="pt-2 border-t border-rose-500/20 flex items-center justify-between">
+                <span className="text-[11px] font-normal text-dim">New to Fashion CART?</span>
+                <Link
+                  href="/register"
+                  className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1"
+                >
+                  Create an Account now →
+                </Link>
+              </div>
+            )}
+            {errorCode === "INVALID_PASSWORD" && (
+              <div className="pt-2 border-t border-rose-500/20 flex items-center justify-between">
+                <span className="text-[11px] font-normal text-dim">Forgot your password?</span>
+                <Link
+                  href="/forgot-password"
+                  className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1"
+                >
+                  Reset password →
+                </Link>
+              </div>
+            )}
           </div>
         )}
 

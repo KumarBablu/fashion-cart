@@ -61,23 +61,46 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Constant-shape response whether the user exists or not
-  const valid = user ? await verifyPassword(password, user.passwordHash) : false;
+  if (!user) {
+    return NextResponse.json(
+      {
+        error: "No account exists with this email address or mobile number. Please create a new account.",
+        code: "ACCOUNT_NOT_FOUND",
+      },
+      { status: 404 }
+    );
+  }
 
-  if (!user || !valid || !user.isActive) {
-    if (user && !valid) {
-      // Unauthorized/failed password attempt detected: notify the account owner asynchronously
-      sendFailedLoginAlertEmail({
-        name: user.name,
-        email: user.email,
-        identifier: rawId,
-        userAgent: req.headers.get("user-agent"),
-      }).catch((err) => {
-        console.error("Failed login alert dispatch error:", err);
-      });
-    }
+  if (!user.isActive) {
+    return NextResponse.json(
+      {
+        error: "This account has been deactivated. Please contact concierge support.",
+        code: "ACCOUNT_DEACTIVATED",
+      },
+      { status: 403 }
+    );
+  }
 
-    return NextResponse.json({ error: "Invalid email/mobile number or password." }, { status: 401 });
+  const valid = await verifyPassword(password, user.passwordHash);
+
+  if (!valid) {
+    // Unauthorized/failed password attempt detected: notify the account owner asynchronously
+    sendFailedLoginAlertEmail({
+      name: user.name,
+      email: user.email,
+      identifier: rawId,
+      userAgent: req.headers.get("user-agent"),
+    }).catch((err) => {
+      console.error("Failed login alert dispatch error:", err);
+    });
+
+    return NextResponse.json(
+      {
+        error: "Incorrect password. Please try again or use 'Forgot password' to recover your account.",
+        code: "INVALID_PASSWORD",
+      },
+      { status: 401 }
+    );
   }
 
   const effectiveRole = user.role;

@@ -87,6 +87,8 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
 /* Clean Luxury Micro-Interactions (Zero Harsh Borders or Outline Rings on Click) */
 *, *::before, *::after {
   -webkit-tap-highlight-color: transparent !important;
