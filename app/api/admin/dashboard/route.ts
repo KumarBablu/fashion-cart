@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const [todaysOrders, ordersCount, pendingPayments, lowStockCount, recentOrders, pendingPaymentsList] =
     await Promise.all([
       db.order.findMany({
-        where: { createdAt: { gte: startOfToday }, status: { notIn: ["CANCELLED"] } },
+        where: { createdAt: { gte: startOfToday }, status: { notIn: ["CANCELLED", "REFUNDED", "REFUND_PENDING"] } },
         select: { total: true },
       }),
       db.order.count(),

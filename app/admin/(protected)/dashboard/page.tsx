@@ -33,11 +33,11 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
     topItems,
   ] = await Promise.all([
     db.order.findMany({
-      where: { status: { notIn: ["CANCELLED"] } },
+      where: { status: { notIn: ["CANCELLED", "REFUNDED", "REFUND_PENDING"] } },
       select: { total: true, createdAt: true },
     }),
     db.order.findMany({
-      where: { createdAt: { gte: startOfToday }, status: { notIn: ["CANCELLED"] } },
+      where: { createdAt: { gte: startOfToday }, status: { notIn: ["CANCELLED", "REFUNDED", "REFUND_PENDING"] } },
       select: { total: true },
     }),
     db.order.count(),

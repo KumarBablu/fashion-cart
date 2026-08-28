@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/db";
 import { formatINR } from "@/lib/format";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 import PaymentVerifyPanel from "@/components/admin/PaymentVerifyPanel";
 import OrderFulfillmentManager from "@/components/admin/OrderFulfillmentManager";
 import OrderEmailReachoutModal from "@/components/admin/OrderEmailReachoutModal";
+import AdminRefundManager from "@/components/admin/AdminRefundManager";
+import WhatsAppConciergeButton from "@/components/ui/WhatsAppConciergeButton";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,9 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase" style={{ backgroundColor: "var(--fc-badge-bg)", color: "var(--fc-badge-fg)" }}>
               {order.status.replace(/_/g, " ")}
             </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-extrabold uppercase bg-black/5 dark:bg-white/10">
+              {store === "jewellery" ? "💍 Jewellery" : "👗 Garments"}
+            </span>
           </div>
           <p className="text-xs text-dim mt-1">
             Customer: <strong style={{ color: "var(--fc-text)" }}>{order.user.name}</strong> ({order.user.email}) · Placed on {new Date(order.createdAt).toLocaleDateString("en-IN")}
@@ -99,198 +103,117 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           />
           {addr?.mobileNumber && (
             <a
-              href={`https://wa.me/91${addr.mobileNumber.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
-                `Namaste ${order.user.name}! 🛍️ Update regarding your Fashion Cart Order #${order.orderNumber} (Status: ${order.status.replace(/_/g, " ")}). View tracking & invoice: https://fashion-cart-5p7k.vercel.app/account/orders/${order.id}`
+              href={`https://wa.me/${addr.mobileNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                `Hello ${addr.fullName}, this is Fashion Cart Concierge regarding your Order #${order.orderNumber}.`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-emerald-600 text-white shadow-sm flex items-center gap-1.5 hover:bg-emerald-700 active:scale-95"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-[#25D366] text-white hover:bg-[#1EBE5D] transition-all shadow-xs cursor-pointer"
             >
-              <span>📲</span> WhatsApp Update
+              <span>💬</span> WhatsApp Customer
             </a>
           )}
-          <a
-            href={`/invoices/${order.id}`}
-            target="_blank"
-            className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider text-white shadow-sm flex items-center gap-1.5 hover:brightness-105 active:scale-95"
-            style={{ backgroundColor: "var(--fc-primary)" }}
-          >
-            <span>📄</span> Tax Invoice / Receipt
-          </a>
-          <a
-            href={`/invoices/${order.id}`}
-            target="_blank"
-            className="px-4 py-2 rounded-full font-bold text-xs uppercase tracking-wider bg-[#FFBA00] text-[#0C3B2E] shadow-sm flex items-center gap-1.5 hover:bg-[#EAA800] active:scale-95"
-          >
-            <span>📦</span> Print Parcel Label (4×6)
-          </a>
           <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
         </div>
       </div>
 
-      {/* Fulfillment & Tracking Section */}
-      <div className="p-6 rounded-2xl border space-y-3" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
-        <h2 className="font-display text-base font-bold">Shipping & Logistics Fulfillment</h2>
-        <p className="text-xs text-dim">Add courier name and tracking ID to notify customer timeline.</p>
-        <OrderFulfillmentManager
-          orderId={order.id}
-          initialCarrier={order.carrierName}
-          initialTracking={order.trackingNumber}
-        />
-      </div>
+      {/* Cancellation & Refund Management Desk (Top Priority) */}
+      <AdminRefundManager
+        orderId={order.id}
+        orderNumber={order.orderNumber}
+        orderStatus={order.status}
+        totalAmount={Number(order.total)}
+        cancelledAt={order.cancelledAt || order.cancelRequestedAt}
+        cancelReason={order.cancelReason}
+        cancellationNotes={order.cancellationNotes}
+        payment={
+          order.payment
+            ? {
+                id: order.payment.id,
+                status: order.payment.status,
+                amount: Number(order.payment.amount),
+                utrNumber: order.payment.utrNumber,
+                gatewayName: order.payment.gatewayName,
+                paymentChannel: order.payment.paymentChannel,
+                instrumentDetails: order.payment.instrumentDetails,
+                refundId: order.payment.refundId,
+                refundStatus: order.payment.refundStatus,
+                refundAmount: order.payment.refundAmount ? Number(order.payment.refundAmount) : null,
+                refundArn: order.payment.refundArn,
+                refundSpeed: order.payment.refundSpeed,
+                refundCreatedAt: order.payment.refundCreatedAt?.toISOString() ?? null,
+                refundCompletedAt: order.payment.refundCompletedAt?.toISOString() ?? null,
+              }
+            : null
+        }
+      />
 
-      {/* Items Section */}
-      <div className="p-6 rounded-2xl border" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
-        <h2 className="font-display text-base font-bold mb-3">Purchased Items &amp; Supplier Fulfillment ({order.items.length})</h2>
-        <div className="divide-y text-xs" style={{ borderColor: "var(--fc-border)" }}>
-          {order.items.map((item) => {
-            const seller = item.product?.seller;
-            const sellerName = seller?.name || item.product?.sellerName;
-            const sellerId = seller?.sellerId || item.product?.sellerIdentifier;
-            const sellerPhone = seller?.phone || item.product?.sellerPhone;
-            const sellerEmail = seller?.email || item.product?.sellerEmail;
-            const sellerUrl = seller?.url || item.product?.sellerUrl || item.product?.productUrl;
+      {/* Logistics & Courier Fulfillment Panel */}
+      <OrderFulfillmentManager
+        orderId={order.id}
+        initialCarrier={order.carrierName}
+        initialTracking={order.trackingNumber}
+      />
 
-            return (
-              <div key={item.id} className="py-3.5 space-y-2.5">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-bold text-sm">{item.productNameSnapshot}</p>
-                    <p className="text-dim mt-0.5 font-mono text-[11px]">
-                      SKU: {item.skuSnapshot} · {item.colourSnapshot} / {item.sizeSnapshot} · Qty: {item.quantity} × {formatINR(item.unitPrice)}
-                    </p>
-                    {item.product?.categoryPath && (
-                      <p className="text-[10px] text-slate-400 mt-0.5">📁 {item.product.categoryPath}</p>
-                    )}
-                  </div>
-                  <span className="font-bold text-sm text-primary">{formatINR(item.total)}</span>
-                </div>
-
-                {/* Confidential Seller Fulfillment Box (Admin Only) */}
-                {(sellerName || sellerId || sellerPhone || sellerUrl) && (
-                  <div className="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/20 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm">🏭</span>
-                        <span className="font-bold text-amber-900 dark:text-amber-300">
-                          Supplier / Seller: <strong>{sellerName || "Direct Vendor"}</strong> {sellerId && `(${sellerId})`}
-                        </span>
-                      </div>
-                      {sellerUrl && (
-                        <a
-                          href={sellerUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1"
-                        >
-                          <span>🔗 Source Link</span> ↗
-                        </a>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
-                      {sellerPhone && (
-                        <>
-                          <a
-                            href={`https://wa.me/91${sellerPhone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
-                              `Hello ${sellerName || "Supplier"}, we have an order for ${item.productNameSnapshot} (SKU: ${item.skuSnapshot}, Size: ${item.sizeSnapshot}, Colour: ${item.colourSnapshot}, Qty: ${item.quantity}). Please confirm availability.`
-                            )}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-emerald-600 text-white flex items-center gap-1 hover:bg-emerald-700 shadow-2xs"
-                          >
-                            <span>💬 WhatsApp Seller ({sellerPhone})</span>
-                          </a>
-                          <a
-                            href={`tel:${sellerPhone}`}
-                            className="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-slate-800 text-white flex items-center gap-1 hover:bg-slate-900 shadow-2xs"
-                          >
-                            <span>📞 Call Seller</span>
-                          </a>
-                        </>
-                      )}
-                      {sellerEmail && (
-                        <a
-                          href={`mailto:${sellerEmail}?subject=${encodeURIComponent(
-                            `Order Fulfillment: ${item.productNameSnapshot} (${item.skuSnapshot})`
-                          )}`}
-                          className="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-blue-600 text-white flex items-center gap-1 hover:bg-blue-700 shadow-2xs"
-                        >
-                          <span>✉️ Email Seller</span>
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {/* Ordered Items Table */}
+      <div className="p-6 rounded-2xl border space-y-4" style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}>
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-base font-bold">Ordered Items &amp; Pricing</h2>
+          <span className="text-xs text-dim">{order.items.length} unique item(s)</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b text-left text-dim uppercase" style={{ borderColor: "var(--fc-border)" }}>
+                <th className="pb-2">Product Name</th>
+                <th className="pb-2">SKU</th>
+                <th className="pb-2">Size / Colour</th>
+                <th className="pb-2">Qty</th>
+                <th className="pb-2 text-right">Unit Price</th>
+                <th className="pb-2 text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y" style={{ borderColor: "var(--fc-border)" }}>
+              {order.items.map((item) => (
+                <tr key={item.id}>
+                  <td className="py-2.5 font-bold" style={{ color: "var(--fc-text)" }}>{item.productNameSnapshot}</td>
+                  <td className="py-2.5 font-mono text-dim">{item.skuSnapshot}</td>
+                  <td className="py-2.5">{item.sizeSnapshot} / {item.colourSnapshot}</td>
+                  <td className="py-2.5 font-semibold">{item.quantity}</td>
+                  <td className="py-2.5 text-right">{formatINR(item.unitPrice)}</td>
+                  <td className="py-2.5 text-right font-bold text-primary">{formatINR(item.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        <div className="mt-4 border-t pt-3 space-y-1.5 text-xs" style={{ borderColor: "var(--fc-border)" }}>
-          <div className="flex justify-between text-dim"><span>Subtotal</span><span>{formatINR(order.subtotal)}</span></div>
+        {/* Pricing Breakdown */}
+        <div className="space-y-1.5 text-xs pt-3 border-t max-w-xs ml-auto" style={{ borderColor: "var(--fc-border)" }}>
+          <div className="flex justify-between text-dim">
+            <span>Items Subtotal</span>
+            <span>{formatINR(order.subtotal)}</span>
+          </div>
           {Number(order.discount) > 0 && (
-            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
-              <span>Coupon Discount ({order.couponCode || "PROMO"})</span>
+            <div className="flex justify-between text-emerald-600 font-semibold">
+              <span>Discount ({order.couponCode || "COUPON"})</span>
               <span>- {formatINR(order.discount)}</span>
             </div>
           )}
-          <div className="flex justify-between text-dim"><span>Delivery Fee</span><span>{formatINR(order.deliveryCharge)}</span></div>
-          <div className="flex justify-between text-dim"><span>Taxes</span><span>{formatINR(order.tax)}</span></div>
+          <div className="flex justify-between text-dim">
+            <span>Delivery Fee</span>
+            <span>{Number(order.deliveryCharge) === 0 ? "FREE" : formatINR(order.deliveryCharge)}</span>
+          </div>
+          <div className="flex justify-between text-dim">
+            <span>Taxes (GST)</span>
+            <span>{formatINR(order.tax)}</span>
+          </div>
           <div className="flex justify-between text-sm font-bold pt-2 border-t" style={{ borderColor: "var(--fc-border)" }}>
             <span>Order Total</span>
             <span className="text-primary text-base">{formatINR(order.total)}</span>
           </div>
         </div>
       </div>
-
-      {/* Cancellation & Refund Audit Box (if cancelled) */}
-      {(order.cancelledAt || order.cancelReason || order.payment?.refundId) && (
-        <div className="p-6 rounded-2xl border border-rose-300 dark:border-rose-900 bg-rose-50/60 dark:bg-rose-950/30 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🚫</span>
-              <h2 className="font-display text-base font-bold text-rose-900 dark:text-rose-200">
-                Order Cancellation &amp; Refund Audit
-              </h2>
-            </div>
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-rose-200 text-rose-900 dark:bg-rose-900 dark:text-rose-100 uppercase font-mono">
-              {order.cancellationStatus || "CANCELLED"}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="space-y-1">
-              <p className="text-dim">Cancellation Reason:</p>
-              <p className="font-semibold text-rose-800 dark:text-rose-300">
-                {order.cancelReason || "Cancelled by customer"}
-              </p>
-              {order.cancellationNotes && (
-                <p className="text-[11px] text-dim italic">
-                  Note: &quot;{order.cancellationNotes}&quot;
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1 sm:border-l sm:pl-3" style={{ borderColor: "rgba(244, 63, 94, 0.3)" }}>
-              <p className="text-dim">Refund Status:</p>
-              <p className="font-bold text-emerald-700 dark:text-emerald-400">
-                {order.payment?.refundStatus ? `✓ ${order.payment.refundStatus}` : "N/A (Zero Charge)"}
-              </p>
-              {order.payment?.refundId && (
-                <p className="text-[11px] font-mono text-dim">
-                  Refund ID: <strong className="text-[#141416] dark:text-white">{order.payment.refundId}</strong>
-                </p>
-              )}
-              {order.payment?.refundArn && (
-                <p className="text-[11px] font-mono text-primary">
-                  Bank ARN: <strong>{order.payment.refundArn}</strong>
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Address & Payment Row */}
       <div className="grid gap-6 sm:grid-cols-2">

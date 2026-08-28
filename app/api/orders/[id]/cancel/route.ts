@@ -108,7 +108,9 @@ export async function POST(
       const updated = await tx.order.update({
         where: { id: order.id },
         data: {
-          status: isPrepaidVerified ? "REFUND_PENDING" : "CANCELLED",
+          status: isPrepaidVerified
+            ? (refundInfo.refundStatus === "PROCESSED" ? "REFUNDED" : "REFUND_PENDING")
+            : "CANCELLED",
           cancelledAt: now,
           cancelRequestedAt: now,
           cancelReason: reason,
