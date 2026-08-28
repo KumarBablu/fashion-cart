@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     let db = getDb(store);
 
     let order = await db.order.findFirst({
-      where: { id: orderId, userId: user.id },
+      where: { id: orderId, user: { email: user.email } },
       include: { payment: true },
     });
 
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       const altStore = store === "jewellery" ? "garments" : "jewellery";
       const altDb = getDb(altStore);
       order = await altDb.order.findFirst({
-        where: { id: orderId, userId: user.id },
+        where: { id: orderId, user: { email: user.email } },
         include: { payment: true },
       });
       if (order) {

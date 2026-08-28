@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     // Check if an existing pending order ID was passed (e.g. from payment desk retry)
     if (body?.existingOrderId) {
       order = await db.order.findFirst({
-        where: { id: body.existingOrderId, userId: user.id },
+        where: { id: body.existingOrderId, user: { email: user.email } },
         include: { payment: true, items: true, user: true },
       });
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         // Check other store database
         const altStore = store === "jewellery" ? "garments" : "jewellery";
         order = await getDb(altStore).order.findFirst({
-          where: { id: body.existingOrderId, userId: user.id },
+          where: { id: body.existingOrderId, user: { email: user.email } },
           include: { payment: true, items: true, user: true },
         });
       }

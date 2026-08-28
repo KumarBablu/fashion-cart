@@ -50,12 +50,12 @@ export async function GET() {
   };
 
   const [garmentsWishlist, jewelleryWishlist] = await Promise.all([
-    getDb("garments").wishlist.findUnique({
-      where: { userId: user.id },
+    getDb("garments").wishlist.findFirst({
+      where: { user: { email: user.email } },
       select: wishlistSelect,
     }).catch(() => null),
-    getDb("jewellery").wishlist.findUnique({
-      where: { userId: user.id },
+    getDb("jewellery").wishlist.findFirst({
+      where: { user: { email: user.email } },
       select: wishlistSelect,
     }).catch(() => null),
   ]);
