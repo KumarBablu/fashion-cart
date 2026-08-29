@@ -26,18 +26,23 @@ export default function AuthCard({
                 className="object-contain"
               />
             </div>
-            <span className="font-display font-extrabold text-xl tracking-tight text-[#0C3B2E]">
-              Fashion Cart
-            </span>
+            <div className="flex flex-col items-center">
+              <span className="font-display font-black text-xl tracking-tight text-[#141416]">
+                Fashion CART
+              </span>
+              <span className="text-[9px] uppercase tracking-[0.24em] font-bold text-[#C59B27] mt-0.5">
+                Premium Outlet
+              </span>
+            </div>
           </Link>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#0C3B2E]">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#141416]">
             {title}
           </h1>
-          {subtitle && <p className="text-xs text-[#5B7A6F] max-w-xs mx-auto">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-[#787C87] max-w-xs mx-auto leading-relaxed">{subtitle}</p>}
         </div>
 
         {/* Card Container */}
-        <div className="rounded-3xl border border-[#E8E3D8] bg-white p-6 sm:p-8 shadow-xl">
+        <div className="rounded-2xl border border-[#E7DFD5] bg-white p-6 sm:p-8 shadow-md">
           {children}
         </div>
       </div>

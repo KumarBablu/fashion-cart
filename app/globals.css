@@ -136,6 +136,23 @@ main {
   font-family: var(--font-display), Georgia, serif;
 }
 
+.tracking-luxury {
+  letter-spacing: 0.18em;
+}
+
+.tracking-editorial {
+  letter-spacing: 0.28em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ==========================================================================
    ATELIER NOIR & CHAMPAGNE GOLD CARDS & BUTTONS
    ========================================================================== */

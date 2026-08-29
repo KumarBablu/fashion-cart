@@ -246,8 +246,8 @@ export default function CartPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#0C3B2E]">
-                {store === "jewellery" ? "Jewellery Shopping Bag" : "Shopping Cart"}
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">
+                {store === "jewellery" ? "Jewellery Shopping Bag" : "Shopping Bag"}
               </h1>
               {store === "jewellery" && (
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-[#D4AF37]/15 text-[#8E6C0C] border border-[#D4AF37]/30">
@@ -255,12 +255,12 @@ export default function CartPage() {
                 </span>
               )}
             </div>
-            <p className="text-xs text-[#5B7A6F] mt-0.5">{items.reduce((s, i) => s + i.quantity, 0)} items in your shopping bag</p>
+            <p className="text-xs text-[#787C87] mt-0.5">{items.reduce((s, i) => s + i.quantity, 0)} items in your shopping bag</p>
           </div>
         </div>
         <Link
           href={store === "jewellery" ? "/jewellery" : "/garments"}
-          className="text-xs font-bold text-[#0C3B2E] hover:text-[#BB8A52] hover:underline"
+          className="text-xs font-bold text-[#141416] hover:text-[#C59B27] hover:underline"
         >
           ← Continue Shopping
         </Link>

@@ -106,7 +106,7 @@ export default function ProductCard({ product }: { product: CardProduct }) {
     <>
       <ScrollBounceCard className="w-full h-full">
         <div
-          className="group relative flex flex-col rounded-3xl bg-white border border-[#E7DFD5] p-3 transition-all duration-300 hover:border-[#C59B27] hover:shadow-2xl hover:-translate-y-1.5 luxury-card-hover w-full h-full"
+          className="group relative flex flex-col rounded-2xl bg-white border border-[#E7DFD5] p-3 sm:p-3.5 transition-all duration-300 hover:border-[#C59B27]/80 hover:shadow-lg hover:-translate-y-1 luxury-card-hover w-full h-full"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -114,30 +114,30 @@ export default function ProductCard({ product }: { product: CardProduct }) {
           <Link
             href={`/products/${product.slug}`}
             prefetch={true}
-            className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-[#F4EFEA] block"
+            className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-[#F4EFEA] block"
           >
             <Image
               src={isHovered && secondaryImage ? secondaryImage : primaryImage}
               alt={product.name}
               fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+              sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
 
             {/* Top Badges */}
             <div className="absolute left-2.5 top-2.5 flex flex-col gap-1 z-10">
               {pct && (
-                <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-[#C59B27] text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
+                <span className="rounded-md px-2 py-0.5 text-[9px] sm:text-[10px] font-extrabold uppercase bg-[#C59B27] text-white shadow-xs tracking-wider">
                   {pct}% OFF
                 </span>
               )}
               {isNew && !pct && (
-                <span className="rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase bg-[#141416] text-white shadow-sm">
+                <span className="rounded-md px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase bg-[#141416] text-white shadow-xs tracking-wider">
                   New
                 </span>
               )}
               {!inStock && (
-                <span className="rounded-lg bg-[#141416]/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+                <span className="rounded-md bg-[#141416]/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-xs tracking-wider">
                   Sold Out
                 </span>
               )}
@@ -146,10 +146,10 @@ export default function ProductCard({ product }: { product: CardProduct }) {
             {/* Wishlist Heart Top Right */}
             <button
               onClick={handleWishlistToggle}
-              className={`absolute right-2.5 top-2.5 z-10 h-8 w-8 rounded-full border flex items-center justify-center backdrop-blur-md transition-all shadow-xs cursor-pointer active:scale-90 ${
+              className={`absolute right-2.5 top-2.5 z-10 h-8 w-8 rounded-full border flex items-center justify-center backdrop-blur-md transition-all shadow-2xs cursor-pointer active:scale-90 ${
                 isWishlisted
-                  ? "bg-rose-50 border-rose-300 text-rose-600 scale-110"
-                  : "bg-white/90 border-[#E7DFD5] text-[#787C87] hover:text-rose-600 hover:scale-110"
+                  ? "bg-rose-50 border-rose-300 text-rose-600 scale-105"
+                  : "bg-white/90 border-[#E7DFD5] text-[#787C87] hover:text-rose-600 hover:scale-105"
               }`}
               aria-label="Save to Wishlist"
             >
@@ -158,11 +158,11 @@ export default function ProductCard({ product }: { product: CardProduct }) {
 
             {/* Hover Size Strip Overlay */}
             {sizes.length > 0 && (
-              <div className="absolute inset-x-2.5 bottom-14 hidden sm:flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7DFD5] shadow-md">
+              <div className="absolute inset-x-2.5 bottom-12 hidden sm:flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/95 backdrop-blur-md border border-[#E7DFD5] shadow-sm">
                   <span className="text-[9px] font-bold uppercase text-[#787C87] mr-0.5">Sizes:</span>
                   {sizes.slice(0, 5).map((s) => (
-                    <span key={s} className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#F4EFEA] text-[#141416]">
+                    <span key={s} className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#FAF8F5] text-[#141416]">
                       {s}
                     </span>
                   ))}
@@ -171,25 +171,24 @@ export default function ProductCard({ product }: { product: CardProduct }) {
             )}
 
             {/* Quick View Button Hover Overlay */}
-            <div className="absolute inset-x-2.5 bottom-2.5 hidden sm:flex opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-3 group-hover:translate-y-0 z-10">
+            <div className="absolute inset-x-2.5 bottom-2 hidden sm:flex opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setQuickViewOpen(true);
                 }}
-                className="w-full py-2 px-3 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7DFD5] hover:bg-[#141416] hover:text-white hover:border-[#141416] text-[#141416] font-bold text-[11px] uppercase tracking-wider shadow-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                className="w-full py-2 px-3 rounded-lg bg-white/95 backdrop-blur-md border border-[#E7DFD5] hover:bg-[#141416] hover:text-white hover:border-[#141416] text-[#141416] font-bold text-[10px] uppercase tracking-wider shadow-md transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
               >
-                <span>👁️</span>
                 <span>Quick View</span>
               </button>
             </div>
           </Link>
 
           {/* Product Details Info Area */}
-          <div className="mt-3 flex flex-1 flex-col justify-between space-y-2.5 px-1">
+          <div className="mt-3 flex flex-1 flex-col justify-between space-y-2 px-0.5">
             <div className="space-y-1">
-              <div className="flex items-center justify-between gap-1 text-[11px] text-[#787C87]">
+              <div className="flex items-center justify-between gap-1 text-[10px] sm:text-[11px] text-[#787C87]">
                 <span className="font-semibold uppercase tracking-wider truncate text-[#C59B27]">
                   {product.brand || "Atelier Edition"}
                 </span>
@@ -201,15 +200,15 @@ export default function ProductCard({ product }: { product: CardProduct }) {
               </div>
 
               <Link href={`/products/${product.slug}`} prefetch={true} className="block group/title">
-                <h3 className="font-display text-sm font-bold text-[#141416] group-hover/title:text-[#C59B27] transition-colors line-clamp-2 leading-snug">
+                <h3 className="font-display text-xs sm:text-sm font-semibold text-[#141416] group-hover/title:text-[#C59B27] transition-colors line-clamp-2 leading-snug">
                   {product.name}
                 </h3>
               </Link>
             </div>
 
             {/* Pricing Section */}
-            <div className="pt-1.5 border-t border-[#E7DFD5]/60 flex flex-wrap items-baseline gap-2">
-              <span className="font-mono text-base font-black text-[#141416]">
+            <div className="pt-1.5 border-t border-[#E7DFD5]/60 flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+              <span className="font-mono text-sm sm:text-base font-bold text-[#141416]">
                 {formatINR(price)}
               </span>
               {compareAt && compareAt > price && (
@@ -218,14 +217,14 @@ export default function ProductCard({ product }: { product: CardProduct }) {
                 </span>
               )}
               {pct && (
-                <span className="text-[11px] font-extrabold text-[#C59B27]">
+                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#C59B27]">
                   {pct}% off
                 </span>
               )}
             </div>
 
-            <div className="flex items-center justify-between text-[10px] text-[#787C87] font-medium">
-              <span>Free Delivery</span>
+            <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-[#787C87] font-medium pt-0.5">
+              <span>Free Express Delivery</span>
               <span className="text-[#141416] font-semibold">COD Available</span>
             </div>
           </div>

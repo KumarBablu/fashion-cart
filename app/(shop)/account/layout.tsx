@@ -29,9 +29,9 @@ export default async function AccountLayout({ children }: { children: React.Reac
             />
           </div>
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#0C3B2E]">My Account</h1>
-            <p className="text-xs text-[#5B7A6F] mt-0.5">
-              Welcome back, <span className="font-bold text-[#0C3B2E]">{user.name}</span> ({user.email})
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">My Account</h1>
+            <p className="text-xs text-[#787C87] mt-0.5">
+              Welcome back, <span className="font-bold text-[#141416]">{user.name}</span> ({user.email})
             </p>
           </div>
         </div>

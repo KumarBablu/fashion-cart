@@ -485,8 +485,8 @@ export default function CheckoutPage() {
             />
           </div>
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#0C3B2E]">Secure Checkout</h1>
-            <p className="text-[11px] text-[#BB8A52] font-semibold">Official Fashion CART Storefront</p>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#141416]">Secure Checkout</h1>
+            <p className="text-[11px] text-[#C59B27] font-semibold">Official Fashion CART Storefront</p>
           </div>
         </div>
       </div>

@@ -451,75 +451,75 @@ export default function ProductDetailClient({
           {/* Header Info */}
           <div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-700">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#C59B27]">
                 {product.brand || "Fashion Cart Studio"}
               </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                ✦ FC Assured
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FBF4E2] text-[#8E6C0C] border border-[#C59B27]/40">
+                ✦ FC Certified Quality
               </span>
             </div>
 
-            <h1 className="font-display text-2xl sm:text-3xl font-bold leading-snug text-slate-900 mt-1">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold leading-snug text-[#141416] mt-1.5">
               {product.name}
             </h1>
 
             {/* Rating and Social Proof */}
             <div className="mt-2 flex items-center gap-2 text-xs">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                 <span>{Number(product.averageRating || 4.8).toFixed(1)}</span>
-                <span>★</span>
+                <span className="text-[#C59B27]">★</span>
               </span>
-              <span className="text-slate-500">· {product.totalReviews || 28} Customer Reviews</span>
-              <span className="text-slate-300">|</span>
-              <span className="text-emerald-700 font-semibold">96% Recommend this</span>
+              <span className="text-[#787C87]">· {product.totalReviews || 28} Verified Reviews</span>
+              <span className="text-[#E7DFD5]">|</span>
+              <span className="text-emerald-800 font-semibold">96% Recommend this</span>
             </div>
 
             {/* Price & Discounts */}
             <div className="mt-4 flex items-baseline gap-3">
-              <span className="text-3xl font-extrabold text-slate-900">
+              <span className="font-mono text-3xl font-black text-[#141416]">
                 {formatINR(selected?.price ?? 0)}
               </span>
               {selected?.compareAtPrice && Number(selected.compareAtPrice) > Number(selected.price) && (
                 <>
-                  <span className="text-base text-slate-400 line-through">
+                  <span className="font-mono text-base text-[#787C87] line-through">
                     {formatINR(selected.compareAtPrice)}
                   </span>
                   {pct && (
-                    <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                    <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-[#FBF4E2] text-[#8E6C0C] border border-[#C59B27]/40">
                       {pct}% OFF
                     </span>
                   )}
                 </>
               )}
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">Inclusive of all taxes · Free shipping on this item</p>
+            <p className="text-[11px] text-[#787C87] mt-1">Inclusive of all taxes · Free express shipping on this item</p>
           </div>
 
           {/* Social Proof Live Viewers */}
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 font-medium">
-            <span className="text-sm pulse-dot">🔥</span>
+          <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E7DFD5] text-xs text-[#141416] font-medium">
+            <span className="text-sm pulse-dot">✨</span>
             <span>
-              <strong>Popular Choice:</strong> 14 shoppers are viewing this outfit right now
+              <strong>Popular Choice:</strong> 14 shoppers are viewing this piece right now
             </span>
           </div>
 
           {/* Colour Selection */}
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-600">
-              Colour: <span className="font-bold text-slate-900">{colour}</span>
+            <div className="text-xs font-bold uppercase tracking-wider text-[#787C87]">
+              Colour / Finish: <span className="font-bold text-[#141416]">{colour}</span>
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {colours.map((c) => (
                 <button
                   key={c}
                   onClick={() => handleColourChange(c)}
-                  className={`rounded-2xl border px-4 py-2 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`rounded-xl border px-3.5 py-2 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     c === colour
-                      ? "border-[#141416] bg-[#141416] text-white shadow-md scale-105"
+                      ? "border-[#141416] bg-[#141416] text-white shadow-xs scale-102"
                       : "border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27]"
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full ${c === colour ? "bg-[#C59B27]" : "bg-[#C59B27]/60"}`} />
+                  <span className={`w-2.5 h-2.5 rounded-full ${c === colour ? "bg-[#C59B27]" : "bg-[#C59B27]/60"}`} />
                   <span>{c}</span>
                 </button>
               ))}
@@ -528,14 +528,14 @@ export default function ProductDetailClient({
 
           {/* Size Selection & Size Guide */}
           <div>
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-600">
-              <span>Size: <span className="font-bold text-slate-900">{size}</span></span>
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#787C87]">
+              <span>Size: <span className="font-bold text-[#141416]">{size}</span></span>
               <button
                 type="button"
                 onClick={() => setSizeGuideOpen(true)}
-                className="text-amber-700 hover:underline font-bold flex items-center gap-1 normal-case text-xs"
+                className="text-[#C59B27] hover:underline font-bold flex items-center gap-1 normal-case text-xs cursor-pointer"
               >
-                {isJewelleryItem ? "💍 Jewellery Size Guide (Bangles, Rings, Chokers)" : "📏 Size Chart & Fit Guide"}
+                {isJewelleryItem ? "💍 Jewellery Size Guide (Bangles, Rings)" : "📏 Size Chart & Fit Guide"}
               </button>
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -544,10 +544,10 @@ export default function ProductDetailClient({
                   key={v.id}
                   disabled={v.stockQuantity === 0}
                   onClick={() => setSize(v.size)}
-                  className={`rounded-xl border px-4 py-2 text-xs font-semibold disabled:opacity-30 disabled:line-through transition-all ${
+                  className={`rounded-xl border min-w-10 px-3.5 py-2 text-xs font-semibold disabled:opacity-30 disabled:line-through transition-all cursor-pointer ${
                     v.size === size
-                      ? "border-slate-900 bg-slate-900 text-white font-bold shadow-xs"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                      ? "border-[#141416] bg-[#141416] text-white font-bold shadow-xs scale-102"
+                      : "border-[#E7DFD5] bg-white text-[#141416] hover:border-[#C59B27]"
                   }`}
                 >
                   {v.size}
@@ -560,31 +560,31 @@ export default function ProductDetailClient({
           <div className="text-xs font-medium">
             {selected ? (
               selected.stockQuantity > 0 ? (
-                <span className="text-emerald-700 flex items-center gap-1.5 font-bold">
+                <span className="text-emerald-800 flex items-center gap-1.5 font-bold">
                   <span>✓</span> In Stock (Ready to dispatch)
                 </span>
               ) : (
                 <span className="text-rose-600 font-bold">✕ Sold Out in this combination</span>
               )
             ) : (
-              <span className="text-slate-400">Please select colour and size</span>
+              <span className="text-[#787C87]">Please select colour and size</span>
             )}
           </div>
 
           {/* Quantity & CTA Buttons */}
           <div className="space-y-3 pt-1">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold uppercase text-slate-500">Quantity</span>
-              <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden text-sm bg-white">
+              <span className="text-xs font-bold uppercase text-[#787C87]">Quantity</span>
+              <div className="flex items-center border border-[#E7DFD5] rounded-xl overflow-hidden text-sm bg-white">
                 <button
-                  className="px-3 py-1 font-bold hover:bg-slate-100 text-slate-700"
+                  className="px-3.5 py-1.5 font-bold hover:bg-[#FAF8F5] text-[#141416] cursor-pointer"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 >
                   −
                 </button>
-                <span className="w-8 text-center font-bold text-slate-900">{quantity}</span>
+                <span className="w-8 text-center font-bold text-[#141416]">{quantity}</span>
                 <button
-                  className="px-3 py-1 font-bold hover:bg-slate-100 text-slate-700"
+                  className="px-3.5 py-1.5 font-bold hover:bg-[#FAF8F5] text-[#141416] cursor-pointer"
                   onClick={() => setQuantity((q) => Math.min(selected?.stockQuantity ?? 1, q + 1))}
                 >
                   +
@@ -597,7 +597,7 @@ export default function ProductDetailClient({
                 <button
                   type="button"
                   onClick={() => router.push("/cart")}
-                  className="flex-1 rounded-full border border-[#0C3B2E] bg-[#0C3B2E] hover:bg-[#145241] text-white py-3.5 text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer group animate-in fade-in"
+                  className="flex-1 rounded-full border border-[#141416] bg-[#141416] hover:bg-[#25262B] text-white py-3.5 text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer group animate-in fade-in"
                 >
                   <span className="text-sm">🛍️</span>
                   <span>Go to Bag →</span>
@@ -606,7 +606,7 @@ export default function ProductDetailClient({
                 <button
                   disabled={!selected || selected.stockQuantity === 0 || adding}
                   onClick={() => addToCart(false)}
-                  className="flex-1 rounded-full border border-slate-300 bg-white text-slate-900 py-3.5 text-xs font-bold uppercase tracking-wider hover:bg-slate-50 transition-all disabled:opacity-40 shadow-xs cursor-pointer"
+                  className="flex-1 rounded-full border-2 border-[#141416] bg-white text-[#141416] hover:bg-[#141416] hover:text-white py-3.5 text-xs font-black uppercase tracking-wider transition-all disabled:opacity-40 shadow-xs cursor-pointer"
                 >
                   {adding ? "Adding to Bag…" : "Add to Bag"}
                 </button>
@@ -615,7 +615,7 @@ export default function ProductDetailClient({
               <button
                 disabled={!selected || selected.stockQuantity === 0 || adding}
                 onClick={() => addToCart(true)}
-                className="flex-1 rounded-full py-3.5 text-xs font-bold uppercase tracking-wider shadow-md bg-slate-900 hover:bg-[#C59B27] text-white transition-colors disabled:opacity-40 cursor-pointer"
+                className="flex-1 rounded-full py-3.5 text-xs font-black uppercase tracking-wider shadow-md bg-[#141416] hover:bg-[#C59B27] text-white transition-all duration-200 disabled:opacity-40 cursor-pointer"
               >
                 Buy Now →
               </button>
@@ -628,7 +628,7 @@ export default function ProductDetailClient({
                 productPrice={Number(selected?.price || product.variants[0]?.price)}
                 productSku={product.slug}
                 customMessage={`Hi Fashion Cart Stylist, I am looking at "${product.name}" (${colour}/${size}) and would like assistance with sizing, fabric details, or custom order styling.`}
-                className="w-full py-3 rounded-full border border-[#25D366] bg-[#25D366]/10 hover:bg-[#25D366] text-[#141416] hover:text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                className="w-full py-3 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 hover:bg-[#25D366] text-[#141416] hover:text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
               >
                 <span>💬</span>
                 <span>Inquire &amp; Order on WhatsApp</span>
