@@ -175,6 +175,25 @@ export default function OrderFulfillmentManager({
     }
   }
 
+  if (isCancelledOrder) {
+    return (
+      <div
+        className="p-6 rounded-3xl border space-y-2 card-theme opacity-80"
+        style={{ backgroundColor: "var(--fc-surface)", borderColor: "var(--fc-border)" }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🛑</span>
+          <h2 className="font-display text-base font-bold text-rose-700 dark:text-rose-400">
+            Fulfillment Disabled (Order {orderStatus.replace(/_/g, " ")})
+          </h2>
+        </div>
+        <p className="text-xs text-dim leading-relaxed">
+          This order has been cancelled/refunded. Doorstep courier dispatch and label generation are disabled to prevent accidental shipment of restocked inventory.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
       className="p-6 rounded-3xl border space-y-5 shadow-xs"

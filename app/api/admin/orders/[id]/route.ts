@@ -79,7 +79,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!current) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
   const isCancelling = ["CANCELLED", "REFUND_PENDING", "REFUNDED"].includes(parsed.data.status);
-  const wasNotCancelled = !["CANCELLED", "REFUND_PENDING", "REFUNDED"].includes(current.status);
+  const wasNotCancelled = !["CANCELLED", "REFUND_PENDING", "REFUNDED"].includes(current.status) && !current.cancelledAt;
+
+  if (!wasNotCancelled && !isCancelling) {
+    return NextResponse.json(
+      {
+        error: `Cannot change status to ${parsed.data.status}. This order was already cancelled/refunded and inventory was restocked.`,
+      },
+      { status: 400 }
+    );
+  }
 
   let refundData: {
     refundId?: string;

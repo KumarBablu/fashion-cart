@@ -44,9 +44,15 @@ export default function OrdersTableWithBatchDispatch({ orders, store }: OrdersTa
   const [batchLoading, setBatchLoading] = useState(false);
   const [quickFulfillingId, setQuickFulfillingId] = useState<string | null>(null);
 
-  const fulfillableOrders = orders.filter(
-    (o) => (o.status === "CONFIRMED" || o.status === "PROCESSING") && !o.shipment
-  );
+  const fulfillableOrders = orders.filter((o) => {
+    const isCancelled =
+      o.status === "CANCELLED" ||
+      o.status === "REFUND_PENDING" ||
+      o.status === "REFUNDED" ||
+      o.payment?.refundStatus === "PROCESSED" ||
+      o.payment?.refundStatus === "INITIATED";
+    return (o.status === "CONFIRMED" || o.status === "PROCESSING") && !o.shipment && !o.trackingNumber && !isCancelled;
+  });
 
   function handleToggleSelect(id: string) {
     if (selectedIds.includes(id)) {
@@ -257,7 +263,18 @@ export default function OrdersTableWithBatchDispatch({ orders, store }: OrdersTa
 
                   {/* Fulfillment & Courier Status */}
                   <td className="px-4 py-3.5">
-                    {hasShipment ? (
+                    {isCancelled ? (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 w-max">
+                          {isRefundCompleted ? "✓ REFUNDED" : "🛑 CANCELLED"}
+                        </span>
+                        {displayAwb && (
+                          <span className="text-[10px] text-dim line-through">
+                            AWB: {displayAwb} (Void)
+                          </span>
+                        )}
+                      </div>
+                    ) : hasShipment ? (
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1.5">
                           <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 w-max">
@@ -269,10 +286,6 @@ export default function OrdersTableWithBatchDispatch({ orders, store }: OrdersTa
                         </div>
                         <span className="text-[10px] text-dim">{displayCarrier}</span>
                       </div>
-                    ) : isCancelled ? (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-200 w-max">
-                        Cancelled
-                      </span>
                     ) : isReadyToShip ? (
                       <button
                         type="button"

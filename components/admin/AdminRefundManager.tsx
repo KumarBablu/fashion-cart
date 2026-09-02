@@ -44,13 +44,29 @@ export default function AdminRefundManager({
   const router = useRouter();
   const { success, error } = useToast();
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState("Order cancelled - Customer requested refund");
 
   const isPrepaid = payment?.status === "VERIFIED" && Boolean(payment?.utrNumber);
   const hasRefund = Boolean(payment?.refundId || payment?.refundStatus);
   const refundAmount = payment?.refundAmount ? Number(payment.refundAmount) : totalAmount;
-  const isRefundCompleted = payment?.refundStatus === "PROCESSED" || Boolean(payment?.refundCompletedAt);
+  const isRefundCompleted =
+    payment?.refundStatus === "PROCESSED" ||
+    Boolean(payment?.refundCompletedAt) ||
+    orderStatus === "REFUNDED";
+
+  // STRICT CHECK: Only render this cancellation & refund desk if the order was ACTUALLY cancelled or has a refund record!
+  const isCancelledOrRefund =
+    orderStatus === "CANCELLED" ||
+    orderStatus === "REFUND_PENDING" ||
+    orderStatus === "REFUNDED" ||
+    hasRefund ||
+    Boolean(cancelledAt);
+
+  if (!isCancelledOrRefund) {
+    return null;
+  }
 
   async function handleTriggerRefund() {
     setLoading(true);
@@ -78,15 +94,28 @@ export default function AdminRefundManager({
     }
   }
 
-  const isCancelledOrRefund =
-    orderStatus === "CANCELLED" ||
-    orderStatus === "REFUND_PENDING" ||
-    orderStatus === "REFUNDED" ||
-    hasRefund ||
-    Boolean(cancelledAt);
+  async function handleSyncWithGateway() {
+    setSyncing(true);
+    try {
+      const store = orderNumber.startsWith("FC-JW") ? "jewellery" : "garments";
+      const res = await fetch(`/api/admin/orders/${orderId}/sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ store }),
+      });
+      const data = await res.json();
+      setSyncing(false);
 
-  if (!isCancelledOrRefund && !isPrepaid) {
-    return null;
+      if (res.ok && data.success) {
+        success("Gateway Synced 🔄", data.message || "Live payment and refund status synchronized.");
+        router.refresh();
+      } else {
+        error("Sync Notice", data.error || "Could not synchronize with gateway.");
+      }
+    } catch (err: any) {
+      setSyncing(false);
+      error("Sync Error", err.message || "Failed to communicate with gateway.");
+    }
   }
 
   return (
@@ -106,6 +135,23 @@ export default function AdminRefundManager({
         </div>
 
         <div className="flex items-center gap-2">
+          {payment?.utrNumber?.startsWith("pay_") && (
+            <button
+              type="button"
+              disabled={syncing}
+              onClick={handleSyncWithGateway}
+              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200 bg-white/80 dark:bg-neutral-900/80 hover:bg-white transition-all cursor-pointer shadow-2xs"
+              title="Sync live status with Razorpay"
+            >
+              {syncing ? (
+                <span className="w-3 h-3 border-2 border-rose-700 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <span>🔄</span>
+              )}
+              <span>Live Gateway Sync</span>
+            </button>
+          )}
+
           <span
             className={`px-3 py-1 rounded-full text-xs font-mono font-bold uppercase ${
               isRefundCompleted
@@ -143,7 +189,7 @@ export default function AdminRefundManager({
           <div className="flex justify-between">
             <span className="text-dim">Customer Reason:</span>
             <span className="font-semibold text-right max-w-[220px] text-[#141416] dark:text-white">
-              {cancelReason || "Cancelled by customer"}
+              {cancelReason || (cancelledAt ? "Order cancelled by customer" : "—")}
             </span>
           </div>
           {cancellationNotes && (
@@ -175,7 +221,13 @@ export default function AdminRefundManager({
                   : "text-dim"
               }`}
             >
-              {payment?.refundStatus ? `✓ ${payment.refundStatus}` : isPrepaid ? "Pending Initiation" : "N/A (Zero Charge)"}
+              {isRefundCompleted
+                ? "✓ PROCESSED (Settled)"
+                : payment?.refundStatus
+                ? `⚡ ${payment.refundStatus}`
+                : isPrepaid
+                ? "Pending Initiation"
+                : "N/A (Zero Charge)"}
             </span>
           </div>
           <div className="flex justify-between">
@@ -205,8 +257,8 @@ export default function AdminRefundManager({
           )}
           {payment?.refundArn && (
             <div className="flex justify-between">
-              <span className="text-dim">Bank ARN / RRN:</span>
-              <span className="font-mono font-bold text-primary text-[11px]">
+              <span className="text-dim">Bank Reference (ARN / RRN):</span>
+              <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 text-[11px]">
                 {payment.refundArn}
               </span>
             </div>
@@ -214,15 +266,42 @@ export default function AdminRefundManager({
         </div>
       </div>
 
-      {/* Manual Refund Action Trigger for Admins (if not yet refunded) */}
-      {isPrepaid && !hasRefund && (
+      {/* Case 1: Refund Completed & Settled Notice */}
+      {isRefundCompleted && (
+        <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">✅</span>
+            <div>
+              <p className="font-bold text-emerald-900 dark:text-emerald-200">
+                Refund Completed &amp; Settled via Banking Gateway
+              </p>
+              <p className="text-emerald-800/80 dark:text-emerald-300 text-[11px]">
+                Full amount of {formatINR(refundAmount)} has been reversed to the customer&apos;s source account{" "}
+                {payment?.refundArn ? `(Bank Reference: ${payment.refundArn})` : ""}.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={syncing}
+            onClick={handleSyncWithGateway}
+            className="px-3 py-1 rounded-full font-bold text-xs border border-emerald-400 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all shrink-0 cursor-pointer flex items-center gap-1.5"
+          >
+            {syncing && <span className="w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />}
+            <span>🔄 Re-verify Live</span>
+          </button>
+        </div>
+      )}
+
+      {/* Case 2: Manual Refund Action Trigger (ONLY if actually cancelled, prepaid, and NOT yet refunded) */}
+      {isPrepaid && !hasRefund && !isRefundCompleted && (
         <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <div>
             <p className="font-bold text-amber-900 dark:text-amber-200">
               ⚡ Action: Online Payment has not been refunded yet
             </p>
             <p className="text-amber-800/80 dark:text-amber-300 text-[11px]">
-              Customer paid {formatINR(totalAmount)} via {payment?.paymentChannel || "Online Gateway"}. You can trigger the automated reversal directly to their bank account now.
+              Customer cancelled this order. You can trigger the automated reversal of {formatINR(totalAmount)} directly to their bank account now.
             </p>
           </div>
           <button

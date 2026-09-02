@@ -65,6 +65,43 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
   if (!order) notFound();
 
+  // Real-time Gateway Sync: if the order has an online payment and is not yet marked as settled refund,
+  // check live with Razorpay to auto-detect any processed refunds or settlements.
+  if (order.payment?.utrNumber?.startsWith("pay_") && order.payment.refundStatus !== "PROCESSED") {
+    try {
+      const { syncOrderPaymentWithGateway } = await import("@/lib/payments/sync");
+      const syncRes = await syncOrderPaymentWithGateway(order.id, store);
+      if (syncRes.synced && syncRes.isRefunded) {
+        const refreshed = await getDb(store).order.findUnique({
+          where: { id },
+          include: {
+            user: true,
+            items: {
+              include: {
+                product: {
+                  include: { seller: true },
+                },
+              },
+            },
+            payment: true,
+            invoice: true,
+            shipment: {
+              include: {
+                activities: { orderBy: { timestamp: "desc" } },
+                pickupLocation: true,
+              },
+            },
+          },
+        });
+        if (refreshed) {
+          order = refreshed;
+        }
+      }
+    } catch {
+      // Non-blocking sync
+    }
+  }
+
   const addr = order.shippingAddressSnapshot as {
     fullName: string;
     mobileNumber: string;

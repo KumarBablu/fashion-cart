@@ -159,6 +159,18 @@ export async function fulfillOrder(
 
   if (!order) throw new Error("Order not found");
 
+  const isCancelled =
+    order.status === "CANCELLED" ||
+    order.status === "REFUND_PENDING" ||
+    order.status === "REFUNDED" ||
+    Boolean(order.cancelledAt);
+
+  if (isCancelled) {
+    throw new Error(
+      `Order #${order.orderNumber} is cancelled/refunded and cannot be fulfilled or assigned a shipping label.`
+    );
+  }
+
   const addr = order.shippingAddressSnapshot as any;
   const pickup = await getDefaultPickupLocation(store);
   const weightKg = await calculateOrderWeight(order.items, store);
