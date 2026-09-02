@@ -94,6 +94,8 @@ export default function OrdersTableWithBatchDispatch({ orders, store }: OrdersTa
     }
   }
 
+  const [dispatchedMap, setDispatchedMap] = useState<Record<string, { awb: string; carrier: string }>>({});
+
   // Quick 1-Click Single Dispatch from Row
   async function handleQuickFulfill(orderId: string) {
     setQuickFulfillingId(orderId);
@@ -107,6 +109,17 @@ export default function OrdersTableWithBatchDispatch({ orders, store }: OrdersTa
       const data = await res.json();
       if (res.ok && data.success) {
         success("Order Dispatched", data.message || "AWB allocated & pickup scheduled.");
+        if (data.shipment) {
+          setDispatchedMap((prev) => ({
+            ...prev,
+            [orderId]: {
+              awb: data.shipment.awbNumber,
+              carrier: data.shipment.carrierName,
+            },
+          }));
+        }
+        // Auto-open 4x6 shipping label in new tab
+        window.open(`/api/admin/logistics/label/${orderId}?store=${store}`, "_blank");
         router.refresh();
       } else {
         toastError("Dispatch Error", data.error || "Failed to dispatch order.");
@@ -175,11 +188,16 @@ export default function OrdersTableWithBatchDispatch({ orders, store }: OrdersTa
           </thead>
           <tbody>
             {orders.map((o) => {
+              const localDispatched = dispatchedMap[o.id];
               const isRefundCompleted = o.payment?.refundStatus === "PROCESSED" || o.status === "REFUNDED";
               const isRefundPending = o.payment?.refundStatus === "INITIATED" || o.status === "REFUND_PENDING";
               const isCancelled = o.status === "CANCELLED" || isRefundCompleted || isRefundPending;
-              const hasShipment = Boolean(o.shipment || o.trackingNumber);
+              const hasShipment = Boolean(o.shipment || o.trackingNumber || localDispatched);
               const isReadyToShip = (o.status === "CONFIRMED" || o.status === "PROCESSING") && !hasShipment;
+
+              const displayAwb = localDispatched?.awb || o.shipment?.awbNumber || o.trackingNumber;
+              const displayCarrier = localDispatched?.carrier || o.shipment?.carrierName || o.carrierName || "Courier Partner";
+              const displayStatus = localDispatched ? "AWB ASSIGNED" : (o.shipment?.status.replace(/_/g, " ") || o.status);
 
               return (
                 <tr key={o.id} className="border-b border-line last:border-0 hover:bg-slate-50/60 dark:hover:bg-neutral-800/50 transition-colors">
@@ -243,13 +261,13 @@ export default function OrdersTableWithBatchDispatch({ orders, store }: OrdersTa
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1.5">
                           <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 w-max">
-                            {o.shipment?.status.replace(/_/g, " ") || o.status}
+                            {displayStatus}
                           </span>
                           <span className="text-[10px] font-mono font-bold text-dim">
-                            {o.shipment?.awbNumber || o.trackingNumber}
+                            {displayAwb}
                           </span>
                         </div>
-                        <span className="text-[10px] text-dim">{o.shipment?.carrierName || o.carrierName || "Courier"}</span>
+                        <span className="text-[10px] text-dim">{displayCarrier}</span>
                       </div>
                     ) : isCancelled ? (
                       <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-200 w-max">
@@ -278,11 +296,10 @@ export default function OrdersTableWithBatchDispatch({ orders, store }: OrdersTa
                           href={`/api/admin/logistics/label/${o.id}?store=${store}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1 rounded-lg text-[10px] font-bold border hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                          style={{ borderColor: "var(--fc-border)" }}
+                          className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-primary text-primary hover:bg-primary/10 transition-colors"
                           title="Print 4x6 Shipping Label PDF"
                         >
-                          🖨️ Label
+                          🖨️ Print Label
                         </a>
                       )}
                       <Link

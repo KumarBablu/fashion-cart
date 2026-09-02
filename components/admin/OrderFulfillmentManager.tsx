@@ -86,6 +86,8 @@ export default function OrderFulfillmentManager({
       if (res.ok && data.success) {
         success("Fulfillment Booked", data.message || "AWB generated & pickup scheduled.");
         setShowRatesModal(false);
+        // Auto-open 4x6 label in new tab
+        window.open(`/api/admin/logistics/label/${orderId}?store=${store}`, "_blank");
         router.refresh();
       } else {
         toastError("Fulfillment Failed", data.error || "Could not book shipment with courier.");
