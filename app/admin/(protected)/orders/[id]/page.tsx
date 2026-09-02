@@ -113,6 +113,16 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
     landmark?: string;
   };
 
+  const isCancelled = Boolean(
+    order.cancelledAt ||
+    order.cancelReason ||
+    ["CANCELLED", "REFUND_PENDING", "REFUNDED"].includes(order.status)
+  );
+
+  const displayStatus = isCancelled && !["REFUND_PENDING", "REFUNDED"].includes(order.status)
+    ? "CANCELLED"
+    : order.status;
+
   return (
     <div className="h-full overflow-y-auto min-h-0 max-w-4xl space-y-6 pr-1 pb-16">
       {/* Header */}
@@ -120,8 +130,17 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-display text-2xl font-bold">{order.orderNumber}</h1>
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase" style={{ backgroundColor: "var(--fc-badge-bg)", color: "var(--fc-badge-fg)" }}>
-              {order.status.replace(/_/g, " ")}
+            <span
+              className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${
+                isCancelled ? "bg-rose-100 text-rose-800 border border-rose-300" : ""
+              }`}
+              style={
+                !isCancelled
+                  ? { backgroundColor: "var(--fc-badge-bg)", color: "var(--fc-badge-fg)" }
+                  : undefined
+              }
+            >
+              {displayStatus.replace(/_/g, " ")}
             </span>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-extrabold uppercase bg-black/5 dark:bg-white/10">
               {store === "jewellery" ? "💍 Jewellery" : "👗 Garments"}
@@ -138,7 +157,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             orderNumber={order.orderNumber}
             customerName={order.user.name}
             customerEmail={order.user.email}
-            orderStatus={order.status}
+            orderStatus={displayStatus}
             paymentStatus={order.payment?.status}
             totalAmount={Number(order.total)}
             items={order.items.map((it) => ({
@@ -162,7 +181,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               <span>💬</span> WhatsApp Customer
             </a>
           )}
-          <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+          <OrderStatusSelect orderId={order.id} currentStatus={displayStatus} isCancelled={isCancelled} />
         </div>
       </div>
 
@@ -170,7 +189,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       <AdminRefundManager
         orderId={order.id}
         orderNumber={order.orderNumber}
-        orderStatus={order.status}
+        orderStatus={displayStatus}
         totalAmount={Number(order.total)}
         cancelledAt={order.cancelledAt || order.cancelRequestedAt}
         cancelReason={order.cancelReason}
@@ -201,7 +220,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       <OrderFulfillmentManager
         orderId={order.id}
         orderNumber={order.orderNumber}
-        orderStatus={order.status}
+        orderStatus={displayStatus}
         store={store}
         initialCarrier={order.carrierName}
         initialTracking={order.trackingNumber}

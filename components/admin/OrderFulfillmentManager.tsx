@@ -247,7 +247,28 @@ export default function OrderFulfillmentManager({
       </div>
 
       {/* Main Content Area */}
-      {hasActiveShipment ? (
+      {isCancelledOrder ? (
+        <div className="p-5 rounded-2xl border border-rose-200 bg-rose-50/60 dark:bg-rose-950/20 dark:border-rose-900/50 space-y-3">
+          <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-bold text-xs uppercase tracking-wide">
+            <span>⛔</span> DISPATCH LOCKED — ORDER CANCELLED / REFUNDED
+          </div>
+          <p className="text-xs text-rose-600/90 dark:text-rose-300 leading-relaxed">
+            This order has been cancelled or requested a refund. Courier fulfillment is permanently locked to protect inventory and prevent accidental parcel dispatch.
+          </p>
+          {hasActiveShipment && (
+            <div className="pt-3 border-t border-rose-200 dark:border-rose-900/50 flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-rose-700">Assigned AWB: {shipment?.awbNumber}</span>
+              <button
+                onClick={handleCancelShipment}
+                disabled={cancelling}
+                className="px-4 py-1.5 rounded-full text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs transition-colors cursor-pointer"
+              >
+                {cancelling ? "Cancelling…" : "🚫 Cancel Courier Shipment & Void AWB"}
+              </button>
+            </div>
+          )}
+        </div>
+      ) : hasActiveShipment ? (
         /* Active Shipment Card */
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

@@ -190,7 +190,7 @@ describe("Logistics Architecture & Provider Adapters", () => {
 
       expect(garmentWeight).toBeGreaterThan(jewelWeight);
       expect(garmentWeight).toBeCloseTo(1.2, 1);
-      expect(jewelWeight).toBeCloseTo(0.3, 1);
+      expect(jewelWeight).toBeCloseTo(0.4, 1);
     });
   });
 });

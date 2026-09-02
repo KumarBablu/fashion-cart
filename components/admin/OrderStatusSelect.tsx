@@ -17,13 +17,25 @@ const STATUSES = [
   "REFUNDED",
 ];
 
-export default function OrderStatusSelect({ orderId, currentStatus }: { orderId: string; currentStatus: string }) {
+export default function OrderStatusSelect({
+  orderId,
+  currentStatus,
+  isCancelled,
+}: {
+  orderId: string;
+  currentStatus: string;
+  isCancelled?: boolean;
+}) {
   const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
   const [saving, setSaving] = useState(false);
   const { success, error } = useToast();
 
-  const isTerminated = currentStatus === "CANCELLED" || currentStatus === "REFUNDED";
+  const isTerminated =
+    Boolean(isCancelled) ||
+    currentStatus === "CANCELLED" ||
+    currentStatus === "REFUNDED" ||
+    currentStatus === "REFUND_PENDING";
 
   async function onChange(newStatus: string) {
     const prevStatus = status;
