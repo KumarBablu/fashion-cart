@@ -1,5 +1,13 @@
 import { formatINR } from "@/lib/format";
 
+type ShipmentActivitySnapshot = {
+  id?: string;
+  status: string;
+  location?: string | null;
+  description: string;
+  timestamp: string | Date;
+};
+
 type OrderTrackingProps = {
   status: string;
   createdAt?: string | Date;
@@ -7,6 +15,13 @@ type OrderTrackingProps = {
   trackingNumber?: string | null;
   paymentMethod?: string;
   total?: number | string;
+  shipment?: {
+    carrierName?: string | null;
+    awbNumber?: string | null;
+    status?: string | null;
+    statusDescription?: string | null;
+    activities?: ShipmentActivitySnapshot[];
+  } | null;
 };
 
 const STAGES = [
@@ -76,7 +91,10 @@ export default function OrderTracking({
   trackingNumber,
   paymentMethod,
   total,
+  shipment,
 }: OrderTrackingProps) {
+  const effectiveCarrier = shipment?.carrierName || carrierName;
+  const effectiveTracking = shipment?.awbNumber || trackingNumber;
   const isCancelled = status === "CANCELLED" || status === "REFUND_PENDING" || status === "REFUNDED";
 
   if (isCancelled) {
@@ -248,9 +266,9 @@ export default function OrderTracking({
                 <p className="text-xs text-dim leading-relaxed">{stageDesc}</p>
 
                 {/* Additional context for shipped status */}
-                {stage.key === "SHIPPED" && carrierName && (
+                {stage.key === "SHIPPED" && effectiveCarrier && (
                   <p className="text-[11px] font-semibold text-primary pt-0.5">
-                    Courier Partner: {carrierName} {trackingNumber ? `· Tracking: ${trackingNumber}` : ""}
+                    Courier Partner: {effectiveCarrier} {effectiveTracking ? `· Tracking: ${effectiveTracking}` : ""}
                   </p>
                 )}
               </div>
@@ -258,6 +276,38 @@ export default function OrderTracking({
           );
         })}
       </div>
+
+      {/* Live Transit Checkpoints (if any recorded) */}
+      {shipment?.activities && shipment.activities.length > 0 && (
+        <div
+          className="p-4 rounded-2xl border space-y-3 mt-4"
+          style={{ backgroundColor: "var(--fc-bg)", borderColor: "var(--fc-border)" }}
+        >
+          <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: "var(--fc-border)" }}>
+            <span className="text-xs font-bold text-dim uppercase">Live Checkpoint Transit Logs</span>
+            <span className="text-[11px] font-mono text-dim">AWB: {effectiveTracking}</span>
+          </div>
+          <div className="space-y-2.5">
+            {shipment.activities.map((act, idx) => (
+              <div key={act.id || idx} className="flex items-start gap-2.5 text-xs">
+                <span className="text-emerald-500 mt-0.5">●</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-[11px]" style={{ color: "var(--fc-text)" }}>{act.description}</p>
+                  <p className="text-[10px] text-dim">
+                    {act.location ? `${act.location} · ` : ""}
+                    {new Date(act.timestamp).toLocaleString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

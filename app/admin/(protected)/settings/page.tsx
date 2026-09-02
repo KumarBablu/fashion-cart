@@ -6,16 +6,19 @@ import PaymentSettingsForm from "@/components/admin/PaymentSettingsForm";
 import DeliverySettingsForm from "@/components/admin/DeliverySettingsForm";
 import BusinessSettingsForm from "@/components/admin/BusinessSettingsForm";
 import EmailSettingsForm from "@/components/admin/EmailSettingsForm";
+import LogisticsSettingsForm from "@/components/admin/LogisticsSettingsForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
-  const [storesControl, paymentSettings, deliverySettings, businessSettings, emailSettings] = await Promise.all([
+  const [storesControl, paymentSettings, deliverySettings, businessSettings, emailSettings, logisticsSettings, pickupLocation] = await Promise.all([
     getStoresControl(),
     prisma.paymentSettings.findFirst({ where: { isActive: true } }),
     prisma.deliverySettings.findFirst(),
     prisma.businessSettings.findFirst(),
     prisma.emailSettings.findFirst(),
+    prisma.logisticsSettings.findFirst(),
+    prisma.pickupLocation.findFirst({ where: { isDefault: true } }),
   ]);
 
   return (
@@ -123,13 +126,34 @@ export default async function AdminSettingsPage() {
             upiId: paymentSettings?.upiId ?? "",
             payeeName: paymentSettings?.payeeName ?? "Bablu Kumar",
             instructions: paymentSettings?.instructions ?? "",
+            manualUpiEnabled: paymentSettings?.manualUpiEnabled ?? true,
             codEnabled: paymentSettings?.codEnabled ?? true,
             codFee: paymentSettings?.codFee ? Number(paymentSettings.codFee) : 0,
           }}
         />
       </section>
 
-      {/* 5. Delivery Settings */}
+      {/* 5. Courier & Logistics Fulfillment Hub */}
+      <section className="space-y-3">
+        <LogisticsSettingsForm
+          initialSettings={
+            logisticsSettings
+              ? {
+                  provider: logisticsSettings.provider,
+                  environment: logisticsSettings.environment,
+                  apiEmail: logisticsSettings.apiEmail,
+                  apiPassword: logisticsSettings.apiPassword,
+                  autoFulfillEnabled: logisticsSettings.autoFulfillEnabled,
+                  defaultGarmentWeight: Number(logisticsSettings.defaultGarmentWeight),
+                  defaultJewelWeight: Number(logisticsSettings.defaultJewelWeight),
+                }
+              : null
+          }
+          initialPickup={pickupLocation}
+        />
+      </section>
+
+      {/* 6. Delivery Settings */}
       <section className="space-y-3">
         <div>
           <h2 className="font-display text-base font-bold">🚚 Delivery &amp; Shipping Rates</h2>
@@ -155,7 +179,7 @@ export default async function AdminSettingsPage() {
           initial={{
             businessName: businessSettings?.businessName ?? "",
             businessAddress: businessSettings?.businessAddress ?? "",
-            gstin: businessSettings?.gstin ?? "",
+            gstin: businessSettings?.gstin && !businessSettings.gstin.startsWith("STORE_CTRL:") ? businessSettings.gstin : "",
             phone: businessSettings?.phone ?? "",
             email: businessSettings?.email ?? "",
           }}

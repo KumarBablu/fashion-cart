@@ -39,6 +39,20 @@ enum OrderStatus {
   REFUNDED
 }
 
+enum ShipmentStatus {
+  DRAFT
+  AWB_ASSIGNED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED_ATTEMPT
+  RTO_INITIATED
+  RTO_DELIVERED
+  CANCELLED
+}
+
 enum PaymentStatus {
   PAYMENT_PENDING
   SCREENSHOT_SUBMITTED
@@ -460,6 +474,7 @@ model Order {
   items         OrderItem[]
   payment       Payment?
   invoice       Invoice?
+  shipment      Shipment?
   inventoryTxns InventoryTransaction[]
 
   @@index([userId])
@@ -524,15 +539,16 @@ model Payment {
 }
 
 model PaymentSettings {
-  id           String   @id @default(cuid())
-  qrCodePath   String?
-  upiId        String?
-  payeeName    String?  @default("Bablu Kumar")
-  instructions String?
-  codEnabled   Boolean  @default(true)
-  codFee       Decimal  @default(0) @db.Decimal(10, 2)
-  isActive     Boolean  @default(true)
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  qrCodePath       String?
+  upiId            String?
+  payeeName        String?  @default("Bablu Kumar")
+  instructions     String?
+  manualUpiEnabled Boolean  @default(true)
+  codEnabled       Boolean  @default(true)
+  codFee           Decimal  @default(0) @db.Decimal(10, 2)
+  isActive         Boolean  @default(true)
+  updatedAt        DateTime @updatedAt
 }
 
 model DeliverySettings {
@@ -661,3 +677,105 @@ model Promotion {
   @@index([placement, isActive])
   @@index([isActive, placement, sortOrder])
 }
+
+// ============================================================
+// LOGISTICS & CARRIER FULFILLMENT
+// ============================================================
+
+model LogisticsSettings {
+  id                   String   @id @default(cuid())
+  provider             String   @default("shiprocket") // "shiprocket", "delhivery", "manual"
+  apiKey               String?
+  apiSecret            String?
+  apiEmail             String?
+  apiPassword          String?
+  authToken            String?
+  tokenExpiresAt       DateTime?
+  webhookSecret        String?
+  autoFulfillEnabled   Boolean  @default(false)        // true = Full auto-pilot, false = 1-click batch
+  defaultPickupId      String?
+  defaultGarmentWeight Decimal  @default(0.600) @db.Decimal(6, 3)
+  defaultJewelWeight   Decimal  @default(0.150) @db.Decimal(6, 3)
+  environment          String   @default("sandbox")    // "sandbox" or "production"
+  updatedAt            DateTime @updatedAt
+}
+
+model PickupLocation {
+  id            String   @id @default(cuid())
+  locationCode  String   @unique // e.g. "WH-MAIN-01", "VAULT-JW-01"
+  store         String   @default("all") // "garments", "jewellery", "all"
+  nickname      String   // e.g. "Central Surat Warehouse", "Jaipur Vault"
+  contactPerson String
+  phone         String
+  email         String?
+  addressLine1  String
+  addressLine2  String?
+  city          String
+  state         String
+  pinCode       String
+  isDefault     Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  shipments     Shipment[]
+
+  @@index([store, isActive])
+}
+
+model Shipment {
+  id                  String         @id @default(cuid())
+  orderId             String         @unique
+  order               Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  pickupLocationId    String?
+  pickupLocation      PickupLocation? @relation(fields: [pickupLocationId], references: [id])
+  
+  carrierCode         String         @default("shiprocket") // e.g. "delhivery", "bluedart", "dtdc", "manual"
+  carrierName         String         // e.g. "Delhivery Surface", "BlueDart Express"
+  awbNumber           String         @unique
+  shipmentIdExternal  String?
+  orderIdExternal     String?
+  routingCode         String?
+  
+  packageWeightKg     Decimal        @default(0.500) @db.Decimal(6, 3)
+  lengthCm            Decimal?       @db.Decimal(6, 2)
+  breadthCm           Decimal?       @db.Decimal(6, 2)
+  heightCm            Decimal?       @db.Decimal(6, 2)
+  shippingCost        Decimal?       @db.Decimal(10, 2)
+  
+  status              ShipmentStatus @default(AWB_ASSIGNED)
+  statusDescription   String?
+  labelUrl            String?
+  manifestUrl         String?
+  pickupToken         String?
+  pickupScheduledDate DateTime?
+  shippedAt           DateTime?
+  deliveredAt         DateTime?
+  estimatedDelivery   DateTime?
+  
+  ndrReason           String?
+  ndrAttemptsCount    Int            @default(0)
+  ndrLastAction       String?
+  
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  activities          ShipmentActivity[]
+
+  @@index([status])
+  @@index([awbNumber])
+}
+
+model ShipmentActivity {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  status      String   // e.g. "PICKED_UP", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED"
+  location    String?  // e.g. "Surat Hub", "Delhi Sorting Center"
+  description String   // e.g. "Package received at origin center"
+  timestamp   DateTime @default(now())
+  rawPayload  Json?
+
+  @@index([shipmentId, timestamp(sort: Desc)])
+}
+

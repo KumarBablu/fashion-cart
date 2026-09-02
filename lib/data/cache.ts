@@ -79,21 +79,28 @@ export function clearMemoryCache(pattern?: string) {
 const fetchStoresControl = unstable_cache(
   async (): Promise<AllStoresControl> => {
     try {
-      const settings = await prisma.businessSettings.findFirst({
-        select: { gstin: true },
-      });
-      if (settings && settings.gstin && settings.gstin.startsWith("STORE_CTRL:")) {
-        const rawJson = settings.gstin.replace("STORE_CTRL:", "");
-        const parsed = JSON.parse(rawJson);
-        return {
-          garments: { ...DEFAULT_STORES_CONTROL.garments, ...parsed.garments },
-          jewellery: { ...DEFAULT_STORES_CONTROL.jewellery, ...parsed.jewellery },
-        };
-      }
+      const [garmentsCounter, jewelleryCounter] = await Promise.all([
+        prisma.counter.findUnique({ where: { id: "store-control-garments" } }),
+        prisma.counter.findUnique({ where: { id: "store-control-jewellery" } }),
+      ]);
+
+      const isGarmentsActive = garmentsCounter ? garmentsCounter.value !== 0 : DEFAULT_STORES_CONTROL.garments.isActive;
+      const isJewelleryActive = jewelleryCounter ? jewelleryCounter.value !== 0 : DEFAULT_STORES_CONTROL.jewellery.isActive;
+
+      return {
+        garments: {
+          ...DEFAULT_STORES_CONTROL.garments,
+          isActive: isGarmentsActive,
+        },
+        jewellery: {
+          ...DEFAULT_STORES_CONTROL.jewellery,
+          isActive: isJewelleryActive,
+        },
+      };
     } catch (err) {
       console.warn("[getCachedStoresControl] fallback to default:", err);
+      return DEFAULT_STORES_CONTROL;
     }
-    return DEFAULT_STORES_CONTROL;
   },
   ["stores-control"],
   { revalidate: 300, tags: ["stores-control"] }

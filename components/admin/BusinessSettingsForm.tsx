@@ -15,7 +15,10 @@ type Initial = {
 export default function BusinessSettingsForm({ initial }: { initial: Initial }) {
   const router = useRouter();
   const { success, error: toastError } = useToast();
-  const [form, setForm] = useState(initial);
+  const [form, setForm] = useState({
+    ...initial,
+    gstin: initial.gstin && !initial.gstin.startsWith("STORE_CTRL:") ? initial.gstin : "",
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

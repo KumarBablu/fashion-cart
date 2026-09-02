@@ -1,11 +1,19 @@
-import { prisma } from "../lib/db";
+import { getDb } from "../lib/db";
 
 async function main() {
-  const paymentSettings = await prisma.paymentSettings.findFirst();
-  console.log("Current PaymentSettings:", paymentSettings);
+  for (const store of ["garments", "jewellery"] as const) {
+    const db = getDb(store);
+    console.log(`\n=== Store: ${store} ===`);
+    const business = await db.businessSettings.findFirst();
+    console.log("BusinessSettings:", business);
 
-  const businessSettings = await prisma.businessSettings.findFirst();
-  console.log("Current BusinessSettings:", businessSettings);
+    const counters = await db.counter.findMany({
+      where: {
+        id: { in: ["store-control-garments", "store-control-jewellery"] },
+      },
+    });
+    console.log("Store Control Counters:", counters);
+  }
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+main().catch(console.error);

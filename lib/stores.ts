@@ -1,6 +1,5 @@
 import { getDb } from "./db";
 import { getCachedStoresControl } from "./data/cache";
-import { revalidateTag } from "next/cache";
 
 export type StoreControl = {
   id: "garments" | "jewellery";
@@ -40,42 +39,47 @@ export async function saveStoresControl(data: Partial<AllStoresControl>): Promis
     jewellery: { ...current.jewellery, ...(data.jewellery || {}) },
   };
 
-  const payloadStr = `STORE_CTRL:${JSON.stringify(updated)}`;
+  const garmentsVal = updated.garments.isActive ? 1 : 0;
+  const jewelleryVal = updated.jewellery.isActive ? 1 : 0;
 
-  // Save to both databases for immediate global consistency
+  // Save to both databases for immediate global consistency using atomic Counter table records
   await Promise.all([
     (async () => {
       try {
-        const first = await getDb("garments").businessSettings.findFirst();
-        if (first) {
-          await getDb("garments").businessSettings.update({
-            where: { id: first.id },
-            data: { gstin: payloadStr },
-          });
-        } else {
-          await getDb("garments").businessSettings.create({
-            data: { gstin: payloadStr, businessName: "Fashion Cart" },
-          });
-        }
+        const db = getDb("garments");
+        await Promise.all([
+          db.counter.upsert({
+            where: { id: "store-control-garments" },
+            update: { value: garmentsVal },
+            create: { id: "store-control-garments", value: garmentsVal },
+          }),
+          db.counter.upsert({
+            where: { id: "store-control-jewellery" },
+            update: { value: jewelleryVal },
+            create: { id: "store-control-jewellery", value: jewelleryVal },
+          }),
+        ]);
       } catch (e) {
-        console.warn("Failed saving garments store control", e);
+        console.warn("Failed saving garments store control in Counter", e);
       }
     })(),
     (async () => {
       try {
-        const first = await getDb("jewellery").businessSettings.findFirst();
-        if (first) {
-          await getDb("jewellery").businessSettings.update({
-            where: { id: first.id },
-            data: { gstin: payloadStr },
-          });
-        } else {
-          await getDb("jewellery").businessSettings.create({
-            data: { gstin: payloadStr, businessName: "Fashion Cart Jewellery" },
-          });
-        }
+        const db = getDb("jewellery");
+        await Promise.all([
+          db.counter.upsert({
+            where: { id: "store-control-garments" },
+            update: { value: garmentsVal },
+            create: { id: "store-control-garments", value: garmentsVal },
+          }),
+          db.counter.upsert({
+            where: { id: "store-control-jewellery" },
+            update: { value: jewelleryVal },
+            create: { id: "store-control-jewellery", value: jewelleryVal },
+          }),
+        ]);
       } catch (e) {
-        console.warn("Failed saving jewellery store control", e);
+        console.warn("Failed saving jewellery store control in Counter", e);
       }
     })(),
   ]);

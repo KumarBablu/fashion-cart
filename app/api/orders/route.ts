@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
               qrCodePath: settings.qrCodePath,
               upiId: settings.upiId,
               instructions: settings.instructions,
+              manualUpiEnabled: settings.manualUpiEnabled ?? true,
               codEnabled: settings.codEnabled,
               codFee: Number(settings.codFee),
             }

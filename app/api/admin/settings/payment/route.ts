@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     const upiId = formData.get("upiId");
     const payeeName = formData.get("payeeName");
     const instructions = formData.get("instructions");
+    const manualUpiEnabled = formData.get("manualUpiEnabled") !== "false";
     const codEnabled = formData.get("codEnabled") === "true";
     const codFee = Number(formData.get("codFee") || 0);
 
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
             upiId: typeof upiId === "string" ? upiId : existing.upiId,
             payeeName: typeof payeeName === "string" ? payeeName : existing.payeeName,
             instructions: typeof instructions === "string" ? instructions : existing.instructions,
+            manualUpiEnabled,
             codEnabled,
             codFee,
           },
@@ -55,11 +57,48 @@ export async function POST(req: NextRequest) {
             upiId: typeof upiId === "string" ? upiId : undefined,
             payeeName: typeof payeeName === "string" ? payeeName : "Bablu Kumar",
             instructions: typeof instructions === "string" ? instructions : undefined,
+            manualUpiEnabled,
             codEnabled,
             codFee,
             isActive: true,
           },
         });
+
+    // Also sync to jewellery DB if configured
+    try {
+      const { getDb } = await import("@/lib/db");
+      const jwDb = getDb("jewellery");
+      const jwExisting = await jwDb.paymentSettings.findFirst({ where: { isActive: true } }).catch(() => null);
+      if (jwExisting) {
+        await jwDb.paymentSettings.update({
+          where: { id: jwExisting.id },
+          data: {
+            ...(qrCodePath ? { qrCodePath } : {}),
+            upiId: typeof upiId === "string" ? upiId : jwExisting.upiId,
+            payeeName: typeof payeeName === "string" ? payeeName : jwExisting.payeeName,
+            instructions: typeof instructions === "string" ? instructions : jwExisting.instructions,
+            manualUpiEnabled,
+            codEnabled,
+            codFee,
+          },
+        });
+      } else {
+        await jwDb.paymentSettings.create({
+          data: {
+            qrCodePath,
+            upiId: typeof upiId === "string" ? upiId : undefined,
+            payeeName: typeof payeeName === "string" ? payeeName : "Bablu Kumar",
+            instructions: typeof instructions === "string" ? instructions : undefined,
+            manualUpiEnabled,
+            codEnabled,
+            codFee,
+            isActive: true,
+          },
+        });
+      }
+    } catch {
+      // Non-blocking sync
+    }
 
     return NextResponse.json({ settings });
   } catch (error) {

@@ -27,6 +27,12 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       },
       payment: true,
       invoice: true,
+      shipment: {
+        include: {
+          activities: { orderBy: { timestamp: "desc" } },
+          pickupLocation: true,
+        },
+      },
     },
   });
 
@@ -44,6 +50,12 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         },
         payment: true,
         invoice: true,
+        shipment: {
+          include: {
+            activities: { orderBy: { timestamp: "desc" } },
+            pickupLocation: true,
+          },
+        },
       },
     });
     if (order) {
@@ -151,8 +163,35 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       {/* Logistics & Courier Fulfillment Panel */}
       <OrderFulfillmentManager
         orderId={order.id}
+        orderNumber={order.orderNumber}
+        orderStatus={order.status}
+        store={store}
         initialCarrier={order.carrierName}
         initialTracking={order.trackingNumber}
+        shipment={
+          order.shipment
+            ? {
+                id: order.shipment.id,
+                carrierName: order.shipment.carrierName,
+                awbNumber: order.shipment.awbNumber,
+                status: order.shipment.status,
+                statusDescription: order.shipment.statusDescription,
+                routingCode: order.shipment.routingCode,
+                packageWeightKg: Number(order.shipment.packageWeightKg),
+                shippingCost: order.shipment.shippingCost ? Number(order.shipment.shippingCost) : null,
+                pickupToken: order.shipment.pickupToken,
+                pickupScheduledDate: order.shipment.pickupScheduledDate?.toISOString() ?? null,
+                estimatedDelivery: order.shipment.estimatedDelivery?.toISOString() ?? null,
+                activities: order.shipment.activities.map((act) => ({
+                  id: act.id,
+                  status: act.status,
+                  location: act.location,
+                  description: act.description,
+                  timestamp: act.timestamp.toISOString(),
+                })),
+              }
+            : null
+        }
       />
 
       {/* Ordered Items Table */}

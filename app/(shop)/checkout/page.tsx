@@ -41,6 +41,7 @@ type PaymentSettings = {
   qrCodePath?: string | null;
   upiId?: string | null;
   payeeName?: string | null;
+  manualUpiEnabled?: boolean;
   codEnabled?: boolean;
   codFee?: number;
 };
@@ -126,9 +127,10 @@ export default function CheckoutPage() {
         ? `/api/cart?direct=true&variantId=${varId}&quantity=${qty}&store=${activeStore}`
         : `/api/cart?store=${activeStore}`;
 
-      const [addrRes, cartRes] = await Promise.all([
+      const [addrRes, cartRes, payRes] = await Promise.all([
         fetch("/api/addresses"),
         fetch(cartUrl),
+        fetch("/api/admin/settings/payment").catch(() => null),
       ]);
       if (addrRes.status === 401) {
         const nextUrl = window.location.pathname + window.location.search;
@@ -139,6 +141,19 @@ export default function CheckoutPage() {
       const cartData = await cartRes.json();
       setAddresses(addrData.addresses || []);
       setItems(cartData.cart?.items || []);
+
+      if (payRes && payRes.ok) {
+        const payData = await payRes.json().catch(() => null);
+        if (payData?.settings) {
+          setPaymentSettings(payData.settings);
+          if (payData.settings.manualUpiEnabled === false) {
+            setPaymentMethod((prev) => (prev === "MANUAL_UPI" ? "ONLINE_GATEWAY" : prev));
+          }
+          if (payData.settings.codEnabled === false) {
+            setPaymentMethod((prev) => (prev === "COD" ? "ONLINE_GATEWAY" : prev));
+          }
+        }
+      }
 
       const def = addrData.addresses?.find((a: Address) => a.isDefault) ?? addrData.addresses?.[0];
       if (def) setSelectedAddress(def.id);
@@ -657,103 +672,107 @@ export default function CheckoutPage() {
                 )}
               </label>
 
-              {/* Option 2: Manual UPI QR & Screenshot */}
-              <label
-                className={`flex flex-col gap-3 p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all ${
-                  paymentMethod === "MANUAL_UPI"
-                    ? "border-primary bg-[#F2EFE8] dark:bg-neutral-800 shadow-md ring-2 ring-primary/30"
-                    : "opacity-80 hover:opacity-100 hover:border-[#D9D0C5]"
-                }`}
-                style={{
-                  backgroundColor: paymentMethod === "MANUAL_UPI" ? undefined : "var(--fc-bg)",
-                  borderColor: paymentMethod === "MANUAL_UPI" ? undefined : "var(--fc-border)",
-                }}
-              >
-                <div className="flex items-start gap-3.5">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    checked={paymentMethod === "MANUAL_UPI"}
-                    onChange={() => setPaymentMethod("MANUAL_UPI")}
-                    className="mt-1"
-                  />
-                  <div className="flex-1 text-xs space-y-1">
-                    <p className="font-bold text-sm text-[#0C3B2E] dark:text-white flex items-center gap-1.5">
-                      <span>📲 Manual UPI QR Scan &amp; Pay</span>
-                      <span className="text-[10px] font-bold bg-[#FFBA00]/30 text-[#0C3B2E] px-2 py-0.5 rounded-md">
-                        0% Fee
-                      </span>
-                    </p>
-                    <p className="text-dim leading-relaxed">
-                      Scan our boutique QR on the next screen, pay with any UPI app, and attach your screenshot or UTR number.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Progressive Disclosure for Manual UPI */}
-                {paymentMethod === "MANUAL_UPI" && (
-                  <div className="pt-3 border-t border-[#D9D0C5] dark:border-neutral-700 space-y-2 animate-in fade-in duration-200">
-                    <p className="text-[11px] font-bold text-[#141416] dark:text-white">
-                      How Manual Verification Works:
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
-                      <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-[#E7DFD5] dark:border-neutral-700">
-                        <span className="font-bold text-primary block">1. Scan &amp; Pay</span>
-                        <span className="text-[10px] text-dim">Scan dynamic QR code with any UPI app</span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-[#E7DFD5] dark:border-neutral-700">
-                        <span className="font-bold text-primary block">2. Attach Proof</span>
-                        <span className="text-[10px] text-dim">Upload payment screenshot or 12-digit UTR</span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-[#E7DFD5] dark:border-neutral-700">
-                        <span className="font-bold text-primary block">3. Staff Approval</span>
-                        <span className="text-[10px] text-dim">Verified by boutique staff for dispatch</span>
-                      </div>
+              {/* Option 2: Manual UPI QR & Screenshot (Controlled by Admin Toggle) */}
+              {paymentSettings?.manualUpiEnabled !== false && (
+                <label
+                  className={`flex flex-col gap-3 p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all ${
+                    paymentMethod === "MANUAL_UPI"
+                      ? "border-primary bg-[#F2EFE8] dark:bg-neutral-800 shadow-md ring-2 ring-primary/30"
+                      : "opacity-80 hover:opacity-100 hover:border-[#D9D0C5]"
+                  }`}
+                  style={{
+                    backgroundColor: paymentMethod === "MANUAL_UPI" ? undefined : "var(--fc-bg)",
+                    borderColor: paymentMethod === "MANUAL_UPI" ? undefined : "var(--fc-border)",
+                  }}
+                >
+                  <div className="flex items-start gap-3.5">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      checked={paymentMethod === "MANUAL_UPI"}
+                      onChange={() => setPaymentMethod("MANUAL_UPI")}
+                      className="mt-1"
+                    />
+                    <div className="flex-1 text-xs space-y-1">
+                      <p className="font-bold text-sm text-[#0C3B2E] dark:text-white flex items-center gap-1.5">
+                        <span>📲 Manual UPI QR Scan &amp; Pay</span>
+                        <span className="text-[10px] font-bold bg-[#FFBA00]/30 text-[#0C3B2E] px-2 py-0.5 rounded-md">
+                          0% Fee
+                        </span>
+                      </p>
+                      <p className="text-dim leading-relaxed">
+                        Scan our boutique QR on the next screen, pay with any UPI app, and attach your screenshot or UTR number.
+                      </p>
                     </div>
                   </div>
-                )}
-              </label>
 
-              {/* Option 3: Cash on Delivery (COD) */}
-              <label
-                className={`flex flex-col gap-3 p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all ${
-                  paymentMethod === "COD"
-                    ? "border-primary bg-[#F2EFE8] dark:bg-neutral-800 shadow-md ring-2 ring-primary/30"
-                    : "opacity-80 hover:opacity-100 hover:border-[#D9D0C5]"
-                }`}
-                style={{
-                  backgroundColor: paymentMethod === "COD" ? undefined : "var(--fc-bg)",
-                  borderColor: paymentMethod === "COD" ? undefined : "var(--fc-border)",
-                }}
-              >
-                <div className="flex items-start gap-3.5">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    checked={paymentMethod === "COD"}
-                    onChange={() => setPaymentMethod("COD")}
-                    className="mt-1"
-                  />
-                  <div className="flex-1 text-xs space-y-1">
-                    <p className="font-bold text-sm text-[#0C3B2E] dark:text-white">
-                      🚚 Cash on Delivery (COD)
-                    </p>
-                    <p className="text-dim leading-relaxed">
-                      Pay in cash or UPI directly to the delivery partner when your parcel arrives at your doorstep.
-                    </p>
-                  </div>
-                </div>
+                  {/* Progressive Disclosure for Manual UPI */}
+                  {paymentMethod === "MANUAL_UPI" && (
+                    <div className="pt-3 border-t border-[#D9D0C5] dark:border-neutral-700 space-y-2 animate-in fade-in duration-200">
+                      <p className="text-[11px] font-bold text-[#141416] dark:text-white">
+                        How Manual Verification Works:
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-[#E7DFD5] dark:border-neutral-700">
+                          <span className="font-bold text-primary block">1. Scan &amp; Pay</span>
+                          <span className="text-[10px] text-dim">Scan dynamic QR code with any UPI app</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-[#E7DFD5] dark:border-neutral-700">
+                          <span className="font-bold text-primary block">2. Attach Proof</span>
+                          <span className="text-[10px] text-dim">Upload payment screenshot or 12-digit UTR</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-[#E7DFD5] dark:border-neutral-700">
+                          <span className="font-bold text-primary block">3. Staff Approval</span>
+                          <span className="text-[10px] text-dim">Verified by boutique staff for dispatch</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </label>
+              )}
 
-                {/* Progressive Disclosure for COD */}
-                {paymentMethod === "COD" && (
-                  <div className="pt-3 border-t border-[#D9D0C5] dark:border-neutral-700 space-y-1.5 text-[11px] animate-in fade-in duration-200">
-                    <p className="font-bold text-[#141416] dark:text-white flex items-center gap-1.5">
-                      <span>🛡️ Doorstep Verification:</span>
-                      <span className="font-normal text-dim">Open parcel check enabled before accepting.</span>
-                    </p>
+              {/* Option 3: Cash on Delivery (COD) (Controlled by Admin Toggle) */}
+              {paymentSettings?.codEnabled !== false && (
+                <label
+                  className={`flex flex-col gap-3 p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all ${
+                    paymentMethod === "COD"
+                      ? "border-primary bg-[#F2EFE8] dark:bg-neutral-800 shadow-md ring-2 ring-primary/30"
+                      : "opacity-80 hover:opacity-100 hover:border-[#D9D0C5]"
+                  }`}
+                  style={{
+                    backgroundColor: paymentMethod === "COD" ? undefined : "var(--fc-bg)",
+                    borderColor: paymentMethod === "COD" ? undefined : "var(--fc-border)",
+                  }}
+                >
+                  <div className="flex items-start gap-3.5">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      checked={paymentMethod === "COD"}
+                      onChange={() => setPaymentMethod("COD")}
+                      className="mt-1"
+                    />
+                    <div className="flex-1 text-xs space-y-1">
+                      <p className="font-bold text-sm text-[#0C3B2E] dark:text-white">
+                        🚚 Cash on Delivery (COD)
+                      </p>
+                      <p className="text-dim leading-relaxed">
+                        Pay in cash or UPI directly to the delivery partner when your parcel arrives at your doorstep.
+                      </p>
+                    </div>
                   </div>
-                )}
-              </label>
+
+                  {/* Progressive Disclosure for COD */}
+                  {paymentMethod === "COD" && (
+                    <div className="pt-3 border-t border-[#D9D0C5] dark:border-neutral-700 space-y-1.5 text-[11px] animate-in fade-in duration-200">
+                      <p className="font-bold text-[#141416] dark:text-white flex items-center gap-1.5">
+                        <span>🛡️ Doorstep Verification:</span>
+                        <span className="font-normal text-dim">Open parcel check enabled before accepting.</span>
+                      </p>
+                    </div>
+                  )}
+                </label>
+              )}
             </div>
 
             {/* Customer Notes */}

@@ -234,9 +234,19 @@ export async function createOrder(
     deliveryCharge = new Prisma.Decimal(0);
   }
 
+  // Check payment method availability against PaymentSettings
+  const paymentSettings = await db.paymentSettings.findFirst({ where: { isActive: true } }).catch(() => null);
+
+  if (paymentMethod === "MANUAL_UPI" && paymentSettings && paymentSettings.manualUpiEnabled === false) {
+    throw new CheckoutError("PAYMENT_METHOD_UNAVAILABLE", "Manual UPI QR payment is currently deactivated. Please choose Instant Online Payment.");
+  }
+
+  if (paymentMethod === "COD" && paymentSettings && paymentSettings.codEnabled === false) {
+    throw new CheckoutError("PAYMENT_METHOD_UNAVAILABLE", "Cash on Delivery is currently deactivated. Please choose Instant Online Payment.");
+  }
+
   // Add COD fee if applicable
   if (paymentMethod === "COD") {
-    const paymentSettings = await db.paymentSettings.findFirst({ where: { isActive: true } }).catch(() => null);
     if (paymentSettings?.codFee && Number(paymentSettings.codFee) > 0) {
       deliveryCharge = deliveryCharge.add(paymentSettings.codFee);
     }

@@ -38,6 +38,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       },
       payment: true,
       invoice: true,
+      shipment: {
+        include: {
+          activities: { orderBy: { timestamp: "desc" } },
+        },
+      },
     },
   });
 
@@ -63,6 +68,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         },
         payment: true,
         invoice: true,
+        shipment: {
+          include: {
+            activities: { orderBy: { timestamp: "desc" } },
+          },
+        },
       },
     });
   }
@@ -190,6 +200,23 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             trackingNumber={order.trackingNumber}
             paymentMethod={order.paymentMethod}
             total={Number(order.total)}
+            shipment={
+              order.shipment
+                ? {
+                    carrierName: order.shipment.carrierName,
+                    awbNumber: order.shipment.awbNumber,
+                    status: order.shipment.status,
+                    statusDescription: order.shipment.statusDescription,
+                    activities: order.shipment.activities.map((act) => ({
+                      id: act.id,
+                      status: act.status,
+                      location: act.location,
+                      description: act.description,
+                      timestamp: act.timestamp.toISOString(),
+                    })),
+                  }
+                : null
+            }
           />
         </div>
       )}
