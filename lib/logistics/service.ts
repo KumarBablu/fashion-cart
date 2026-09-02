@@ -30,7 +30,8 @@ export async function getLogisticsProvider(): Promise<ICourierProvider> {
  * Resolves or initializes default Pickup Location.
  */
 export async function getDefaultPickupLocation(store: "garments" | "jewellery" = "garments") {
-  let location = await prisma.pickupLocation.findFirst({
+  const db = getDb(store);
+  let location = await db.pickupLocation.findFirst({
     where: {
       OR: [{ store }, { store: "all" }],
       isActive: true,
@@ -39,7 +40,7 @@ export async function getDefaultPickupLocation(store: "garments" | "jewellery" =
   });
 
   if (!location) {
-    location = await prisma.pickupLocation.findFirst({
+    location = await db.pickupLocation.findFirst({
       where: {
         OR: [{ store }, { store: "all" }],
         isActive: true,
@@ -49,7 +50,7 @@ export async function getDefaultPickupLocation(store: "garments" | "jewellery" =
 
   if (!location) {
     // Auto-create standard primary hub
-    location = await prisma.pickupLocation.create({
+    location = await db.pickupLocation.create({
       data: {
         locationCode: `HUB-${store.toUpperCase()}-01`,
         store: "all",
